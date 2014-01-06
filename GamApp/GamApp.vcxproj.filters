@@ -1,0 +1,119 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="RenderSystem">
+      <UniqueIdentifier>{28f0ab69-13d6-463a-ae06-47951c54bf37}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameSystem">
+      <UniqueIdentifier>{cfab8778-615a-428a-abf6-4cc03fb18aa5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameSystem\CommonUtil">
+      <UniqueIdentifier>{777160e5-81a7-4b43-a54a-b6cc3190bdf0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameSystem\MainGame">
+      <UniqueIdentifier>{6a46336b-e63e-466b-b5f2-3396b7ac1430}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameSystem\CommonUtil\Timer">
+      <UniqueIdentifier>{3001983f-1e4a-4e66-9e13-901073809b4b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameSystem\EntityFeature">
+      <UniqueIdentifier>{4df2f1d4-be98-4ec8-90e7-9fc45b68fcc7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameSystem\Camera">
+      <UniqueIdentifier>{3ca6a907-afd0-462c-94ca-fdcb2c80cf1a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameSystem\CommonUtil\Input">
+      <UniqueIdentifier>{ee41cd2c-c2a8-4314-8be6-36e0ea2773c2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameSystem\CommonUtil\MeshLoader">
+      <UniqueIdentifier>{326117a4-2b8a-4e8c-8854-666a9bb8f35a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameSystem\CommonUtil\BoundingVolume">
+      <UniqueIdentifier>{5ee82f22-790d-4aeb-a37a-753fe02dae4e}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="DrawSkyBox.h" />
+    <ClInclude Include="GameSystem\Camera\Camera.h">
+      <Filter>GameSystem\Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="GameSystem\CommonUtil\Timer\GlobalTimer.h">
+      <Filter>GameSystem\CommonUtil\Timer</Filter>
+    </ClInclude>
+    <ClInclude Include="GameSystem\CommonUtil\GlobalHeader.h">
+      <Filter>GameSystem\CommonUtil</Filter>
+    </ClInclude>
+    <ClInclude Include="GameSystem\CommonUtil\Singleton.h">
+      <Filter>GameSystem\CommonUtil</Filter>
+    </ClInclude>
+    <ClInclude Include="GameSystem\EntityFeature\Entity.h">
+      <Filter>GameSystem\EntityFeature</Filter>
+    </ClInclude>
+    <ClInclude Include="GameSystem\EntityFeature\EntityManager.h">
+      <Filter>GameSystem\EntityFeature</Filter>
+    </ClInclude>
+    <ClInclude Include="GameSystem\MainGame\MainGame.h">
+      <Filter>GameSystem\MainGame</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderSystem\D3D9Device.h">
+      <Filter>RenderSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="GameSystem\CommonUtil\Input\Input.h">
+      <Filter>GameSystem\CommonUtil\Input</Filter>
+    </ClInclude>
+    <ClInclude Include="GameSystem\CommonUtil\MeshLoader\MeshLoader.h">
+      <Filter>GameSystem\CommonUtil\MeshLoader</Filter>
+    </ClInclude>
+    <ClInclude Include="GameSystem\CommonUtil\D3D9Header.h">
+      <Filter>GameSystem\CommonUtil</Filter>
+    </ClInclude>
+    <ClInclude Include="GameSystem\CommonUtil\BoundingVolume\BoundingVolume.h">
+      <Filter>GameSystem\CommonUtil\BoundingVolume</Filter>
+    </ClInclude>
+    <ClInclude Include="GameSystem\CommonUtil\BoundingVolume\BoundingBox.h">
+      <Filter>GameSystem\CommonUtil\BoundingVolume</Filter>
+    </ClInclude>
+    <ClInclude Include="GameSystem\CommonUtil\BoundingVolume\BoundingSphere.h">
+      <Filter>GameSystem\CommonUtil\BoundingVolume</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="DrawSkyBox.cpp" />
+    <ClCompile Include="GameSystem\Camera\Camera.cpp">
+      <Filter>GameSystem\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="GameSystem\CommonUtil\Timer\GlobalTimer.cpp">
+      <Filter>GameSystem\CommonUtil\Timer</Filter>
+    </ClCompile>
+    <ClCompile Include="GameSystem\EntityFeature\Entity.cpp">
+      <Filter>GameSystem\EntityFeature</Filter>
+    </ClCompile>
+    <ClCompile Include="GameSystem\EntityFeature\EntityManager.cpp">
+      <Filter>GameSystem\EntityFeature</Filter>
+    </ClCompile>
+    <ClCompile Include="GameSystem\MainGame\MainGame.cpp">
+      <Filter>GameSystem\MainGame</Filter>
+    </ClCompile>
+    <ClCompile Include="GameSystem\MainWindow.cpp">
+      <Filter>GameSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderSystem\D3D9Device.cpp">
+      <Filter>RenderSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="GameSystem\CommonUtil\Input\Input.cpp">
+      <Filter>GameSystem\CommonUtil\Input</Filter>
+    </ClCompile>
+    <ClCompile Include="GameSystem\CommonUtil\MeshLoader\MeshLoader.cpp">
+      <Filter>GameSystem\CommonUtil\MeshLoader</Filter>
+    </ClCompile>
+    <ClCompile Include="GameSystem\CommonUtil\BoundingVolume\BoundingVolume.cpp">
+      <Filter>GameSystem\CommonUtil\BoundingVolume</Filter>
+    </ClCompile>
+    <ClCompile Include="GameSystem\CommonUtil\BoundingVolume\BoundingBox.cpp">
+      <Filter>GameSystem\CommonUtil\BoundingVolume</Filter>
+    </ClCompile>
+    <ClCompile Include="GameSystem\CommonUtil\BoundingVolume\BoundingSphere.cpp">
+      <Filter>GameSystem\CommonUtil\BoundingVolume</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

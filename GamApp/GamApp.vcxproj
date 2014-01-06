@@ -1,0 +1,110 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{E9662664-52C1-49D2-8CF9-D382F747519C}</ProjectGuid>
+    <RootNamespace>GamApp</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <IncludePath>D:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Include;E:\WorkSpace\GamApp\GamApp\RenderSystem;E:\WorkSpace\GamApp\GamApp\GameSystem;E:\WorkSpace\GamApp\GamApp;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Lib\x86;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>D:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <AdditionalLibraryDirectories>D:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="DrawSkyBox.h" />
+    <ClInclude Include="GameSystem\Camera\Camera.h" />
+    <ClInclude Include="GameSystem\CommonUtil\BoundingVolume\BoundingBox.h" />
+    <ClInclude Include="GameSystem\CommonUtil\BoundingVolume\BoundingSphere.h" />
+    <ClInclude Include="GameSystem\CommonUtil\BoundingVolume\BoundingVolume.h" />
+    <ClInclude Include="GameSystem\CommonUtil\D3D9Header.h" />
+    <ClInclude Include="GameSystem\CommonUtil\GlobalHeader.h" />
+    <ClInclude Include="GameSystem\CommonUtil\Input\Input.h" />
+    <ClInclude Include="GameSystem\CommonUtil\MeshLoader\MeshLoader.h" />
+    <ClInclude Include="GameSystem\CommonUtil\Singleton.h" />
+    <ClInclude Include="GameSystem\CommonUtil\Timer\GlobalTimer.h" />
+    <ClInclude Include="GameSystem\EntityFeature\Entity.h" />
+    <ClInclude Include="GameSystem\EntityFeature\EntityManager.h" />
+    <ClInclude Include="GameSystem\MainGame\MainGame.h" />
+    <ClInclude Include="RenderSystem\D3D9Device.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="DrawSkyBox.cpp" />
+    <ClCompile Include="GameSystem\Camera\Camera.cpp" />
+    <ClCompile Include="GameSystem\CommonUtil\BoundingVolume\BoundingBox.cpp" />
+    <ClCompile Include="GameSystem\CommonUtil\BoundingVolume\BoundingSphere.cpp" />
+    <ClCompile Include="GameSystem\CommonUtil\BoundingVolume\BoundingVolume.cpp" />
+    <ClCompile Include="GameSystem\CommonUtil\Input\Input.cpp" />
+    <ClCompile Include="GameSystem\CommonUtil\MeshLoader\MeshLoader.cpp" />
+    <ClCompile Include="GameSystem\CommonUtil\Timer\GlobalTimer.cpp" />
+    <ClCompile Include="GameSystem\EntityFeature\Entity.cpp" />
+    <ClCompile Include="GameSystem\EntityFeature\EntityManager.cpp" />
+    <ClCompile Include="GameSystem\MainGame\MainGame.cpp" />
+    <ClCompile Include="GameSystem\MainWindow.cpp" />
+    <ClCompile Include="RenderSystem\D3D9Device.cpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

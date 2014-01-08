@@ -5,6 +5,8 @@ unsigned int Entity::baseFastIndex = 0;
 Entity::Entity() :
 	fastIndex(++baseFastIndex)
 {
+	D3DXMatrixIdentity(&mWorldTramsform);
+	mRenderUtil.SetOwner(this);
 }
 
 
@@ -47,6 +49,8 @@ void Entity::BuildRenderUtil()
 	{
 		mRenderUtil.SetEffect(i, RENDERDEVICE::Instance().GetDefaultEffect());
 	}
+
+	AssignRenderUtil();
 }
 
 void Entity::SetMeshFileName(std::string fileName)

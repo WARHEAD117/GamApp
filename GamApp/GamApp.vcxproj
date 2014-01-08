@@ -39,8 +39,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>D:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Include;E:\WorkSpace\GamApp\GamApp\RenderSystem;E:\WorkSpace\GamApp\GamApp\GameSystem;E:\WorkSpace\GamApp\GamApp;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Lib\x86;$(LibraryPath)</LibraryPath>
+    <IncludePath>E:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Include;D:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Include;E:\WorkSpace\GamApp\GamApp\RenderSystem;E:\WorkSpace\GamApp\GamApp\GameSystem;E:\WorkSpace\GamApp\GamApp;E:\C++ WorkSpace\GamApp\GamApp;E:\C++ WorkSpace\GamApp\GamApp\RenderSystem;E:\C++ WorkSpace\GamApp\GamApp\GameSystem;$(IncludePath)</IncludePath>
+    <LibraryPath>E:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Lib\x86;D:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Lib\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -75,6 +75,7 @@
   <ItemGroup>
     <ClInclude Include="DrawSkyBox.h" />
     <ClInclude Include="GameSystem\Camera\Camera.h" />
+    <ClInclude Include="GameSystem\Camera\CameraParam.h" />
     <ClInclude Include="GameSystem\CommonUtil\BoundingVolume\BoundingBox.h" />
     <ClInclude Include="GameSystem\CommonUtil\BoundingVolume\BoundingSphere.h" />
     <ClInclude Include="GameSystem\CommonUtil\BoundingVolume\BoundingVolume.h" />
@@ -91,6 +92,7 @@
     <ClInclude Include="GameSystem\MainGame\MainGame.h" />
     <ClInclude Include="RenderSystem\D3D9Device.h" />
     <ClInclude Include="RenderSystem\RenderPipeLine\RenderPipe.h" />
+    <ClInclude Include="RenderSystem\RenderUtil\EffectParam.h" />
     <ClInclude Include="RenderSystem\RenderUtil\RenderUtil.h" />
   </ItemGroup>
   <ItemGroup>

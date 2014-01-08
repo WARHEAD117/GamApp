@@ -1,5 +1,8 @@
 #include "RenderUtil.h"
 #include "D3D9Device.h"
+#include "EntityFeature/Entity.h"
+
+#include "EffectParam.h"
 
 RenderUtil::RenderUtil()
 {
@@ -17,18 +20,22 @@ void RenderUtil::BuildEffectInfo()
 	D3DXMATRIX proj;
 	RENDERDEVICE::Instance().g_pD3DDevice->GetTransform(D3DTS_PROJECTION, &proj);
 	mViewProj = view * proj;
+
+	mWorldMat = mOwner->GetWorldTransform();
 }
 
 void RenderUtil::Render()
 {
 	BuildEffectInfo();
+	
 
 	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, mVertexBuffer, 0, D3DXGetFVFVertexSize(mFVF));
 	RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(mFVF);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetIndices(mIndexBuffer);
 	for (DWORD i = 0; i < mSubMeshList.size(); i++)
 	{
-		mEffectList[i]->SetMatrix("g_ViewProj", &mViewProj);
+		mEffectList[i]->SetMatrix(VIEWPROJMATRIX, &mViewProj);
+		mEffectList[i]->SetMatrix(WORLDMATRIX, &mWorldMat);
 
 		UINT nPasses = 0;
 		HRESULT r1 = mEffectList[i]->Begin(&nPasses, 0);
@@ -38,11 +45,11 @@ void RenderUtil::Render()
 			RENDERDEVICE::Instance().g_pD3DDevice->SetMaterial(&mSubMeshList[i].pMaterial);
 		if (mSubMeshList[i].pTexture)
 		{
-			mEffectList[i]->SetTexture("g_mTexture", mSubMeshList[i].pTexture);
+			mEffectList[i]->SetTexture(DIFFUSETEXTURE, mSubMeshList[i].pTexture);
 		}
 		else
 		{
-			mEffectList[i]->SetTexture("g_mTexture", NULL);
+			mEffectList[i]->SetTexture(DIFFUSETEXTURE, NULL);
 		}
 
 		mEffectList[i]->CommitChanges();
@@ -84,4 +91,9 @@ void RenderUtil::SetEffect(int subMeshIndex, LPD3DXEFFECT effect)
 		return;
 
 	mEffectList[subMeshIndex] = effect;
+}
+
+void RenderUtil::SetOwner(Entity* owner)
+{
+	mOwner = owner;
 }

@@ -103,6 +103,12 @@
     <ClInclude Include="GameSystem\CommonUtil\EffectLoader\EffectLoader.h">
       <Filter>GameSystem\CommonUtil\EffectLoader</Filter>
     </ClInclude>
+    <ClInclude Include="RenderSystem\RenderUtil\EffectParam.h">
+      <Filter>RenderSystem\RenderUtil</Filter>
+    </ClInclude>
+    <ClInclude Include="GameSystem\Camera\CameraParam.h">
+      <Filter>GameSystem\Camera</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DrawSkyBox.cpp" />

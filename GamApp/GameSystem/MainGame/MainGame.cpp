@@ -1,8 +1,9 @@
 #include "MainGame.h"
 #include "CommonUtil\Timer\GlobalTimer.h"
 #include "RenderSystem\D3D9Device.h"
+#include "RenderPipeLine\RenderPipe.h"
 
-#include "CommonUtil\MeshLoader\MeshLoader.h"
+#include "EntityFeature\Entity.h"
 
 MainGame::MainGame()
 {
@@ -18,7 +19,8 @@ MainGame::~MainGame()
 //Just for test-------------------------------------------------------------------
 LPD3DXMESH mesh;
 LPDIRECT3DTEXTURE9			planeTex;
-MeshLoader loader;
+
+Entity testEntity;
 //--------------------------------------------------------------------------------
 
 void MainGame::GameLoad()
@@ -37,7 +39,8 @@ void MainGame::GameLoad()
 	g_DrawSkyBox->SetTexture("Res\\SkyBox\\front.jpg", 5);
 	g_DrawSkyBox->SetTexture("Res\\SkyBox\\back.jpg", 4);
 
-	loader.LoadXMesh("Res\\Mesh\\tree3\\tree3.X");
+	testEntity.SetMeshFileName("Res\\Mesh\\car\\car25.X");
+	testEntity.BuildRenderUtil();
 	//===================================================================================================
 }
 
@@ -71,19 +74,22 @@ void MainGame::OnFrame()
 
 void MainGame::Render()
 {
-	RENDERDEVICE::Instance().g_pD3DDevice->BeginScene();
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(1, 0, 0), 1.0f, 0);
-
-	RENDERDEVICE::Instance().g_pD3DDevice->SetTexture(0, planeTex);
-
-	g_DrawSkyBox->Render(D3DXVECTOR3(0, 0, 1));
 	D3DXMATRIX  matWorld;
 	//¾ØÕóµ¥Î»»¯
 	D3DXMatrixIdentity(&matWorld);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetTransform(D3DTS_WORLD, &matWorld);
-	mesh->DrawSubset(0);
-	RENDERDEVICE::Instance().g_pD3DDevice->EndScene();
-	RENDERDEVICE::Instance().g_pD3DDevice->Present(0, 0, 0, 0);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetTexture(0, planeTex);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_LIGHTING, FALSE);
+
+	//g_DrawSkyBox->Render(D3DXVECTOR3(0, 0, 1));
+ 	
+
+	testEntity.AssignRenderUtil();
+	RENDERPIPE::Instance().RenderAll();
+
+// 	mesh->DrawSubset(0);
+// 
+// 	testUtil.Render();
 }
 	
 void MainGame::OnEndFrame()

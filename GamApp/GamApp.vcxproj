@@ -79,15 +79,19 @@
     <ClInclude Include="GameSystem\CommonUtil\BoundingVolume\BoundingSphere.h" />
     <ClInclude Include="GameSystem\CommonUtil\BoundingVolume\BoundingVolume.h" />
     <ClInclude Include="GameSystem\CommonUtil\D3D9Header.h" />
+    <ClInclude Include="GameSystem\CommonUtil\EffectLoader\EffectLoader.h" />
     <ClInclude Include="GameSystem\CommonUtil\GlobalHeader.h" />
     <ClInclude Include="GameSystem\CommonUtil\Input\Input.h" />
     <ClInclude Include="GameSystem\CommonUtil\MeshLoader\MeshLoader.h" />
+    <ClInclude Include="GameSystem\CommonUtil\MeshRender\MeshRender.h" />
     <ClInclude Include="GameSystem\CommonUtil\Singleton.h" />
     <ClInclude Include="GameSystem\CommonUtil\Timer\GlobalTimer.h" />
     <ClInclude Include="GameSystem\EntityFeature\Entity.h" />
     <ClInclude Include="GameSystem\EntityFeature\EntityManager.h" />
     <ClInclude Include="GameSystem\MainGame\MainGame.h" />
     <ClInclude Include="RenderSystem\D3D9Device.h" />
+    <ClInclude Include="RenderSystem\RenderPipeLine\RenderPipe.h" />
+    <ClInclude Include="RenderSystem\RenderUtil\RenderUtil.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DrawSkyBox.cpp" />
@@ -95,14 +99,28 @@
     <ClCompile Include="GameSystem\CommonUtil\BoundingVolume\BoundingBox.cpp" />
     <ClCompile Include="GameSystem\CommonUtil\BoundingVolume\BoundingSphere.cpp" />
     <ClCompile Include="GameSystem\CommonUtil\BoundingVolume\BoundingVolume.cpp" />
+    <ClCompile Include="GameSystem\CommonUtil\EffectLoader\EffectLoader.cpp" />
     <ClCompile Include="GameSystem\CommonUtil\Input\Input.cpp" />
     <ClCompile Include="GameSystem\CommonUtil\MeshLoader\MeshLoader.cpp" />
+    <ClCompile Include="GameSystem\CommonUtil\MeshRender\MeshRender.cpp" />
     <ClCompile Include="GameSystem\CommonUtil\Timer\GlobalTimer.cpp" />
     <ClCompile Include="GameSystem\EntityFeature\Entity.cpp" />
     <ClCompile Include="GameSystem\EntityFeature\EntityManager.cpp" />
     <ClCompile Include="GameSystem\MainGame\MainGame.cpp" />
     <ClCompile Include="GameSystem\MainWindow.cpp" />
     <ClCompile Include="RenderSystem\D3D9Device.cpp" />
+    <ClCompile Include="RenderSystem\RenderPipeLine\RenderPipe.cpp" />
+    <ClCompile Include="RenderSystem\RenderUtil\RenderUtil.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="System\commonDiffuse.fx">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Effect</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
+      <DisableOptimizations Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</DisableOptimizations>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CommonDiffuse</EntryPointName>
+      <FileType>Document</FileType>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </FxCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

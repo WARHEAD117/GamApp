@@ -31,6 +31,21 @@
     <Filter Include="GameSystem\CommonUtil\BoundingVolume">
       <UniqueIdentifier>{5ee82f22-790d-4aeb-a37a-753fe02dae4e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="GameSystem\CommonUtil\MeshRender">
+      <UniqueIdentifier>{933933b2-21a1-45e3-a3b5-3673dfe224b2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="RenderSystem\RenderPipeLine">
+      <UniqueIdentifier>{90dc97f5-f310-4963-9cf3-39ae89335682}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="RenderSystem\RenderUtil">
+      <UniqueIdentifier>{9daf2681-9bd4-4ce1-8885-6b7b916e9335}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="System">
+      <UniqueIdentifier>{555e9110-7104-4a46-8fbe-fe8f7edac3ff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameSystem\CommonUtil\EffectLoader">
+      <UniqueIdentifier>{273db008-eeae-43f7-a191-0fd767177315}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DrawSkyBox.h" />
@@ -76,6 +91,18 @@
     <ClInclude Include="GameSystem\CommonUtil\BoundingVolume\BoundingSphere.h">
       <Filter>GameSystem\CommonUtil\BoundingVolume</Filter>
     </ClInclude>
+    <ClInclude Include="GameSystem\CommonUtil\MeshRender\MeshRender.h">
+      <Filter>GameSystem\CommonUtil\MeshRender</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderSystem\RenderPipeLine\RenderPipe.h">
+      <Filter>RenderSystem\RenderPipeLine</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderSystem\RenderUtil\RenderUtil.h">
+      <Filter>RenderSystem\RenderUtil</Filter>
+    </ClInclude>
+    <ClInclude Include="GameSystem\CommonUtil\EffectLoader\EffectLoader.h">
+      <Filter>GameSystem\CommonUtil\EffectLoader</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DrawSkyBox.cpp" />
@@ -115,5 +142,22 @@
     <ClCompile Include="GameSystem\CommonUtil\BoundingVolume\BoundingSphere.cpp">
       <Filter>GameSystem\CommonUtil\BoundingVolume</Filter>
     </ClCompile>
+    <ClCompile Include="GameSystem\CommonUtil\MeshRender\MeshRender.cpp">
+      <Filter>GameSystem\CommonUtil\MeshRender</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderSystem\RenderPipeLine\RenderPipe.cpp">
+      <Filter>RenderSystem\RenderPipeLine</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderSystem\RenderUtil\RenderUtil.cpp">
+      <Filter>RenderSystem\RenderUtil</Filter>
+    </ClCompile>
+    <ClCompile Include="GameSystem\CommonUtil\EffectLoader\EffectLoader.cpp">
+      <Filter>GameSystem\CommonUtil\EffectLoader</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="System\commonDiffuse.fx">
+      <Filter>System</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

@@ -17,11 +17,11 @@ std::string getFilePath(std::string in)
 	return in.substr(0, splitIndex+1);
 }
 
-HRESULT MeshLoader::LoadXMesh(char* filePath)
+HRESULT MeshLoader::LoadXMesh(std::string filePath)
 {
 	ID3DXBuffer* adjBuffer = 0;
 	LPD3DXBUFFER pXBuffer;
-	if (FAILED(D3DXLoadMeshFromX(filePath, D3DXMESH_SYSTEMMEM, RENDERDEVICE::Instance().g_pD3DDevice,
+	if (FAILED(D3DXLoadMeshFromX(filePath.c_str(), D3DXMESH_SYSTEMMEM, RENDERDEVICE::Instance().g_pD3DDevice,
 		&adjBuffer, &pXBuffer, NULL, &m_dwMtrlNum, &m_pMesh)))
 		return E_FAIL;
 	
@@ -80,10 +80,41 @@ HRESULT MeshLoader::LoadXMesh(char* filePath)
 	}
 	
 	pXBuffer->Release();
+
+	if (!SUCCEEDED(m_pMesh->GetVertexBuffer(&mVertexBuffer)))
+	{
+		return S_FALSE;
+	}
+
+	if (!SUCCEEDED(m_pMesh->GetIndexBuffer(&mIndexBuffer)))
+	{
+		return S_FALSE;
+	}
+
+	DWORD num_attr;
+	m_pMesh->GetAttributeTable(NULL, &num_attr);
+	m_AttTable.resize(num_attr);
+	m_pMesh->GetAttributeTable(&m_AttTable[0], &num_attr);
+
+	mSubMeshList.resize(num_attr);
+	for (int i = 0; i < (int)num_attr; i++)
+	{
+		mSubMeshList[i].subMeshId = m_AttTable[i].AttribId;
+		mSubMeshList[i].faceStart = m_AttTable[i].FaceStart;
+		mSubMeshList[i].faceCount = m_AttTable[i].FaceCount;
+		mSubMeshList[i].vertexStart = m_AttTable[i].VertexStart;
+		mSubMeshList[i].vertexCount = m_AttTable[i].VertexCount;
+		mSubMeshList[i].indexStart = m_AttTable[i].FaceStart*3;
+		mSubMeshList[i].indexCount = m_AttTable[i].FaceCount*3;
+		mSubMeshList[i].pTexture = m_pTextures[i];
+		mSubMeshList[i].pMaterial = m_Materials[i];
+	}
+
+
 	return S_OK;
 }
 
-LPD3DXMESH MeshLoader::GetD3DMesh()
+LPD3DXMESH& MeshLoader::GetD3DMesh()
 {
 	return m_pMesh;
 }
@@ -129,3 +160,5 @@ void MeshLoader::ComputeBoundingSphere()
 	mBoundingSphereInfo.center = center;
 	mBoundingSphereInfo.radius = radius;
 }
+
+

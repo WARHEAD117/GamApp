@@ -1,5 +1,6 @@
 #include "D3D9Device.h"
 
+static std::string defaultEffectName = "System\\commonDiffuse.fx";
 
 D3D9Device::D3D9Device()
 {
@@ -77,4 +78,20 @@ void D3D9Device::InitD3DDevice(HWND hWnd)
 		devBehaviorFlags,   // vertex processing
 		&g_pD3DPP,            // present parameters
 		&g_pD3DDevice));      // return created device
+}
+
+LPD3DXEFFECT D3D9Device::GetDefaultEffect()
+{
+	if (!defaultEffect)
+	{
+		ID3DXBuffer* error = 0;
+		if (E_FAIL == ::D3DXCreateEffectFromFile(g_pD3DDevice, defaultEffectName.c_str(), NULL, NULL, D3DXSHADER_DEBUG,
+			NULL, &defaultEffect, &error))
+		{
+			MessageBox(GetForegroundWindow(), (char*)error->GetBufferPointer(), "Shader", MB_OK);
+			abort();
+		}
+	}
+
+	return defaultEffect;
 }

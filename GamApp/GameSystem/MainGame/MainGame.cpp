@@ -18,17 +18,12 @@ MainGame::~MainGame()
 }
 
 //Just for test-------------------------------------------------------------------
-LPD3DXMESH mesh;
-LPDIRECT3DTEXTURE9			planeTex;
-
 Entity testEntity;
 //--------------------------------------------------------------------------------
 
 void MainGame::GameLoad()
 {
 	//Just for test---------------------------------------------------------------------------------
-	D3DXCreateSphere(RENDERDEVICE::Instance().g_pD3DDevice, 0.5, 32, 32, &mesh, NULL);
-	D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "grass.jpg", &planeTex);
 	//--初始化天空盒及其贴图
 	g_DrawSkyBox = new CDrawSkyBox(RENDERDEVICE::Instance().g_pD3DDevice);
 

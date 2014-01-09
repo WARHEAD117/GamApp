@@ -79,7 +79,7 @@ void D3D9Device::InitD3DDevice(HWND hWnd)
 		&g_pD3DPP,            // present parameters
 		&g_pD3DDevice));      // return created device
 
-
+	//SetDefaultState
 	g_pD3DDevice->SetRenderState(D3DRS_LIGHTING, FALSE);
 }
 

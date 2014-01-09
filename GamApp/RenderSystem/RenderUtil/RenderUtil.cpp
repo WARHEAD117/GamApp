@@ -15,10 +15,8 @@ RenderUtil::~RenderUtil()
 
 void RenderUtil::BuildEffectInfo()
 {
-	D3DXMATRIX view;
-	RENDERDEVICE::Instance().g_pD3DDevice->GetTransform(D3DTS_VIEW, &view);
-	D3DXMATRIX proj;
-	RENDERDEVICE::Instance().g_pD3DDevice->GetTransform(D3DTS_PROJECTION, &proj);
+	D3DXMATRIX view = RENDERDEVICE::Instance().ViewMatrix;
+	D3DXMATRIX proj = RENDERDEVICE::Instance().ProjMatrix;
 	mViewProj = view * proj;
 
 	mWorldMat = mOwner->GetWorldTransform();

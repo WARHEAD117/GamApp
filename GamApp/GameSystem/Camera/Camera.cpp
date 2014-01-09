@@ -37,7 +37,6 @@ void Camera::OnFrame(D3DXVECTOR3 pos, D3DXVECTOR3 lookAt, D3DXVECTOR3  right, D3
 	mUpW = up;
 
 	BuildViewMtx();
-	BuildProjMtx();
 }
 
 void Camera::BuildViewMtx()
@@ -79,7 +78,7 @@ void Camera::BuildViewMtx()
 	mView(2, 3) = 0.0f;
 	mView(3, 3) = 1.0f;
 
-	RENDERDEVICE::Instance().g_pD3DDevice->SetTransform(D3DTS_VIEW, &mView);
+	RENDERDEVICE::Instance().ViewMatrix = mView;
 
 	// 	D3DXMATRIX   matView;
 	// 	D3DXMatrixLookAtLH(&matView, &mPosW,
@@ -96,5 +95,5 @@ void Camera::BuildProjMtx()
 
 	D3DXMatrixPerspectiveFovLH(&mProj, mFOV, w / h, 1.0f, 5000.0f);
 
-	RENDERDEVICE::Instance().g_pD3DDevice->SetTransform(D3DTS_PROJECTION, &mProj);
+	RENDERDEVICE::Instance().ProjMatrix = mProj;
 }

@@ -78,6 +78,9 @@ void D3D9Device::InitD3DDevice(HWND hWnd)
 		devBehaviorFlags,   // vertex processing
 		&g_pD3DPP,            // present parameters
 		&g_pD3DDevice));      // return created device
+
+
+	g_pD3DDevice->SetRenderState(D3DRS_LIGHTING, FALSE);
 }
 
 LPD3DXEFFECT D3D9Device::GetDefaultEffect()
@@ -95,3 +98,4 @@ LPD3DXEFFECT D3D9Device::GetDefaultEffect()
 
 	return defaultEffect;
 }
+

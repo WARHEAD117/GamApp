@@ -40,11 +40,16 @@ void MainGame::GameLoad()
 	g_DrawSkyBox->SetTexture("Res\\SkyBox\\front.jpg", 5);
 	g_DrawSkyBox->SetTexture("Res\\SkyBox\\back.jpg", 4);
 
+	
+	//===================================================================================================
+	//BuildCamera
+	mainCamera.Init();
+
+	//Create Entity
 	testEntity.SetMeshFileName("Res\\Mesh\\tree3\\tree3.X");
 	testEntity.BuildRenderUtil();
 
 	m_EntityManager.AddEntity(testEntity);
-	//===================================================================================================
 }
 
 void MainGame::GameLoop()
@@ -72,18 +77,11 @@ void MainGame::OnFrame()
 {
 	m_EntityManager.OnFrame();
 
-	mCamera.OnFrame(CameraParam::posW, CameraParam::lookAtW, CameraParam::rightW, CameraParam::upW);
+	mainCamera.OnFrame(CameraParam::posW, CameraParam::lookAtW, CameraParam::rightW, CameraParam::upW);
 }
 
 void MainGame::Render()
 {
-	D3DXMATRIX  matWorld;
-	//¾ØÕóµ¥Î»»¯
-	D3DXMatrixIdentity(&matWorld);
-	RENDERDEVICE::Instance().g_pD3DDevice->SetTransform(D3DTS_WORLD, &matWorld);
-	RENDERDEVICE::Instance().g_pD3DDevice->SetTexture(0, planeTex);
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_LIGHTING, FALSE);
-
 	//g_DrawSkyBox->Render(D3DXVECTOR3(0, 0, 1));
 
 	RENDERPIPE::Instance().RenderAll();

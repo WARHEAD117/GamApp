@@ -24,6 +24,6 @@ private:
 private:
 	EntityManager	m_EntityManager;
 	CDrawSkyBox*	g_DrawSkyBox;
-	Camera			mCamera;
+	Camera			mainCamera;
 };
 

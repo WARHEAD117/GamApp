@@ -12,6 +12,7 @@ public:
 	void	PushRenderUtil(const RenderUtil& renderUtil);
 
 	void	RenderAll();
+	void	UpdateRenderState();
 
 private:
 	std::vector<RenderUtil> mRenderUtilList;

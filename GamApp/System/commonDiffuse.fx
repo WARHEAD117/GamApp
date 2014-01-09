@@ -1,10 +1,11 @@
-extern matrix  g_mWorld;
-extern matrix  g_View;
-extern matrix  g_Proj;
-extern matrix  g_mWorldInv;
-shared matrix  g_ViewProj;
+matrix		g_World;
+matrix		g_View;
+matrix		g_Proj;
+matrix		g_ViewProj;
+matrix		g_mWorldInv;
 
-texture  	g_mTexture;
+
+texture		g_Texture;
 
 float4 lightDiffuse = float4( 1.0f, 1.0f, 1.0f, 1.0f );
 float4 lightAmbient = float4( 1.0f,1.0f, 1.0f, 1.0f ); 
@@ -17,7 +18,7 @@ float4 materialSpecular = float4( 1.0f,1.0f, 1.0f, 1.0f );
 sampler2D g_sampleTexture =
 sampler_state
 {
-    Texture = <g_mTexture>;
+	Texture = <g_Texture>;
     MinFilter = Linear;
     MagFilter = Linear;
     MipFilter = Linear;
@@ -38,6 +39,7 @@ OutputVS VShader(float4 posL       : POSITION0,
 	
 	//最终输出的顶点位置（经过世界、观察、投影矩阵变换）
     // Transform to homogeneous clip space.
+	//matrix matWVP = mul(g_ViewProj, g_World);
 	outVS.posH = mul(posL, g_ViewProj);
 
     // Pass on texture coordinates to be interpolated

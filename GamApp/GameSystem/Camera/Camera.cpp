@@ -1,22 +1,19 @@
 #include "Camera.h"
 #include "D3D9Device.h"
+#include "Camera/CameraParam.h"
 
 Camera::Camera(void)
 {
-	using namespace ns_camera;
-
 	D3DXMatrixIdentity(&mView);
 	D3DXMatrixIdentity(&mProj);
 	D3DXMatrixIdentity(&mWorld);
 
-	mPosW = posW;
-	mRightW = rightW;
-	mUpW = upW;
-	mLookAtW = lookAtW;
+	mPosW = CameraParam::posW;
+	mRightW = CameraParam::rightW;
+	mUpW = CameraParam::upW;
+	mLookAtW = CameraParam::lookAtW;
 
-	mFOV = FOV;
-
-	using namespace std;
+	mFOV = CameraParam::FOV;
 }
 Camera::~Camera(void)
 {

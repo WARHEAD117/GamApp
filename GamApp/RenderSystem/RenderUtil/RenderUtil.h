@@ -2,6 +2,8 @@
 #include "CommonUtil/GlobalHeader.h"
 #include "CommonUtil/D3D9Header.h"
 
+class Entity;
+
 struct SubMesh
 {
 	DWORD subMeshId;
@@ -31,6 +33,8 @@ public:
 
 	void	SetEffectList(const std::vector<LPD3DXEFFECT>& effectList);
 	void	SetEffect(int subMeshIndex, LPD3DXEFFECT effect);
+
+	void	SetOwner(Entity* owner);
 private:
 	LPDIRECT3DVERTEXBUFFER9		mVertexBuffer;
 	LPDIRECT3DINDEXBUFFER9		mIndexBuffer;
@@ -40,7 +44,9 @@ private:
 	std::vector<LPD3DXEFFECT>	mEffectList;
 
 	D3DXMATRIX					mViewProj;
+	D3DXMATRIX					mWorldMat;
 
+	Entity*						mOwner;
 private:
 	void	BuildEffectInfo();
 };

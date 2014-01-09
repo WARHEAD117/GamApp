@@ -3,6 +3,7 @@
 #include "RenderSystem\D3D9Device.h"
 #include "RenderPipeLine\RenderPipe.h"
 
+#include "Camera\CameraParam.h"
 #include "EntityFeature\Entity.h"
 
 MainGame::MainGame()
@@ -39,8 +40,10 @@ void MainGame::GameLoad()
 	g_DrawSkyBox->SetTexture("Res\\SkyBox\\front.jpg", 5);
 	g_DrawSkyBox->SetTexture("Res\\SkyBox\\back.jpg", 4);
 
-	testEntity.SetMeshFileName("Res\\Mesh\\car\\car25.X");
+	testEntity.SetMeshFileName("Res\\Mesh\\tree3\\tree3.X");
 	testEntity.BuildRenderUtil();
+
+	m_EntityManager.AddEntity(testEntity);
 	//===================================================================================================
 }
 
@@ -69,7 +72,7 @@ void MainGame::OnFrame()
 {
 	m_EntityManager.OnFrame();
 
-	mCamera.OnFrame(ns_camera::posW, ns_camera::lookAtW, ns_camera::rightW, ns_camera::upW);
+	mCamera.OnFrame(CameraParam::posW, CameraParam::lookAtW, CameraParam::rightW, CameraParam::upW);
 }
 
 void MainGame::Render()
@@ -82,14 +85,8 @@ void MainGame::Render()
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_LIGHTING, FALSE);
 
 	//g_DrawSkyBox->Render(D3DXVECTOR3(0, 0, 1));
- 	
 
-	testEntity.AssignRenderUtil();
 	RENDERPIPE::Instance().RenderAll();
-
-// 	mesh->DrawSubset(0);
-// 
-// 	testUtil.Render();
 }
 	
 void MainGame::OnEndFrame()

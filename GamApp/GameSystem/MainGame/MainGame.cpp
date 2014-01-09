@@ -6,6 +6,8 @@
 #include "Camera\CameraParam.h"
 #include "EntityFeature\Entity.h"
 
+#include "CommonUtil/Input/Input.h"
+
 MainGame::MainGame()
 {
 }
@@ -72,7 +74,37 @@ void MainGame::OnFrame()
 {
 	m_EntityManager.OnFrame();
 
-	mainCamera.OnFrame(CameraParam::posW, CameraParam::lookAtW, CameraParam::rightW, CameraParam::upW);
+	D3DXVECTOR3 pos = mainCamera.GetPos();
+	if (KEYDOWN('W'))
+	{
+		pos = pos + D3DXVECTOR3(-1, 0, 0) * CameraParam::speed*0.001;
+	}
+
+	if (KEYDOWN('S'))
+	{
+		pos = pos + D3DXVECTOR3(1, 0, 0) * CameraParam::speed*0.001;
+	}
+
+	if (KEYDOWN('A'))
+	{
+		pos = pos + D3DXVECTOR3(0, 0, -1) * CameraParam::speed*0.001;
+	}
+
+	if (KEYDOWN('D'))
+	{
+		pos = pos + D3DXVECTOR3(0, 0, 1) * CameraParam::speed*0.001;
+	}
+	if (KEYDOWN('Q'))
+	{
+		pos = pos + D3DXVECTOR3(0, 1, 0) * CameraParam::speed*0.001;
+	}
+
+	if (KEYDOWN('E'))
+	{
+		pos = pos + D3DXVECTOR3(0, -1, 0) * CameraParam::speed*0.001;
+	}
+	D3DXVECTOR3 lookAt = D3DXVECTOR3(-1, 0, 0) + pos;
+	mainCamera.OnFrame(pos, lookAt, CameraParam::rightW, CameraParam::upW);
 }
 
 void MainGame::Render()

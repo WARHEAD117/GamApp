@@ -8,6 +8,7 @@
 
 #include "CommonUtil/Input/Input.h"
 
+#include "iostream"
 MainGame::MainGame()
 {
 }
@@ -54,7 +55,6 @@ void MainGame::GameLoop()
 	GLOBALTIMER::Instance().StartFrame();
 	Run();
 	GLOBALTIMER::Instance().EndFrame();
-
 }
 
 void MainGame::Run()
@@ -74,37 +74,44 @@ void MainGame::OnFrame()
 {
 	m_EntityManager.OnFrame();
 
-	D3DXVECTOR3 pos = mainCamera.GetPos();
+	double dTime = GLOBALTIMER::Instance().GetFrameTime();
+	
+	D3DXMATRIX cW = mainCamera.GetWorldTransform();
+	D3DXMATRIX moveMat;
+	
+	D3DXVECTOR3 move(0, 0, 0);
 	if (KEYDOWN('W'))
 	{
-		pos = pos + D3DXVECTOR3(-1, 0, 0) * CameraParam::speed*0.001;
+		move = D3DXVECTOR3(-1, 0, 0) * CameraParam::speed*dTime;
 	}
 
 	if (KEYDOWN('S'))
 	{
-		pos = pos + D3DXVECTOR3(1, 0, 0) * CameraParam::speed*0.001;
+		move = D3DXVECTOR3(1, 0, 0) * CameraParam::speed*dTime;
 	}
 
 	if (KEYDOWN('A'))
 	{
-		pos = pos + D3DXVECTOR3(0, 0, -1) * CameraParam::speed*0.001;
+		move = D3DXVECTOR3(0, 0, -1) * CameraParam::speed*dTime;
 	}
 
 	if (KEYDOWN('D'))
 	{
-		pos = pos + D3DXVECTOR3(0, 0, 1) * CameraParam::speed*0.001;
+		move = D3DXVECTOR3(0, 0, 1) * CameraParam::speed*dTime;
 	}
 	if (KEYDOWN('Q'))
 	{
-		pos = pos + D3DXVECTOR3(0, 1, 0) * CameraParam::speed*0.001;
+		move = D3DXVECTOR3(0, 1, 0) * CameraParam::speed*dTime;
 	}
 
 	if (KEYDOWN('E'))
 	{
-		pos = pos + D3DXVECTOR3(0, -1, 0) * CameraParam::speed*0.001;
+		move = D3DXVECTOR3(0, -1, 0) * CameraParam::speed*dTime;
 	}
-	D3DXVECTOR3 lookAt = D3DXVECTOR3(-1, 0, 0) + pos;
-	mainCamera.OnFrame(pos, lookAt, CameraParam::rightW, CameraParam::upW);
+	D3DXMatrixTranslation(&moveMat, move.x, move.y, move.z);
+	cW = cW * moveMat;
+	mainCamera.SetWorldTransform(cW);
+	mainCamera.OnFrame();
 }
 
 void MainGame::Render()

@@ -46,6 +46,9 @@
     <Filter Include="GameSystem\CommonUtil\EffectLoader">
       <UniqueIdentifier>{273db008-eeae-43f7-a191-0fd767177315}</UniqueIdentifier>
     </Filter>
+    <Filter Include="GaneScene">
+      <UniqueIdentifier>{7f86a179-0873-4d7c-8d8d-b44890e9325c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DrawSkyBox.h" />

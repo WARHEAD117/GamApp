@@ -8,7 +8,10 @@ public:
 	~Camera();
 
 	void Init(); //初始化
-	void OnFrame(D3DXVECTOR3 pos, D3DXVECTOR3 lookAt, D3DXVECTOR3  right, D3DXVECTOR3 up);
+	void		SetWorldTransform(D3DXMATRIX matrix);
+	D3DXMATRIX	GetWorldTransform();
+
+	void OnFrame();
 
 	void BuildViewMtx();
 	void BuildProjMtx();
@@ -29,6 +32,8 @@ public:
 	D3DXMATRIX mWorld;  //世界矩阵
 
 private:
+	D3DXMATRIX	mWorldTransform;
+
 	D3DXVECTOR3 mPosW;
 	D3DXVECTOR3 mRightW;
 	D3DXVECTOR3 mUpW;

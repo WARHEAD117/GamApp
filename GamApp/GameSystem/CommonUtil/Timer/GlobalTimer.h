@@ -19,6 +19,7 @@ protected:
 	LARGE_INTEGER mFrequencyStart;
 	LARGE_INTEGER mFrequencyEnd;
 public:
+	//All unit is second(s)
 	void StartGameTimer();
 	void ResetGameTimer();
 	double GetCurGameTime();

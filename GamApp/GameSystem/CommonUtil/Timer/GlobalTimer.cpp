@@ -27,7 +27,7 @@ double GlobalTimer::GetCurGameTime()
 	LARGE_INTEGER curTime;
 	QueryPerformanceCounter(&curTime);
 
-	return (double)((curTime.QuadPart - mGameStartTime.QuadPart) * 1000 / mPerformanceFrequency.QuadPart);
+	return (double)((curTime.QuadPart - mGameStartTime.QuadPart) * 1000.0 / mPerformanceFrequency.QuadPart) / 1000.0;
 }
 
 void GlobalTimer::StartFrame()
@@ -38,7 +38,7 @@ void GlobalTimer::StartFrame()
 void GlobalTimer::EndFrame()
 {
 	QueryPerformanceCounter(&mFrameEndTime);
-	mLastFrameDurTime = (double)((mFrameEndTime.QuadPart - mGameStartTime.QuadPart) * 1000 / mPerformanceFrequency.QuadPart);
+	mLastFrameDurTime = (double)((mFrameEndTime.QuadPart - mFrameStartTime.QuadPart) * 1000.0 / mPerformanceFrequency.QuadPart) / 1000.0;
 }
 
 double GlobalTimer::GetFrameTime()

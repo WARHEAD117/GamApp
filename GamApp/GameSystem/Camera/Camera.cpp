@@ -7,6 +7,7 @@ Camera::Camera(void)
 	D3DXMatrixIdentity(&mView);
 	D3DXMatrixIdentity(&mProj);
 	D3DXMatrixIdentity(&mWorld);
+	D3DXMatrixIdentity(&mWorldTransform);
 
 	mPosW = CameraParam::posW;
 	mRightW = CameraParam::rightW;
@@ -27,16 +28,9 @@ void Camera::Init()
 	BuildProjMtx();
 }
 
-void Camera::OnFrame(D3DXVECTOR3 pos, D3DXVECTOR3 lookAt, D3DXVECTOR3  right, D3DXVECTOR3 up)
+void Camera::OnFrame()
 {
-	mPosW = pos;
-
-	mLookAtW = lookAt;
-
-	mRightW = right;
-	mUpW = up;
-
-	BuildViewMtx();
+	RENDERDEVICE::Instance().ViewMatrix = mView * mWorldTransform;
 }
 
 void Camera::BuildViewMtx()
@@ -96,4 +90,14 @@ void Camera::BuildProjMtx()
 	D3DXMatrixPerspectiveFovLH(&mProj, mFOV, w / h, 1.0f, 5000.0f);
 
 	RENDERDEVICE::Instance().ProjMatrix = mProj;
+}
+
+void Camera::SetWorldTransform(D3DXMATRIX matrix)
+{
+	mWorldTransform = matrix;
+}
+
+D3DXMATRIX Camera::GetWorldTransform()
+{
+	return mWorldTransform;
 }

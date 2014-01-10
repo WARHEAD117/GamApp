@@ -63,3 +63,8 @@ void Entity::SetEffectFileName(int subMeshIndex, std::string fileName)
 	mEffectLoader.LoadFxEffect(fileName);
 	mRenderUtil.SetEffect(subMeshIndex, mEffectLoader.GetEffect());
 }
+
+void Entity::SetWorldTransform(D3DXMATRIX matrix)
+{
+	mWorldTramsform = matrix;
+}

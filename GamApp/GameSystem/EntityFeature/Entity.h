@@ -18,6 +18,7 @@ public:
 	unsigned int GetIndex();
 
 	D3DXMATRIX	GetWorldTransform();
+	void		SetWorldTransform(D3DXMATRIX matrix);
 public:
 	void OnBeginFrame();
 	void OnFrame();

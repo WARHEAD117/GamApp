@@ -14,6 +14,8 @@ public:
 
 	void AddLight(BaseLight* const light);
 	void OnFrame();
+
+	BaseLight* GetLight(int lightIndex);
 };
 
 typedef CSingleton<LightManager> LIGHTMANAGER;

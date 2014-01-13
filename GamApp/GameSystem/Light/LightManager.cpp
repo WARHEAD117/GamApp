@@ -22,3 +22,8 @@ void LightManager::OnFrame()
 		mLightList[i]->OnFrame();
 	}
 }
+
+BaseLight* LightManager::GetLight(int lightIndex)
+{
+	return mLightList[0];
+}

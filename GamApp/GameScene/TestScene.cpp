@@ -60,22 +60,22 @@ void TestScene::OnBeginFrame()
 	D3DXVECTOR3 move(0, 0, 0);
 	if (KEYDOWN('W'))
 	{
-		move = D3DXVECTOR3(-1, 0, 0) * CameraParam::speed*(float)dTime;
+		move = D3DXVECTOR3(0, 0, -1) * CameraParam::speed*(float)dTime;
 	}
 
 	if (KEYDOWN('S'))
 	{
-		move = D3DXVECTOR3(1, 0, 0) * CameraParam::speed*(float)dTime;
+		move = D3DXVECTOR3(0, 0, 1) * CameraParam::speed*(float)dTime;
 	}
 
 	if (KEYDOWN('A'))
 	{
-		move = D3DXVECTOR3(0, 0, -1) * CameraParam::speed*(float)dTime;
+		move = D3DXVECTOR3(1, 0, 0) * CameraParam::speed*(float)dTime;
 	}
 
 	if (KEYDOWN('D'))
 	{
-		move = D3DXVECTOR3(0, 0, 1) * CameraParam::speed*(float)dTime;
+		move = D3DXVECTOR3(-1, 0, 0) * CameraParam::speed*(float)dTime;
 	}
 	if (KEYDOWN('Q'))
 	{

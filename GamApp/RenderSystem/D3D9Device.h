@@ -20,6 +20,7 @@ public:
 
 	D3DXMATRIX								ViewMatrix;
 	D3DXMATRIX								ProjMatrix;
+	D3DXVECTOR3								ViewPosition;
 };
 
 typedef CSingleton<D3D9Device> RENDERDEVICE;

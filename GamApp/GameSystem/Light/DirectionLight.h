@@ -10,6 +10,8 @@ public:
 
 	void OnFrame();
 
+	D3DXVECTOR3 GetLightDir();
+
 	D3DXVECTOR3 mPosition;
 	D3DXVECTOR3 mLightDir;
 

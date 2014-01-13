@@ -4,6 +4,8 @@ matrix		g_Proj;
 matrix		g_ViewProj;
 matrix		g_mWorldInv;
 
+float4		g_LightDir;
+float4		g_ViewPos;
 
 texture		g_Texture;
 
@@ -58,7 +60,7 @@ float4 PShader(float4 posH        : POSITION0,
 	float4 Texture = tex2D(g_sampleTexture, TexCoord);
 	
 	//混合光照和纹理
-	float4 finalColor = Texture;
+	float4 finalColor = g_ViewPos;
 	//输出颜色
 	return finalColor;
 }

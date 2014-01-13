@@ -37,7 +37,7 @@ public:
 	void	SetOwner(Entity* owner);
 
 private:
-	void	SetlightInfo();
+	void	SetlightInfo(LPD3DXEFFECT effect);
 private:
 	LPDIRECT3DVERTEXBUFFER9		mVertexBuffer;
 	LPDIRECT3DINDEXBUFFER9		mIndexBuffer;

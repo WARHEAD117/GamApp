@@ -7,3 +7,6 @@
 #define  VIEWPROJMATRIX		"g_ViewProj"
 
 #define	 DIFFUSETEXTURE		"g_Texture"
+
+#define	 LIGHTDIRECTION		"g_LightDir"
+#define  VIEWPOSITION		"g_ViewPos"

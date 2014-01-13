@@ -18,3 +18,8 @@ void DirectionLight::OnFrame()
 	D3DXVec3Transform(&tempVec4, &defaultDir, &mWorldTransform);
 	mLightDir = D3DXVECTOR3(tempVec4.x, tempVec4.y, tempVec4.z);
 }
+
+D3DXVECTOR3 DirectionLight::GetLightDir()
+{
+	return mLightDir;
+}

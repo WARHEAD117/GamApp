@@ -2,6 +2,7 @@
 #include "D3D9Device.h"
 #include "EntityFeature/Entity.h"
 #include "Light/LightManager.h"
+#include "Light/DirectionLight.h"
 
 #include "EffectParam.h"
 
@@ -21,13 +22,18 @@ void RenderUtil::BuildEffectInfo()
 	mViewProj = view * proj;
 
 	mWorldMat = mOwner->GetWorldTransform();
-
-	SetlightInfo();
 }
 
-void RenderUtil::SetlightInfo()
+void RenderUtil::SetlightInfo(LPD3DXEFFECT effect)
 {
 // 	LIGHTMANAGER::Instance().
+	BaseLight* pLight = LIGHTMANAGER::Instance().GetLight(0);
+	DirectionLight* pDirLight = dynamic_cast<DirectionLight*>(pLight);
+	D3DXVECTOR3 lightDir = pDirLight->GetLightDir();
+
+	D3DXVECTOR3 viewPos = RENDERDEVICE::Instance().ViewPosition;
+	effect->SetVector(LIGHTDIRECTION, &D3DXVECTOR4(lightDir.x, lightDir.y, lightDir.z, 1.0));
+	effect->SetVector(VIEWPOSITION, &D3DXVECTOR4(viewPos.x, viewPos.y, viewPos.z, 1.0));
 }
 
 void RenderUtil::Render()
@@ -57,6 +63,8 @@ void RenderUtil::Render()
 		{
 			mEffectList[i]->SetTexture(DIFFUSETEXTURE, NULL);
 		}
+
+		SetlightInfo(mEffectList[i]);
 
 		mEffectList[i]->CommitChanges();
 

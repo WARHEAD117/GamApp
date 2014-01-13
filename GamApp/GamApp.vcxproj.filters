@@ -49,6 +49,9 @@
     <Filter Include="GaneScene">
       <UniqueIdentifier>{7f86a179-0873-4d7c-8d8d-b44890e9325c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="GaneScene\BaseScene">
+      <UniqueIdentifier>{cd95ccbe-e475-4cb8-bb4e-edb0a9b6f989}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DrawSkyBox.h" />
@@ -112,6 +115,15 @@
     <ClInclude Include="GameSystem\Camera\CameraParam.h">
       <Filter>GameSystem\Camera</Filter>
     </ClInclude>
+    <ClInclude Include="GameScene\BaseScene\BaseScene.h">
+      <Filter>GaneScene\BaseScene</Filter>
+    </ClInclude>
+    <ClInclude Include="GameScene\BaseScene\SceneManager.h">
+      <Filter>GaneScene\BaseScene</Filter>
+    </ClInclude>
+    <ClInclude Include="GameScene\TestScene.h">
+      <Filter>GaneScene</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DrawSkyBox.cpp" />
@@ -162,6 +174,15 @@
     </ClCompile>
     <ClCompile Include="GameSystem\CommonUtil\EffectLoader\EffectLoader.cpp">
       <Filter>GameSystem\CommonUtil\EffectLoader</Filter>
+    </ClCompile>
+    <ClCompile Include="GameScene\BaseScene\BaseScene.cpp">
+      <Filter>GaneScene\BaseScene</Filter>
+    </ClCompile>
+    <ClCompile Include="GameScene\BaseScene\SceneManager.cpp">
+      <Filter>GaneScene\BaseScene</Filter>
+    </ClCompile>
+    <ClCompile Include="GameScene\TestScene.cpp">
+      <Filter>GaneScene</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

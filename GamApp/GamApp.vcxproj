@@ -74,6 +74,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="DrawSkyBox.h" />
+    <ClInclude Include="GameScene\BaseScene\BaseScene.h" />
+    <ClInclude Include="GameScene\BaseScene\SceneManager.h" />
+    <ClInclude Include="GameScene\TestScene.h" />
     <ClInclude Include="GameSystem\Camera\Camera.h" />
     <ClInclude Include="GameSystem\Camera\CameraParam.h" />
     <ClInclude Include="GameSystem\CommonUtil\BoundingVolume\BoundingBox.h" />
@@ -97,6 +100,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DrawSkyBox.cpp" />
+    <ClCompile Include="GameScene\BaseScene\BaseScene.cpp" />
+    <ClCompile Include="GameScene\BaseScene\SceneManager.cpp" />
+    <ClCompile Include="GameScene\TestScene.cpp" />
     <ClCompile Include="GameSystem\Camera\Camera.cpp" />
     <ClCompile Include="GameSystem\CommonUtil\BoundingVolume\BoundingBox.cpp" />
     <ClCompile Include="GameSystem\CommonUtil\BoundingVolume\BoundingSphere.cpp" />

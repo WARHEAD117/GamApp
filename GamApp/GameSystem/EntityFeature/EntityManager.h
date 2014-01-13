@@ -21,3 +21,4 @@ private:
 	std::map< unsigned int, Entity > entityMap;
 };
 
+typedef CSingleton<EntityManager> ENTITYMANAGER;

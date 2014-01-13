@@ -1,8 +1,6 @@
 #pragma once
 #include "CommonUtil\GlobalHeader.h"
 #include "EntityFeature\EntityManager.h"
-#include "DrawSkyBox.h"
-#include "Camera\Camera.h"
 
 class MainGame
 {
@@ -22,8 +20,5 @@ private:
 	void Render();
 
 private:
-	EntityManager	m_EntityManager;
-	CDrawSkyBox*	g_DrawSkyBox;
-	Camera			mainCamera;
 };
 

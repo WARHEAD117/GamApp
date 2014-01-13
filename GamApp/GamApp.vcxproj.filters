@@ -52,6 +52,12 @@
     <Filter Include="GaneScene\BaseScene">
       <UniqueIdentifier>{cd95ccbe-e475-4cb8-bb4e-edb0a9b6f989}</UniqueIdentifier>
     </Filter>
+    <Filter Include="GameSystem\Light">
+      <UniqueIdentifier>{5377fa5d-c848-457b-ae32-dd7c95997279}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameSystem\Transform">
+      <UniqueIdentifier>{d6b0aa79-75a8-4d1d-9f07-e038141ccc31}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DrawSkyBox.h" />
@@ -124,6 +130,12 @@
     <ClInclude Include="GameScene\TestScene.h">
       <Filter>GaneScene</Filter>
     </ClInclude>
+    <ClInclude Include="GameSystem\Light\DirectionLight.h">
+      <Filter>GameSystem\Light</Filter>
+    </ClInclude>
+    <ClInclude Include="GameSystem\Transform\Transform.h">
+      <Filter>GameSystem\Transform</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DrawSkyBox.cpp" />
@@ -183,6 +195,12 @@
     </ClCompile>
     <ClCompile Include="GameScene\TestScene.cpp">
       <Filter>GaneScene</Filter>
+    </ClCompile>
+    <ClCompile Include="GameSystem\Light\DirectionLight.cpp">
+      <Filter>GameSystem\Light</Filter>
+    </ClCompile>
+    <ClCompile Include="GameSystem\Transform\Transform.cpp">
+      <Filter>GameSystem\Transform</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

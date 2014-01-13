@@ -92,7 +92,9 @@
     <ClInclude Include="GameSystem\CommonUtil\Timer\GlobalTimer.h" />
     <ClInclude Include="GameSystem\EntityFeature\Entity.h" />
     <ClInclude Include="GameSystem\EntityFeature\EntityManager.h" />
+    <ClInclude Include="GameSystem\Light\DirectionLight.h" />
     <ClInclude Include="GameSystem\MainGame\MainGame.h" />
+    <ClInclude Include="GameSystem\Transform\Transform.h" />
     <ClInclude Include="RenderSystem\D3D9Device.h" />
     <ClInclude Include="RenderSystem\RenderPipeLine\RenderPipe.h" />
     <ClInclude Include="RenderSystem\RenderUtil\EffectParam.h" />
@@ -114,8 +116,10 @@
     <ClCompile Include="GameSystem\CommonUtil\Timer\GlobalTimer.cpp" />
     <ClCompile Include="GameSystem\EntityFeature\Entity.cpp" />
     <ClCompile Include="GameSystem\EntityFeature\EntityManager.cpp" />
+    <ClCompile Include="GameSystem\Light\DirectionLight.cpp" />
     <ClCompile Include="GameSystem\MainGame\MainGame.cpp" />
     <ClCompile Include="GameSystem\MainWindow.cpp" />
+    <ClCompile Include="GameSystem\Transform\Transform.cpp" />
     <ClCompile Include="RenderSystem\D3D9Device.cpp" />
     <ClCompile Include="RenderSystem\RenderPipeLine\RenderPipe.cpp" />
     <ClCompile Include="RenderSystem\RenderUtil\RenderUtil.cpp" />

@@ -20,6 +20,7 @@ Entity testEntity;
 
 void TestScene::OnLoad()
 {
+	//
 	//Just for test---------------------------------------------------------------------------------
 	//--初始化天空盒及其贴图
 	g_DrawSkyBox = new CDrawSkyBox(RENDERDEVICE::Instance().g_pD3DDevice);

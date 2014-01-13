@@ -3,9 +3,11 @@
 
 Transform::Transform()
 {
+	D3DXMatrixIdentity(&mWorldTransform);
 }
 
 
 Transform::~Transform()
 {
 }
+

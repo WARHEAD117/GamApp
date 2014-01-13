@@ -5,7 +5,7 @@ unsigned int Entity::baseFastIndex = 0;
 Entity::Entity() :
 	fastIndex(++baseFastIndex)
 {
-	D3DXMatrixIdentity(&mWorldTramsform);
+	D3DXMatrixIdentity(&mWorldTransform);
 	mRenderUtil.SetOwner(this);
 }
 
@@ -62,9 +62,4 @@ void Entity::SetEffectFileName(int subMeshIndex, std::string fileName)
 {
 	mEffectLoader.LoadFxEffect(fileName);
 	mRenderUtil.SetEffect(subMeshIndex, mEffectLoader.GetEffect());
-}
-
-void Entity::SetWorldTransform(D3DXMATRIX matrix)
-{
-	mWorldTramsform = matrix;
 }

@@ -5,7 +5,10 @@
 #include "CommonUtil\EffectLoader\EffectLoader.h"
 #include "RenderUtil\RenderUtil.h"
 
-class Entity
+#include "Transform/Transform.h"
+
+class Entity :
+	public Transform
 {
 public:
 	Entity();
@@ -17,8 +20,6 @@ private:
 public:
 	unsigned int GetIndex();
 
-	D3DXMATRIX	GetWorldTransform();
-	void		SetWorldTransform(D3DXMATRIX matrix);
 public:
 	void OnBeginFrame();
 	void OnFrame();
@@ -34,17 +35,6 @@ private:
 	RenderUtil		mRenderUtil;
 	MeshLoader		mMeshLoader;
 	EffectLoader	mEffectLoader;
-
-	D3DXMATRIX	mLocalTransform;
-	D3DXMATRIX	mWorldTramsform;
-
-	D3DXVECTOR3	mLocalTranslate;
-	D3DXVECTOR3	mLocalScale;
-	D3DXVECTOR3	mLocalRotation;
-
-	D3DXVECTOR3	mWorldTranslate;
-	D3DXVECTOR3	mWorldScale;
-	D3DXVECTOR3	mWorldRotation;
 };
 
 inline unsigned int Entity::GetIndex()
@@ -52,10 +42,7 @@ inline unsigned int Entity::GetIndex()
 	return fastIndex;
 }
 
-inline D3DXMATRIX Entity::GetWorldTransform()
-{
-	return mWorldTramsform;
-}
+
 
 
 

@@ -6,6 +6,7 @@
 #include "EntityFeature\Entity.h"
 
 #include "GameScene/BaseScene/SceneManager.h"
+#include "Light/LightManager.h"
 
 #include "GameScene/TestScene.h"
 
@@ -53,6 +54,8 @@ void MainGame::OnFrame()
 {
 	SCENEMANAGER::Instance().OnFrame();
 	ENTITYMANAGER::Instance().OnFrame();
+
+	LIGHTMANAGER::Instance().OnFrame();
 }
 
 void MainGame::Render()

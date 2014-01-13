@@ -1,6 +1,7 @@
 #include "RenderUtil.h"
 #include "D3D9Device.h"
 #include "EntityFeature/Entity.h"
+#include "Light/LightManager.h"
 
 #include "EffectParam.h"
 
@@ -20,6 +21,13 @@ void RenderUtil::BuildEffectInfo()
 	mViewProj = view * proj;
 
 	mWorldMat = mOwner->GetWorldTransform();
+
+	SetlightInfo();
+}
+
+void RenderUtil::SetlightInfo()
+{
+// 	LIGHTMANAGER::Instance().
 }
 
 void RenderUtil::Render()

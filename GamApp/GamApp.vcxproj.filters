@@ -136,6 +136,12 @@
     <ClInclude Include="GameSystem\Transform\Transform.h">
       <Filter>GameSystem\Transform</Filter>
     </ClInclude>
+    <ClInclude Include="GameSystem\Light\LightManager.h">
+      <Filter>GameSystem\Light</Filter>
+    </ClInclude>
+    <ClInclude Include="GameSystem\Light\BaseLight.h">
+      <Filter>GameSystem\Light</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DrawSkyBox.cpp" />
@@ -201,6 +207,12 @@
     </ClCompile>
     <ClCompile Include="GameSystem\Transform\Transform.cpp">
       <Filter>GameSystem\Transform</Filter>
+    </ClCompile>
+    <ClCompile Include="GameSystem\Light\LightManager.cpp">
+      <Filter>GameSystem\Light</Filter>
+    </ClCompile>
+    <ClCompile Include="GameSystem\Light\BaseLight.cpp">
+      <Filter>GameSystem\Light</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

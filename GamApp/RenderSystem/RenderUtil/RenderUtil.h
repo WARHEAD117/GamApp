@@ -35,6 +35,9 @@ public:
 	void	SetEffect(int subMeshIndex, LPD3DXEFFECT effect);
 
 	void	SetOwner(Entity* owner);
+
+private:
+	void	SetlightInfo();
 private:
 	LPDIRECT3DVERTEXBUFFER9		mVertexBuffer;
 	LPDIRECT3DINDEXBUFFER9		mIndexBuffer;

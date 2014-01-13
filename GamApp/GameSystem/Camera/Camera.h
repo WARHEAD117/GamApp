@@ -1,15 +1,16 @@
 #pragma once
 #include "CommonUtil\\D3D9Header.h"
 
-class Camera
+#include "Transform/Transform.h"
+
+class Camera : 
+	public Transform
 {
 public:
 	Camera();
 	~Camera();
 
 	void Init(); //初始化
-	void		SetWorldTransform(D3DXMATRIX matrix);
-	D3DXMATRIX	GetWorldTransform();
 
 	void OnFrame();
 
@@ -32,7 +33,6 @@ public:
 	D3DXMATRIX mWorld;  //世界矩阵
 
 private:
-	D3DXMATRIX	mWorldTransform;
 
 	D3DXVECTOR3 mPosW;
 	D3DXVECTOR3 mRightW;

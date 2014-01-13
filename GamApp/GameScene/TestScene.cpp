@@ -4,6 +4,9 @@
 #include "Camera\CameraParam.h"
 #include "CommonUtil/Input/Input.h"
 
+#include "Light/DirectionLight.h"
+#include "Light/LightManager.h"
+
 TestScene::TestScene()
 {
 }
@@ -17,6 +20,7 @@ TestScene::~TestScene()
 
 
 Entity testEntity;
+DirectionLight dirLight;
 
 void TestScene::OnLoad()
 {
@@ -43,6 +47,7 @@ void TestScene::OnLoad()
 	testEntity.BuildRenderUtil();
 
 	ENTITYMANAGER::Instance().AddEntity(testEntity);
+	LIGHTMANAGER::Instance().AddLight(&dirLight);
 }
 
 void TestScene::OnBeginFrame()
@@ -84,12 +89,12 @@ void TestScene::OnBeginFrame()
 	D3DXMatrixTranslation(&moveMat, move.x, move.y, move.z);
 	cW = cW * moveMat;
 	mainCamera.SetWorldTransform(cW);
-	mainCamera.OnFrame();
+	
 }
 
 void TestScene::OnFrame()
 {
-
+	mainCamera.OnFrame();
 }
 
 void TestScene::OnEndFrame()

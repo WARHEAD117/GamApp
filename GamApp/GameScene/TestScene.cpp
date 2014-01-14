@@ -43,6 +43,7 @@ void TestScene::OnLoad()
 	mainCamera.Init();
 
 	//Create Entity
+	//testEntity.SetMeshFileName("Res\\Mesh\\car\\car25.X");
 	testEntity.SetMeshFileName("Res\\Mesh\\tree3\\tree3.X");
 	testEntity.BuildRenderUtil();
 
@@ -50,42 +51,54 @@ void TestScene::OnLoad()
 	LIGHTMANAGER::Instance().AddLight(&dirLight);
 }
 
-void TestScene::OnBeginFrame()
+void ComputeMove(D3DXVECTOR3& move)
 {
 	double dTime = GLOBALTIMER::Instance().GetFrameTime();
+	
+	float speed = CameraParam::speed;
+	if (KEYDOWN(VK_SHIFT))
+	{
+		speed *= 5;
+	}
 
-	D3DXMATRIX cW = mainCamera.GetWorldTransform();
-	D3DXMATRIX moveMat;
-
-	D3DXVECTOR3 move(0, 0, 0);
 	if (KEYDOWN('W'))
 	{
-		move = D3DXVECTOR3(0, 0, -1) * CameraParam::speed*(float)dTime;
+		move = D3DXVECTOR3(-1, 0, 0) * speed*(float)dTime;
 	}
 
 	if (KEYDOWN('S'))
 	{
-		move = D3DXVECTOR3(0, 0, 1) * CameraParam::speed*(float)dTime;
+		move = D3DXVECTOR3(1, 0, 0) * speed*(float)dTime;
 	}
 
 	if (KEYDOWN('A'))
 	{
-		move = D3DXVECTOR3(1, 0, 0) * CameraParam::speed*(float)dTime;
+		move = D3DXVECTOR3(0, 0, -1) * speed*(float)dTime;
 	}
 
 	if (KEYDOWN('D'))
 	{
-		move = D3DXVECTOR3(-1, 0, 0) * CameraParam::speed*(float)dTime;
+		move = D3DXVECTOR3(0, 0, 1) * speed*(float)dTime;
 	}
 	if (KEYDOWN('Q'))
 	{
-		move = D3DXVECTOR3(0, 1, 0) * CameraParam::speed*(float)dTime;
+		move = D3DXVECTOR3(0, 1, 0) * speed*(float)dTime;
 	}
 
 	if (KEYDOWN('E'))
 	{
-		move = D3DXVECTOR3(0, -1, 0) * CameraParam::speed*(float)dTime;
+		move = D3DXVECTOR3(0, -1, 0) * speed*(float)dTime;
 	}
+}
+
+void TestScene::OnBeginFrame()
+{
+	D3DXMATRIX cW = mainCamera.GetWorldTransform();
+	D3DXMATRIX moveMat;
+
+	D3DXVECTOR3 move(0, 0, 0);
+	ComputeMove(move);
+
 	D3DXMatrixTranslation(&moveMat, move.x, move.y, move.z);
 	cW = cW * moveMat;
 	mainCamera.SetWorldTransform(cW);

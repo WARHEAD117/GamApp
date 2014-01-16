@@ -2,6 +2,7 @@ matrix		g_World;
 matrix		g_View;
 matrix		g_Proj;
 matrix		g_ViewProj;
+matrix		g_WorldViewProj;
 matrix		g_mWorldInv;
 
 float4		g_LightDir;
@@ -11,10 +12,10 @@ texture		g_Texture;
 
 float4 lightDiffuse = float4(1.0f, 1.0f, 1.0f, 1.0f);
 float4 lightAmbient = float4(1.0f, 1.0f, 1.0f, 1.0f);
-float4 lightSpecular = float4(0.5f, 0.5f, 0.5f, 1.0f);
+float4 lightSpecular = float4(1.0f, 1.0f, 1.0f, 1.0f);
 
 float4 materialAmbient = float4(1.0f, 1.0f, 1.0f, 1.0f);
-float4 materialDiffuse = float4(0.5f, 0.5f, 0.5f, 1.0f);
+float4 materialDiffuse = float4(1.0f, 1.0f, 1.0f, 1.0f);
 float4 materialSpecular = float4(1.0f, 1.0f, 1.0f, 1.0f);
 
 sampler2D g_sampleTexture =
@@ -28,10 +29,10 @@ sampler_state
 
 struct OutputVS
 {
-	float4 posH         : POSITION0;
+	float4 posWVP         : POSITION0;
 	float2 TexCoord		: TEXCOORD0;
-	float2 normal		: NORMAL0;
-	float4 toEyeDir		: TEXCOORD1;
+	float2 normalW		: NORMAL0;
+	float4 toEyeDirW		: TEXCOORD1;
 };
 
 
@@ -42,48 +43,37 @@ OutputVS VShader(float4 posL       : POSITION0,
 	OutputVS outVS = (OutputVS)0;
 
 	//最终输出的顶点位置（经过世界、观察、投影矩阵变换）
-	// Transform to homogeneous clip space.
-	//matrix matWVP = mul(g_ViewProj, g_World);
-	outVS.posH = mul(posL, g_ViewProj);
+	outVS.posWVP = mul(posL, g_WorldViewProj);
+	outVS.normalW = mul(normalL, g_World);
 
-	// Pass on texture coordinates to be interpolated
-	// in rasterization.
 	outVS.TexCoord = TexCoord;
-	outVS.normal = normalL;
-	outVS.toEyeDir = g_LightDir - posL;
+	outVS.toEyeDirW = normalize(g_ViewPos - mul(posL, g_World));
 	return outVS;
 }
 
 
-float4 PShader(float4 posH			:	POSITION0,
-	float2 TexCoord : TEXCOORD0,
-	float3 Normal : NORMAL0,
-	float4 ToEyeDir : TEXCOORD1) : COLOR
+float4 PShader( float4 posWVP			:	POSITION0,
+				float2 TexCoord : TEXCOORD0,
+				float3 NormalW : NORMAL0,
+				float4 ToEyeDirW : TEXCOORD1) : COLOR
 {
-
 	//纹理采样
 	float4 Texture = tex2D(g_sampleTexture, TexCoord);
-
-
 
 	//计算环境光
 	float4 Ambient = lightAmbient * materialAmbient;  //材质可理解为反射系数
 
 	//计算漫反射
-	float DiffuseRatio = dot(g_LightDir, Normal);
+	float DiffuseRatio = dot(-g_LightDir, NormalW);
 	float4 Diffuse = lightDiffuse * (materialDiffuse * DiffuseRatio);
 
-	Normal = normalize(Normal);
-	float4 LightDir = normalize(g_LightDir);
 	//计算镜面反射
-	float4 Reflect = float4(normalize(LightDir.xyz - 2 * DiffuseRatio * Normal), 1.0f);
-	float SpecularRatio = dot(Reflect, ToEyeDir);
+	float4 Reflect = normalize(float4(g_LightDir.xyz - 2 * DiffuseRatio * NormalW, 1.0f));
+	float SpecularRatio = dot(Reflect, ToEyeDirW);
 	float4 Specular = lightSpecular* (materialSpecular * SpecularRatio);
-
-	//Specular = normalize(Specular); 
-	//Diffuse = normalize(Diffuse);
+	Specular = pow(Specular, 10);
 	//混合光照和纹理
-	float4 finalColor = Texture * (Ambient *0.3f + Diffuse);// + Specular;// ;
+	float4 finalColor = Texture*Diffuse + Specular + Ambient*0.1f;
 	//输出颜色
 	return finalColor;
 }

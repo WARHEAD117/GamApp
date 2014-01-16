@@ -1,6 +1,6 @@
 #include "DirectionLight.h"
 
-const D3DXVECTOR3 defaultDir(1.0f, 0.0f, 0.0f);
+const D3DXVECTOR3 defaultDir(-1.0f, 0.0f, 0.0f);
 DirectionLight::DirectionLight()
 {
 	mLightDir = ZEROVECTOR3;
@@ -17,6 +17,7 @@ void DirectionLight::OnFrame()
 	D3DXVECTOR4 tempVec4;
 	D3DXVec3Transform(&tempVec4, &defaultDir, &mWorldTransform);
 	mLightDir = D3DXVECTOR3(tempVec4.x, tempVec4.y, tempVec4.z);
+	D3DXVec3Normalize(&mLightDir, &mLightDir);
 }
 
 D3DXVECTOR3 DirectionLight::GetLightDir()

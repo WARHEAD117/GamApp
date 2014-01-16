@@ -43,8 +43,8 @@ void TestScene::OnLoad()
 	mainCamera.Init();
 
 	//Create Entity
-	//testEntity.SetMeshFileName("Res\\Mesh\\car\\car25.X");
-	testEntity.SetMeshFileName("Res\\Mesh\\tree3\\tree3.X");
+	testEntity.SetMeshFileName("Res\\Mesh\\car\\car25.X");
+	//testEntity.SetMeshFileName("Res\\Mesh\\tree3\\tree3.X");
 	testEntity.BuildRenderUtil();
 
 	ENTITYMANAGER::Instance().AddEntity(testEntity);

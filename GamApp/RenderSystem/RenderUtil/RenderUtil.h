@@ -47,6 +47,7 @@ private:
 	std::vector<LPD3DXEFFECT>	mEffectList;
 
 	D3DXMATRIX					mViewProj;
+	D3DXMATRIX					mWorldViewProj;
 	D3DXMATRIX					mWorldMat;
 
 	Entity*						mOwner;

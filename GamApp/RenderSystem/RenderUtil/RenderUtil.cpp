@@ -17,11 +17,12 @@ RenderUtil::~RenderUtil()
 
 void RenderUtil::BuildEffectInfo()
 {
+	mWorldMat = mOwner->GetWorldTransform();
 	D3DXMATRIX view = RENDERDEVICE::Instance().ViewMatrix;
 	D3DXMATRIX proj = RENDERDEVICE::Instance().ProjMatrix;
 	mViewProj = view * proj;
-
-	mWorldMat = mOwner->GetWorldTransform();
+	mWorldViewProj = mWorldMat * mViewProj;
+	
 }
 
 void RenderUtil::SetlightInfo(LPD3DXEFFECT effect)
@@ -46,6 +47,7 @@ void RenderUtil::Render()
 	RENDERDEVICE::Instance().g_pD3DDevice->SetIndices(mIndexBuffer);
 	for (DWORD i = 0; i < mSubMeshList.size(); i++)
 	{
+		mEffectList[i]->SetMatrix(WORLDVIEWPROJMATRIX, &mWorldViewProj);
 		mEffectList[i]->SetMatrix(VIEWPROJMATRIX, &mViewProj);
 		mEffectList[i]->SetMatrix(WORLDMATRIX, &mWorldMat);
 

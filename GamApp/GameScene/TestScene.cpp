@@ -53,10 +53,10 @@ void TestScene::OnLoad()
 	
 	krisEntity.BuildRenderUtil();
 	shevaEntity.BuildRenderUtil();
-	effectLoader.LoadFxEffect("System\\BankBRDFLight.fx");
+	effectLoader.LoadFxEffect("System\\commonDiffuse.fx");
 	testMat1.effect = effectLoader.GetEffect();
 	krisEntity.SetMaterial(&testMat1);
-	krisEntity.SetEffect("System\\BankBRDFLight.fx");
+
 	ENTITYMANAGER::Instance().AddEntity(krisEntity);
 	ENTITYMANAGER::Instance().AddEntity(shevaEntity);
 
@@ -115,12 +115,20 @@ void TestScene::OnBeginFrame()
 	cW = cW * moveMat;
 	mainCamera.SetWorldTransform(cW);
 	
-	D3DXMatrixRotationY(&moveMat, 180);
-	krisEntity.SetWorldTransform(moveMat);
+	move = D3DXVECTOR3(0, -5, -3);
+	D3DXMatrixTranslation(&moveMat, move.x, move.y, move.z);
+	D3DXMATRIX rotMat;
+	D3DXMatrixRotationY(&rotMat, 180);
+	rotMat *= moveMat;
+	krisEntity.SetWorldTransform(rotMat);
 
-	D3DXVECTOR3 move2(20, 0, 0);
-	D3DXMatrixTranslation(&moveMat, move2.x, move2.y, move2.z);
-	shevaEntity.SetWorldTransform(moveMat);
+	move = D3DXVECTOR3(0, -5, 3);
+	D3DXMatrixTranslation(&moveMat, move.x, move.y, move.z);
+	rotMat;
+	D3DXMatrixIdentity(&rotMat);
+	D3DXMatrixRotationY(&rotMat, 180);
+	rotMat *= moveMat;
+	shevaEntity.SetWorldTransform(rotMat);
 }
 
 void TestScene::OnFrame()

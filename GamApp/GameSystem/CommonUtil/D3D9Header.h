@@ -33,7 +33,7 @@ if (FAILED(hr))                                 \
 
 //=================================================================
 #define ZEROVECTOR3	D3DXVECTOR3(0.0f,0.0f,0.0f)
-
+#define ZEROVECTOR4	D3DXVECTOR4(0.0f,0.0f,0.0f)
 //=================================================================
 struct Material
 {
@@ -44,6 +44,14 @@ struct Material
 	float           Power;          /* Sharpness if specular highlight */
 
 	LPD3DXEFFECT	effect;
+
+	Material()
+	{
+		Diffuse = D3DXVECTOR4(1.0f, 1.0f, 1.0f, 1.0f);
+		Ambient = D3DXVECTOR4(1.0f, 1.0f, 1.0f, 1.0f);
+		Specular = D3DXVECTOR4(1.0f, 1.0f, 1.0f, 1.0f);
+		Emissive = D3DXVECTOR4(1.0f, 1.0f, 1.0f, 1.0f);
+	}
 
 	void operator = (const D3DMATERIAL9& d3dmat)
 	{

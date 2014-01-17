@@ -55,7 +55,7 @@ HRESULT MeshLoader::LoadXMesh(std::string filePath)
 		D3DXMESHOPT_COMPACT | D3DXMESHOPT_ATTRSORT | D3DXMESHOPT_VERTEXCACHE,
 		(DWORD*)adjBuffer->GetBufferPointer(), 0, 0, 0, &m_pMesh);
 	//ReleaseCOM(m_pMesh); // Done w/ system mesh.
-	Release(adjBuffer); // Done with buffer.
+	TRelease(adjBuffer); // Done with buffer.
 
 	D3DXMATERIAL *Material = (D3DXMATERIAL *)pXBuffer->GetBufferPointer();
 	m_Materials.resize(m_dwMtrlNum);

@@ -9,6 +9,7 @@ RenderPipe::RenderPipe()
 
 RenderPipe::~RenderPipe()
 {
+	ClearRenderUtil();
 }
 
 void RenderPipe::RenderAll()

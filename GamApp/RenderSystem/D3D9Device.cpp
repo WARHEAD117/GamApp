@@ -11,10 +11,9 @@ D3D9Device::D3D9Device()
 
 D3D9Device::~D3D9Device()
 {
-	if (g_pD3D)
-		Release(g_pD3D);
-	if (g_pD3D)
-		Release(g_pD3DDevice);
+	SafeRelease(g_pD3D);
+	SafeRelease(g_pD3DDevice);
+	SafeRelease(defaultEffect);
 }
 
 void D3D9Device::InitD3DDevice(HWND hWnd)

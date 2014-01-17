@@ -1,6 +1,6 @@
 #include "DirectionLight.h"
 
-const D3DXVECTOR3 defaultDir(-1.0f, 0.0f, 0.0f);
+const D3DXVECTOR3 defaultDir(-1.0f, -1.0f, -1.0f);
 DirectionLight::DirectionLight()
 {
 	mLightDir = ZEROVECTOR3;

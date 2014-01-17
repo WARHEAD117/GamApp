@@ -129,12 +129,12 @@ void Input::Clearup()
 {
 	if(m_pMouse)
 	{
-		Release(m_pMouse);
+		TRelease(m_pMouse);
 		m_pMouse = NULL;
 	}
 	if(pDI)
 	{
-		Release(pDI);
+		TRelease(pDI);
 		pDI = NULL;
 	}
 	

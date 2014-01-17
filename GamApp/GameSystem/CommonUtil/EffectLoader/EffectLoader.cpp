@@ -9,6 +9,7 @@ EffectLoader::EffectLoader()
 
 EffectLoader::~EffectLoader()
 {
+	TRelease(mEffect);
 }
 
 void EffectLoader::LoadFxEffect(std::string fileName)

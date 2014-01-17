@@ -98,5 +98,8 @@ inline void MeshLoader::GetIndexBuffer(LPDIRECT3DINDEXBUFFER9 &indexBuffer)
 
 inline DWORD MeshLoader::GetVertexFVF()
 {
-	return m_pMesh->GetFVF();
+	if (m_pMesh)
+		return m_pMesh->GetFVF();
+	else
+		return NULL;
 }

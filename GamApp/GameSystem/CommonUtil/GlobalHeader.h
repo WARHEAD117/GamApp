@@ -9,12 +9,12 @@
 #include "Singleton.h"
 
 template<class COM>
-void Release(COM t)
+void TRelease(COM& t)
 {
 	if (t)
 	{
-		t->Release();
-		t = NULL;
+		int count = t->Release();
+		//t = NULL;
 	}
 }
 

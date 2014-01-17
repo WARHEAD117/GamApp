@@ -33,3 +33,23 @@ if (FAILED(hr))                                 \
 
 //=================================================================
 #define ZEROVECTOR3	D3DXVECTOR3(0.0f,0.0f,0.0f)
+
+//=================================================================
+struct Material
+{
+	D3DXVECTOR4   Diffuse;        /* Diffuse color RGBA */
+	D3DXVECTOR4   Ambient;        /* Ambient color RGB */
+	D3DXVECTOR4   Specular;       /* Specular 'shininess' */
+	D3DXVECTOR4   Emissive;       /* Emissive color RGB */
+	float           Power;          /* Sharpness if specular highlight */
+
+	LPD3DXEFFECT	effect;
+
+	void operator = (const D3DMATERIAL9& d3dmat)
+	{
+		Ambient = D3DXVECTOR4(max(d3dmat.Ambient.r, 0), max(d3dmat.Ambient.g, 0), max(d3dmat.Ambient.b, 0), max(d3dmat.Ambient.a, 0));
+		Diffuse = D3DXVECTOR4(max(d3dmat.Diffuse.r, 0), max(d3dmat.Diffuse.g, 0), max(d3dmat.Diffuse.b, 0), max(d3dmat.Diffuse.a, 0));
+		Specular = D3DXVECTOR4(max(d3dmat.Specular.r, 0), max(d3dmat.Specular.g, 0), max(d3dmat.Specular.b, 0), max(d3dmat.Specular.a, 0));
+		Power = d3dmat.Power;
+	}
+};

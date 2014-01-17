@@ -1,6 +1,7 @@
 #include "D3D9Device.h"
 
 static std::string defaultEffectName = "System\\commonDiffuse.fx";
+static std::string defaultTextureName = "System\\white.dds";
 
 D3D9Device::D3D9Device()
 {
@@ -97,5 +98,25 @@ LPD3DXEFFECT D3D9Device::GetDefaultEffect()
 	}
 
 	return defaultEffect;
+}
+
+LPDIRECT3DTEXTURE9 D3D9Device::GetDefaultTexture()
+{
+	if (!defaultTexture)
+	{
+		if (FAILED(D3DXCreateTextureFromFile(g_pD3DDevice, defaultTextureName.c_str(), &defaultTexture)))
+		{
+			MessageBox(GetForegroundWindow(), "Can't find default texture", "Texture", MB_OK);
+			abort();
+		}
+	}
+	
+	return defaultTexture;
+}
+
+Material* D3D9Device::GetDefaultMaterial()
+{
+	defaultMaterial.effect = GetDefaultEffect();
+	return &defaultMaterial;
 }
 

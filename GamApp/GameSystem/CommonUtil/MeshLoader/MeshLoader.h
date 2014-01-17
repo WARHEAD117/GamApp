@@ -41,6 +41,8 @@ public:
 	const std::vector<SubMesh>& GetSubMeshList();
 	DWORD						GetVertexFVF();
 
+	int							GetSubMeshCount();
+
 	void		ComputeBoundingBox();
 	void		ComputeBoundingSphere();
 
@@ -63,6 +65,11 @@ private:
 	BoundingSphereInfo	mBoundingSphereInfo;
 	BoundingBoxInfo		mBoundingBoxInfo;
 };
+
+inline int MeshLoader::GetSubMeshCount()
+{
+	return mSubMeshList.size();
+}
 
 inline BoundingSphereInfo MeshLoader::GetBoundingSphereInfo()
 {

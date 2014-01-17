@@ -47,34 +47,40 @@ void RenderUtil::Render()
 	RENDERDEVICE::Instance().g_pD3DDevice->SetIndices(mIndexBuffer);
 	for (DWORD i = 0; i < mSubMeshList.size(); i++)
 	{
-		mEffectList[i]->SetMatrix(WORLDVIEWPROJMATRIX, &mWorldViewProj);
-		mEffectList[i]->SetMatrix(VIEWPROJMATRIX, &mViewProj);
-		mEffectList[i]->SetMatrix(WORLDMATRIX, &mWorldMat);
+		mMaterialList[i]->effect->SetMatrix(WORLDVIEWPROJMATRIX, &mWorldViewProj);
+		mMaterialList[i]->effect->SetMatrix(VIEWPROJMATRIX, &mViewProj);
+		mMaterialList[i]->effect->SetMatrix(WORLDMATRIX, &mWorldMat);
 
 		UINT nPasses = 0;
-		HRESULT r1 = mEffectList[i]->Begin(&nPasses, 0);
-		HRESULT r2 = mEffectList[i]->BeginPass(0);
+		HRESULT r1 = mMaterialList[i]->effect->Begin(&nPasses, 0);
+		HRESULT r2 = mMaterialList[i]->effect->BeginPass(0);
 
-		if (&mSubMeshList[i].pMaterial)
-			RENDERDEVICE::Instance().g_pD3DDevice->SetMaterial(&mSubMeshList[i].pMaterial);
+		{
+			mMaterialList[i]->effect->SetVector(AMBIENTMATERIAL, &mSubMeshList[i].pMaterial.Ambient);
+			mMaterialList[i]->effect->SetVector(DIFFUSEMATERIAL, &mSubMeshList[i].pMaterial.Diffuse);
+			mMaterialList[i]->effect->SetVector(SPECULARMATERIAL, &mSubMeshList[i].pMaterial.Specular);
+			mMaterialList[i]->effect->SetFloat(SPECULARPOWER, (float)mSubMeshList[i].pMaterial.Power);
+		}
+
 		if (mSubMeshList[i].pTexture)
 		{
-			mEffectList[i]->SetTexture(DIFFUSETEXTURE, mSubMeshList[i].pTexture);
+			mMaterialList[i]->effect->SetTexture(DIFFUSETEXTURE, mSubMeshList[i].pTexture);
+			
 		}
 		else
 		{
-			mEffectList[i]->SetTexture(DIFFUSETEXTURE, NULL);
+			mMaterialList[i]->effect->SetTexture(DIFFUSETEXTURE, NULL);
 		}
 
-		SetlightInfo(mEffectList[i]);
+		SetlightInfo(mMaterialList[i]->effect);
 
-		mEffectList[i]->CommitChanges();
+		mMaterialList[i]->effect->CommitChanges();
 
 		RENDERDEVICE::Instance().g_pD3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0,
 			mSubMeshList[i].vertexCount, mSubMeshList[i].indexStart, mSubMeshList[i].faceCount);
 
-		mEffectList[i]->EndPass();
-		mEffectList[i]->End();
+		mMaterialList[i]->effect->EndPass();
+		mMaterialList[i]->effect->End();
 	}
 	RENDERDEVICE::Instance().g_pD3DDevice->SetTexture(0, NULL);
 }
@@ -93,23 +99,31 @@ void RenderUtil::SetSubMeshList(const std::vector<SubMesh>& subMeshList)
 {
 	mSubMeshList = subMeshList;
 
-	mEffectList.resize(mSubMeshList.size());
+	mMaterialList.resize(mSubMeshList.size());
 }
 
-void RenderUtil::SetEffectList(const std::vector<LPD3DXEFFECT>& effectList)
+void RenderUtil::SetMaterialList(const std::vector<Material*>& materialList)
 {
-	mEffectList = effectList;
+	mMaterialList = materialList;
 }
 
 void RenderUtil::SetEffect(int subMeshIndex, LPD3DXEFFECT effect)
 {
-	if (subMeshIndex >= mEffectList.size())
+	if (subMeshIndex >= mMaterialList.size())
 		return;
 
-	mEffectList[subMeshIndex] = effect;
+	mMaterialList[subMeshIndex]->effect = effect;
 }
 
 void RenderUtil::SetOwner(Entity* owner)
 {
 	mOwner = owner;
+}
+
+void RenderUtil::SetMaterial(int subMeshIndex, Material* material)
+{
+	if (subMeshIndex >= mMaterialList.size())
+		return;
+
+	mMaterialList[subMeshIndex] = material;
 }

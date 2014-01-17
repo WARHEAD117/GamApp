@@ -26,7 +26,10 @@ public:
 	void OnEndFrame();
 
 	void SetMeshFileName(std::string fileName);
-	void SetEffectFileName(int subMeshIndex, std::string fileName);
+	void SetEffect(std::string fileName, int subMeshIndex = -1);
+	void SetEffect(LPD3DXEFFECT effect, int subMeshIndex = -1);
+
+	void SetMaterial(Material* material, int subMeshIndex = -1);
 
 	void AssignRenderUtil();
 	void BuildRenderUtil();
@@ -41,9 +44,6 @@ inline unsigned int Entity::GetIndex()
 {
 	return fastIndex;
 }
-
-
-
 
 
 

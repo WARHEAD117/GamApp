@@ -4,6 +4,8 @@
 
 class Entity;
 
+
+
 struct SubMesh
 {
 	DWORD subMeshId;
@@ -14,7 +16,7 @@ struct SubMesh
 	DWORD vertexCount;
 	DWORD indexCount;
 	LPDIRECT3DTEXTURE9 pTexture;
-	D3DMATERIAL9 pMaterial;
+	Material pMaterial;
 	ID3DXEffect* pEffect;
 };
 
@@ -31,8 +33,9 @@ public:
 	void	SetSubMeshList(const std::vector<SubMesh>& subMeshList);
 	void	SetFVF(DWORD fvf);
 
-	void	SetEffectList(const std::vector<LPD3DXEFFECT>& effectList);
+	void	SetMaterialList(const std::vector<Material*>& materialList);
 	void	SetEffect(int subMeshIndex, LPD3DXEFFECT effect);
+	void	SetMaterial(int subMeshIndex, Material* material);
 
 	void	SetOwner(Entity* owner);
 
@@ -44,7 +47,7 @@ private:
 	std::vector<SubMesh>		mSubMeshList;
 	DWORD						mFVF;
 
-	std::vector<LPD3DXEFFECT>	mEffectList;
+	std::vector<Material*>		mMaterialList;
 
 	D3DXMATRIX					mViewProj;
 	D3DXMATRIX					mWorldViewProj;

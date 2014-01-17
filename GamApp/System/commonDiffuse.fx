@@ -14,9 +14,10 @@ float4 lightDiffuse = float4(1.0f, 1.0f, 1.0f, 1.0f);
 float4 lightAmbient = float4(1.0f, 1.0f, 1.0f, 1.0f);
 float4 lightSpecular = float4(1.0f, 1.0f, 1.0f, 1.0f);
 
-float4 materialAmbient = float4(1.0f, 1.0f, 1.0f, 1.0f);
-float4 materialDiffuse = float4(1.0f, 1.0f, 1.0f, 1.0f);
-float4 materialSpecular = float4(1.0f, 1.0f, 1.0f, 1.0f);
+float4 g_AmbientMaterial = float4(1.0f, 1.0f, 1.0f, 1.0f);
+float4 g_DiffuseMaterial = float4(1.0f, 1.0f, 1.0f, 1.0f);
+float4 g_SpecularMaterial = float4(1.0f, 1.0f, 1.0f, 1.0f);
+float g_SpecularPower = 1.0f;
 
 sampler2D g_sampleTexture =
 sampler_state
@@ -31,7 +32,7 @@ struct OutputVS
 {
 	float4 posWVP         : POSITION0;
 	float2 TexCoord		: TEXCOORD0;
-	float2 normalW		: NORMAL0;
+	float3 normalW		: NORMAL0;
 	float4 toEyeDirW		: TEXCOORD1;
 };
 
@@ -47,7 +48,7 @@ OutputVS VShader(float4 posL       : POSITION0,
 	outVS.normalW = mul(normalL, g_World);
 
 	outVS.TexCoord = TexCoord;
-	outVS.toEyeDirW = normalize(g_ViewPos - mul(posL, g_World));
+	outVS.toEyeDirW = g_ViewPos - mul(posL, g_World);
 	return outVS;
 }
 
@@ -60,20 +61,33 @@ float4 PShader( float4 posWVP			:	POSITION0,
 	//纹理采样
 	float4 Texture = tex2D(g_sampleTexture, TexCoord);
 
-	//计算环境光
-	float4 Ambient = lightAmbient * materialAmbient;  //材质可理解为反射系数
 
+	//计算环境光
+	float4 Ambient = lightAmbient * g_AmbientMaterial;  //材质可理解为反射系数
+
+	NormalW = normalize(NormalW);
+	ToEyeDirW = normalize(ToEyeDirW);
 	//计算漫反射
 	float DiffuseRatio = dot(-g_LightDir, NormalW);
-	float4 Diffuse = lightDiffuse * (materialDiffuse * DiffuseRatio);
+	float4 Diffuse = lightDiffuse * (g_DiffuseMaterial * DiffuseRatio);
 
 	//计算镜面反射
-	float4 Reflect = normalize(float4(g_LightDir.xyz - 2 * DiffuseRatio * NormalW, 1.0f));
-	float SpecularRatio = dot(Reflect, ToEyeDirW);
-	float4 Specular = lightSpecular* (materialSpecular * SpecularRatio);
-	Specular = pow(Specular, 10);
+
+	//计算半角向量
+	float4 H = normalize(ToEyeDirW - g_LightDir);
+
+	//Phong光照
+	//float4 Reflect = normalize(float4(g_LightDir.xyz - 2 * DiffuseRatio * NormalW, 1.0f));
+	//float SpecularRatio = max(dot(Reflect, ToEyeDirW), 0);
+
+	//Blinn-Phong光照
+	float SpecularRatio = max(dot(NormalW, H),0);
+	
+	float4	Specular = pow(SpecularRatio, 12);
+	//Specular = lightSpecular* (g_SpecularMaterial * Specular);
+
 	//混合光照和纹理
-	float4 finalColor = Texture*Diffuse + Specular + Ambient*0.1f;
+	float4 finalColor = Texture * Diffuse + Specular + Ambient*0.1f;
 	//输出颜色
 	return finalColor;
 }

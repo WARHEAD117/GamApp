@@ -31,7 +31,7 @@ void Entity::OnEndFrame()
 
 void Entity::AssignRenderUtil()
 {
-	RENDERPIPE::Instance().PushRenderUtil(mRenderUtil);
+	RENDERPIPE::Instance().PushRenderUtil(&mRenderUtil);
 }
 
 void Entity::BuildRenderUtil()
@@ -47,7 +47,7 @@ void Entity::BuildRenderUtil()
 
 	for (int i = 0; i < mMeshLoader.GetSubMeshList().size(); i++)
 	{
-		mRenderUtil.SetEffect(i, RENDERDEVICE::Instance().GetDefaultEffect());
+		mRenderUtil.SetMaterial(i, RENDERDEVICE::Instance().GetDefaultMaterial());
 	}
 
 	AssignRenderUtil();
@@ -58,8 +58,51 @@ void Entity::SetMeshFileName(std::string fileName)
 	mMeshLoader.LoadXMesh(fileName);
 }
 
-void Entity::SetEffectFileName(int subMeshIndex, std::string fileName)
+void Entity::SetEffect(std::string fileName, int subMeshIndex)
 {
 	mEffectLoader.LoadFxEffect(fileName);
-	mRenderUtil.SetEffect(subMeshIndex, mEffectLoader.GetEffect());
+	if (subMeshIndex >= 0)
+	{
+		mRenderUtil.SetEffect(subMeshIndex, mEffectLoader.GetEffect());
+	}
+	else
+	{
+		int subMeshCount = mMeshLoader.GetSubMeshCount();
+		for (int i = 0; i < subMeshCount; i++)
+		{
+			mRenderUtil.SetEffect(i, mEffectLoader.GetEffect());
+		}
+	}
+}
+
+void Entity::SetEffect(LPD3DXEFFECT effect, int subMeshIndex)
+{
+	if (subMeshIndex >= 0)
+	{
+		mRenderUtil.SetEffect(subMeshIndex, effect);
+	}
+	else
+	{
+		int subMeshCount = mMeshLoader.GetSubMeshCount();
+		for (int i = 0; i < subMeshCount; i++)
+		{
+			mRenderUtil.SetEffect(i, effect);
+		}
+	}
+}
+
+void Entity::SetMaterial(Material* material, int subMeshIndex /*= -1*/)
+{
+	if (subMeshIndex >= 0)
+	{
+		mRenderUtil.SetMaterial(subMeshIndex, material);
+	}
+	else
+	{
+		int subMeshCount = mMeshLoader.GetSubMeshCount();
+		for (int i = 0; i < subMeshCount; i++)
+		{
+			mRenderUtil.SetMaterial(i, material);
+		}
+	}
 }

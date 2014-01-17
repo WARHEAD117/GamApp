@@ -19,7 +19,10 @@ TestScene::~TestScene()
 }
 
 
-Entity testEntity;
+Entity krisEntity;
+Entity shevaEntity;
+Material testMat1;
+EffectLoader effectLoader;
 DirectionLight dirLight;
 
 void TestScene::OnLoad()
@@ -43,11 +46,20 @@ void TestScene::OnLoad()
 	mainCamera.Init();
 
 	//Create Entity
-	testEntity.SetMeshFileName("Res\\Mesh\\car\\car25.X");
+	krisEntity.SetMeshFileName("Res\\Mesh\\kris_sheva\\kris.X");
+	shevaEntity.SetMeshFileName("Res\\Mesh\\kris_sheva\\sheva.X");
+	//testEntity.SetMeshFileName("Res\\Mesh\\car\\car25.X");
 	//testEntity.SetMeshFileName("Res\\Mesh\\tree3\\tree3.X");
-	testEntity.BuildRenderUtil();
+	
+	krisEntity.BuildRenderUtil();
+	shevaEntity.BuildRenderUtil();
+	effectLoader.LoadFxEffect("System\\BankBRDFLight.fx");
+	testMat1.effect = effectLoader.GetEffect();
+	krisEntity.SetMaterial(&testMat1);
+	krisEntity.SetEffect("System\\BankBRDFLight.fx");
+	ENTITYMANAGER::Instance().AddEntity(krisEntity);
+	ENTITYMANAGER::Instance().AddEntity(shevaEntity);
 
-	ENTITYMANAGER::Instance().AddEntity(testEntity);
 	LIGHTMANAGER::Instance().AddLight(&dirLight);
 }
 
@@ -103,6 +115,12 @@ void TestScene::OnBeginFrame()
 	cW = cW * moveMat;
 	mainCamera.SetWorldTransform(cW);
 	
+	D3DXMatrixRotationY(&moveMat, 180);
+	krisEntity.SetWorldTransform(moveMat);
+
+	D3DXVECTOR3 move2(20, 0, 0);
+	D3DXMatrixTranslation(&moveMat, move2.x, move2.y, move2.z);
+	shevaEntity.SetWorldTransform(moveMat);
 }
 
 void TestScene::OnFrame()

@@ -11,12 +11,16 @@ public:
 
 	void InitD3DDevice(HWND hWnd);
 	LPD3DXEFFECT GetDefaultEffect();
+	LPDIRECT3DTEXTURE9 GetDefaultTexture();
+	Material* GetDefaultMaterial();
 
 	LPDIRECT3D9								g_pD3D;       //--Direct3D对象指针
 	LPDIRECT3DDEVICE9						g_pD3DDevice; //--Direct3D的设备
 	D3DPRESENT_PARAMETERS					g_pD3DPP;
 
+	Material								defaultMaterial;
 	LPD3DXEFFECT							defaultEffect;
+	LPDIRECT3DTEXTURE9						defaultTexture;
 
 	D3DXMATRIX								ViewMatrix;
 	D3DXMATRIX								ProjMatrix;

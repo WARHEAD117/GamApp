@@ -1,5 +1,5 @@
 #include "MeshLoader.h"
-
+#include "D3D9Device.h"
 
 MeshLoader::MeshLoader()
 {
@@ -74,7 +74,7 @@ HRESULT MeshLoader::LoadXMesh(std::string filePath)
 
 			if (FAILED(D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, texfinalPath.c_str(), &m_pTextures[i])))
 			{
-				m_pTextures[i] = NULL;
+				m_pTextures[i] = RENDERDEVICE::Instance().GetDefaultTexture();
 			}
 		}
 	}

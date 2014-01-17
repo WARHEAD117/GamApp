@@ -20,14 +20,14 @@ void RenderPipe::RenderAll()
 
 	for (int i = 0; i < mRenderUtilList.size(); ++i)
 	{
-		mRenderUtilList[i].Render();
+		mRenderUtilList[i]->Render();
 	}
 
 	RENDERDEVICE::Instance().g_pD3DDevice->EndScene();
 	RENDERDEVICE::Instance().g_pD3DDevice->Present(0, 0, 0, 0);
 }
 
-void RenderPipe::PushRenderUtil(const RenderUtil& renderUtil)
+void RenderPipe::PushRenderUtil(RenderUtil* const renderUtil)
 {
 	mRenderUtilList.push_back(renderUtil);
 }

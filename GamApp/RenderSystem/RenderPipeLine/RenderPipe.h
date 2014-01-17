@@ -9,13 +9,13 @@ public:
 	~RenderPipe();
 
 	void	ClearRenderUtil();
-	void	PushRenderUtil(const RenderUtil& renderUtil);
+	void	PushRenderUtil(RenderUtil* const renderUtil);
 
 	void	RenderAll();
 	void	UpdateRenderState();
 
 private:
-	std::vector<RenderUtil> mRenderUtilList;
+	std::vector<RenderUtil*> mRenderUtilList;
 };
 
 

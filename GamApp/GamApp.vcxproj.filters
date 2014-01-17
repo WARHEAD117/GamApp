@@ -219,5 +219,8 @@
     <FxCompile Include="System\commonDiffuse.fx">
       <Filter>System</Filter>
     </FxCompile>
+    <FxCompile Include="System\BankBRDFLight.fx">
+      <Filter>System</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

@@ -129,6 +129,10 @@
     <ClCompile Include="RenderSystem\RenderUtil\RenderUtil.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="System\BankBRDFLight.fx">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Effect</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">2.0</ShaderModel>
+    </FxCompile>
     <FxCompile Include="System\commonDiffuse.fx">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">main</EntryPointName>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Effect</ShaderType>

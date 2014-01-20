@@ -8,6 +8,9 @@ MeshLoader::MeshLoader()
 
 MeshLoader::~MeshLoader()
 {
+// 	SafeRelease(m_pMesh);
+// 	SafeRelease(mVertexBuffer);
+// 	SafeRelease(mIndexBuffer);
 }
 
 std::string getFilePath(std::string in)

@@ -53,7 +53,7 @@ void TestScene::OnLoad()
 	
 	krisEntity.BuildRenderUtil();
 	shevaEntity.BuildRenderUtil();
-	effectLoader.LoadFxEffect("System\\commonDiffuse.fx");
+	effectLoader.LoadFxEffect("System\\BankBRDFLight.fx");
 	testMat1.effect = effectLoader.GetEffect();
 	krisEntity.SetMaterial(&testMat1);
 

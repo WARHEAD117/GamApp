@@ -9,20 +9,24 @@ EffectLoader::EffectLoader()
 
 EffectLoader::~EffectLoader()
 {
-	TRelease(mEffect);
+	SafeRelease(mEffect);
 }
 
 void EffectLoader::LoadFxEffect(std::string fileName)
 {
-	if (E_FAIL == ::D3DXCreateEffectFromFile(RENDERDEVICE::Instance().g_pD3DDevice, fileName.c_str(), NULL, NULL, D3DXSHADER_DEBUG,
-		NULL, &mEffect, NULL))
+	HRESULT result = ::D3DXCreateEffectFromFile(RENDERDEVICE::Instance().g_pD3DDevice, fileName.c_str(), NULL, NULL, D3DXSHADER_DEBUG,
+		NULL, &mEffect, NULL);
+
+	if (result != S_OK)
 	{
-		MessageBox(GetForegroundWindow(), "ShadowMap_Shader_Error!", "Shader", MB_OK);
-		abort();
+		MessageBox(GetForegroundWindow(), fileName.c_str(), "Shader", MB_OK);
 	}
 }
 
 LPD3DXEFFECT EffectLoader::GetEffect()
 {
-	return mEffect;
+	if (mEffect)
+		return mEffect;
+	else
+		return RENDERDEVICE::Instance().defaultEffect;
 }

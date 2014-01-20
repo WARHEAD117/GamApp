@@ -14,6 +14,7 @@ D3D9Device::~D3D9Device()
 	SafeRelease(g_pD3D);
 	SafeRelease(g_pD3DDevice);
 	SafeRelease(defaultEffect);
+	SafeRelease(defaultTexture);
 }
 
 void D3D9Device::InitD3DDevice(HWND hWnd)

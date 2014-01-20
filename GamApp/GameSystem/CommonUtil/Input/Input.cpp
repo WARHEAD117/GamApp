@@ -127,16 +127,8 @@ BOOL Input::ReadMouse()
 //-------------------------------------------
 void Input::Clearup()
 {
-	if(m_pMouse)
-	{
-		TRelease(m_pMouse);
-		m_pMouse = NULL;
-	}
-	if(pDI)
-	{
-		TRelease(pDI);
-		pDI = NULL;
-	}
-	
+	SafeRelease(m_pMouse);
+
+	SafeRelease(pDI);	
 }
 

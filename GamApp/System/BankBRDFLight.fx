@@ -82,13 +82,13 @@ float4 PShader(float4 posWVP			:	POSITION0,
 
 	bool back = (dot(V, float4(NormalW, 1.0f))>0) && (dot(g_LightDir, float4(NormalW, 1.0f)));
 
-	float Ks = 0.8;
-	float shininess = 6;
+	float Ks = 0.6;
+	float shininess = 3;
 	if (back)
 	{
-		float4 T = float4(normalize(cross(NormalW, V)),1.0f);   // 计算顶点切向量 
+		float4 T = float4(normalize(cross(NormalW, -V)),1.0f);   // 计算顶点切向量 
 
-		float a = dot(-g_LightDir, T);
+		float a = dot(g_LightDir, T);
 
 		float b = dot(V, T);
 

@@ -58,6 +58,9 @@
     <Filter Include="GameSystem\Transform">
       <UniqueIdentifier>{d6b0aa79-75a8-4d1d-9f07-e038141ccc31}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Takarazuka">
+      <UniqueIdentifier>{30caa44d-58c6-4582-8bbc-32e30d5a5467}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DrawSkyBox.h" />
@@ -142,6 +145,7 @@
     <ClInclude Include="GameSystem\Light\BaseLight.h">
       <Filter>GameSystem\Light</Filter>
     </ClInclude>
+    <ClInclude Include="Takarazuka\VertexManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DrawSkyBox.cpp" />
@@ -214,6 +218,7 @@
     <ClCompile Include="GameSystem\Light\BaseLight.cpp">
       <Filter>GameSystem\Light</Filter>
     </ClCompile>
+    <ClCompile Include="Takarazuka\VertexManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="System\commonDiffuse.fx">

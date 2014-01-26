@@ -40,22 +40,22 @@ void VertexManager::BuildVertex(LPDIRECT3DVERTEXBUFFER9 VB)
 
 	//初始化天空盒的顶点缓冲区
 	//=============================================================下表面
-	pVertices->position = D3DXVECTOR3(12.0f, -12.0f, 12.0f);
+	pVertices->position = D3DXVECTOR3(1.0f, -1.0f, 1.0f);
 	pVertices->tu = 1.0f;
 	pVertices->tv = 0.0f;
 	pVertices++;
 
-	pVertices->position = D3DXVECTOR3(-12.0f, -12.0f, 12.0f);
+	pVertices->position = D3DXVECTOR3(-1.0f, -1.0f, 1.0f);
 	pVertices->tu = 0.0f;
 	pVertices->tv = 0.0f;
 	pVertices++;
 
-	pVertices->position = D3DXVECTOR3(12.0f, -12.0f, -12.0f);
+	pVertices->position = D3DXVECTOR3(1.0f, -1.0f, -1.0f);
 	pVertices->tu = 1.0f;
 	pVertices->tv = 1.0f;
 	pVertices++;
 
-	pVertices->position = D3DXVECTOR3(-12.0f, -12.0f, -12.0f);
+	pVertices->position = D3DXVECTOR3(-1.0f, -1.0f, -1.0f);
 	pVertices->tu = 0.0f;
 	pVertices->tv = 1.0f;
 	pVertices++;

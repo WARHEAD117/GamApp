@@ -15,7 +15,7 @@ RenderPipe::~RenderPipe()
 void RenderPipe::RenderAll()
 {
 	RENDERDEVICE::Instance().g_pD3DDevice->BeginScene();
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(1, 0, 0), 1.0f, 0);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(255, 255, 255), 1.0f, 0);
 
 	UpdateRenderState();
 

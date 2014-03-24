@@ -14,27 +14,27 @@ public:
 	Entity();
 	~Entity();
 
-private:
+protected:
 	unsigned int fastIndex;
 	static unsigned int baseFastIndex;
 public:
-	unsigned int GetIndex();
+	virtual unsigned int GetIndex();
 
 public:
-	void OnBeginFrame();
-	void OnFrame();
-	void OnEndFrame();
+	virtual void OnBeginFrame();
+	virtual void OnFrame();
+	virtual void OnEndFrame();
 
-	void SetMeshFileName(std::string fileName);
-	void SetEffect(std::string fileName, int subMeshIndex = -1);
-	void SetEffect(LPD3DXEFFECT effect, int subMeshIndex = -1);
+	virtual void SetMeshFileName(std::string fileName);
+	virtual void SetEffect(std::string fileName, int subMeshIndex = -1);
+	virtual void SetEffect(LPD3DXEFFECT effect, int subMeshIndex = -1);
 
-	void SetMaterial(Material* material, int subMeshIndex = -1);
+	virtual void SetMaterial(Material* material, int subMeshIndex = -1);
 
-	void AssignRenderUtil();
-	void BuildRenderUtil();
+	virtual void AssignRenderUtil();
+	virtual void BuildRenderUtil();
 
-private:
+protected:
 	RenderUtil		mRenderUtil;
 	MeshLoader		mMeshLoader;
 	EffectLoader	mEffectLoader;

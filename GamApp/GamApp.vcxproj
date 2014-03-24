@@ -101,6 +101,9 @@
     <ClInclude Include="RenderSystem\RenderPipeLine\RenderPipe.h" />
     <ClInclude Include="RenderSystem\RenderUtil\EffectParam.h" />
     <ClInclude Include="RenderSystem\RenderUtil\RenderUtil.h" />
+    <ClInclude Include="Takarazuka\NoteEntity.h" />
+    <ClInclude Include="Takarazuka\NoteManager.h" />
+    <ClInclude Include="Takarazuka\TakarazukaScene.h" />
     <ClInclude Include="Takarazuka\VertexManager.h" />
   </ItemGroup>
   <ItemGroup>
@@ -128,6 +131,9 @@
     <ClCompile Include="RenderSystem\D3D9Device.cpp" />
     <ClCompile Include="RenderSystem\RenderPipeLine\RenderPipe.cpp" />
     <ClCompile Include="RenderSystem\RenderUtil\RenderUtil.cpp" />
+    <ClCompile Include="Takarazuka\NoteEntity.cpp" />
+    <ClCompile Include="Takarazuka\NoteManager.cpp" />
+    <ClCompile Include="Takarazuka\TakarazukaScene.cpp" />
     <ClCompile Include="Takarazuka\VertexManager.cpp" />
   </ItemGroup>
   <ItemGroup>

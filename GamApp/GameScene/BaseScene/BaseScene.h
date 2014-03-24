@@ -6,7 +6,7 @@ class BaseScene
 {
 public:
 	BaseScene();
-	~BaseScene();
+	virtual ~BaseScene();
 
 	virtual void OnLoad();
 	virtual void OnBeginFrame();

@@ -145,7 +145,18 @@
     <ClInclude Include="GameSystem\Light\BaseLight.h">
       <Filter>GameSystem\Light</Filter>
     </ClInclude>
-    <ClInclude Include="Takarazuka\VertexManager.h" />
+    <ClInclude Include="Takarazuka\VertexManager.h">
+      <Filter>Takarazuka</Filter>
+    </ClInclude>
+    <ClInclude Include="Takarazuka\NoteEntity.h">
+      <Filter>Takarazuka</Filter>
+    </ClInclude>
+    <ClInclude Include="Takarazuka\NoteManager.h">
+      <Filter>Takarazuka</Filter>
+    </ClInclude>
+    <ClInclude Include="Takarazuka\TakarazukaScene.h">
+      <Filter>Takarazuka</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DrawSkyBox.cpp" />
@@ -218,7 +229,18 @@
     <ClCompile Include="GameSystem\Light\BaseLight.cpp">
       <Filter>GameSystem\Light</Filter>
     </ClCompile>
-    <ClCompile Include="Takarazuka\VertexManager.cpp" />
+    <ClCompile Include="Takarazuka\VertexManager.cpp">
+      <Filter>Takarazuka</Filter>
+    </ClCompile>
+    <ClCompile Include="Takarazuka\NoteEntity.cpp">
+      <Filter>Takarazuka</Filter>
+    </ClCompile>
+    <ClCompile Include="Takarazuka\NoteManager.cpp">
+      <Filter>Takarazuka</Filter>
+    </ClCompile>
+    <ClCompile Include="Takarazuka\TakarazukaScene.cpp">
+      <Filter>Takarazuka</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="System\commonDiffuse.fx">

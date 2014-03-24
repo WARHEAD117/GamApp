@@ -10,7 +10,7 @@ class TestScene :
 {
 public:
 	TestScene();
-	~TestScene();
+	virtual ~TestScene();
 
 	virtual void OnLoad();
 	virtual void OnBeginFrame();

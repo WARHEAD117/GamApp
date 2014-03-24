@@ -84,12 +84,12 @@ float4 PShader( float4 posWVP			:	POSITION0,
 	float SpecularRatio = max(dot(NormalW, H),0);
 	
 	float4	Specular = pow(SpecularRatio, 12);
-	//Specular = lightSpecular* (g_SpecularMaterial * Specular);
+		//Specular = lightSpecular* (g_SpecularMaterial * Specular);
 
-	//混合光照和纹理
-	float4 finalColor = Texture * Diffuse + Specular + Ambient*0.1f;
-	//输出颜色
-	return finalColor;
+		//混合光照和纹理
+		float4 finalColor = Texture * Diffuse + Specular + Ambient*0.1f;
+		//输出颜色
+		return finalColor;// float4(1.0f, 0.0f, 0.0f, 1.0f);
 }
 
 technique CommonDiffuse

@@ -9,6 +9,7 @@
 #include "Light/LightManager.h"
 
 #include "GameScene/TestScene.h"
+#include "Takarazuka/TakarazukaScene.h"
 
 MainGame::MainGame()
 {
@@ -20,11 +21,12 @@ MainGame::~MainGame()
 
 //Just for test-------------------------------------------------------------------
 TestScene testScene;
+TakarazukaScene takarazukaScene;
 //--------------------------------------------------------------------------------
 
 void MainGame::GameLoad()
 {
-	SCENEMANAGER::Instance().AddScene(&testScene);
+	SCENEMANAGER::Instance().AddScene(&takarazukaScene);
 
 	SCENEMANAGER::Instance().OnLoad();
 }

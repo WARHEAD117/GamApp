@@ -14,8 +14,18 @@ public:
 	void	RenderAll();
 	void	UpdateRenderState();
 
+	LPDIRECT3DTEXTURE9	m_pDiffuseTarget;
+	LPDIRECT3DTEXTURE9	m_pNormalDepthTarget;
+
 private:
 	std::vector<RenderUtil*> mRenderUtilList;
+
+	
+
+	LPDIRECT3DSURFACE9	m_pDIffuseSurface;
+	LPDIRECT3DSURFACE9	m_pNormalDepthSurface;
+
+	LPDIRECT3DSURFACE9	m_pOriSurface;
 };
 
 

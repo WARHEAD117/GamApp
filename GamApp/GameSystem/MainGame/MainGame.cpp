@@ -26,7 +26,7 @@ TakarazukaScene takarazukaScene;
 
 void MainGame::GameLoad()
 {
-	SCENEMANAGER::Instance().AddScene(&takarazukaScene);
+	SCENEMANAGER::Instance().AddScene(&testScene);
 
 	SCENEMANAGER::Instance().OnLoad();
 }

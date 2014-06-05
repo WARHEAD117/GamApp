@@ -249,5 +249,11 @@
     <FxCompile Include="System\BankBRDFLight.fx">
       <Filter>System</Filter>
     </FxCompile>
+    <FxCompile Include="System\DeferredNormalDepth.fx">
+      <Filter>System</Filter>
+    </FxCompile>
+    <FxCompile Include="System\DeferredDiffuse.fx">
+      <Filter>System</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

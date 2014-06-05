@@ -51,8 +51,6 @@ void TestScene::OnLoad()
 	//testEntity.SetMeshFileName("Res\\Mesh\\car\\car25.X");
 	//testEntity.SetMeshFileName("Res\\Mesh\\tree3\\tree3.X");
 	
-	krisEntity.BuildRenderUtil();
-	shevaEntity.BuildRenderUtil();
 	effectLoader.LoadFxEffect("System\\BankBRDFLight.fx");
 	testMat1.effect = effectLoader.GetEffect();
 	krisEntity.SetMaterial(&testMat1);

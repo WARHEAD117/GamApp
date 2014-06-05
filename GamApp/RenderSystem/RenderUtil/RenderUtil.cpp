@@ -4,6 +4,7 @@
 #include "Light/LightManager.h"
 #include "Light/DirectionLight.h"
 
+#include "Camera/CameraParam.h"
 #include "EffectParam.h"
 
 RenderUtil::RenderUtil()
@@ -22,7 +23,7 @@ void RenderUtil::BuildEffectInfo()
 	D3DXMATRIX proj = RENDERDEVICE::Instance().ProjMatrix;
 	mViewProj = view * proj;
 	mWorldViewProj = mWorldMat * mViewProj;
-	
+	mViewMat = view;
 }
 
 void RenderUtil::SetlightInfo(LPD3DXEFFECT effect)
@@ -50,6 +51,7 @@ void RenderUtil::Render()
 		mMaterialList[i]->effect->SetMatrix(WORLDVIEWPROJMATRIX, &mWorldViewProj);
 		mMaterialList[i]->effect->SetMatrix(VIEWPROJMATRIX, &mViewProj);
 		mMaterialList[i]->effect->SetMatrix(WORLDMATRIX, &mWorldMat);
+		mMaterialList[i]->effect->SetMatrix(VIEWMATRIX, &mViewMat);
 
 		UINT nPasses = 0;
 		HRESULT r1 = mMaterialList[i]->effect->Begin(&nPasses, 0);
@@ -81,6 +83,77 @@ void RenderUtil::Render()
 
 		mMaterialList[i]->effect->EndPass();
 		mMaterialList[i]->effect->End();
+	}
+	RENDERDEVICE::Instance().g_pD3DDevice->SetTexture(0, NULL);
+}
+
+void RenderUtil::RenderNormalDepth()
+{
+	BuildEffectInfo();
+
+
+	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, mVertexBuffer, 0, D3DXGetFVFVertexSize(mFVF));
+	RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(mFVF);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetIndices(mIndexBuffer);
+	for (DWORD i = 0; i < mSubMeshList.size(); i++)
+	{
+		RENDERDEVICE::Instance().GetNormalDepthEffect()->SetMatrix(WORLDVIEWPROJMATRIX, &mWorldViewProj);
+		RENDERDEVICE::Instance().GetNormalDepthEffect()->SetMatrix(VIEWPROJMATRIX, &mViewProj);
+		RENDERDEVICE::Instance().GetNormalDepthEffect()->SetMatrix(WORLDMATRIX, &mWorldMat);
+
+		UINT nPasses = 0;
+		HRESULT r1 = RENDERDEVICE::Instance().GetNormalDepthEffect()->Begin(&nPasses, 0);
+		HRESULT r2 = RENDERDEVICE::Instance().GetNormalDepthEffect()->BeginPass(0);
+
+		RENDERDEVICE::Instance().GetNormalDepthEffect()->CommitChanges();
+
+		RENDERDEVICE::Instance().g_pD3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0,
+			mSubMeshList[i].vertexCount, mSubMeshList[i].indexStart, mSubMeshList[i].faceCount);
+
+		RENDERDEVICE::Instance().GetNormalDepthEffect()->EndPass();
+		RENDERDEVICE::Instance().GetNormalDepthEffect()->End();
+	}
+	RENDERDEVICE::Instance().g_pD3DDevice->SetTexture(0, NULL);
+}
+
+void RenderUtil::RenderDiffuse()
+{
+	BuildEffectInfo();
+
+
+	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, mVertexBuffer, 0, D3DXGetFVFVertexSize(mFVF));
+	RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(mFVF);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetIndices(mIndexBuffer);
+	for (DWORD i = 0; i < mSubMeshList.size(); i++)
+	{
+		RENDERDEVICE::Instance().GetDiffuseEffect()->SetMatrix(WORLDVIEWPROJMATRIX, &mWorldViewProj);
+		RENDERDEVICE::Instance().GetDiffuseEffect()->SetMatrix(VIEWPROJMATRIX, &mViewProj);
+		RENDERDEVICE::Instance().GetDiffuseEffect()->SetMatrix(WORLDMATRIX, &mWorldMat);
+		RENDERDEVICE::Instance().GetDiffuseEffect()->SetMatrix(VIEWMATRIX, &mViewMat);
+		RENDERDEVICE::Instance().GetDiffuseEffect()->SetFloat("g_zNear", CameraParam::zNear);
+		RENDERDEVICE::Instance().GetDiffuseEffect()->SetFloat("g_zFar", CameraParam::zFar);
+
+		UINT nPasses = 0;
+		HRESULT r1 = RENDERDEVICE::Instance().GetDiffuseEffect()->Begin(&nPasses, 0);
+		HRESULT r2 = RENDERDEVICE::Instance().GetDiffuseEffect()->BeginPass(0);
+
+		if (mSubMeshList[i].pTexture)
+		{
+			RENDERDEVICE::Instance().GetDiffuseEffect()->SetTexture(DIFFUSETEXTURE, mSubMeshList[i].pTexture);
+
+		}
+		else
+		{
+			RENDERDEVICE::Instance().GetDiffuseEffect()->SetTexture(DIFFUSETEXTURE, NULL);
+		}
+
+		RENDERDEVICE::Instance().GetDiffuseEffect()->CommitChanges();
+
+		RENDERDEVICE::Instance().g_pD3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0,
+			mSubMeshList[i].vertexCount, mSubMeshList[i].indexStart, mSubMeshList[i].faceCount);
+
+		RENDERDEVICE::Instance().GetDiffuseEffect()->EndPass();
+		RENDERDEVICE::Instance().GetDiffuseEffect()->End();
 	}
 	RENDERDEVICE::Instance().g_pD3DDevice->SetTexture(0, NULL);
 }

@@ -10,4 +10,7 @@ namespace CameraParam
 	const D3DXVECTOR3 lookAtW = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
 
 	const float FOV = D3DX_PI*0.25f;
+
+	const float zNear = 1;
+	const float zFar = 500;
 };

@@ -56,6 +56,7 @@ void Entity::BuildRenderUtil()
 void Entity::SetMeshFileName(std::string fileName)
 {
 	mMeshLoader.LoadXMesh(fileName);
+	BuildRenderUtil();
 }
 
 void Entity::SetEffect(std::string fileName, int subMeshIndex)

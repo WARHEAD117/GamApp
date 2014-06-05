@@ -27,6 +27,8 @@ public:
 	~RenderUtil();
 
 	void	Render();
+	void	RenderNormalDepth();
+	void	RenderDiffuse();
 
 	void	SetVertexBuffer(const LPDIRECT3DVERTEXBUFFER9& vertexBuffer);
 	void	SetIndexBuffer(const LPDIRECT3DINDEXBUFFER9& indexBuffer);
@@ -52,6 +54,7 @@ private:
 	D3DXMATRIX					mViewProj;
 	D3DXMATRIX					mWorldViewProj;
 	D3DXMATRIX					mWorldMat;
+	D3DXMATRIX					mViewMat;
 
 	Entity*						mOwner;
 private:

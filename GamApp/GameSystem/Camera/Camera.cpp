@@ -86,7 +86,7 @@ void Camera::BuildProjMtx()
 	float w = (float)RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth;
 	float h = (float)RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight;
 
-	D3DXMatrixPerspectiveFovLH(&mProj, mFOV, w / h, 1.0f, 5000.0f);
+	D3DXMatrixPerspectiveFovLH(&mProj, mFOV, w / h, CameraParam::zNear, CameraParam::zFar);
 
 	RENDERDEVICE::Instance().ProjMatrix = mProj;
 }

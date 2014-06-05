@@ -1,6 +1,8 @@
 #include "D3D9Device.h"
 
 static std::string defaultEffectName = "System\\commonDiffuse.fx";
+static std::string diffuseEffectName = "System\\DeferredDiffuse.fx";
+static std::string normalDepthEffectName = "System\\DeferredNormalDepth.fx";
 static std::string defaultTextureName = "System\\white.dds";
 
 D3D9Device::D3D9Device()
@@ -14,6 +16,7 @@ D3D9Device::~D3D9Device()
 	SafeRelease(g_pD3D);
 	SafeRelease(g_pD3DDevice);
 	SafeRelease(defaultEffect);
+	SafeRelease(normalDepthEffect);
 	SafeRelease(defaultTexture);
 }
 
@@ -98,6 +101,38 @@ LPD3DXEFFECT D3D9Device::GetDefaultEffect()
 	}
 
 	return defaultEffect;
+}
+
+LPD3DXEFFECT D3D9Device::GetDiffuseEffect()
+{
+	if (!diffuseEffect)
+	{
+		ID3DXBuffer* error = 0;
+		if (E_FAIL == ::D3DXCreateEffectFromFile(g_pD3DDevice, diffuseEffectName.c_str(), NULL, NULL, D3DXSHADER_DEBUG,
+			NULL, &diffuseEffect, &error))
+		{
+			MessageBox(GetForegroundWindow(), (char*)error->GetBufferPointer(), "Shader", MB_OK);
+			abort();
+		}
+	}
+
+	return diffuseEffect;
+}
+
+LPD3DXEFFECT D3D9Device::GetNormalDepthEffect()
+{
+	if (!normalDepthEffect)
+	{
+		ID3DXBuffer* error = 0;
+		if (E_FAIL == ::D3DXCreateEffectFromFile(g_pD3DDevice, normalDepthEffectName.c_str(), NULL, NULL, D3DXSHADER_DEBUG,
+			NULL, &normalDepthEffect, &error))
+		{
+			MessageBox(GetForegroundWindow(), (char*)error->GetBufferPointer(), "Shader", MB_OK);
+			abort();
+		}
+	}
+
+	return normalDepthEffect;
 }
 
 LPDIRECT3DTEXTURE9 D3D9Device::GetDefaultTexture()

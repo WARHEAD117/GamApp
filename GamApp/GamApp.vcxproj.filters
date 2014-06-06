@@ -255,5 +255,8 @@
     <FxCompile Include="System\DeferredDiffuse.fx">
       <Filter>System</Filter>
     </FxCompile>
+    <FxCompile Include="System\DeferredRender.fx">
+      <Filter>System</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

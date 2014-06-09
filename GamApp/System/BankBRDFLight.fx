@@ -52,6 +52,77 @@ OutputVS VShader(float4 posL       : POSITION0,
 	return outVS;
 }
 
+texture hmapTex;
+sampler2D hmapSampler = sampler_state {
+	Texture = <hmapTex>;
+	MinFilter = Linear;
+	MipFilter = Linear;
+	MagFilter = Linear;
+	AddressU = Clamp;
+	AddressV = Clamp;
+};
+
+texture nmapTex;
+sampler2D nmapSampler = sampler_state {
+	Texture = <hmapTex>;
+	MinFilter = Linear;
+	MipFilter = Linear;
+	MagFilter = Linear;
+	AddressU = Clamp;
+	AddressV = Clamp;
+};
+
+float4 tex_brdf(float3 normalW,
+				float3 toEyeDirW,
+				float4 LampColor) 
+{
+	float3 Nn = normalize(normalW);
+	float3 Vn = normalize(toEyeDirW);
+	float3 Ln = normalize(g_LightDir.xyz);
+	float3 Hn = normalize(Vn + Ln);
+	float2 huv = float2(0.5 + dot(Ln, Hn) / 2.0,
+		1.0 - (0.5 + dot(Nn, Hn) / 2.0));
+	float2 nuv = float2(0.5 + dot(Ln, Nn) / 2.0,
+		1.0 - (0.5 + dot(Nn, Vn) / 2.0));
+	float4 ht = tex2D(hmapSampler, huv);
+	float4 nt = tex2D(nmapSampler, nuv);
+	float4 nspec = ht * nt * LampColor;
+	return nspec;
+}
+
+float4 bank_brdf(float3 normalW,
+	float3 toEyeDirW,
+	float4 Diffuse)
+{
+	float4 specular = float4(0.0, 0.0, 0.0, 0.0);
+
+	//计算半角向量
+	float3 H = normalize(toEyeDirW - g_LightDir.xyz);
+
+	float3 V = toEyeDirW;
+
+	bool back = (dot(V, float4(normalW, 1.0f))>0) && (dot(g_LightDir.xyz, normalW));
+
+	float Ks = 0.6;
+	float shininess = 10;
+	if (back)
+	{
+		float3 T = normalize(cross(normalW, -V));   // 计算顶点切向量 
+
+			float a = dot(g_LightDir.xyz, T);
+
+		float b = dot(V, T);
+
+		float c = sqrt(1 - pow(a, 2.0))* sqrt(1 - pow(b, 2.0)) - a*b; // 计算 Bank BRDF 系数 
+
+		float brdf = Ks* pow(c, shininess);
+
+		specular = brdf *Diffuse;// *lightColor;
+	}
+
+	return specular;
+}
+
 
 float4 PShader(float2 TexCoord : TEXCOORD0,
 				float3 NormalW : NORMAL0,
@@ -70,38 +141,18 @@ float4 PShader(float2 TexCoord : TEXCOORD0,
 	float DiffuseRatio = dot(-g_LightDir.xyz, NormalW);
 	float4 Diffuse = lightDiffuse * (g_DiffuseMaterial * DiffuseRatio);
 
-	//计算镜面反射
+		//计算镜面反射
 
-	//计算半角向量
-	float3 H = normalize(ToEyeDirW - g_LightDir.xyz);
 
-	float3 V = ToEyeDirW;
 
-	float4 Specular = float4(0.0, 0.0, 0.0, 0.0);
+		float4 Specular = float4(0.0, 0.0, 0.0, 0.0);
 
-	bool back = (dot(V, float4(NormalW, 1.0f))>0) && (dot(g_LightDir.xyz, NormalW));
-
-	float Ks = 0.6;
-	float shininess = 10;
-	if (back)
-	{
-		float3 T = normalize(cross(NormalW, -V));   // 计算顶点切向量 
-
-		float a = dot(g_LightDir.xyz, T);
-
-		float b = dot(V, T);
-
-		float c = sqrt(1 - pow(a, 2.0))* sqrt(1 - pow(b, 2.0)) - a*b; // 计算 Bank BRDF 系数 
-
-		float brdf = Ks* pow(c, shininess);
-
-		Specular = brdf *Diffuse;// *lightColor;
-	}
-
-	//混合光照和纹理
-	float4 finalColor = Texture * Diffuse + Specular + Ambient*0.1f;
+		//Specular = bank_brdf(NormalW, ToEyeDirW, Diffuse);
+		Specular = tex_brdf(NormalW, ToEyeDirW, float4(1.0f, 1.0f, 1.0f, 1.0f));
+		//混合光照和纹理
+		float4 finalColor = Specular + Texture * Diffuse;// +Ambient*0.1f;
 		//输出颜色
-	return finalColor;
+		return finalColor;
 }
 
 technique CommonDiffuse

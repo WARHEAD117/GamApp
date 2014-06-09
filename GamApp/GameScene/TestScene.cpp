@@ -46,7 +46,7 @@ void TestScene::OnLoad()
 	mainCamera.Init();
 
 	//Create Entity
-	krisEntity.SetMeshFileName("Res\\Mesh\\kris_sheva\\kris.X");
+	krisEntity.SetMeshFileName("Res\\Mesh\\car\\car25.X");
 	shevaEntity.SetMeshFileName("Res\\Mesh\\kris_sheva\\sheva.X");
 	//testEntity.SetMeshFileName("Res\\Mesh\\car\\car25.X");
 	//testEntity.SetMeshFileName("Res\\Mesh\\tree3\\tree3.X");
@@ -101,6 +101,7 @@ void ComputeMove(D3DXVECTOR3& move)
 	}
 }
 
+float R = 0;
 void TestScene::OnBeginFrame()
 {
 	D3DXMATRIX cW = mainCamera.GetWorldTransform();
@@ -116,7 +117,8 @@ void TestScene::OnBeginFrame()
 	move = D3DXVECTOR3(0, -5, -3);
 	D3DXMatrixTranslation(&moveMat, move.x, move.y, move.z);
 	D3DXMATRIX rotMat;
-	D3DXMatrixRotationY(&rotMat, 180);
+	D3DXMatrixRotationY(&rotMat, 180+R);
+	R+=0.001f;
 	rotMat *= moveMat;
 	krisEntity.SetWorldTransform(rotMat);
 

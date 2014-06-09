@@ -14,7 +14,7 @@ struct OutputVS
 {
 	float4 posWVP			: POSITION;
 	float3 normalW			: NORMAL0;
-	float4 toEyeDirW		: TEXCOORD0;
+	float3 toEyeDirW		: TEXCOORD0;
 	float Depth		: TEXCOORD1;
 };
 
@@ -32,13 +32,13 @@ OutputVS VShader(float4 posL		: POSITION0,
 
 	outVS.normalW = mul(normalL, g_World);
 
-	outVS.toEyeDirW = g_ViewPos - mul(posL, g_World);
+	outVS.toEyeDirW = g_ViewPos.xyz - mul(posL, g_World).xyz;
 	return outVS;
 }
 
 
 float4 PShader(float3 NormalW			: NORMAL0,
-				float4 ToEyeDirW		: TEXCOORD0,
+				float3 ToEyeDirW		: TEXCOORD0,
 				float Depth : TEXCOORD1) : COLOR
 {
 	NormalW = normalize(NormalW);

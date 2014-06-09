@@ -19,12 +19,12 @@ sampler_state
 
 struct OutputVS
 {
-	float4 posWVP         : POSITION0;
+	float4 posWVP         : POSITION;
 	float2 TexCoord		: TEXCOORD0;
 };
 
 
-OutputVS VShader(float4 posL       : POSITION0,
+OutputVS VShader(float4 posL       : POSITION,
 				 float2 TexCoord : TEXCOORD0)
 {
 	OutputVS outVS = (OutputVS)0;

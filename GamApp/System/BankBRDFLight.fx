@@ -33,7 +33,7 @@ struct OutputVS
 	float4 posWVP         : POSITION0;
 	float2 TexCoord		: TEXCOORD0;
 	float3 normalW		: NORMAL0;
-	float4 toEyeDirW		: TEXCOORD1;
+	float3 toEyeDirW		: TEXCOORD1;
 };
 
 
@@ -48,15 +48,14 @@ OutputVS VShader(float4 posL       : POSITION0,
 	outVS.normalW = mul(normalL, g_World);
 
 	outVS.TexCoord = TexCoord;
-	outVS.toEyeDirW = g_ViewPos - mul(posL, g_World);
+	outVS.toEyeDirW = g_ViewPos.xyz - mul(posL, g_World).xyz;
 	return outVS;
 }
 
 
-float4 PShader(float4 posWVP			:	POSITION0,
-	float2 TexCoord : TEXCOORD0,
-	float3 NormalW : NORMAL0,
-	float4 ToEyeDirW : TEXCOORD1) : COLOR
+float4 PShader(float2 TexCoord : TEXCOORD0,
+				float3 NormalW : NORMAL0,
+				float3 ToEyeDirW : TEXCOORD1) : COLOR
 {
 	//纹理采样
 	float4 Texture = tex2D(g_sampleTexture, TexCoord);
@@ -68,27 +67,27 @@ float4 PShader(float4 posWVP			:	POSITION0,
 	NormalW = normalize(NormalW);
 	ToEyeDirW = normalize(ToEyeDirW);
 	//计算漫反射
-	float DiffuseRatio = dot(-g_LightDir, NormalW);
+	float DiffuseRatio = dot(-g_LightDir.xyz, NormalW);
 	float4 Diffuse = lightDiffuse * (g_DiffuseMaterial * DiffuseRatio);
 
 	//计算镜面反射
 
 	//计算半角向量
-	float4 H = normalize(ToEyeDirW - g_LightDir);
+	float3 H = normalize(ToEyeDirW - g_LightDir.xyz);
 
-	float4 V = ToEyeDirW;
+	float3 V = ToEyeDirW;
 
 	float4 Specular = float4(0.0, 0.0, 0.0, 0.0);
 
-	bool back = (dot(V, float4(NormalW, 1.0f))>0) && (dot(g_LightDir, float4(NormalW, 1.0f)));
+	bool back = (dot(V, float4(NormalW, 1.0f))>0) && (dot(g_LightDir.xyz, NormalW));
 
 	float Ks = 0.6;
-	float shininess = 3;
+	float shininess = 10;
 	if (back)
 	{
-		float4 T = float4(normalize(cross(NormalW, -V)),1.0f);   // 计算顶点切向量 
+		float3 T = normalize(cross(NormalW, -V));   // 计算顶点切向量 
 
-		float a = dot(g_LightDir, T);
+		float a = dot(g_LightDir.xyz, T);
 
 		float b = dot(V, T);
 

@@ -11,7 +11,15 @@ public:
 	void	ClearRenderUtil();
 	void	PushRenderUtil(RenderUtil* const renderUtil);
 
+	void	ForwardRender();
+
+	void	RenderDiffuse();
+	void	RenderNormalDepth();
+	void	DeferredRender();
+	void	RenderPost();
+
 	void	RenderAll();
+	
 	void	UpdateRenderState();
 
 	LPDIRECT3DTEXTURE9	m_pDiffuseTarget;

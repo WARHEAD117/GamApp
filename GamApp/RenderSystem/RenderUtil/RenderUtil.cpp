@@ -100,6 +100,9 @@ void RenderUtil::RenderNormalDepth()
 		RENDERDEVICE::Instance().GetNormalDepthEffect()->SetMatrix(WORLDVIEWPROJMATRIX, &mWorldViewProj);
 		RENDERDEVICE::Instance().GetNormalDepthEffect()->SetMatrix(VIEWPROJMATRIX, &mViewProj);
 		RENDERDEVICE::Instance().GetNormalDepthEffect()->SetMatrix(WORLDMATRIX, &mWorldMat);
+		RENDERDEVICE::Instance().GetNormalDepthEffect()->SetMatrix(VIEWMATRIX, &mViewMat);
+		RENDERDEVICE::Instance().GetNormalDepthEffect()->SetFloat("g_zNear", CameraParam::zNear);
+		RENDERDEVICE::Instance().GetNormalDepthEffect()->SetFloat("g_zFar", CameraParam::zFar);
 
 		UINT nPasses = 0;
 		HRESULT r1 = RENDERDEVICE::Instance().GetNormalDepthEffect()->Begin(&nPasses, 0);
@@ -129,10 +132,7 @@ void RenderUtil::RenderDiffuse()
 		RENDERDEVICE::Instance().GetDiffuseEffect()->SetMatrix(WORLDVIEWPROJMATRIX, &mWorldViewProj);
 		RENDERDEVICE::Instance().GetDiffuseEffect()->SetMatrix(VIEWPROJMATRIX, &mViewProj);
 		RENDERDEVICE::Instance().GetDiffuseEffect()->SetMatrix(WORLDMATRIX, &mWorldMat);
-		RENDERDEVICE::Instance().GetDiffuseEffect()->SetMatrix(VIEWMATRIX, &mViewMat);
-		RENDERDEVICE::Instance().GetDiffuseEffect()->SetFloat("g_zNear", CameraParam::zNear);
-		RENDERDEVICE::Instance().GetDiffuseEffect()->SetFloat("g_zFar", CameraParam::zFar);
-
+		
 		UINT nPasses = 0;
 		HRESULT r1 = RENDERDEVICE::Instance().GetDiffuseEffect()->Begin(&nPasses, 0);
 		HRESULT r2 = RENDERDEVICE::Instance().GetDiffuseEffect()->BeginPass(0);

@@ -258,5 +258,8 @@
     <FxCompile Include="System\DeferredRender.fx">
       <Filter>System</Filter>
     </FxCompile>
+    <FxCompile Include="System\SSAO.fx">
+      <Filter>System</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

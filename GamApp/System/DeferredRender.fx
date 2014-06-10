@@ -50,7 +50,7 @@ OutputVS VShader(float4 posL       : POSITION0,
 float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
 {
 	//纹理采样
-	float4 Texture = float4(1.0f, 1.0f, 1.0f, 1.0f);// tex2D(g_sampleDiffuse, TexCoord);
+	float4 Texture = tex2D(g_sampleDiffuse, TexCoord);
 	float4 NormalDepth = tex2D(g_sampleNormalDepth, TexCoord);
 
 
@@ -78,8 +78,8 @@ float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
 
 	float4 DiffuseLight = float4(0.0f, 0.0f, 0.0f, 1.0f);
 	float4	Specular = float4(0.0f, 0.0f, 0.0f, 1.0f);
-	//for (int i = 0; i < 4; i++)
-	int i = 3;
+	for (int i = 0; i < 4; i++)
+	//int i = 3;
 	{
 		float3 L;
 		float4 LS;
@@ -128,7 +128,7 @@ float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
 	//混合光照和纹理
 	float4 finalColor = Ambient * Texture +DiffuseLight *Texture;// DiffuseLight *Texture + Specular + ;
 	//输出颜色
-	return NormalDepth;// float4(1.0f, 0.0f, 0.0f, 1.0f);
+	return finalColor;// float4(1.0f, 0.0f, 0.0f, 1.0f);
 }
 
 technique DeferredRender

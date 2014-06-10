@@ -5,6 +5,7 @@
 #define VIEWMATRIX			"g_View"
 #define PROJECTIONMATRIX	"g_Proj"
 #define VIEWPROJMATRIX		"g_ViewProj"
+#define INVPROJMATRIX		"g_InverseProj"
 #define WORLDVIEWPROJMATRIX "g_WorldViewProj"
 #define	DIFFUSETEXTURE		"g_Texture"
 

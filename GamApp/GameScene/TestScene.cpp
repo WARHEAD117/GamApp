@@ -46,7 +46,7 @@ void TestScene::OnLoad()
 	mainCamera.Init();
 
 	//Create Entity
-	krisEntity.SetMeshFileName("Res\\Mesh\\car\\car25.X");
+	krisEntity.SetMeshFileName("Res\\Mesh\\kris_sheva\\kris.X");
 	shevaEntity.SetMeshFileName("Res\\Mesh\\kris_sheva\\sheva.X");
 	//testEntity.SetMeshFileName("Res\\Mesh\\car\\car25.X");
 	//testEntity.SetMeshFileName("Res\\Mesh\\tree3\\tree3.X");

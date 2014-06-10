@@ -1,7 +1,9 @@
 #include "RenderPipe.h"
 #include "D3D9Device.h"
 #include "CommonUtil/Input/Input.h"
+
 #include "RenderUtil/EffectParam.h"
+#include "Camera/CameraParam.h"
 
 struct VERTEX
 {
@@ -11,9 +13,13 @@ struct VERTEX
 #define D3DFVF_VERTEX (D3DFVF_XYZ|D3DFVF_TEX1)
 VERTEX vertices[4]; //选择框;
 LPDIRECT3DVERTEXBUFFER9		pBufferVex;
+D3DXMATRIX orthoWorld;
 D3DXMATRIX orthoView;
 D3DXMATRIX orthoProj;
-LPD3DXEFFECT deferredEffect;
+
+LPD3DXEFFECT deferredEffect; 
+LPD3DXEFFECT ssaoEffect;
+LPDIRECT3DTEXTURE9         m_pRandomNormal;
 
 RenderPipe::RenderPipe()
 {
@@ -73,6 +79,9 @@ RenderPipe::RenderPipe()
 	// 获得正交投影矩阵
 	D3DXMatrixOrthoOffCenterLH(&orthoProj, 0.0f, RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight, 0.0f, 0.0f, 1.0f);
 	D3DXMatrixOrthoLH(&orthoProj, RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight, 0.01f, 10000.0f);
+	//
+	D3DXMatrixIdentity(&orthoWorld);
+	D3DXMatrixTranslation(&orthoWorld, 0, 0, 0);
 
 	//=================================================
 	ID3DXBuffer* error = 0;
@@ -80,6 +89,20 @@ RenderPipe::RenderPipe()
 		NULL, &deferredEffect, &error))
 	{
 		MessageBox(GetForegroundWindow(), (char*)error->GetBufferPointer(), "Shader", MB_OK);
+		abort();
+	}
+
+	//=================================================
+ 	if (E_FAIL == ::D3DXCreateEffectFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "System\\SSAO.fx", NULL, NULL, D3DXSHADER_DEBUG,
+ 		NULL, &ssaoEffect, &error))
+ 	{
+ 		MessageBox(GetForegroundWindow(), (char*)error->GetBufferPointer(), "Shader", MB_OK);
+ 		abort();
+ 	}
+
+	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "System\\randomNormal.dds", &m_pRandomNormal))
+	{
+		MessageBox(GetForegroundWindow(), "","234", MB_OK);
 		abort();
 	}
 }
@@ -92,6 +115,56 @@ RenderPipe::~RenderPipe()
 	ClearRenderUtil();
 }
 
+void RenderPipe::RenderDiffuse()
+{
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pDIffuseSurface);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 0, 0, 0), 1.0f, 0);
+
+	for (int i = 0; i < mRenderUtilList.size(); ++i)
+	{
+		mRenderUtilList[i]->RenderDiffuse();
+	}
+}
+
+void RenderPipe::RenderNormalDepth()
+{
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pNormalDepthSurface);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 0, 0, 0), 1.0f, 0);
+
+	for (int i = 0; i < mRenderUtilList.size(); ++i)
+	{
+		mRenderUtilList[i]->RenderNormalDepth();
+	}
+}
+
+void RenderPipe::RenderPost()
+{
+	UINT numPasses = 0;
+	ssaoEffect->Begin(&numPasses, 0);
+	ssaoEffect->BeginPass(0);
+	
+	ssaoEffect->SetMatrix(WORLDVIEWPROJMATRIX, &orthoWorld);
+	D3DXMATRIX InvProj;
+	D3DXMatrixInverse(&InvProj, NULL, &RENDERDEVICE::Instance().ProjMatrix);
+	ssaoEffect->SetMatrix(INVPROJMATRIX, &InvProj);
+
+	ssaoEffect->SetTexture("g_NormalDepthBuffer", m_pNormalDepthTarget);
+	ssaoEffect->SetTexture("g_RandomNormal", m_pRandomNormal);
+
+	RENDERDEVICE::Instance().GetDiffuseEffect()->SetFloat("g_zNear", CameraParam::zNear);
+	RENDERDEVICE::Instance().GetDiffuseEffect()->SetFloat("g_zFar", CameraParam::zFar);
+
+	ssaoEffect->CommitChanges();
+
+	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, pBufferVex, 0, sizeof(VERTEX));
+	RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(D3DFVF_VERTEX);
+	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+	ssaoEffect->SetTexture(0, NULL);
+
+	ssaoEffect->EndPass();
+	ssaoEffect->End();
+}
+
 void RenderPipe::RenderAll()
 {
 	RENDERDEVICE::Instance().g_pD3DDevice->BeginScene();
@@ -101,59 +174,37 @@ void RenderPipe::RenderAll()
 
 	RENDERDEVICE::Instance().g_pD3DDevice->GetRenderTarget(0, &m_pOriSurface);
 
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pDIffuseSurface);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 0, 0, 0), 1.0f, 0);
-
-	for (int i = 0; i < mRenderUtilList.size(); ++i)
-	{
-		mRenderUtilList[i]->RenderDiffuse();
-	}
-
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pNormalDepthSurface);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 0, 0, 0), 1.0f, 0);
-
-	for (int i = 0; i < mRenderUtilList.size(); ++i)
-	{
-		mRenderUtilList[i]->RenderNormalDepth();
-	}
-
-	//================================================================================
+	RenderDiffuse();
+	
+	RenderNormalDepth();
 
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pOriSurface);
 
+	//ForwardRender();
+
+	DeferredRender();
+
+	RenderPost();
+
+	RENDERDEVICE::Instance().g_pD3DDevice->EndScene();
+	RENDERDEVICE::Instance().g_pD3DDevice->Present(0, 0, 0, 0);
+}
+
+void RenderPipe::ForwardRender()
+{
 	for (int i = 0; i < mRenderUtilList.size(); ++i)
 	{
 		mRenderUtilList[i]->Render();
 	}
+}
 
-
-	D3DXMATRIX m_OriViewMatrix;
-	D3DXMATRIX m_OriProjMatrix;
-	D3DXMATRIX m_OriWordMatrix;
-	// 获得原始状态
-	RENDERDEVICE::Instance().g_pD3DDevice->GetTransform(D3DTS_VIEW, &m_OriViewMatrix);
-	RENDERDEVICE::Instance().g_pD3DDevice->GetTransform(D3DTS_PROJECTION, &m_OriProjMatrix);
-	RENDERDEVICE::Instance().g_pD3DDevice->GetTransform(D3DTS_WORLD, &m_OriWordMatrix);
-	// 设置单位摄影矩阵及正交投影矩阵;
-	//RENDERDEVICE::Instance().g_pD3DDevice->SetTransform(D3DTS_WORLD, &orthoView);
-	//RENDERDEVICE::Instance().g_pD3DDevice->SetTransform(D3DTS_VIEW, &orthoView);
-	//RENDERDEVICE::Instance().g_pD3DDevice->SetTransform(D3DTS_PROJECTION, &orthoProj);
-
-
+void RenderPipe::DeferredRender()
+{
 	UINT numPasses = 0;
 	deferredEffect->Begin(&numPasses, 0);
 	deferredEffect->BeginPass(0);
 
-	D3DXMATRIX  matWorld;
-	D3DXMatrixIdentity(&matWorld);
-	D3DXMatrixTranslation(&matWorld, 0, 0, 0);
-	//ssRENDERDEVICE::Instance().g_pD3DDevice->SetTransform(D3DTS_PROJECTION, &matWorld);
-
-	
-	D3DXMATRIX worldViewProj;;
-	worldViewProj = orthoView * orthoProj;
-	worldViewProj = worldViewProj * matWorld;
-	deferredEffect->SetMatrix(WORLDVIEWPROJMATRIX, &matWorld);
+	deferredEffect->SetMatrix(WORLDVIEWPROJMATRIX, &orthoWorld);
 
 	deferredEffect->SetTexture("g_DiffuseBuffer", m_pDiffuseTarget);
 	deferredEffect->SetTexture("g_NormalDepthBuffer", m_pNormalDepthTarget);
@@ -164,19 +215,9 @@ void RenderPipe::RenderAll()
 	RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(D3DFVF_VERTEX);
 	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 	deferredEffect->SetTexture(0, NULL);
-	
+
 	deferredEffect->EndPass();
 	deferredEffect->End();
-
-	// 还原原始摄影矩阵及投影矩阵
-	RENDERDEVICE::Instance().g_pD3DDevice->SetTransform(D3DTS_VIEW, &m_OriViewMatrix);
-	RENDERDEVICE::Instance().g_pD3DDevice->SetTransform(D3DTS_PROJECTION, &m_OriProjMatrix);
-	RENDERDEVICE::Instance().g_pD3DDevice->SetTransform(D3DTS_WORLD, &m_OriWordMatrix);
-
-	//= == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == =
-
-	RENDERDEVICE::Instance().g_pD3DDevice->EndScene();
-	RENDERDEVICE::Instance().g_pD3DDevice->Present(0, 0, 0, 0);
 }
 
 void RenderPipe::PushRenderUtil(RenderUtil* const renderUtil)

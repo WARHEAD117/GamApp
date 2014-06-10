@@ -27,7 +27,7 @@ OutputVS VShader(float4 posL		: POSITION0,
 	//最终输出的顶点位置（经过世界、观察、投影矩阵变换）
 	outVS.posWVP = mul(posL, g_WorldViewProj);
 	float4 pos = mul(posL, g_World);
-	pos = mul(posL, g_View);
+	pos = mul(pos, g_View);
 	outVS.Depth = pos.z / (g_zFar - g_zNear);
 
 	outVS.normalW = mul(normalL, g_World);

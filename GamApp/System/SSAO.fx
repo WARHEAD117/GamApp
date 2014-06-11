@@ -9,7 +9,7 @@ matrix		g_InverseProj;
 float		g_zNear = 1.0f;
 float		g_zFar = 1000.0f;
 
-float4		aoParam = float4(0.1, 0.1, 5.0, 15.0);
+float4		aoParam = float4(1, 2, 5.0, 15.0);
 
 texture		g_NormalDepthBuffer;
 texture		g_RandomNormal;
@@ -52,37 +52,32 @@ OutputVS VShader(float4 posL       : POSITION0,
 	return outVS;
 }
 
-float doAO(float2 uv, float2 rand, float2 radius, float3 pos, int i)
+float doAO(float2 uv, float2 rand, float2 radius, float3 pos, float3 n)
 {
-	float intensity = aoParam.z;
-	float scale = aoParam.w;
+		float intensity = aoParam.z;
+		float scale = aoParam.w;
 
-	//float Dis = pow(length(pos), 2);
+		//float Dis = pow(length(pos), 2);
 
-	float2 randUV = uv + rand*radius;// *Dis;
+		float2 randUV = uv + radius * rand;
 		float4 NormalDepth = tex2D(g_sampleNormalDepth, randUV);
 
-	// 从视口坐标中获取 x/w 和 y/w  
-	float x = randUV.x * 2 - 1;
-	float y = (1 - randUV.y) * 2 - 1;
-	float4 vProjectedPos = float4(x, y, NormalDepth.w, 1.0f);
-		// 通过转置的投影矩阵进行转换到视图空间  
-		float4 vPositionVS = mul(vProjectedPos, g_InverseProj);
-		float3 ViewPos = vPositionVS.xyz / vPositionVS.w;
-		float3 samplePos = ViewPos;
+		// 从视口坐标中获取 x/w 和 y/w  
+		float x = randUV.x * 2 - 1;
+		float y = (1 - randUV.y) * 2 - 1;
+		float4 vProjectedPos = float4(x, y, NormalDepth.w, 1.0f);
+			// 通过转置的投影矩阵进行转换到视图空间  
+			float4 vPositionVS = mul(vProjectedPos, g_InverseProj);
+			float3 ViewPos = vPositionVS.xyz / vPositionVS.w;
+			float3 samplePos = ViewPos;
 
-		float3 diff = samplePos - pos;
-		float3 v = normalize(samplePos - pos);
-		float D = length(diff) / pos.z * 100;// *scale;
+			float3 diff = samplePos - pos;
+			float3 v = normalize(samplePos - pos);
+			float D = length(diff) * pos.z *100;// *scale;
 
-	
 
-	float3 normal = normalize(NormalDepth.xyz* 2.0f - 1.0f);
-
-		
-		
-	float ao = max(0.0, dot(normal, v) - 0.1f)* (1.0f / (1.0f + D)) * intensity;
-	return ao;
+		float ao = (1.0f / (1.0f + D));// *intensity;
+		return ao;
 }
 
 float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
@@ -113,25 +108,28 @@ float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
 	float2 rand = normalize(normal);
 	rand = rand * 2 - 1;
 
+	float3 n = normalize(NormalDepth.xyz * 2.0f - 1.0f);
+
 	float ao = 0;
 
 	for (int i = 0; i<8; i++)
 	{
-		ao += doAO(TexCoord, rand, vec[i] * d1, pos, i);
+		ao += doAO(TexCoord, rand, vec[i] * d1, pos, n);
 	}
 
 	for (int i = 0; i<8; i++)
 	{
-		ao += doAO(TexCoord, rand, vec[i] * d2, pos, i);
+		ao += doAO(TexCoord, rand, vec[i] * d2, pos, n);
 	}
 
 	ao = ao / 16;
 
-	if (ao < 0)
-		ao = 0;
+	//if (ao < 0)
+	//	ao = 0;
 
 	float finalAO = ao;
 	float4 finalColor = float4(finalAO, finalAO, finalAO, 1.0f);
+
 
 	return finalColor;// float4(1.0f, 0.0f, 0.0f, 1.0f);
 }

@@ -93,7 +93,7 @@ RenderPipe::RenderPipe()
 	}
 
 	//=================================================
- 	if (E_FAIL == ::D3DXCreateEffectFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "System\\SSAO.fx", NULL, NULL, D3DXSHADER_DEBUG,
+ 	if (E_FAIL == ::D3DXCreateEffectFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "System\\SSAONew.fx", NULL, NULL, D3DXSHADER_DEBUG,
  		NULL, &ssaoEffect, &error))
  	{
  		MessageBox(GetForegroundWindow(), (char*)error->GetBufferPointer(), "Shader", MB_OK);
@@ -142,7 +142,7 @@ void RenderPipe::RenderPost()
 	UINT numPasses = 0;
 	ssaoEffect->Begin(&numPasses, 0);
 	ssaoEffect->BeginPass(0);
-	
+
 	ssaoEffect->SetMatrix(WORLDVIEWPROJMATRIX, &orthoWorld);
 	D3DXMATRIX InvProj;
 	D3DXMatrixInverse(&InvProj, NULL, &RENDERDEVICE::Instance().ProjMatrix);

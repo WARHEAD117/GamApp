@@ -261,5 +261,8 @@
     <FxCompile Include="System\SSAO.fx">
       <Filter>System</Filter>
     </FxCompile>
+    <FxCompile Include="System\SSAONew.fx">
+      <Filter>System</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

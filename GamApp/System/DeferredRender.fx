@@ -58,8 +58,8 @@ float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
 	//计算环境光
 	float4 Ambient = float4(0.2f, 0.2f, 0.2f, 1.0f);  //材质可理解为反射系数
 
-	float3 NormalW = normalize(NormalDepth.xyz);
-	float3 ToEyeDirW = normalize(float3(1, 0, 0));
+	float3 NormalV = normalize(NormalDepth.xyz * 2.0f - 1.0f);
+	float3 ToEyeDirv = normalize(float3(0, 0, -1));
 	float3 LightDir = float3(-1.0f, -1.0f, -1.0f);
 	//float4 LIGHTDIR[4] = { float4(-1.0f, -1.0f, -1.0f, 1.0f), float4(-1.0f, -1.0f, 1.0f, 1.0f), float4(-1.0f, 1.0f, -1.0f, 1.0f), float4(-1.0f, 1.0f, 1.0f, 1.0f) };
 	//float4 lightSpecular[4] = { float4(1.0f, 0.0f, 0.0f, 1.0f), float4(0.0f, 1.0f, 0.0f, 1.0f), float4(0.0f, 0.0f, 1.0f, 1.0f), float4(1.0f, 1.0f, 1.0f, 1.0f) };
@@ -73,13 +73,13 @@ float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
 	float3 LIGHTDIR3 = float3(-2.0f, -2.0f, 2.0f);
 	float4 lightSpecular3 = float4(0.0f, 0.0f, 1.0f, 1.0f);
 
-	float3 LIGHTDIR4 = float3(0.0f, -0.0f, -1.0f);
+	float3 LIGHTDIR4 = float3(0.0f, -0.0f, 1.0f);
 	float4 lightSpecular4 = float4(1.0f, 1.0f, 1.0f, 1.0f);
 
 	float4 DiffuseLight = float4(0.0f, 0.0f, 0.0f, 1.0f);
 	float4	Specular = float4(0.0f, 0.0f, 0.0f, 1.0f);
-	for (int i = 0; i < 4; i++)
-	//int i = 3;
+	//for (int i = 0; i < 4; i++)
+	int i = 3;
 	{
 		float3 L;
 		float4 LS;
@@ -106,20 +106,20 @@ float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
 
 		L = normalize(-L);
 		//计算漫反射
-		float DiffuseRatio = max(dot(L, NormalW), 0);
+		float DiffuseRatio = max(dot(L, NormalV), 0);
 		DiffuseLight += LS * float4(1.0f, 1.0f, 1.0f, 1.0f) * DiffuseRatio;
 
 		//计算镜面反射
 
 		//计算半角向量
-		float3 H = normalize(L + ToEyeDirW);
+		float3 H = normalize(L + ToEyeDirv);
 
 		//Phong光照
 		//float4 Reflect = normalize(float4(g_LightDir.xyz - 2 * DiffuseRatio * NormalW, 1.0f));
 		//float SpecularRatio = max(dot(Reflect, ToEyeDirW), 0);
 
 		//Blinn-Phong光照
-		float SpecularRatio = max(dot(NormalW, H), 0);
+		float SpecularRatio = max(dot(NormalV, H), 0);
 		float PoweredSpecular = pow(SpecularRatio, 6);
 		Specular += LS * PoweredSpecular;
 

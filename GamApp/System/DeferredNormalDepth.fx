@@ -31,7 +31,9 @@ OutputVS VShader(float4 posL		: POSITION0,
 	outVS.posWV = pos;
 
 	float3 normalWorld = mul(normalL, g_World);
-	outVS.normalW = (mul(normalWorld, g_View) + float3(1.0f,1.0f,1.0f))/2;
+	outVS.normalW = mul(normalWorld, g_View);
+
+	//outVS.normalW = mul(normalL, g_WorldViewProj);
 
 	outVS.toEyeDirW = g_ViewPos.xyz - mul(posL, g_World).xyz;
 	return outVS;
@@ -43,6 +45,7 @@ float4 PShader(float3 NormalW			: NORMAL0,
 				float3 posWV : TEXCOORD1) : COLOR
 {
 	NormalW = normalize(NormalW);
+	NormalW = (NormalW + float3(1.0f, 1.0f, 1.0f)) / 2;
 	ToEyeDirW = normalize(ToEyeDirW);
 
 	float Depth = posWV.z / g_zFar;

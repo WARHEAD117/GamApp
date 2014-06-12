@@ -264,5 +264,8 @@
     <FxCompile Include="System\SSAONew.fx">
       <Filter>System</Filter>
     </FxCompile>
+    <FxCompile Include="System\DeferredPosition.fx">
+      <Filter>System</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

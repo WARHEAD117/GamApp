@@ -12,6 +12,7 @@ public:
 	void InitD3DDevice(HWND hWnd);
 	LPD3DXEFFECT GetDefaultEffect();
 	LPD3DXEFFECT GetDiffuseEffect();
+	LPD3DXEFFECT GetPositionEffect();
 	LPD3DXEFFECT GetNormalDepthEffect();
 	LPDIRECT3DTEXTURE9 GetDefaultTexture();
 	Material* GetDefaultMaterial();
@@ -24,6 +25,7 @@ public:
 	LPD3DXEFFECT							defaultEffect;
 	LPD3DXEFFECT							diffuseEffect;
 	LPD3DXEFFECT							normalDepthEffect;
+	LPD3DXEFFECT							positionEffect;
 	LPDIRECT3DTEXTURE9						defaultTexture;
 
 	D3DXMATRIX								ViewMatrix;

@@ -29,6 +29,7 @@ public:
 	void	Render();
 	void	RenderNormalDepth();
 	void	RenderDiffuse();
+	void	RenderPosition();
 
 	void	SetVertexBuffer(const LPDIRECT3DVERTEXBUFFER9& vertexBuffer);
 	void	SetIndexBuffer(const LPDIRECT3DINDEXBUFFER9& indexBuffer);

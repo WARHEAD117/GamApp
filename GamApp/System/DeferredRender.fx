@@ -8,6 +8,8 @@ matrix		g_mWorldInv;
 texture		g_DiffuseBuffer;
 texture		g_NormalDepthBuffer;
 
+texture		g_AOBuffer;
+
 sampler2D g_sampleDiffuse =
 sampler_state
 {
@@ -21,6 +23,15 @@ sampler2D g_sampleNormalDepth =
 sampler_state
 {
 	Texture = <g_NormalDepthBuffer>;
+	MinFilter = Linear;
+	MagFilter = Linear;
+	MipFilter = Linear;
+};
+
+sampler2D g_sampleAO =
+sampler_state
+{
+	Texture = <g_AOBuffer>;
 	MinFilter = Linear;
 	MagFilter = Linear;
 	MipFilter = Linear;
@@ -52,13 +63,12 @@ float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
 	//纹理采样
 	float4 Texture = tex2D(g_sampleDiffuse, TexCoord);
 	float4 NormalDepth = tex2D(g_sampleNormalDepth, TexCoord);
-
+	float3 NormalV = normalize(NormalDepth.xyz * 2.0f - 1.0f);
 
 	//DeferredRender
 	//计算环境光
 	float4 Ambient = float4(0.2f, 0.2f, 0.2f, 1.0f);  //材质可理解为反射系数
 
-	float3 NormalV = normalize(NormalDepth.xyz * 2.0f - 1.0f);
 	float3 ToEyeDirv = normalize(float3(0, 0, -1));
 	float3 LightDir = float3(-1.0f, -1.0f, -1.0f);
 	//float4 LIGHTDIR[4] = { float4(-1.0f, -1.0f, -1.0f, 1.0f), float4(-1.0f, -1.0f, 1.0f, 1.0f), float4(-1.0f, 1.0f, -1.0f, 1.0f), float4(-1.0f, 1.0f, 1.0f, 1.0f) };
@@ -125,8 +135,9 @@ float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
 
 	}
 
+	float4 AO = tex2D(g_sampleAO, TexCoord);
 	//混合光照和纹理
-	float4 finalColor = Ambient * Texture +DiffuseLight *Texture;// DiffuseLight *Texture + Specular + ;
+	float4 finalColor = AO * (Ambient * Texture + DiffuseLight *Texture);// DiffuseLight *Texture + Specular + ;
 	//输出颜色
 	return finalColor;// float4(1.0f, 0.0f, 0.0f, 1.0f);
 }

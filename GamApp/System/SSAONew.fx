@@ -7,16 +7,16 @@ matrix		g_mWorldInv;
 matrix		g_InverseProj;
 
 float		g_zNear = 1.0f;
-float		g_zFar = 1000.0f;
+float		g_zFar = 100.0f;
 
-float4		aoParam = float4(1, 2, 5.0, 15.0);
 float		g_intensity = 1;
 float		g_scale = 1;
 float		g_bias = 0;
 float		g_sample_rad = 0.03;
 
 texture		g_NormalDepthBuffer;
-texture		g_RandomNormal;
+texture		g_RandomNormal; 
+texture		g_PositionBuffer;
 
 sampler2D g_sampleNormalDepth =
 sampler_state
@@ -31,6 +31,15 @@ sampler2D g_sampleRandomNormal =
 sampler_state
 {
 	Texture = <g_RandomNormal>;
+	MinFilter = Linear;
+	MagFilter = Linear;
+	MipFilter = Linear;
+};
+
+sampler2D g_samplePosition =
+sampler_state
+{
+	Texture = <g_PositionBuffer>;
 	MinFilter = Linear;
 	MagFilter = Linear;
 	MipFilter = Linear;
@@ -60,7 +69,7 @@ OutputVS VShader(float4 posL       : POSITION0,
 
 float3 getPosition(in float2 uv)
 {
-	//return tex2D(g_buffer_pos, uv).xyz;
+	return tex2D(g_samplePosition, uv).xyz;
 
 	//纹理采样
 	float4 NormalDepth = tex2D(g_sampleNormalDepth, uv);
@@ -71,7 +80,9 @@ float3 getPosition(in float2 uv)
 	float4 vProjectedPos = float4(x, y, NormalDepth.w, 1.0f);
 	// 通过转置的投影矩阵进行转换到视图空间  
 	float4 vPositionVS = mul(vProjectedPos, g_InverseProj);
-	return vPositionVS.xyz / vPositionVS.w;
+	//return vPositionVS.xyz / vPositionVS.w;
+	vPositionVS.z = NormalDepth.w * g_zFar;
+	return vPositionVS.xyz;
 }
 
 
@@ -95,7 +106,9 @@ float doAmbientOcclusion(in float2 tcoord, in float2 uv, in float3 p, in float3 
 }
 
 float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
-{
+{ 
+	//return tex2D(g_samplePosition, TexCoord);
+
 	const float2 vec[4] = { float2(1, 0), float2(-1, 0),float2(0, 1), float2(0, -1) };
 	
 	float3 p = getPosition(TexCoord);
@@ -118,12 +131,12 @@ float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
 		ao += doAmbientOcclusion(TexCoord, coord1*0.75, p, n);
 		ao += doAmbientOcclusion(TexCoord, coord2, p, n);
 	}
-	
+
 	ao /= (float)iterations*4.0;
-	
 	//**END**//  
 	//Do stuff here with your occlusion value “ao”: modulate ambient lighting,  write it to a buffer for later //use, etc. 
-	return float4(1-ao, 1-ao, 1-ao, 1.0f);
+
+	return float4(1 - ao, 1 - ao, 1 - ao, 1.0f);
 }
 
 technique SSAO

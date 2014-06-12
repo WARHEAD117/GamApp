@@ -158,6 +158,33 @@ void RenderUtil::RenderDiffuse()
 	RENDERDEVICE::Instance().g_pD3DDevice->SetTexture(0, NULL);
 }
 
+void RenderUtil::RenderPosition()
+{
+	BuildEffectInfo();
+
+	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, mVertexBuffer, 0, D3DXGetFVFVertexSize(mFVF));
+	RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(mFVF);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetIndices(mIndexBuffer);
+	for (DWORD i = 0; i < mSubMeshList.size(); i++)
+	{
+		RENDERDEVICE::Instance().GetPositionEffect()->SetMatrix(WORLDVIEWPROJMATRIX, &mWorldViewProj);
+		RENDERDEVICE::Instance().GetPositionEffect()->SetMatrix(VIEWMATRIX, &mViewMat);
+		RENDERDEVICE::Instance().GetPositionEffect()->SetMatrix(WORLDMATRIX, &mWorldMat);
+
+		UINT nPasses = 0;
+		HRESULT r1 = RENDERDEVICE::Instance().GetPositionEffect()->Begin(&nPasses, 0);
+		HRESULT r2 = RENDERDEVICE::Instance().GetPositionEffect()->BeginPass(0);
+
+		RENDERDEVICE::Instance().GetPositionEffect()->CommitChanges();
+
+		RENDERDEVICE::Instance().g_pD3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0,
+			mSubMeshList[i].vertexCount, mSubMeshList[i].indexStart, mSubMeshList[i].faceCount);
+
+		RENDERDEVICE::Instance().GetPositionEffect()->EndPass();
+		RENDERDEVICE::Instance().GetPositionEffect()->End();
+	}
+}
+
 void RenderUtil::SetVertexBuffer(const LPDIRECT3DVERTEXBUFFER9& vertexBuffer)
 {
 	mVertexBuffer = vertexBuffer;

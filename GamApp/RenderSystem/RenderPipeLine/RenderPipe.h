@@ -15,8 +15,9 @@ public:
 
 	void	RenderDiffuse();
 	void	RenderNormalDepth();
+	void	RenderPosition();
 	void	DeferredRender();
-	void	RenderPost();
+	void	RenderAO();
 
 	void	RenderAll();
 	
@@ -24,6 +25,9 @@ public:
 
 	LPDIRECT3DTEXTURE9	m_pDiffuseTarget;
 	LPDIRECT3DTEXTURE9	m_pNormalDepthTarget;
+	LPDIRECT3DTEXTURE9	m_pPositionTarget;
+
+	LPDIRECT3DTEXTURE9	m_pAOTarget;
 
 private:
 	std::vector<RenderUtil*> mRenderUtilList;
@@ -32,6 +36,8 @@ private:
 
 	LPDIRECT3DSURFACE9	m_pDIffuseSurface;
 	LPDIRECT3DSURFACE9	m_pNormalDepthSurface;
+	LPDIRECT3DSURFACE9	m_pPositionSurface;
+	LPDIRECT3DSURFACE9	m_pAOSurface;
 
 	LPDIRECT3DSURFACE9	m_pOriSurface;
 };

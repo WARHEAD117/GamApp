@@ -22,9 +22,9 @@ sampler2D g_sampleNormalDepth =
 sampler_state
 {
 	Texture = <g_NormalDepthBuffer>;
-	MinFilter = Linear;
-	MagFilter = Linear;
-	MipFilter = Linear;
+	MinFilter = Point;
+	MagFilter = Point;
+	MipFilter = Point;
 };
 
 sampler2D g_sampleRandomNormal =
@@ -67,24 +67,25 @@ OutputVS VShader(float4 posL       : POSITION0,
 
 
 
-float3 getPosition(in float2 uv)
+float3 getPosition2(in float2 uv)
 {
 	return tex2D(g_samplePosition, uv).xyz;
+}
 
+float3 getPosition1(in float2 uv)
+{
 	//纹理采样
 	float4 NormalDepth = tex2D(g_sampleNormalDepth, uv);
 
 	// 从视口坐标中获取 x/w 和 y/w  
-	float x = uv.x * 2 - 1;
-	float y = (1 - uv.y) * 2 - 1;
+	float x = uv.x * 2.0f - 1;
+	float y = (1 - uv.y) * 2.0f - 1.0f;
 	float4 vProjectedPos = float4(x, y, NormalDepth.w, 1.0f);
 	// 通过转置的投影矩阵进行转换到视图空间  
 	float4 vPositionVS = mul(vProjectedPos, g_InverseProj);
-	//return vPositionVS.xyz / vPositionVS.w;
-	vPositionVS.z = NormalDepth.w * g_zFar;
-	return vPositionVS.xyz;
+	float3 vPositionVS3 = vPositionVS.xyz / vPositionVS.w;
+	return vPositionVS3.xyz;
 }
-
 
 float3 getNormal(in float2 uv)
 {
@@ -96,47 +97,34 @@ float2 getRandom(in float2 uv)
 	return normalize(tex2D(g_sampleRandomNormal, /*g_screen_size*/float2(800,600) * uv / /*random_size*/float2(256,256)).xy * 2.0f - 1.0f);
 }
 
-
-float doAmbientOcclusion(in float2 tcoord, in float2 uv, in float3 p, in float3 cnorm)
-{
-	float3 diff = getPosition(tcoord + uv) - p;
-	const float3 v = normalize(diff);
-	const float d = length(diff)*g_scale;
-	return max(0.0, dot(cnorm, v) - g_bias)*(1.0 / (1.0 + d))*g_intensity;
-}
-
 float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
 { 
+	float z1 = getPosition1(TexCoord).z;
+	float z2 = getPosition2(TexCoord).z;
+
+	float x1 = getPosition1(TexCoord).x;
+	float x2 = getPosition2(TexCoord).x;
+
+	float y1 = getPosition1(TexCoord).y;
+	float y2 = getPosition2(TexCoord).y;
+
+	float3 p1 = getPosition2(TexCoord);
+	float3 p2 = getPosition2(TexCoord);
+
+	//return float4(p1, 1.0f);
+	return float4(p2, 1.0f);
+
 	//return tex2D(g_samplePosition, TexCoord);
+	float dz = abs(z1 - z2);
+	float dx = abs(x1 - x2);
+	float dy = abs(y1 - y2);
 
-	const float2 vec[4] = { float2(1, 0), float2(-1, 0),float2(0, 1), float2(0, -1) };
-	
-	float3 p = getPosition(TexCoord);
-		float3 n = getNormal(TexCoord);
-		float2 rand = getRandom(TexCoord);
-	float ao = 0.0f;
-	float rad = g_sample_rad / p.z;
+	if (dx >= 0.03)
+		return float4(1, 0, 0, 1.0f);
+	else
+		return float4(0, 0, 1, 1.0f);
 
-	//**SSAO Calculation**// 
-	int iterations = 4;
-	
-	for (int j = 0; j < iterations; ++j)
-	{
-		float2 coord1 = reflect(vec[j], rand)*rad;
-			
-		float2 coord2 = float2(coord1.x*0.707 - coord1.y*0.707, coord1.x*0.707 + coord1.y*0.707);
-
-		ao += doAmbientOcclusion(TexCoord, coord1*0.25, p, n);
-		ao += doAmbientOcclusion(TexCoord, coord2*0.5, p, n);
-		ao += doAmbientOcclusion(TexCoord, coord1*0.75, p, n);
-		ao += doAmbientOcclusion(TexCoord, coord2, p, n);
-	}
-
-	ao /= (float)iterations*4.0;
-	//**END**//  
-	//Do stuff here with your occlusion value “ao”: modulate ambient lighting,  write it to a buffer for later //use, etc. 
-
-	return float4(1 - ao, 1 - ao, 1 - ao, 1.0f);
+	return float4(dy, dy, dy, 1.0f);
 }
 
 technique SSAO

@@ -52,10 +52,12 @@ private:
 
 	std::vector<Material*>		mMaterialList;
 
-	D3DXMATRIX					mViewProj;
-	D3DXMATRIX					mWorldViewProj;
 	D3DXMATRIX					mWorldMat;
 	D3DXMATRIX					mViewMat;
+	D3DXMATRIX					mProjMat;
+	D3DXMATRIX					mWorldView;
+	D3DXMATRIX					mViewProj;
+	D3DXMATRIX					mWorldViewProj;
 
 	Entity*						mOwner;
 private:

@@ -105,7 +105,7 @@ RenderPipe::RenderPipe()
 	}
 
 	//=================================================
- 	if (E_FAIL == ::D3DXCreateEffectFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "System\\SSAONew.fx", NULL, NULL, D3DXSHADER_DEBUG,
+ 	if (E_FAIL == ::D3DXCreateEffectFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "System\\SSAO.fx", NULL, NULL, D3DXSHADER_DEBUG,
  		NULL, &ssaoEffect, &error))
  	{
  		MessageBox(GetForegroundWindow(), (char*)error->GetBufferPointer(), "Shader", MB_OK);
@@ -191,9 +191,7 @@ void RenderPipe::RenderAO()
 	ssaoEffect->BeginPass(0);
 
 	ssaoEffect->SetMatrix(WORLDVIEWPROJMATRIX, &orthoWorld);
-	D3DXMATRIX InvProj;
-	D3DXMatrixInverse(&InvProj, NULL, &RENDERDEVICE::Instance().ProjMatrix);
-	ssaoEffect->SetMatrix(INVPROJMATRIX, &InvProj);
+	ssaoEffect->SetMatrix(INVPROJMATRIX, &RENDERDEVICE::Instance().InvProjMatrix);
 
 	ssaoEffect->SetTexture("g_NormalDepthBuffer", m_pNormalDepthTarget);
 	ssaoEffect->SetTexture("g_RandomNormal", m_pRandomNormal);
@@ -266,11 +264,14 @@ void RenderPipe::DeferredRender()
 	deferredEffect->BeginPass(0);
 
 	deferredEffect->SetMatrix(WORLDVIEWPROJMATRIX, &orthoWorld);
+	deferredEffect->SetMatrix(INVPROJMATRIX, &RENDERDEVICE::Instance().InvProjMatrix);
 
 	deferredEffect->SetTexture("g_DiffuseBuffer", m_pDiffuseTarget);
 	deferredEffect->SetTexture("g_NormalDepthBuffer", m_pNormalDepthTarget);
-
 	deferredEffect->SetTexture("g_AOBuffer", m_pAOTarget);
+	
+	deferredEffect->SetFloat("g_zNear", CameraParam::zNear);
+	deferredEffect->SetFloat("g_zFar", CameraParam::zFar);
 
 	deferredEffect->CommitChanges();
 
@@ -298,7 +299,8 @@ void RenderPipe::RenderAll()
 	
 	RenderNormalDepth();
 
-	RenderPosition();
+	//位置缓冲可以通过深度重建，但是如果需要较高精度的时候，可以考虑渲染位置图
+	//RenderPosition();
 
 	//ForwardRender();
 

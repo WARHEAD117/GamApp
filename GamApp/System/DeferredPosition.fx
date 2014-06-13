@@ -1,6 +1,7 @@
 matrix		g_World;
 matrix		g_View;
 matrix		g_Proj;
+matrix		g_WorldView;
 matrix		g_ViewProj;
 matrix		g_WorldViewProj;
 matrix		g_mWorldInv;
@@ -23,8 +24,7 @@ OutputVS VShader(float4 posL		: POSITION0)
 
 	//最终输出的顶点位置（经过世界、观察、投影矩阵变换）
 	outVS.posWVP = mul(posL, g_WorldViewProj);
-	float4 pos = mul(posL, g_World);
-	outVS.posView = mul(pos, g_View);
+	outVS.posView = mul(posL, g_WorldView);
 
 	return outVS;
 }

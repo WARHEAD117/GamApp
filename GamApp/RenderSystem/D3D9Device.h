@@ -30,6 +30,8 @@ public:
 
 	D3DXMATRIX								ViewMatrix;
 	D3DXMATRIX								ProjMatrix;
+	D3DXMATRIX								InvProjMatrix;
+
 	D3DXVECTOR3								ViewPosition;
 };
 

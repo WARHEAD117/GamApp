@@ -19,11 +19,14 @@ RenderUtil::~RenderUtil()
 void RenderUtil::BuildEffectInfo()
 {
 	mWorldMat = mOwner->GetWorldTransform();
-	D3DXMATRIX view = RENDERDEVICE::Instance().ViewMatrix;
-	D3DXMATRIX proj = RENDERDEVICE::Instance().ProjMatrix;
-	mViewProj = view * proj;
-	mWorldViewProj = mWorldMat * mViewProj;
-	mViewMat = view;
+	mViewMat = RENDERDEVICE::Instance().ViewMatrix;
+	mProjMat = RENDERDEVICE::Instance().ProjMatrix;
+	
+	mWorldView		= mWorldMat * mViewMat;
+	mViewProj		= mViewMat * mProjMat;
+	mWorldViewProj	= mWorldMat * mViewProj;
+	
+	
 }
 
 void RenderUtil::SetlightInfo(LPD3DXEFFECT effect)
@@ -71,7 +74,7 @@ void RenderUtil::Render()
 		}
 		else
 		{
-			mMaterialList[i]->effect->SetTexture(DIFFUSETEXTURE, NULL);
+			mMaterialList[i]->effect->SetTexture(DIFFUSETEXTURE, RENDERDEVICE::Instance().GetDefaultTexture());
 		}
 
 		SetlightInfo(mMaterialList[i]->effect);
@@ -98,9 +101,7 @@ void RenderUtil::RenderNormalDepth()
 	for (DWORD i = 0; i < mSubMeshList.size(); i++)
 	{
 		RENDERDEVICE::Instance().GetNormalDepthEffect()->SetMatrix(WORLDVIEWPROJMATRIX, &mWorldViewProj);
-		RENDERDEVICE::Instance().GetNormalDepthEffect()->SetMatrix(VIEWPROJMATRIX, &mViewProj);
-		RENDERDEVICE::Instance().GetNormalDepthEffect()->SetMatrix(WORLDMATRIX, &mWorldMat);
-		RENDERDEVICE::Instance().GetNormalDepthEffect()->SetMatrix(VIEWMATRIX, &mViewMat);
+		RENDERDEVICE::Instance().GetNormalDepthEffect()->SetMatrix(WORLDVIEWMATRIX, &mWorldView);
 		RENDERDEVICE::Instance().GetNormalDepthEffect()->SetFloat("g_zNear", CameraParam::zNear);
 		RENDERDEVICE::Instance().GetNormalDepthEffect()->SetFloat("g_zFar", CameraParam::zFar);
 
@@ -130,8 +131,6 @@ void RenderUtil::RenderDiffuse()
 	for (DWORD i = 0; i < mSubMeshList.size(); i++)
 	{
 		RENDERDEVICE::Instance().GetDiffuseEffect()->SetMatrix(WORLDVIEWPROJMATRIX, &mWorldViewProj);
-		RENDERDEVICE::Instance().GetDiffuseEffect()->SetMatrix(VIEWPROJMATRIX, &mViewProj);
-		RENDERDEVICE::Instance().GetDiffuseEffect()->SetMatrix(WORLDMATRIX, &mWorldMat);
 		
 		UINT nPasses = 0;
 		HRESULT r1 = RENDERDEVICE::Instance().GetDiffuseEffect()->Begin(&nPasses, 0);
@@ -144,7 +143,7 @@ void RenderUtil::RenderDiffuse()
 		}
 		else
 		{
-			RENDERDEVICE::Instance().GetDiffuseEffect()->SetTexture(DIFFUSETEXTURE, NULL);
+			RENDERDEVICE::Instance().GetDiffuseEffect()->SetTexture(DIFFUSETEXTURE, RENDERDEVICE::Instance().GetDefaultTexture());
 		}
 
 		RENDERDEVICE::Instance().GetDiffuseEffect()->CommitChanges();
@@ -168,8 +167,7 @@ void RenderUtil::RenderPosition()
 	for (DWORD i = 0; i < mSubMeshList.size(); i++)
 	{
 		RENDERDEVICE::Instance().GetPositionEffect()->SetMatrix(WORLDVIEWPROJMATRIX, &mWorldViewProj);
-		RENDERDEVICE::Instance().GetPositionEffect()->SetMatrix(VIEWMATRIX, &mViewMat);
-		RENDERDEVICE::Instance().GetPositionEffect()->SetMatrix(WORLDMATRIX, &mWorldMat);
+		RENDERDEVICE::Instance().GetPositionEffect()->SetMatrix(WORLDVIEWMATRIX, &mWorldView);
 
 		UINT nPasses = 0;
 		HRESULT r1 = RENDERDEVICE::Instance().GetPositionEffect()->Begin(&nPasses, 0);

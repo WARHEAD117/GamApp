@@ -89,4 +89,5 @@ void Camera::BuildProjMtx()
 	D3DXMatrixPerspectiveFovLH(&mProj, mFOV, w / h, CameraParam::zNear, CameraParam::zFar);
 
 	RENDERDEVICE::Instance().ProjMatrix = mProj;
+	D3DXMatrixInverse(&RENDERDEVICE::Instance().InvProjMatrix, NULL, &mProj);
 }

@@ -4,9 +4,10 @@
 #define WORLDMATRIX			"g_World"
 #define VIEWMATRIX			"g_View"
 #define PROJECTIONMATRIX	"g_Proj"
+#define WORLDVIEWMATRIX		"g_WorldView"
 #define VIEWPROJMATRIX		"g_ViewProj"
-#define INVPROJMATRIX		"g_InverseProj"
 #define WORLDVIEWPROJMATRIX "g_WorldViewProj"
+#define INVPROJMATRIX		"g_InverseProj"
 #define	DIFFUSETEXTURE		"g_Texture"
 
 #define	LIGHTDIRECTION		"g_LightDir"

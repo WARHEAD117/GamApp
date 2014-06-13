@@ -7,12 +7,16 @@ matrix		g_mWorldInv;
 matrix		g_InverseProj;
 
 float		g_zNear = 1.0f;
-float		g_zFar = 1000.0f;
+float		g_zFar = 100.0f;
 
-float4		aoParam = float4(1, 2, 5.0, 15.0);
+float		g_intensity = 1;
+float		g_scale = 1;
+float		g_bias = 0;
+float		g_sample_rad = 0.03;
 
 texture		g_NormalDepthBuffer;
-texture		g_RandomNormal;
+texture		g_RandomNormal; 
+texture		g_PositionBuffer;
 
 sampler2D g_sampleNormalDepth =
 sampler_state
@@ -27,6 +31,15 @@ sampler2D g_sampleRandomNormal =
 sampler_state
 {
 	Texture = <g_RandomNormal>;
+	MinFilter = Linear;
+	MagFilter = Linear;
+	MipFilter = Linear;
+};
+
+sampler2D g_samplePosition =
+sampler_state
+{
+	Texture = <g_PositionBuffer>;
 	MinFilter = Linear;
 	MagFilter = Linear;
 	MipFilter = Linear;
@@ -52,86 +65,84 @@ OutputVS VShader(float4 posL       : POSITION0,
 	return outVS;
 }
 
-float doAO(float2 uv, float2 rand, float2 radius, float3 pos, float3 n)
+float3 GetPosition(in float2 uv)
 {
-		float intensity = aoParam.z;
-		float scale = aoParam.w;
+	//使用positionBuffer来获取位置，精度较高，但是慢
+	//return tex2D(g_samplePosition, uv).xyz;
 
-		//float Dis = pow(length(pos), 2);
+	//使用深度重建位置信息，精度较低，误差在小数点后第二位出现，但是速度很好
+	//法线深度图采样
+	float4 NormalDepth = tex2D(g_sampleNormalDepth, uv);
 
-		float2 randUV = uv + radius * rand;
-		float4 NormalDepth = tex2D(g_sampleNormalDepth, randUV);
+	// 从视口坐标中获取 x/w 和 y/w  
+	float x = uv.x * 2.0f - 1;
+	float y = (1 - uv.y) * 2.0f - 1.0f;
+	//这里的z值是投影后的非线性深度
+	float4 vProjectedPos = float4(x, y, NormalDepth.w, 1.0f);
+	// 通过转置的投影矩阵进行转换到视图空间  
+	float4 vPositionVS = mul(vProjectedPos, g_InverseProj);
+	float3 vPositionVS3 = vPositionVS.xyz / vPositionVS.w;
+	return vPositionVS3.xyz;
+}
 
-		// 从视口坐标中获取 x/w 和 y/w  
-		float x = randUV.x * 2 - 1;
-		float y = (1 - randUV.y) * 2 - 1;
-		float4 vProjectedPos = float4(x, y, NormalDepth.w, 1.0f);
-			// 通过转置的投影矩阵进行转换到视图空间  
-			float4 vPositionVS = mul(vProjectedPos, g_InverseProj);
-			float3 ViewPos = vPositionVS.xyz / vPositionVS.w;
-			float3 samplePos = ViewPos;
+float3 getNormal(in float2 uv)
+{
+	return normalize(tex2D(g_sampleNormalDepth, uv).xyz * 2.0f - 1.0f);
+}
 
-			float3 diff = samplePos - pos;
-			float3 v = normalize(samplePos - pos);
-			float D = length(diff) * pos.z *100;// *scale;
+float2 getRandom(in float2 uv)
+{
+	return normalize(tex2D(g_sampleRandomNormal, /*g_screen_size*/float2(800,600) * uv / /*random_size*/float2(256,256)).xy * 2.0f - 1.0f);
+}
 
-
-		float ao = (1.0f / (1.0f + D));// *intensity;
-		return ao;
+//Maria SSAO
+float doAmbientOcclusion(in float2 tcoord, in float2 uv, in float3 p, in float3 cnorm)
+{
+	float3 diff = GetPosition(tcoord + uv) - p;
+	const float3 v = normalize(diff);
+	const float d = length(diff)*g_scale;
+	return max(0.0, dot(cnorm, v) - g_bias)*(1.0 / (1.0 + d))*g_intensity;
 }
 
 float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
 {
-	//纹理采样
-	float4 NormalDepth = tex2D(g_sampleNormalDepth, TexCoord);
+	const float2 vec[4] = { float2(1, 0), float2(-1, 0),float2(0, 1), float2(0, -1) };
 	
-	// 从视口坐标中获取 x/w 和 y/w  
-	float x = TexCoord.x * 2 - 1;
-	float y = (1 - TexCoord.y) * 2 - 1;
-	float4 vProjectedPos = float4(x, y, NormalDepth.w, 1.0f);
-	// 通过转置的投影矩阵进行转换到视图空间  
-	float4 vPositionVS = mul(vProjectedPos, g_InverseProj);
-	float3 ViewPos = vPositionVS.xyz / vPositionVS.w;
-	float3 pos = ViewPos;
+	//观察空间位置
+	float3 p = GetPosition(TexCoord);
 
-	float dis = g_zFar - g_zNear;
+	//深度重建的位置会有误差，最远处的误差会导致背景变灰，所以要消除影响
+	if (p.z > g_zFar - 0.1)
+		return float4(1, 1, 1, 1);
 
-	float2 vec[8] = { float2(1, 1), float2(1, -1), float2(-1, 1), float2(-1, -1), float2(0, 1.4f), float2(0, -1.4f), float2(1.4f, 0), float2(-1.4f, 0) };
-	float radius1 = aoParam.x;
-	float radius2 = aoParam.y;
-	float intensity = aoParam.z;
+	//观察空间法线
+	float3 n = getNormal(TexCoord);
+	
+	//随机法线
+	float2 rand = getRandom(TexCoord);
+	float ao = 0.0f;
+	float rad = g_sample_rad / p.z;
 
-	float d1 = radius1 / NormalDepth.w / dis;
-	float d2 = radius2 / NormalDepth.w / dis;
-
-	float4 normal = tex2D(g_sampleRandomNormal, TexCoord * float2(800,600) / float2(256, 256));
-	float2 rand = normalize(normal);
-	rand = rand * 2 - 1;
-
-	float3 n = normalize(NormalDepth.xyz * 2.0f - 1.0f);
-
-	float ao = 0;
-
-	for (int i = 0; i<8; i++)
+	//**SSAO Calculation**// 
+	int iterations = 4;
+	
+	for (int j = 0; j < iterations; ++j)
 	{
-		ao += doAO(TexCoord, rand, vec[i] * d1, pos, n);
+		float2 coord1 = reflect(vec[j], rand)*rad;
+			
+		float2 coord2 = float2(coord1.x*0.707 - coord1.y*0.707, coord1.x*0.707 + coord1.y*0.707);
+
+		ao += doAmbientOcclusion(TexCoord, coord1*0.25, p, n);
+		ao += doAmbientOcclusion(TexCoord, coord2*0.5, p, n);
+		ao += doAmbientOcclusion(TexCoord, coord1*0.75, p, n);
+		ao += doAmbientOcclusion(TexCoord, coord2, p, n);
 	}
 
-	for (int i = 0; i<8; i++)
-	{
-		ao += doAO(TexCoord, rand, vec[i] * d2, pos, n);
-	}
+	ao /= (float)iterations*4.0;
+	//**END**//  
+	//Do stuff here with your occlusion value “ao”: modulate ambient lighting,  write it to a buffer for later //use, etc. 
 
-	ao = ao / 16;
-
-	//if (ao < 0)
-	//	ao = 0;
-
-	float finalAO = ao;
-	float4 finalColor = float4(finalAO, finalAO, finalAO, 1.0f);
-
-
-	return finalColor;// float4(1.0f, 0.0f, 0.0f, 1.0f);
+	return float4(1 - ao, 1 - ao, 1 - ao, 1.0f);
 }
 
 technique SSAO

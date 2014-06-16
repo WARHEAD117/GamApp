@@ -14,10 +14,13 @@ public:
 	void OnFrame();
 	void OnEndFrame();
 
+	Entity* CreateEntity();
+	Entity* CreateEntityFromXFile(std::string fileName);
 	void AddEntity(Entity& entity);
 	void DelEntity(unsigned int entityIndex);
 
 private:
+	Entity* Creator();
 	std::map< unsigned int, Entity > entityMap;
 };
 

@@ -5,21 +5,28 @@
 #include "RenderUtil/EffectParam.h"
 #include "Camera/CameraParam.h"
 
+#include "RenderPipeLine/PostEffect/SSAO.h"
+
 struct VERTEX
 {
 	D3DXVECTOR3		position;
 	FLOAT			tu, tv;
 };
+
 #define D3DFVF_VERTEX (D3DFVF_XYZ|D3DFVF_TEX1)
-VERTEX vertices[4]; //选择框;
+VERTEX vertices[4];
 LPDIRECT3DVERTEXBUFFER9		pBufferVex;
-D3DXMATRIX orthoWorld;
-D3DXMATRIX orthoView;
-D3DXMATRIX orthoProj;
 
 LPD3DXEFFECT deferredEffect; 
-LPD3DXEFFECT ssaoEffect;
-LPDIRECT3DTEXTURE9         m_pRandomNormal;
+LPD3DXEFFECT mainColorEffect;
+
+D3DXMATRIX shadowOrthoWorld;
+D3DXMATRIX shadowOrthoView;
+D3DXMATRIX shadowOrthoProj;
+D3DXMATRIX invShadowOrthoProj;
+int SHADOWMAPSIZE = 700;
+
+SSAO ssao;
 
 RenderPipe::RenderPipe()
 {
@@ -43,10 +50,9 @@ RenderPipe::RenderPipe()
 
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
 		1, D3DUSAGE_RENDERTARGET,
-		D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT,
-		&m_pAOTarget, NULL);
-	hr = m_pAOTarget->GetSurfaceLevel(0, &m_pAOSurface);
-
+		D3DFMT_A32B32G32R32F, D3DPOOL_DEFAULT,
+		&m_pMainColorTarget, NULL);
+	hr = m_pMainColorTarget->GetSurfaceLevel(0, &m_pMainColorSurface);
 	//=======================================================================
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateVertexBuffer(4 * sizeof(VERTEX)
 		, 0
@@ -86,15 +92,20 @@ RenderPipe::RenderPipe()
 
 	pBufferVex->Unlock();
 
-	// 获得单位摄影矩阵
-	D3DXMatrixIdentity(&orthoView);
-	// 获得正交投影矩阵
-	D3DXMatrixOrthoOffCenterLH(&orthoProj, 0.0f, RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight, 0.0f, 0.0f, 1.0f);
-	D3DXMatrixOrthoLH(&orthoProj, RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight, 0.01f, 10000.0f);
-	//
-	D3DXMatrixIdentity(&orthoWorld);
-	D3DXMatrixTranslation(&orthoWorld, 0, 0, 0);
+	//=============================================================================
+	//ShadowMap
+	D3DXMatrixLookAtLH(&shadowOrthoView, &D3DXVECTOR3(0, 10, -10),
+		&D3DXVECTOR3(0, -1, 1),
+		&D3DXVECTOR3(0, 1, 1));
+	D3DXMatrixInverse(&shadowOrthoWorld, NULL, &shadowOrthoView);
+	D3DXMatrixOrthoLH(&shadowOrthoProj, 20, 20, 0.01f, 50.0f);
+	D3DXMatrixInverse(&invShadowOrthoProj, NULL, &shadowOrthoProj);
 
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(SHADOWMAPSIZE, SHADOWMAPSIZE,
+		1, D3DUSAGE_RENDERTARGET,
+		D3DFMT_R32F, D3DPOOL_DEFAULT,
+		&m_pShadowTarget, NULL);
+	hr = m_pShadowTarget->GetSurfaceLevel(0, &m_pShadowSurface);
 	//=================================================
 	ID3DXBuffer* error = 0;
 	if (E_FAIL == ::D3DXCreateEffectFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "System\\DeferredRender.fx", NULL, NULL, D3DXSHADER_DEBUG,
@@ -104,19 +115,17 @@ RenderPipe::RenderPipe()
 		abort();
 	}
 
-	//=================================================
- 	if (E_FAIL == ::D3DXCreateEffectFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "System\\SSAO.fx", NULL, NULL, D3DXSHADER_DEBUG,
- 		NULL, &ssaoEffect, &error))
- 	{
- 		MessageBox(GetForegroundWindow(), (char*)error->GetBufferPointer(), "Shader", MB_OK);
- 		abort();
- 	}
-
-	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "System\\randomNormal.dds", &m_pRandomNormal))
+	error = 0;
+	if (E_FAIL == ::D3DXCreateEffectFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "System\\MainColor.fx", NULL, NULL, D3DXSHADER_DEBUG,
+		NULL, &mainColorEffect, &error))
 	{
-		MessageBox(GetForegroundWindow(), "","234", MB_OK);
+		MessageBox(GetForegroundWindow(), (char*)error->GetBufferPointer(), "Shader", MB_OK);
 		abort();
 	}
+	//=================================================
+
+
+	ssao.CreatePostEffect();
 }
 
 
@@ -160,116 +169,42 @@ void RenderPipe::RenderPosition()
 	}
 }
 
-
-
-float		g_intensity = 2;
-float		g_scale = 1;
-float		g_bias = 0.1;
-float		g_sample_rad = 0.1;
-bool		AOEnable = true;
-bool		down = false;
-void RenderPipe::RenderAO()
+void RenderPipe::RenderShadow()
 {
-	if (KEYDOWN('P'))
-	{
-		down = true;
-	}
-	if (down == true && KEYUP('P'))
-	{
-		down = false;
-		AOEnable = !AOEnable;
-	}
-
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pAOSurface);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pShadowSurface);
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(255, 255, 255, 255), 1.0f, 0);
-
-	if (!AOEnable)
-		return;
-
-	UINT numPasses = 0;
-	ssaoEffect->Begin(&numPasses, 0);
-	ssaoEffect->BeginPass(0);
-
-	ssaoEffect->SetMatrix(WORLDVIEWPROJMATRIX, &orthoWorld);
-	ssaoEffect->SetMatrix(INVPROJMATRIX, &RENDERDEVICE::Instance().InvProjMatrix);
-
-	ssaoEffect->SetTexture("g_NormalDepthBuffer", m_pNormalDepthTarget);
-	ssaoEffect->SetTexture("g_RandomNormal", m_pRandomNormal);
-	ssaoEffect->SetTexture("g_PositionBuffer", m_pPositionTarget);
-
-	if (KEYDOWN('T'))
+	for (int i = 0; i < mRenderUtilList.size(); ++i)
 	{
-		g_intensity += 0.0001;
+		mRenderUtilList[i]->RenderShadow();
 	}
-	if (KEYDOWN('Y'))
-	{
-		g_scale += 0.0001;
-	}
-	if (KEYDOWN('U'))
-	{
-		g_sample_rad += 0.0001;
-	}
-	if (KEYDOWN('I'))
-	{
-		g_bias += 0.0001;
-	}
-
-	if (KEYDOWN('G'))
-	{
-		g_intensity -= 0.0001;
-	}
-	if (KEYDOWN('H'))
-	{
-		g_scale -= 0.0001;
-	}
-	if (KEYDOWN('J'))
-	{
-		g_sample_rad -= 0.0001;
-	}
-	if (KEYDOWN('K'))
-	{
-		g_bias -= 0.0001;
-	}
-
-	if (KEYDOWN('R'))
-	{
-		g_intensity = 1;
-		g_scale = 1;
-		g_bias = 0.3;
-		g_sample_rad = 0.03;
-	}
-	ssaoEffect->SetFloat("g_intensity", g_intensity);
-	ssaoEffect->SetFloat("g_scale", g_scale);
-	ssaoEffect->SetFloat("g_bias", g_bias);
-	ssaoEffect->SetFloat("g_sample_rad", g_sample_rad);
-
-	ssaoEffect->SetFloat("g_zNear", CameraParam::zNear);
-	ssaoEffect->SetFloat("g_zFar", CameraParam::zFar);
-
-	ssaoEffect->CommitChanges();
-
-	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, pBufferVex, 0, sizeof(VERTEX));
-	RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(D3DFVF_VERTEX);
-	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
-	ssaoEffect->SetTexture(0, NULL);
-
-	ssaoEffect->EndPass();
-	ssaoEffect->End();
 }
 
 void RenderPipe::DeferredRender()
 {
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pMainColorSurface);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 0, 0, 0), 1.0f, 0);
+
 	UINT numPasses = 0;
 	deferredEffect->Begin(&numPasses, 0);
 	deferredEffect->BeginPass(0);
 
-	deferredEffect->SetMatrix(WORLDVIEWPROJMATRIX, &orthoWorld);
+	deferredEffect->SetMatrix(WORLDVIEWPROJMATRIX, &RENDERDEVICE::Instance().OrthoWVPMatrix);
 	deferredEffect->SetMatrix(INVPROJMATRIX, &RENDERDEVICE::Instance().InvProjMatrix);
 
-	deferredEffect->SetTexture("g_DiffuseBuffer", m_pDiffuseTarget);
-	deferredEffect->SetTexture("g_NormalDepthBuffer", m_pNormalDepthTarget);
-	deferredEffect->SetTexture("g_AOBuffer", m_pAOTarget);
-	
+	deferredEffect->SetTexture(DIFFUSEBUFFER, m_pDiffuseTarget);
+	deferredEffect->SetTexture(NORMALDEPTHBUFFER, m_pNormalDepthTarget);
+	deferredEffect->SetTexture("g_AOBuffer", ssao.GetPostTarget());
+	deferredEffect->SetTexture("g_ShadowBuffer", m_pShadowTarget);
+
+	D3DXMATRIX ShadowView;
+	D3DXMATRIX invShadowProj;
+	D3DXMATRIX invView;
+	D3DXMatrixInverse(&invView, NULL, &RENDERDEVICE::Instance().ViewMatrix);
+	deferredEffect->SetMatrix("g_ShadowView", &shadowOrthoView);
+	deferredEffect->SetMatrix("g_ShadowProj", &shadowOrthoProj);
+	deferredEffect->SetMatrix("g_invView", &invView);
+
+
 	deferredEffect->SetFloat("g_zNear", CameraParam::zNear);
 	deferredEffect->SetFloat("g_zFar", CameraParam::zFar);
 
@@ -284,7 +219,27 @@ void RenderPipe::DeferredRender()
 	deferredEffect->End();
 }
 
+void RenderPipe::RenderMainColor()
+{
+	UINT numPasses = 0;
+	mainColorEffect->Begin(&numPasses, 0);
+	mainColorEffect->BeginPass(0);
 
+	mainColorEffect->SetMatrix(WORLDVIEWPROJMATRIX, &RENDERDEVICE::Instance().OrthoWVPMatrix);
+	mainColorEffect->SetMatrix(INVPROJMATRIX, &RENDERDEVICE::Instance().InvProjMatrix);
+
+	mainColorEffect->SetTexture(MAINCOLORBUFFER, m_pMainColorTarget);
+
+	mainColorEffect->CommitChanges();
+
+	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, pBufferVex, 0, sizeof(VERTEX));
+	RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(D3DFVF_VERTEX);
+	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+	mainColorEffect->SetTexture(0, NULL);
+
+	mainColorEffect->EndPass();
+	mainColorEffect->End();
+}
 
 void RenderPipe::RenderAll()
 {
@@ -295,6 +250,8 @@ void RenderPipe::RenderAll()
 
 	RENDERDEVICE::Instance().g_pD3DDevice->GetRenderTarget(0, &m_pOriSurface);
 
+	RenderShadow();
+
 	RenderDiffuse();
 	
 	RenderNormalDepth();
@@ -304,11 +261,12 @@ void RenderPipe::RenderAll()
 
 	//ForwardRender();
 
-	RenderAO();
+	ssao.RenderPost();
+	DeferredRender();
 
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pOriSurface);
 
-	DeferredRender();
+	RenderMainColor();
 	
 	RENDERDEVICE::Instance().g_pD3DDevice->EndScene();
 	RENDERDEVICE::Instance().g_pD3DDevice->Present(0, 0, 0, 0);

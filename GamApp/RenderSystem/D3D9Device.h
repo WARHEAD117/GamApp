@@ -14,6 +14,7 @@ public:
 	LPD3DXEFFECT GetDiffuseEffect();
 	LPD3DXEFFECT GetPositionEffect();
 	LPD3DXEFFECT GetNormalDepthEffect();
+	LPD3DXEFFECT GetShadowEffect();
 	LPDIRECT3DTEXTURE9 GetDefaultTexture();
 	Material* GetDefaultMaterial();
 
@@ -26,11 +27,14 @@ public:
 	LPD3DXEFFECT							diffuseEffect;
 	LPD3DXEFFECT							normalDepthEffect;
 	LPD3DXEFFECT							positionEffect;
+	LPD3DXEFFECT							shadowEffect;
 	LPDIRECT3DTEXTURE9						defaultTexture;
 
 	D3DXMATRIX								ViewMatrix;
 	D3DXMATRIX								ProjMatrix;
 	D3DXMATRIX								InvProjMatrix;
+
+	D3DXMATRIX								OrthoWVPMatrix;
 
 	D3DXVECTOR3								ViewPosition;
 };

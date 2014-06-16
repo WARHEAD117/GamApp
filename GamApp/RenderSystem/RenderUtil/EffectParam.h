@@ -17,3 +17,8 @@
 #define AMBIENTMATERIAL		"g_AmbientMaterial"
 #define SPECULARMATERIAL	"g_SpecularMaterial"
 #define SPECULARPOWER		"g_SpecularPower"
+
+#define MAINCOLORBUFFER		"g_MainColorBuffer"
+#define NORMALDEPTHBUFFER	"g_NormalDepthBuffer"
+#define POSITIONBUFFER		"g_PositionBuffer"
+#define DIFFUSEBUFFER		"g_DiffuseBuffer"

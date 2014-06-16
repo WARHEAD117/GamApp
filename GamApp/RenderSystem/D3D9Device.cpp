@@ -5,6 +5,7 @@ static std::string diffuseEffectName = "System\\DeferredDiffuse.fx";
 static std::string normalDepthEffectName = "System\\DeferredNormalDepth.fx";
 static std::string defaultTextureName = "System\\white.dds";
 static std::string positionEffectName = "System\\DeferredPosition.fx";
+static std::string shadowEffectName = "System\\DeferredShadow.fx";
 
 D3D9Device::D3D9Device()
 {
@@ -150,6 +151,22 @@ LPD3DXEFFECT D3D9Device::GetPositionEffect()
 	}
 
 	return positionEffect;
+}
+
+LPD3DXEFFECT D3D9Device::GetShadowEffect()
+{
+	if (!shadowEffect)
+	{
+		ID3DXBuffer* error = 0;
+		if (E_FAIL == ::D3DXCreateEffectFromFile(g_pD3DDevice, shadowEffectName.c_str(), NULL, NULL, D3DXSHADER_DEBUG,
+			NULL, &shadowEffect, &error))
+		{
+			MessageBox(GetForegroundWindow(), (char*)error->GetBufferPointer(), "Shader", MB_OK);
+			abort();
+		}
+	}
+
+	return shadowEffect;
 }
 
 LPDIRECT3DTEXTURE9 D3D9Device::GetDefaultTexture()

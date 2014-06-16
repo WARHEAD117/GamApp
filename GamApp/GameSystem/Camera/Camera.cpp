@@ -90,4 +90,9 @@ void Camera::BuildProjMtx()
 
 	RENDERDEVICE::Instance().ProjMatrix = mProj;
 	D3DXMatrixInverse(&RENDERDEVICE::Instance().InvProjMatrix, NULL, &mProj);
+
+	D3DXMATRIX orthoWVP;
+	D3DXMatrixIdentity(&orthoWVP);
+	D3DXMatrixTranslation(&orthoWVP, 0, 0, 0);
+	RENDERDEVICE::Instance().OrthoWVPMatrix = orthoWVP;
 }

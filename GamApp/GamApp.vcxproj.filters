@@ -61,6 +61,9 @@
     <Filter Include="Takarazuka">
       <UniqueIdentifier>{30caa44d-58c6-4582-8bbc-32e30d5a5467}</UniqueIdentifier>
     </Filter>
+    <Filter Include="RenderSystem\PostEffect">
+      <UniqueIdentifier>{41f4e774-c786-4e9b-a847-01f31c8c9698}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DrawSkyBox.h" />
@@ -157,6 +160,12 @@
     <ClInclude Include="Takarazuka\TakarazukaScene.h">
       <Filter>Takarazuka</Filter>
     </ClInclude>
+    <ClInclude Include="RenderSystem\RenderPipeLine\PostEffect\PostEffectBase.h">
+      <Filter>RenderSystem\PostEffect</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderSystem\RenderPipeLine\PostEffect\SSAO.h">
+      <Filter>RenderSystem\PostEffect</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DrawSkyBox.cpp" />
@@ -241,6 +250,12 @@
     <ClCompile Include="Takarazuka\TakarazukaScene.cpp">
       <Filter>Takarazuka</Filter>
     </ClCompile>
+    <ClCompile Include="RenderSystem\RenderPipeLine\PostEffect\PostEffectBase.cpp">
+      <Filter>RenderSystem\PostEffect</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderSystem\RenderPipeLine\PostEffect\SSAO.cpp">
+      <Filter>RenderSystem\PostEffect</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="System\commonDiffuse.fx">
@@ -268,6 +283,12 @@
       <Filter>System</Filter>
     </FxCompile>
     <FxCompile Include="System\PosTest.fx">
+      <Filter>System</Filter>
+    </FxCompile>
+    <FxCompile Include="System\DeferredShadow.fx">
+      <Filter>System</Filter>
+    </FxCompile>
+    <FxCompile Include="System\MainColor.fx">
       <Filter>System</Filter>
     </FxCompile>
   </ItemGroup>

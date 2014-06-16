@@ -98,6 +98,8 @@
     <ClInclude Include="GameSystem\MainGame\MainGame.h" />
     <ClInclude Include="GameSystem\Transform\Transform.h" />
     <ClInclude Include="RenderSystem\D3D9Device.h" />
+    <ClInclude Include="RenderSystem\RenderPipeLine\PostEffect\PostEffectBase.h" />
+    <ClInclude Include="RenderSystem\RenderPipeLine\PostEffect\SSAO.h" />
     <ClInclude Include="RenderSystem\RenderPipeLine\RenderPipe.h" />
     <ClInclude Include="RenderSystem\RenderUtil\EffectParam.h" />
     <ClInclude Include="RenderSystem\RenderUtil\RenderUtil.h" />
@@ -129,6 +131,8 @@
     <ClCompile Include="GameSystem\MainWindow.cpp" />
     <ClCompile Include="GameSystem\Transform\Transform.cpp" />
     <ClCompile Include="RenderSystem\D3D9Device.cpp" />
+    <ClCompile Include="RenderSystem\RenderPipeLine\PostEffect\PostEffectBase.cpp" />
+    <ClCompile Include="RenderSystem\RenderPipeLine\PostEffect\SSAO.cpp" />
     <ClCompile Include="RenderSystem\RenderPipeLine\RenderPipe.cpp" />
     <ClCompile Include="RenderSystem\RenderUtil\RenderUtil.cpp" />
     <ClCompile Include="Takarazuka\NoteEntity.cpp" />
@@ -160,6 +164,14 @@
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">2.0</ShaderModel>
     </FxCompile>
     <FxCompile Include="System\DeferredRender.fx">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Effect</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">2.0</ShaderModel>
+    </FxCompile>
+    <FxCompile Include="System\DeferredShadow.fx">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Effect</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">2.0</ShaderModel>
+    </FxCompile>
+    <FxCompile Include="System\MainColor.fx">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Effect</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">2.0</ShaderModel>
     </FxCompile>

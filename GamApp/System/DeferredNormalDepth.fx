@@ -15,7 +15,7 @@ struct OutputVS
 {
 	float4 posWVP			: POSITION;
 	float3 normalWV			: NORMAL;
-	float3 posP				: TEXCOORD0;
+	float4 posP				: TEXCOORD0;
 };
 
 
@@ -26,7 +26,7 @@ OutputVS VShader(float4 posL		: POSITION,
 
 	//最终输出的顶点位置（经过世界、观察、投影矩阵变换）
 	outVS.posWVP = mul(posL, g_WorldViewProj);
-	outVS.posP = outVS.posWVP.xyz / outVS.posWVP.w;
+	outVS.posP = outVS.posWVP;
 
 	//观察空间下的法线
 	outVS.normalWV = mul(normalL, g_WorldView);
@@ -36,13 +36,13 @@ OutputVS VShader(float4 posL		: POSITION,
 
 
 float4 PShader(float3 NormalWV			: NORMAL,
-				float3 posP				: TEXCOORD0) : COLOR
+				float4 posP				: TEXCOORD0) : COLOR
 {
 	NormalWV = normalize(NormalWV);
 	NormalWV = (NormalWV + float3(1.0f, 1.0f, 1.0f)) / 2;
 
 	//投影后的非线性深度
-	float Depth = posP.z;
+	float Depth = posP.z / posP.w;
 
 	float4 finalColor = float4(NormalWV, Depth);
 	//输出颜色

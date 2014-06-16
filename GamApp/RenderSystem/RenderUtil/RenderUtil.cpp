@@ -25,8 +25,23 @@ void RenderUtil::BuildEffectInfo()
 	mWorldView		= mWorldMat * mViewMat;
 	mViewProj		= mViewMat * mProjMat;
 	mWorldViewProj	= mWorldMat * mViewProj;
-	
-	
+}
+
+void RenderUtil::BuildShadowEffectInfo()
+{
+	mWorldMat = mOwner->GetWorldTransform();
+	mViewMat = RENDERDEVICE::Instance().ViewMatrix;
+	mProjMat = RENDERDEVICE::Instance().ProjMatrix;
+
+	D3DXMatrixLookAtLH(&mViewMat, &D3DXVECTOR3(0, 10, -10),
+		&D3DXVECTOR3(0, -1, 1),
+		&D3DXVECTOR3(0, 1, 1));
+
+	D3DXMatrixOrthoLH(&mProjMat, 20, 20, 0.01f, 50.0f);
+
+	mWorldView = mWorldMat * mViewMat;
+	mViewProj = mViewMat * mProjMat;
+	mWorldViewProj = mWorldMat * mViewProj;
 }
 
 void RenderUtil::SetlightInfo(LPD3DXEFFECT effect)
@@ -180,6 +195,32 @@ void RenderUtil::RenderPosition()
 
 		RENDERDEVICE::Instance().GetPositionEffect()->EndPass();
 		RENDERDEVICE::Instance().GetPositionEffect()->End();
+	}
+}
+
+void RenderUtil::RenderShadow()
+{
+	BuildShadowEffectInfo();
+
+	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, mVertexBuffer, 0, D3DXGetFVFVertexSize(mFVF));
+	RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(mFVF);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetIndices(mIndexBuffer);
+	for (DWORD i = 0; i < mSubMeshList.size(); i++)
+	{
+		RENDERDEVICE::Instance().GetShadowEffect()->SetMatrix(WORLDVIEWPROJMATRIX, &mWorldViewProj);
+		RENDERDEVICE::Instance().GetShadowEffect()->SetMatrix(WORLDVIEWMATRIX, &mWorldView);
+
+		UINT nPasses = 0;
+		HRESULT r1 = RENDERDEVICE::Instance().GetShadowEffect()->Begin(&nPasses, 0);
+		HRESULT r2 = RENDERDEVICE::Instance().GetShadowEffect()->BeginPass(0);
+
+		RENDERDEVICE::Instance().GetShadowEffect()->CommitChanges();
+
+		RENDERDEVICE::Instance().g_pD3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0,
+			mSubMeshList[i].vertexCount, mSubMeshList[i].indexStart, mSubMeshList[i].faceCount);
+
+		RENDERDEVICE::Instance().GetShadowEffect()->EndPass();
+		RENDERDEVICE::Instance().GetShadowEffect()->End();
 	}
 }
 

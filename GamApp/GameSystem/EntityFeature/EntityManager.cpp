@@ -49,3 +49,23 @@ void EntityManager::DelEntity(unsigned int entityIndex)
 		return;
 	entityMap.erase(entityIndex);
 }
+
+Entity* EntityManager::CreateEntity()
+{
+	Entity* newEntity = Creator();
+	AddEntity(*newEntity);
+	return newEntity;
+}
+
+Entity* EntityManager::CreateEntityFromXFile(std::string fileName)
+{
+	Entity* newEntity = Creator();
+	newEntity->SetMeshFileName(fileName);
+	AddEntity(*newEntity);
+	return newEntity;
+}
+
+Entity* EntityManager::Creator()
+{
+	return new Entity();
+}

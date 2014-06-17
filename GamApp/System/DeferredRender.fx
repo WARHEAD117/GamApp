@@ -47,9 +47,9 @@ sampler2D g_sampleShadow =
 sampler_state
 {
 	Texture = <g_ShadowBuffer>;
-	MinFilter = Linear;
-	MagFilter = Linear;
-	MipFilter = Linear;
+	MinFilter = Point;
+	MagFilter = Point;
+	MipFilter = Point;
 	AddressU = Clamp;
 	AddressV = Clamp;
 };
@@ -190,12 +190,23 @@ float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
 	float4 lightProjPos = mul(lightViewPos, g_ShadowProj);
 	float lightU = (lightProjPos.x / lightProjPos.w + 1.0f) / 2.0f;
 	float lightV = (1.0f - lightProjPos.y / lightProjPos.w) / 2.0f;
-	float4 shadow = tex2D(g_sampleShadow, float2(lightU, lightV));
+
+	int SHADOWMAP_SIZE = 700;
+	float2 ShadowTexCoord = float2(lightU, lightV);
+	float2 texturePos = ShadowTexCoord * SHADOWMAP_SIZE;
+	float2 lerps = frac(texturePos);
+
+	float shadowBias = 0.2f;
+
+	float shadowVal[4];
+	shadowVal[0] = (tex2D(g_sampleShadow, ShadowTexCoord) + shadowBias < lightViewPos.z / lightViewPos.w) ? 0.0f : 1.0f;
+	shadowVal[1] = (tex2D(g_sampleShadow, ShadowTexCoord + float2(1.0f / SHADOWMAP_SIZE, 0.0f)) + shadowBias < lightViewPos.z / lightViewPos.w) ? 0.0f : 1.0f;
+	shadowVal[2] = (tex2D(g_sampleShadow, ShadowTexCoord + float2(0.0f, 1.0f / SHADOWMAP_SIZE)) + shadowBias < lightViewPos.z / lightViewPos.w) ? 0.0f : 1.0f;
+	shadowVal[3] = (tex2D(g_sampleShadow, ShadowTexCoord + float2(1.0f / SHADOWMAP_SIZE, 1.0f / SHADOWMAP_SIZE)) + shadowBias < lightViewPos.z / lightViewPos.w) ? 0.0f : 1.0f;
+
+	float shadowFinal = lerp(lerp(shadowVal[0], shadowVal[1], lerps.x), lerp(shadowVal[2], shadowVal[3], lerps.x), lerps.y);
+
 	
-	float4 shadow1 = tex2D(g_sampleShadow, float2(lightU - 1 / 700.0f, lightV));
-	float4 shadow2 = tex2D(g_sampleShadow, float2(lightU + 1 / 700.0f, lightV));
-	float4 shadow3 = tex2D(g_sampleShadow, float2(lightU, lightV - 1 / 700.0f));
-	float4 shadow4 = tex2D(g_sampleShadow, float2(lightU, lightV + 1 / 700.0f));
 	//return float4(float2(lightU, lightV),0.0f,1.0f);
 
 	//return float4(shadow.x, 0.0f,0.0f,1.0f);
@@ -206,12 +217,9 @@ float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
 	//return lightProjPos;
 	//return  float4(lightProjPos.x, lightProjPos.y, 0.0f, 1.0f);
 
-	float shadowStrength = 1.0f;
-	if (lightProjPos.z / lightProjPos.w > shadow.r + 0.003f)
-		shadowStrength = 0.1f;
 
 	//混合光照和纹理
-	float4 finalColor = AO * Ambient * Texture + (DiffuseLight *Texture + Specular)*shadowStrength;
+	float4 finalColor = AO * Ambient * Texture + (DiffuseLight *Texture + Specular)*shadowFinal;
 	//return float4(NormalDepth.w, 0.0f, 0.0f, 1.0f);
 	//return AO;
 	return finalColor;// float4(1.0f, 0.0f, 0.0f, 1.0f);

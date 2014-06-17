@@ -14,7 +14,7 @@ float4		g_ViewPos;
 struct OutputVS
 {
 	float4 posWVP			: POSITION;
-	float2 Depth			: TEXCOORD0;
+	float3 posWV			: TEXCOORD0;
 };
 
 
@@ -24,16 +24,16 @@ OutputVS VShader(float4 posL		: POSITION0)
 
 	//最终输出的顶点位置（经过世界、观察、投影矩阵变换）
 	outVS.posWVP = mul(posL, g_WorldViewProj);
-	outVS.Depth = outVS.posWVP.zw;
+	outVS.posWV = mul(posL, g_WorldView);
 
 	return outVS;
 }
 
 
-float4 PShader(float2 Depth : TEXCOORD0) : COLOR
+float4 PShader(float3 posWV : TEXCOORD0) : COLOR
 {
 	//输出颜色
-	float4 Color = Depth.x / Depth.y;
+	float4 Color = posWV.z;
 	return Color;// float4(1.0f, 0.0f, 0.0f, 1.0f);
 }
 

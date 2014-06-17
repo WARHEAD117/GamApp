@@ -25,7 +25,7 @@ D3DXMATRIX shadowOrthoWorld;
 D3DXMATRIX shadowOrthoView;
 D3DXMATRIX shadowOrthoProj;
 D3DXMATRIX invShadowOrthoProj;
-int SHADOWMAPSIZE = 512;
+int SHADOWMAPSIZE = 756;
 
 SSAO ssao;
 

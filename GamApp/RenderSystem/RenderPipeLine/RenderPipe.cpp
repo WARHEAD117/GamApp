@@ -312,12 +312,18 @@ void RenderPipe::DeferredRender_MultiPass()
 	deferredMultiPassEffect->SetMatrix("g_invView", &invView);
 	deferredMultiPassEffect->SetInt("g_ShadowMapSize", SHADOWMAPSIZE);
 	deferredMultiPassEffect->SetFloat("g_ShadowBias", 0.2f);
+
+	deferredMultiPassEffect->CommitChanges();
+
 	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 	deferredMultiPassEffect->EndPass();
 
 	//»·¾³¹âPass
 	deferredMultiPassEffect->BeginPass(2);
+
 	deferredMultiPassEffect->SetVector("g_AmbientColor", &AmbientColor);
+	deferredMultiPassEffect->CommitChanges();
+
 	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 	deferredMultiPassEffect->EndPass();
 	

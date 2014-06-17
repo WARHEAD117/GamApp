@@ -100,6 +100,29 @@ float3 GetPosition(in float2 uv)
 	return vPositionVS3.xyz;
 }
 
+
+float ChebyshevUpperBound(float2 Moments, float t)
+{
+	float g_MinVariance = 0.02f;
+
+	float p = (t <= Moments.x);
+
+	float Variance = Moments.y - (Moments.x*Moments.x);
+	Variance = max(Variance, g_MinVariance);
+
+	float d = t - Moments.x;
+	float p_max = Variance / (Variance + d*d);
+
+	return max(p, p_max);
+}
+
+float ShadowCompute(float2 ShadowTexCoord, float disToLight)
+{
+	float2 Moments = tex2D(g_sampleShadow, ShadowTexCoord);
+	float shadowFinal = ChebyshevUpperBound(Moments, disToLight);
+	return shadowFinal;
+}
+
 float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
 {
 	//ÎÆÀí²ÉÑù
@@ -134,8 +157,8 @@ float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
 
 	float4 DiffuseLight = float4(0.0f, 0.0f, 0.0f, 1.0f);
 	float4	Specular = float4(0.0f, 0.0f, 0.0f, 1.0f);
-	//for (int i = 0; i < 4; i++)
-	int i = 3;
+	for (int i = 0; i < 4; i++)
+	//int i = 3;
 	{
 		float3 L;
 		float4 LS;
@@ -193,6 +216,9 @@ float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
 
 	int SHADOWMAP_SIZE = 700;
 	float2 ShadowTexCoord = float2(lightU, lightV);
+
+	
+
 	float2 texturePos = ShadowTexCoord * SHADOWMAP_SIZE;
 	float2 lerps = frac(texturePos);
 
@@ -204,8 +230,8 @@ float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
 	shadowVal[2] = (tex2D(g_sampleShadow, ShadowTexCoord + float2(0.0f, 1.0f / SHADOWMAP_SIZE)) + shadowBias < lightViewPos.z / lightViewPos.w) ? 0.0f : 1.0f;
 	shadowVal[3] = (tex2D(g_sampleShadow, ShadowTexCoord + float2(1.0f / SHADOWMAP_SIZE, 1.0f / SHADOWMAP_SIZE)) + shadowBias < lightViewPos.z / lightViewPos.w) ? 0.0f : 1.0f;
 
-	float shadowFinal = lerp(lerp(shadowVal[0], shadowVal[1], lerps.x), lerp(shadowVal[2], shadowVal[3], lerps.x), lerps.y);
-
+	float shadowFinal;// = lerp(lerp(shadowVal[0], shadowVal[1], lerps.x), lerp(shadowVal[2], shadowVal[3], lerps.x), lerps.y);
+	shadowFinal = ShadowCompute(ShadowTexCoord, lightViewPos.z);
 	
 	//return float4(float2(lightU, lightV),0.0f,1.0f);
 

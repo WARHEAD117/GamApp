@@ -18,6 +18,7 @@ public:
 	void	RenderPosition();
 	void	RenderAO();
 	void	DeferredRender();
+	void	DeferredRender_MultiPass();
 	void	RenderMainColor();
 
 	void	RenderShadow();

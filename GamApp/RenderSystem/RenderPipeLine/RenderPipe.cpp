@@ -18,13 +18,14 @@ VERTEX vertices[4];
 LPDIRECT3DVERTEXBUFFER9		pBufferVex;
 
 LPD3DXEFFECT deferredEffect; 
+LPD3DXEFFECT deferredMultiPassEffect;
 LPD3DXEFFECT mainColorEffect;
 
 D3DXMATRIX shadowOrthoWorld;
 D3DXMATRIX shadowOrthoView;
 D3DXMATRIX shadowOrthoProj;
 D3DXMATRIX invShadowOrthoProj;
-int SHADOWMAPSIZE = 700;
+int SHADOWMAPSIZE = 512;
 
 SSAO ssao;
 
@@ -103,13 +104,21 @@ RenderPipe::RenderPipe()
 
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(SHADOWMAPSIZE, SHADOWMAPSIZE,
 		1, D3DUSAGE_RENDERTARGET,
-		D3DFMT_R32F, D3DPOOL_DEFAULT,
+		D3DFMT_A32B32G32R32F, D3DPOOL_DEFAULT,
 		&m_pShadowTarget, NULL);
 	hr = m_pShadowTarget->GetSurfaceLevel(0, &m_pShadowSurface);
 	//=================================================
 	ID3DXBuffer* error = 0;
 	if (E_FAIL == ::D3DXCreateEffectFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "System\\DeferredRender.fx", NULL, NULL, D3DXSHADER_DEBUG,
 		NULL, &deferredEffect, &error))
+	{
+		MessageBox(GetForegroundWindow(), (char*)error->GetBufferPointer(), "Shader", MB_OK);
+		abort();
+	}
+
+	error = 0;
+	if (E_FAIL == ::D3DXCreateEffectFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "System\\DeferredRender_MultiPass.fx", NULL, NULL, D3DXSHADER_DEBUG,
+		NULL, &deferredMultiPassEffect, &error))
 	{
 		MessageBox(GetForegroundWindow(), (char*)error->GetBufferPointer(), "Shader", MB_OK);
 		abort();
@@ -219,6 +228,115 @@ void RenderPipe::DeferredRender()
 	deferredEffect->End();
 }
 
+D3DXVECTOR3 lightDirArrayWorld[16] = 
+{ 
+D3DXVECTOR3(0, 0, 1), D3DXVECTOR3(0, 0, -1), D3DXVECTOR3(0, -1, 0), D3DXVECTOR3(0, 0, 0),
+D3DXVECTOR3(0, 0, 0), D3DXVECTOR3(0, 0, 0), D3DXVECTOR3(0, 0, 0), D3DXVECTOR3(0, 0, 0),
+D3DXVECTOR3(0, 0, 0), D3DXVECTOR3(0, 0, 0), D3DXVECTOR3(0, 0, 0), D3DXVECTOR3(0, 0, 0),
+D3DXVECTOR3(0, 0, 0), D3DXVECTOR3(0, 0, 0), D3DXVECTOR3(0, 0, 0), D3DXVECTOR3(0, 0, 0) 
+};
+
+D3DXVECTOR4 lightColorArray[16] =
+{ D3DXVECTOR4(0.3, 0.0, 0.0f, 1), D3DXVECTOR4(0.0, 0, 0.3, 0), D3DXVECTOR4(0, 0.3, 0.0, 0), D3DXVECTOR4(0.0, 0.0, 0, 0),
+D3DXVECTOR4(0, 0, 0, 0), D3DXVECTOR4(0, 0, 0, 0), D3DXVECTOR4(0, 0, 0, 0), D3DXVECTOR4(0, 0, 0, 0),
+D3DXVECTOR4(0, 0, 0, 0), D3DXVECTOR4(0, 0, 0, 0), D3DXVECTOR4(0, 0, 0, 0), D3DXVECTOR4(0, 0, 0, 0),
+D3DXVECTOR4(0, 0, 0, 0), D3DXVECTOR4(0, 0, 0, 0), D3DXVECTOR4(0, 0, 0, 0), D3DXVECTOR4(0, 0, 0, 0)};
+
+D3DXVECTOR4	AmbientColor = D3DXVECTOR4(0.2f, 0.2f, 0.2f, 0);
+
+void RenderPipe::DeferredRender_MultiPass()
+{
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pMainColorSurface);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 0, 0, 0), 1.0f, 0);
+
+	deferredMultiPassEffect->SetMatrix(VIEWMATRIX, &RENDERDEVICE::Instance().ViewMatrix);
+	deferredMultiPassEffect->SetMatrix(WORLDVIEWPROJMATRIX, &RENDERDEVICE::Instance().OrthoWVPMatrix);
+	deferredMultiPassEffect->SetMatrix(INVPROJMATRIX, &RENDERDEVICE::Instance().InvProjMatrix);
+
+	deferredMultiPassEffect->SetTexture(DIFFUSEBUFFER, m_pDiffuseTarget);
+	deferredMultiPassEffect->SetTexture(NORMALDEPTHBUFFER, m_pNormalDepthTarget);
+	deferredMultiPassEffect->SetTexture("g_AOBuffer", ssao.GetPostTarget());
+	deferredMultiPassEffect->SetTexture("g_ShadowBuffer", m_pShadowTarget);
+
+#if USE_POSITIONBUFFER
+	deferredEffect->SetTexture("g_PositionBuffer", m_pPositionTarget);
+#endif
+	
+	
+
+	deferredMultiPassEffect->SetFloat("g_zNear", CameraParam::zNear);
+	deferredMultiPassEffect->SetFloat("g_zFar", CameraParam::zFar);
+
+	deferredMultiPassEffect->CommitChanges();
+
+	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, pBufferVex, 0, sizeof(VERTEX));
+	RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(D3DFVF_VERTEX);
+
+	UINT numPasses = 0;
+	deferredMultiPassEffect->Begin(&numPasses, 0);
+
+	
+
+	D3DXVECTOR4 lightDirArrayView[16];
+	for (int i = 0; i < 16; i++)
+	{
+		D3DXVECTOR3 viewDir = lightDirArrayWorld[i];
+		D3DXVECTOR3 temp;
+		D3DXVec3TransformNormal(&temp, &viewDir, &RENDERDEVICE::Instance().ViewMatrix);
+		lightDirArrayView[i] = D3DXVECTOR4(temp,1.0f);
+	}
+
+	int lightCount = 1;
+	for (int i = 0; i < lightCount; i++)
+	{
+
+		deferredMultiPassEffect->BeginPass(0);
+
+		deferredMultiPassEffect->SetVectorArray("g_LightDirArray", lightDirArrayView, 16);
+		deferredMultiPassEffect->SetVectorArray("g_LightColorArray", lightColorArray, 16);
+		deferredMultiPassEffect->CommitChanges();
+
+		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+
+		deferredMultiPassEffect->EndPass();
+	}
+
+	//阴影Pass
+	deferredMultiPassEffect->BeginPass(1);
+	D3DXMATRIX ShadowView;
+	D3DXMATRIX invShadowProj;
+	D3DXMATRIX invView;
+	D3DXMatrixInverse(&invView, NULL, &RENDERDEVICE::Instance().ViewMatrix);
+	deferredMultiPassEffect->SetMatrix("g_ShadowView", &shadowOrthoView);
+	deferredMultiPassEffect->SetMatrix("g_ShadowProj", &shadowOrthoProj);
+	deferredMultiPassEffect->SetMatrix("g_invView", &invView);
+	deferredMultiPassEffect->SetInt("g_ShadowMapSize", SHADOWMAPSIZE);
+	deferredMultiPassEffect->SetFloat("g_ShadowBias", 0.2f);
+	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+	deferredMultiPassEffect->EndPass();
+
+	//环境光Pass
+	deferredMultiPassEffect->BeginPass(2);
+	deferredMultiPassEffect->SetVector("g_AmbientColor", &AmbientColor);
+	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+	deferredMultiPassEffect->EndPass();
+	
+	//纹理及AO的Pass
+	deferredMultiPassEffect->BeginPass(3);
+	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+	deferredMultiPassEffect->EndPass();
+
+	//DebugPass
+	deferredMultiPassEffect->BeginPass(4);
+	//RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+	deferredMultiPassEffect->EndPass();
+
+	deferredMultiPassEffect->End();
+
+	deferredMultiPassEffect->SetTexture(0, NULL);
+}
+
+
 void RenderPipe::RenderMainColor()
 {
 	UINT numPasses = 0;
@@ -256,13 +374,17 @@ void RenderPipe::RenderAll()
 	
 	RenderNormalDepth();
 
+#if USE_POSITIONBUFFER
 	//位置缓冲可以通过深度重建，但是如果需要较高精度的时候，可以考虑渲染位置图
-	//RenderPosition();
+	RenderPosition();
+#endif	
+	
 
 	//ForwardRender();
 
 	ssao.RenderPost();
-	DeferredRender();
+	DeferredRender_MultiPass();
+	//DeferredRender();
 
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pOriSurface);
 

@@ -46,8 +46,8 @@ void TestScene::OnLoad()
 	mainCamera.Init();
 
 	//Create Entity
-	krisEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\Cube.X");
-	//krisEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\kris_sheva\\kris.X");
+	//krisEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\Cube.X");
+	krisEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\kris_sheva\\kris.X");
 	shevaEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\kris_sheva\\sheva.X");
 	//testEntity.SetMeshFileName("Res\\Mesh\\car\\car25.X");
 	//testEntity.SetMeshFileName("Res\\Mesh\\tree3\\tree3.X");
@@ -78,22 +78,22 @@ void ComputeMove(D3DXVECTOR3& move)
 
 	if (KEYDOWN('W'))
 	{
-		move = D3DXVECTOR3(-1, 0, 0) * speed*(float)dTime;
+		move = D3DXVECTOR3(0, 0, 1) * speed*(float)dTime;
 	}
 
 	if (KEYDOWN('S'))
 	{
-		move = D3DXVECTOR3(1, 0, 0) * speed*(float)dTime;
+		move = D3DXVECTOR3(0, 0, -1) * speed*(float)dTime;
 	}
 
 	if (KEYDOWN('A'))
 	{
-		move = D3DXVECTOR3(0, 0, -1) * speed*(float)dTime;
+		move = D3DXVECTOR3(-1, 0, 0) * speed*(float)dTime;
 	}
 
 	if (KEYDOWN('D'))
 	{
-		move = D3DXVECTOR3(0, 0, 1) * speed*(float)dTime;
+		move = D3DXVECTOR3(1, 0, 0) * speed*(float)dTime;
 	}
 	if (KEYDOWN('Q'))
 	{
@@ -106,6 +106,27 @@ void ComputeMove(D3DXVECTOR3& move)
 	}
 }
 
+void ComputeRotate(D3DXMATRIX& rot)
+{
+	double dTime = GLOBALTIMER::Instance().GetFrameTime();
+
+	float speed = 0.1;
+	if (KEYDOWN(VK_SHIFT))
+	{
+		speed *= 5;
+	}
+
+	if (KEYDOWN('X'))
+	{
+		D3DXMatrixRotationY(&rot, speed*(float)dTime);
+	}
+
+	if (KEYDOWN('Z'))
+	{
+		D3DXMatrixRotationY(&rot, -speed*(float)dTime);
+	}
+}
+
 float R = 0;
 void TestScene::OnBeginFrame()
 {
@@ -115,8 +136,12 @@ void TestScene::OnBeginFrame()
 	D3DXVECTOR3 move(0, 0, 0);
 	ComputeMove(move);
 
+	D3DXMATRIX rot;
+	D3DXMatrixIdentity(&rot);
+	ComputeRotate(rot);
+
 	D3DXMatrixTranslation(&moveMat, move.x, move.y, move.z);
-	cW = cW * moveMat;
+	cW = moveMat *cW *  rot;
 	mainCamera.SetWorldTransform(cW);
 	
 	move = D3DXVECTOR3(0, -5, -3);

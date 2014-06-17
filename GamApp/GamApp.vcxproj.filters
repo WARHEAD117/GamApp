@@ -291,5 +291,11 @@
     <FxCompile Include="System\MainColor.fx">
       <Filter>System</Filter>
     </FxCompile>
+    <FxCompile Include="System\DeferredRender_MultiPass.fx">
+      <Filter>System</Filter>
+    </FxCompile>
+    <FxCompile Include="System\DeferredShadowVSM.fx">
+      <Filter>System</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

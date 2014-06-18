@@ -42,7 +42,9 @@ private:
 	LPDIRECT3DSURFACE9	m_pNormalDepthSurface;
 	LPDIRECT3DSURFACE9	m_pPositionSurface;
 	LPDIRECT3DSURFACE9	m_pAOSurface;
+
 	LPDIRECT3DSURFACE9	m_pShadowSurface;
+	LPDIRECT3DSURFACE9	m_pDepthStencilShadowSurface;
 
 	LPDIRECT3DSURFACE9	m_pMainColorSurface;
 

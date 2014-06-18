@@ -5,6 +5,9 @@
 #include "RenderUtil/EffectParam.h"
 #include "Camera/CameraParam.h"
 
+#include "Light/LightManager.h"
+#include "Light/DirectionLight.h"
+
 #include "RenderPipeLine/PostEffect/SSAO.h"
 
 struct VERTEX
@@ -25,7 +28,7 @@ D3DXMATRIX shadowOrthoWorld;
 D3DXMATRIX shadowOrthoView;
 D3DXMATRIX shadowOrthoProj;
 D3DXMATRIX invShadowOrthoProj;
-int SHADOWMAPSIZE = 756;
+int SHADOWMAPSIZE = 1024;
 
 SSAO ssao;
 
@@ -107,6 +110,10 @@ RenderPipe::RenderPipe()
 		D3DFMT_A32B32G32R32F, D3DPOOL_DEFAULT,
 		&m_pShadowTarget, NULL);
 	hr = m_pShadowTarget->GetSurfaceLevel(0, &m_pShadowSurface);
+
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateDepthStencilSurface(SHADOWMAPSIZE, SHADOWMAPSIZE, 
+		D3DFMT_D24X8, D3DMULTISAMPLE_NONE, 0, TRUE,
+		&m_pDepthStencilShadowSurface, NULL);
 	//=================================================
 	ID3DXBuffer* error = 0;
 	if (E_FAIL == ::D3DXCreateEffectFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "System\\DeferredRender.fx", NULL, NULL, D3DXSHADER_DEBUG,
@@ -180,11 +187,31 @@ void RenderPipe::RenderPosition()
 
 void RenderPipe::RenderShadow()
 {
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pShadowSurface);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(255, 255, 255, 255), 1.0f, 0);
-	for (int i = 0; i < mRenderUtilList.size(); ++i)
+	LPDIRECT3DSURFACE9 pOldDS = NULL;
+	RENDERDEVICE::Instance().g_pD3DDevice->GetDepthStencilSurface(&pOldDS);
+
+	int lightCount = LIGHTMANAGER::Instance().GetLightCount();
+	for (int index = 0; index < lightCount; index++)
 	{
-		mRenderUtilList[i]->RenderShadow();
+		BaseLight* pLight = LIGHTMANAGER::Instance().GetLight(index);
+		bool useShadow = pLight->GetUseShadow();
+		if (!useShadow)
+			continue;
+		else
+		{
+			pLight->SetShadowTarget();
+
+			for (int i = 0; i < mRenderUtilList.size(); ++i)
+			{
+				mRenderUtilList[i]->RenderShadow(index);
+			}
+		}
+	}
+
+	if (NULL != pOldDS)
+	{
+		RENDERDEVICE::Instance().g_pD3DDevice->SetDepthStencilSurface(pOldDS);
+		SafeRelease(pOldDS);
 	}
 }
 
@@ -228,21 +255,10 @@ void RenderPipe::DeferredRender()
 	deferredEffect->End();
 }
 
-D3DXVECTOR3 lightDirArrayWorld[16] = 
-{ 
-D3DXVECTOR3(0, 0, 1), D3DXVECTOR3(0, 0, -1), D3DXVECTOR3(0, -1, 0), D3DXVECTOR3(0, 0, 0),
-D3DXVECTOR3(0, 0, 0), D3DXVECTOR3(0, 0, 0), D3DXVECTOR3(0, 0, 0), D3DXVECTOR3(0, 0, 0),
-D3DXVECTOR3(0, 0, 0), D3DXVECTOR3(0, 0, 0), D3DXVECTOR3(0, 0, 0), D3DXVECTOR3(0, 0, 0),
-D3DXVECTOR3(0, 0, 0), D3DXVECTOR3(0, 0, 0), D3DXVECTOR3(0, 0, 0), D3DXVECTOR3(0, 0, 0) 
-};
-
-D3DXVECTOR4 lightColorArray[16] =
-{ D3DXVECTOR4(0.3, 0.0, 0.0f, 1), D3DXVECTOR4(0.0, 0, 0.3, 0), D3DXVECTOR4(0, 0.3, 0.0, 0), D3DXVECTOR4(0.0, 0.0, 0, 0),
-D3DXVECTOR4(0, 0, 0, 0), D3DXVECTOR4(0, 0, 0, 0), D3DXVECTOR4(0, 0, 0, 0), D3DXVECTOR4(0, 0, 0, 0),
-D3DXVECTOR4(0, 0, 0, 0), D3DXVECTOR4(0, 0, 0, 0), D3DXVECTOR4(0, 0, 0, 0), D3DXVECTOR4(0, 0, 0, 0),
-D3DXVECTOR4(0, 0, 0, 0), D3DXVECTOR4(0, 0, 0, 0), D3DXVECTOR4(0, 0, 0, 0), D3DXVECTOR4(0, 0, 0, 0)};
-
 D3DXVECTOR4	AmbientColor = D3DXVECTOR4(0.2f, 0.2f, 0.2f, 0);
+
+float g_minVariance = 0.2f;
+float g_Amount = 0.8f;
 
 void RenderPipe::DeferredRender_MultiPass()
 {
@@ -256,7 +272,6 @@ void RenderPipe::DeferredRender_MultiPass()
 	deferredMultiPassEffect->SetTexture(DIFFUSEBUFFER, m_pDiffuseTarget);
 	deferredMultiPassEffect->SetTexture(NORMALDEPTHBUFFER, m_pNormalDepthTarget);
 	deferredMultiPassEffect->SetTexture("g_AOBuffer", ssao.GetPostTarget());
-	deferredMultiPassEffect->SetTexture("g_ShadowBuffer", m_pShadowTarget);
 
 #if USE_POSITIONBUFFER
 	deferredEffect->SetTexture("g_PositionBuffer", m_pPositionTarget);
@@ -275,51 +290,96 @@ void RenderPipe::DeferredRender_MultiPass()
 	UINT numPasses = 0;
 	deferredMultiPassEffect->Begin(&numPasses, 0);
 
+
 	
+	deferredMultiPassEffect->SetInt("g_ShadowMapSize", SHADOWMAPSIZE);
+	deferredMultiPassEffect->SetFloat("g_ShadowBias", 0.2f);
 
-	D3DXVECTOR4 lightDirArrayView[16];
-	for (int i = 0; i < 16; i++)
+	if (KEYDOWN('O'))
 	{
-		D3DXVECTOR3 viewDir = lightDirArrayWorld[i];
-		D3DXVECTOR3 temp;
-		D3DXVec3TransformNormal(&temp, &viewDir, &RENDERDEVICE::Instance().ViewMatrix);
-		lightDirArrayView[i] = D3DXVECTOR4(temp,1.0f);
+		g_minVariance += 0.001;
 	}
+	if (KEYDOWN('L'))
+	{
+		g_minVariance -= 0.001;
+	}
+	if (KEYDOWN('N'))
+	{
+		g_Amount += 0.001;
+	}
+	if (KEYDOWN('M'))
+	{
+		g_Amount -= 0.001;
+	}
+	if (KEYDOWN('R'))
+	{
+		g_minVariance = 0.2f;
+		g_Amount = 0.8f;
+	}
+	deferredMultiPassEffect->SetFloat("g_MinVariance", g_minVariance);
+	deferredMultiPassEffect->SetFloat("g_Amount", g_Amount);
 
-	int lightCount = 1;
+	deferredMultiPassEffect->CommitChanges();
+
+	int lightCount = LIGHTMANAGER::Instance().GetLightCount();
 	for (int i = 0; i < lightCount; i++)
 	{
+		BaseLight* pLight = LIGHTMANAGER::Instance().GetLight(i);
+		D3DXVECTOR3 lightDir = pLight->GetLightDir();
+		bool useShadow = pLight->GetUseShadow();
+		D3DXVECTOR4 lightColor = pLight->GetLightColor();
+
+		D3DXVECTOR3 temp;
+		D3DXVec3TransformNormal(&temp, &lightDir, &RENDERDEVICE::Instance().ViewMatrix);
+		D3DXVECTOR4 lightDir_View = D3DXVECTOR4(temp, 1.0f);
 
 		deferredMultiPassEffect->BeginPass(0);
 
-		deferredMultiPassEffect->SetVectorArray("g_LightDirArray", lightDirArrayView, 16);
-		deferredMultiPassEffect->SetVectorArray("g_LightColorArray", lightColorArray, 16);
+		D3DXMATRIX invView;
+		D3DXMatrixInverse(&invView, NULL, &RENDERDEVICE::Instance().ViewMatrix);
+		deferredMultiPassEffect->SetMatrix("g_ShadowView", &pLight->GetLightViewMatrix());
+		deferredMultiPassEffect->SetMatrix("g_ShadowProj", &pLight->GetLightProjMatrix());
+		deferredMultiPassEffect->SetMatrix("g_invView", &invView);
+		deferredMultiPassEffect->SetBool("g_bUseShadow", useShadow);
+
+		if (useShadow)
+			deferredMultiPassEffect->SetTexture("g_ShadowBuffer", pLight->GetShadowTarget());
+
+		deferredMultiPassEffect->SetVector("g_LightDir", &lightDir_View);
+		deferredMultiPassEffect->SetVector("g_LightColor", &lightColor);
+
 		deferredMultiPassEffect->CommitChanges();
 
 		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 
 		deferredMultiPassEffect->EndPass();
 	}
+	
+	/*
+	lightCount = 4;
+	for (int i = 0; i < lightCount; i++)
+	{
 
-	//阴影Pass
-	deferredMultiPassEffect->BeginPass(1);
-	D3DXMATRIX ShadowView;
-	D3DXMATRIX invShadowProj;
-	D3DXMATRIX invView;
-	D3DXMatrixInverse(&invView, NULL, &RENDERDEVICE::Instance().ViewMatrix);
-	deferredMultiPassEffect->SetMatrix("g_ShadowView", &shadowOrthoView);
-	deferredMultiPassEffect->SetMatrix("g_ShadowProj", &shadowOrthoProj);
-	deferredMultiPassEffect->SetMatrix("g_invView", &invView);
-	deferredMultiPassEffect->SetInt("g_ShadowMapSize", SHADOWMAPSIZE);
-	deferredMultiPassEffect->SetFloat("g_ShadowBias", 0.2f);
+		deferredMultiPassEffect->BeginPass(0);
 
-	deferredMultiPassEffect->CommitChanges();
+		if (i==0)
+			deferredMultiPassEffect->SetBool("g_bUseShadow", true);
+		else
+			deferredMultiPassEffect->SetBool("g_bUseShadow", false);
 
-	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
-	deferredMultiPassEffect->EndPass();
+		deferredMultiPassEffect->SetVector("g_LightDir", &lightDirArrayView[i]);
+		deferredMultiPassEffect->SetVector("g_LightColor", &lightColorArray[i]);
+		deferredMultiPassEffect->CommitChanges();
+
+		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+
+		deferredMultiPassEffect->EndPass();
+	}*/
+
+	
 
 	//环境光Pass
-	deferredMultiPassEffect->BeginPass(2);
+	deferredMultiPassEffect->BeginPass(1);
 
 	deferredMultiPassEffect->SetVector("g_AmbientColor", &AmbientColor);
 	deferredMultiPassEffect->CommitChanges();
@@ -328,12 +388,12 @@ void RenderPipe::DeferredRender_MultiPass()
 	deferredMultiPassEffect->EndPass();
 	
 	//纹理及AO的Pass
-	deferredMultiPassEffect->BeginPass(3);
+	deferredMultiPassEffect->BeginPass(2);
 	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 	deferredMultiPassEffect->EndPass();
 
 	//DebugPass
-	deferredMultiPassEffect->BeginPass(4);
+	deferredMultiPassEffect->BeginPass(3);
 	//RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 	deferredMultiPassEffect->EndPass();
 

@@ -23,8 +23,8 @@ Entity* krisEntity;
 Entity* shevaEntity;
 Material testMat1;
 EffectLoader effectLoader;
-DirectionLight dirLight;
-
+BaseLight dirLight;
+BaseLight dirLight2;
 void TestScene::OnLoad()
 {
 	//
@@ -62,8 +62,24 @@ void TestScene::OnLoad()
 	testMat1.effect = effectLoader.GetEffect();
 	krisEntity->SetMaterial(&testMat1);
 
+	dirLight.SetLightColor(D3DXCOLOR(0.3, 0.3, 0.3, 1.0f));
+	D3DXMATRIX light1MoveMat;
+	D3DXVECTOR3 moveLight = D3DXVECTOR3(0, 10, 0);
+	D3DXMatrixTranslation(&light1MoveMat, moveLight.x, moveLight.y, moveLight.z);
+	dirLight.SetUseShadow(true);
+	dirLight.SetWorldTransform(light1MoveMat);
+
+	dirLight2.SetLightColor(D3DXCOLOR(0.0, 0.0, 1.3, 1.0f));
+	dirLight2.SetUseShadow(true);
+	D3DXMATRIX light2MoveMat;
+	moveLight = D3DXVECTOR3(0, 10, 10);
+	D3DXMatrixTranslation(&light2MoveMat, moveLight.x, moveLight.y, moveLight.z);
+	D3DXMATRIX light2Mat;
+	D3DXMatrixRotationX(&light2Mat, 45);
+	dirLight2.SetWorldTransform(light2Mat*light2MoveMat);
 
 	LIGHTMANAGER::Instance().AddLight(&dirLight);
+	LIGHTMANAGER::Instance().AddLight(&dirLight2);
 }
 
 void ComputeMove(D3DXVECTOR3& move)

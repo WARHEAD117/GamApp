@@ -16,6 +16,8 @@ public:
 	void OnFrame();
 
 	BaseLight* GetLight(int lightIndex);
+	int GetLightCount();
 };
+
 
 typedef CSingleton<LightManager> LIGHTMANAGER;

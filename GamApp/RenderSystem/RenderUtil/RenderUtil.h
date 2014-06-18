@@ -30,7 +30,9 @@ public:
 	void	RenderNormalDepth();
 	void	RenderDiffuse();
 	void	RenderPosition();
-	void	RenderShadow();
+	void RenderShadow(int lightIndex);
+
+	void	RenderDeferred(ID3DXEffect* pEffect);
 
 	void	SetVertexBuffer(const LPDIRECT3DVERTEXBUFFER9& vertexBuffer);
 	void	SetIndexBuffer(const LPDIRECT3DINDEXBUFFER9& indexBuffer);
@@ -63,7 +65,7 @@ private:
 	Entity*						mOwner;
 private:
 	void	BuildEffectInfo();
-	void	BuildShadowEffectInfo();
+	void BuildShadowEffectInfo(int lightIndex);
 };
 
 inline void RenderUtil::SetFVF(DWORD fvf)

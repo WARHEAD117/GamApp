@@ -27,17 +27,16 @@ void RenderUtil::BuildEffectInfo()
 	mWorldViewProj	= mWorldMat * mViewProj;
 }
 
-void RenderUtil::BuildShadowEffectInfo()
+void RenderUtil::BuildShadowEffectInfo(int lightIndex)
 {
 	mWorldMat = mOwner->GetWorldTransform();
 	mViewMat = RENDERDEVICE::Instance().ViewMatrix;
 	mProjMat = RENDERDEVICE::Instance().ProjMatrix;
 
-	D3DXMatrixLookAtLH(&mViewMat, &D3DXVECTOR3(0, 10, -10),
-		&D3DXVECTOR3(0, -1, 1),
-		&D3DXVECTOR3(0, 1, 1));
+	BaseLight* pLight = LIGHTMANAGER::Instance().GetLight(lightIndex);
 
-	D3DXMatrixOrthoLH(&mProjMat, 20, 20, 0.01f, 50.0f);
+	mViewMat = pLight->GetLightViewMatrix();
+	mProjMat = pLight->GetLightProjMatrix();
 
 	mWorldView = mWorldMat * mViewMat;
 	mViewProj = mViewMat * mProjMat;
@@ -109,29 +108,28 @@ void RenderUtil::RenderNormalDepth()
 {
 	BuildEffectInfo();
 
+	RENDERDEVICE::Instance().GetNormalDepthEffect()->SetMatrix(WORLDVIEWPROJMATRIX, &mWorldViewProj);
+	RENDERDEVICE::Instance().GetNormalDepthEffect()->SetMatrix(WORLDVIEWMATRIX, &mWorldView);
+	RENDERDEVICE::Instance().GetNormalDepthEffect()->SetFloat("g_zNear", CameraParam::zNear);
+	RENDERDEVICE::Instance().GetNormalDepthEffect()->SetFloat("g_zFar", CameraParam::zFar);
+
+	UINT nPasses = 0;
+	HRESULT r1 = RENDERDEVICE::Instance().GetNormalDepthEffect()->Begin(&nPasses, 0);
+	HRESULT r2 = RENDERDEVICE::Instance().GetNormalDepthEffect()->BeginPass(0);
+
+	RENDERDEVICE::Instance().GetNormalDepthEffect()->CommitChanges();
 
 	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, mVertexBuffer, 0, D3DXGetFVFVertexSize(mFVF));
 	RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(mFVF);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetIndices(mIndexBuffer);
 	for (DWORD i = 0; i < mSubMeshList.size(); i++)
 	{
-		RENDERDEVICE::Instance().GetNormalDepthEffect()->SetMatrix(WORLDVIEWPROJMATRIX, &mWorldViewProj);
-		RENDERDEVICE::Instance().GetNormalDepthEffect()->SetMatrix(WORLDVIEWMATRIX, &mWorldView);
-		RENDERDEVICE::Instance().GetNormalDepthEffect()->SetFloat("g_zNear", CameraParam::zNear);
-		RENDERDEVICE::Instance().GetNormalDepthEffect()->SetFloat("g_zFar", CameraParam::zFar);
-
-		UINT nPasses = 0;
-		HRESULT r1 = RENDERDEVICE::Instance().GetNormalDepthEffect()->Begin(&nPasses, 0);
-		HRESULT r2 = RENDERDEVICE::Instance().GetNormalDepthEffect()->BeginPass(0);
-
-		RENDERDEVICE::Instance().GetNormalDepthEffect()->CommitChanges();
-
 		RENDERDEVICE::Instance().g_pD3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0,
 			mSubMeshList[i].vertexCount, mSubMeshList[i].indexStart, mSubMeshList[i].faceCount);
-
-		RENDERDEVICE::Instance().GetNormalDepthEffect()->EndPass();
-		RENDERDEVICE::Instance().GetNormalDepthEffect()->End();
 	}
+
+	RENDERDEVICE::Instance().GetNormalDepthEffect()->EndPass();
+	RENDERDEVICE::Instance().GetNormalDepthEffect()->End();
 	RENDERDEVICE::Instance().g_pD3DDevice->SetTexture(0, NULL);
 }
 
@@ -198,9 +196,9 @@ void RenderUtil::RenderPosition()
 	}
 }
 
-void RenderUtil::RenderShadow()
+void RenderUtil::RenderShadow(int lightIndex)
 {
-	BuildShadowEffectInfo();
+	BuildShadowEffectInfo(lightIndex);
 
 	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, mVertexBuffer, 0, D3DXGetFVFVertexSize(mFVF));
 	RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(mFVF);
@@ -223,6 +221,24 @@ void RenderUtil::RenderShadow()
 		RENDERDEVICE::Instance().GetShadowEffect()->End();
 	}
 }
+
+
+void RenderUtil::RenderDeferred(ID3DXEffect* pEffect)
+{
+	pEffect->SetMatrix(WORLDVIEWPROJMATRIX, &mWorldViewProj);
+	pEffect->SetMatrix(WORLDVIEWMATRIX, &mWorldView);
+	pEffect->CommitChanges();
+
+	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, mVertexBuffer, 0, D3DXGetFVFVertexSize(mFVF));
+	RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(mFVF);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetIndices(mIndexBuffer);
+	for (DWORD i = 0; i < mSubMeshList.size(); i++)
+	{
+		RENDERDEVICE::Instance().g_pD3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0,
+			mSubMeshList[i].vertexCount, mSubMeshList[i].indexStart, mSubMeshList[i].faceCount);
+	}
+}
+
 
 void RenderUtil::SetVertexBuffer(const LPDIRECT3DVERTEXBUFFER9& vertexBuffer)
 {

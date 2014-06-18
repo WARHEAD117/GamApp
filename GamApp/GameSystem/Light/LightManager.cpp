@@ -25,5 +25,13 @@ void LightManager::OnFrame()
 
 BaseLight* LightManager::GetLight(int lightIndex)
 {
-	return mLightList[0];
+	if (lightIndex >= mLightList.size())
+		return NULL;
+	return mLightList[lightIndex];
+}
+
+
+int LightManager::GetLightCount()
+{
+	return mLightList.size();
 }

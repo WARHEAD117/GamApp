@@ -17,9 +17,13 @@ float		g_zFar = 1000.0f;
 
 int			g_ShadowMapSize = 512;
 float		g_ShadowBias = 0.2f;
-#define		LIGHTCOUNT 32
-float4		g_LightDirArray[LIGHTCOUNT];
-float4		g_LightColorArray[LIGHTCOUNT];
+
+float		g_MinVariance = 0.02;
+float		g_Amount = 1.0f;
+
+bool		g_bUseShadow;
+float4		g_LightDir;
+float4		g_LightColor;
 float4		g_AmbientColor;
 
 sampler2D g_sampleDiffuse =
@@ -68,7 +72,7 @@ sampler_state
 	Texture = <g_ShadowBuffer>;
 	MinFilter = ANISOTROPIC;
 	MagFilter = ANISOTROPIC;
-	MipFilter = ANISOTROPIC;
+	MipFilter = ANISOTROPIC;// ANISOTROPIC;
 	AddressU = Clamp;
 	AddressV = Clamp;
 };
@@ -129,6 +133,79 @@ float4 AmbientPass(float2 TexCoord : TEXCOORD0) : COLOR
 	return Ambient;
 }
 
+
+float linstep(float min, float max, float v)
+{
+	return clamp((v - min) / (max - min), 0, 1);
+}
+
+float ReduceLightBleeding(float p_max, float Amount)
+{
+	return linstep(Amount, 1, p_max);
+}
+
+float ChebyshevUpperBound(float2 Moments, float t)
+{
+	float p = (t <= Moments.x);
+
+	float Variance = Moments.y - (Moments.x*Moments.x);
+	Variance = max(Variance, g_MinVariance);
+
+	float d = t - Moments.x;
+	float p_max = Variance / (Variance + d*d);
+
+	p_max = ReduceLightBleeding(p_max, g_Amount);
+
+	return max(p, p_max);
+}
+
+float4 GaussianBlur(int mapWidth, int mapHeight, float2 texCoords)
+{
+	float weights[6] = { 0.00078633, 0.00655965, 0.01330373, 0.05472157, 0.11098164, 0.22508352 };
+
+	float4 color;
+	float stepU = 1.0f / mapWidth;
+	float stepV = 1.0f / mapHeight;
+
+	//0,1,2,1,0
+	//1,3,4,3,1
+	//2,4,5,4,2
+	//1,3,4,3,1
+	//0,1,2,1,0
+	color = tex2D(g_sampleShadow, texCoords + float2(-2 * stepU, -2 * stepV)) * (weights[0]);
+	color += tex2D(g_sampleShadow, texCoords + float2(-1 * stepU, -2 * stepV)) * (weights[1]);
+	color += tex2D(g_sampleShadow, texCoords + float2(0 * stepU, -2 * stepV)) * (weights[2]);
+	color += tex2D(g_sampleShadow, texCoords + float2(1 * stepU, -2 * stepV)) * (weights[1]);
+	color += tex2D(g_sampleShadow, texCoords + float2(2 * stepU, -2 * stepV)) * (weights[0]);
+
+	color += tex2D(g_sampleShadow, texCoords + float2(-2 * stepU, -1 * stepV)) * (weights[1]);
+	color += tex2D(g_sampleShadow, texCoords + float2(-1 * stepU, -1 * stepV)) * (weights[3]);
+	color += tex2D(g_sampleShadow, texCoords + float2(0 * stepU, -1 * stepV)) * (weights[4]);
+	color += tex2D(g_sampleShadow, texCoords + float2(1 * stepU, -1 * stepV)) * (weights[3]);
+	color += tex2D(g_sampleShadow, texCoords + float2(2 * stepU, -1 * stepV)) * (weights[1]);
+
+	color += tex2D(g_sampleShadow, texCoords + float2(-2 * stepU, 0 * stepV)) * (weights[2]);
+	color += tex2D(g_sampleShadow, texCoords + float2(-1 * stepU, 0 * stepV)) * (weights[4]);
+	color += tex2D(g_sampleShadow, texCoords + float2(0 * stepU, 0 * stepV)) * (weights[5]);
+	color += tex2D(g_sampleShadow, texCoords + float2(1 * stepU, 0 * stepV)) * (weights[4]);
+	color += tex2D(g_sampleShadow, texCoords + float2(2 * stepU, 0 * stepV)) * (weights[2]);
+
+	color += tex2D(g_sampleShadow, texCoords + float2(-2 * stepU, 1 * stepV)) * (weights[1]);
+	color += tex2D(g_sampleShadow, texCoords + float2(-1 * stepU, 1 * stepV)) * (weights[3]);
+	color += tex2D(g_sampleShadow, texCoords + float2(0 * stepU, 1 * stepV)) * (weights[4]);
+	color += tex2D(g_sampleShadow, texCoords + float2(1 * stepU, 1 * stepV)) * (weights[3]);
+	color += tex2D(g_sampleShadow, texCoords + float2(2 * stepU, 1 * stepV)) * (weights[1]);
+
+	color += tex2D(g_sampleShadow, texCoords + float2(-2 * stepU, 2 * stepV)) * (weights[0]);
+	color += tex2D(g_sampleShadow, texCoords + float2(-1 * stepU, 2 * stepV)) * (weights[1]);
+	color += tex2D(g_sampleShadow, texCoords + float2(0 * stepU, 2 * stepV)) * (weights[2]);
+	color += tex2D(g_sampleShadow, texCoords + float2(1 * stepU, 2 * stepV)) * (weights[1]);
+	color += tex2D(g_sampleShadow, texCoords + float2(2 * stepU, 2 * stepV)) * (weights[0]);
+
+	return color;
+}
+
+
 float4 LightPass(float2 TexCoord : TEXCOORD0) : COLOR
 {
 	float4 NormalDepth = tex2D(g_sampleNormalDepth, TexCoord);
@@ -143,36 +220,48 @@ float4 LightPass(float2 TexCoord : TEXCOORD0) : COLOR
 	float4 DiffuseLight = float4(0.0f, 0.0f, 0.0f, 1.0f);
 	float4 SpecularLight = float4(0.0f, 0.0f, 0.0f, 1.0f);
 	
-	for (int i = 0; i < LIGHTCOUNT; i++)
+	float3 toLight = g_LightDir.xyz;
+	//float4 toLightV4 = mul(float4(toLight,1.0f), g_View);
+	//toLight = toLightV4.xyz / toLightV4.w;
+
+	toLight = normalize(-toLight);
+	//计算漫反射
+	float DiffuseRatio = max(dot(toLight, NormalV), 0);
+	DiffuseLight += g_LightColor * float4(1.0f, 1.0f, 1.0f, 1.0f) * DiffuseRatio;
+
+	//计算半角向量
+	float3 H = normalize(toLight + ToEyeDirV);
+
+	//Phong光照
+	//float4 Reflect = normalize(float4(g_LightDir.xyz - 2 * DiffuseRatio * NormalW, 1.0f));
+	//float SpecularRatio = max(dot(Reflect, ToEyeDirW), 0);
+
+	//Blinn-Phong光照
+	float SpecularRatio = max(dot(NormalV, H), 0);
+	float PoweredSpecular = pow(SpecularRatio, 24);
+	SpecularLight += g_LightColor * PoweredSpecular;
+
+	float shadowFinal = 1.0f;
+	if (g_bUseShadow)
 	{
-		float3 toLight = g_LightDirArray[i];
-		//float4 toLightV4 = mul(float4(toLight,1.0f), g_View);
-		//toLight = toLightV4.xyz / toLightV4.w;
+		//Shadow
+		float4 worldPos = mul(float4(pos, 1.0f), g_invView);
+		float4 lightViewPos = mul(worldPos, g_ShadowView);
+		float4 lightProjPos = mul(lightViewPos, g_ShadowProj);
+		float lightU = (lightProjPos.x / lightProjPos.w + 1.0f) / 2.0f;
+		float lightV = (1.0f - lightProjPos.y / lightProjPos.w) / 2.0f;
 
-		toLight = normalize(-toLight);
-		//计算漫反射
-		float DiffuseRatio = max(dot(toLight, NormalV), 0);
-		DiffuseLight += g_LightColorArray[i] * float4(1.0f, 1.0f, 1.0f, 1.0f) * DiffuseRatio;
+		float2 ShadowTexCoord = float2(lightU, lightV);
 
-		//计算半角向量
-		float3 H = normalize(toLight + ToEyeDirV);
+		//float2 Moments = tex2D(g_sampleShadow, ShadowTexCoord);
+		float2 Moments = GaussianBlur(g_ShadowMapSize, g_ShadowMapSize, ShadowTexCoord);
 
-		//Phong光照
-		//float4 Reflect = normalize(float4(g_LightDir.xyz - 2 * DiffuseRatio * NormalW, 1.0f));
-		//float SpecularRatio = max(dot(Reflect, ToEyeDirW), 0);
-
-		//Blinn-Phong光照
-		float SpecularRatio = max(dot(NormalV, H), 0);
-		float PoweredSpecular = pow(SpecularRatio, 24);
-		SpecularLight += g_LightColorArray[i] * PoweredSpecular;
+		shadowFinal = ChebyshevUpperBound(Moments, lightViewPos.z);
 	}
-
-	
-
 
 	//混合光照和纹理
 	float4 finalColor = DiffuseLight +SpecularLight;
-	return finalColor;
+	return finalColor * shadowFinal;
 }
 
 float4 DiffusePass(float2 TexCoord : TEXCOORD0) : COLOR
@@ -184,21 +273,6 @@ float4 DiffusePass(float2 TexCoord : TEXCOORD0) : COLOR
 	float4 AO = tex2D(g_sampleAO, TexCoord);
 
 	return Texture * AO;
-}
-
-float ChebyshevUpperBound(float2 Moments, float t)
-{
-	float g_MinVariance = 0.02f;
-
-	float p = (t <= Moments.x);
-
-	float Variance = Moments.y - (Moments.x*Moments.x);
-	Variance = max(Variance, g_MinVariance);
-
-	float d = t - Moments.x;
-	float p_max = Variance / (Variance + d*d);
-
-	return max(p, p_max);
 }
 
 float4 ShadowVSMPass(float2 TexCoord : TEXCOORD0) : COLOR
@@ -213,7 +287,9 @@ float4 ShadowVSMPass(float2 TexCoord : TEXCOORD0) : COLOR
 
 	float2 ShadowTexCoord = float2(lightU, lightV);
 
-	float2 Moments = tex2D(g_sampleShadow, ShadowTexCoord);
+	//float2 Moments = tex2D(g_sampleShadow, ShadowTexCoord);
+	float2 Moments = GaussianBlur(g_ShadowMapSize, g_ShadowMapSize, ShadowTexCoord);
+
 	float shadowFinal = ChebyshevUpperBound(Moments, lightViewPos.z);
 
 	return float4(shadowFinal, shadowFinal, shadowFinal, 1.0f);
@@ -260,7 +336,7 @@ float4 DebugPass(float2 TexCoord : TEXCOORD0) : COLOR
 
 	//return Texture;
 	//return AO;
-	//return float4(Shadow.x / 100, Shadow.x / 100, Shadow.x / 100, 1.0f);
+	return float4(Shadow.x / 100, Shadow.x / 100, Shadow.x / 100, 1.0f);
 	//return NormalDepth;
 	return float4(NormalDepth.w, NormalDepth.w, NormalDepth.w,1.0f);
 }
@@ -275,31 +351,24 @@ technique DeferredRender
 		SrcBlend = ONE;
 		DestBlend = ONE;
 	}
-	pass p1 //渲染阴影
-	{
-		pixelShader = compile ps_3_0 ShadowVSMPass();
-		AlphaBlendEnable = true;                        //设置渲染状态        
-		SrcBlend = ZERO;
-		DestBlend = SrcColor;
-	}
-	pass p2 //添加环境光
+	pass p1 //添加环境光
 	{
 		pixelShader = compile ps_3_0 AmbientPass();
 		AlphaBlendEnable = true;                        //设置渲染状态        
 		SrcBlend = ONE;
 		DestBlend = ONE;
 	}
-	pass p3 //纹理及AO
+	pass p2 //纹理及AO
 	{
 		pixelShader = compile ps_3_0 DiffusePass();
 		AlphaBlendEnable = true;                        //设置渲染状态        
 		SrcBlend = ZERO;
 		DestBlend = SrcColor;
 	}
-	pass p4 //DEBUG PASS
+	pass p3 //DEBUG PASS
 	{
-		//pixelShader = compile ps_3_0 DebugPass();
-		pixelShader = compile ps_3_0 ShadowVSMPass();
+		pixelShader = compile ps_3_0 DebugPass();
+		//pixelShader = compile ps_3_0 ShadowVSMPass();
 		//pixelShader = compile ps_3_0 AmbientPass();
 		//pixelShader = compile ps_3_0 DiffusePass();
 		AlphaBlendEnable = true;                        //设置渲染状态        

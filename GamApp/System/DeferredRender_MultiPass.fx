@@ -336,8 +336,8 @@ float4 DebugPass(float2 TexCoord : TEXCOORD0) : COLOR
 
 	//return Texture;
 	//return AO;
-	return float4(Shadow.x / 100, Shadow.x / 100, Shadow.x / 100, 1.0f);
-	//return NormalDepth;
+	//return float4(Shadow.x / 100, Shadow.x / 100, Shadow.x / 100, 1.0f);
+	return NormalDepth;
 	return float4(NormalDepth.w, NormalDepth.w, NormalDepth.w,1.0f);
 }
 

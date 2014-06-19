@@ -20,6 +20,8 @@ struct VERTEX
 VERTEX vertices[4];
 LPDIRECT3DVERTEXBUFFER9		pBufferVex;
 
+LPD3DXEFFECT GBufferEffect;
+
 LPD3DXEFFECT deferredEffect; 
 LPD3DXEFFECT deferredMultiPassEffect;
 LPD3DXEFFECT mainColorEffect;
@@ -34,11 +36,12 @@ SSAO ssao;
 
 RenderPipe::RenderPipe()
 {
+
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
 		1, D3DUSAGE_RENDERTARGET,
-		D3DFMT_A16B16G16R16, D3DPOOL_DEFAULT,
+		D3DFMT_A32B32G32R32F, D3DPOOL_DEFAULT,
 		&m_pDiffuseTarget, NULL);
-	HRESULT hr = m_pDiffuseTarget->GetSurfaceLevel(0, &m_pDIffuseSurface);
+	HRESULT hr = m_pDiffuseTarget->GetSurfaceLevel(0, &m_pDiffuseSurface);
 
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
 		1, D3DUSAGE_RENDERTARGET,
@@ -57,6 +60,15 @@ RenderPipe::RenderPipe()
 		D3DFMT_A32B32G32R32F, D3DPOOL_DEFAULT,
 		&m_pMainColorTarget, NULL);
 	hr = m_pMainColorTarget->GetSurfaceLevel(0, &m_pMainColorSurface);
+
+	//-----------------------------------------------------------------------
+	//G-Buffer
+// 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
+// 		1, D3DUSAGE_RENDERTARGET,
+// 		D3DFMT_A32B32G32R32F, D3DPOOL_DEFAULT,
+// 		&m_GBuffer, NULL);
+// 	hr = m_GBuffer->GetSurfaceLevel(0, &m_pDIffuseSurface);
+// 	hr = m_GBuffer->GetSurfaceLevel(1, &m_pNormalDepthSurface);
 	//=======================================================================
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateVertexBuffer(4 * sizeof(VERTEX)
 		, 0
@@ -132,6 +144,14 @@ RenderPipe::RenderPipe()
 	}
 
 	error = 0;
+	if (E_FAIL == ::D3DXCreateEffectFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "System\\DeferredGBuffer.fx", NULL, NULL, D3DXSHADER_DEBUG,
+		NULL, &GBufferEffect, &error))
+	{
+		MessageBox(GetForegroundWindow(), (char*)error->GetBufferPointer(), "Shader", MB_OK);
+		abort();
+	}
+
+	error = 0;
 	if (E_FAIL == ::D3DXCreateEffectFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "System\\MainColor.fx", NULL, NULL, D3DXSHADER_DEBUG,
 		NULL, &mainColorEffect, &error))
 	{
@@ -152,15 +172,43 @@ RenderPipe::~RenderPipe()
 	ClearRenderUtil();
 }
 
-void RenderPipe::RenderDiffuse()
+void RenderPipe::RenderGBuffer()
 {
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pDIffuseSurface);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pDiffuseSurface);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(1, m_pNormalDepthSurface);
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 0, 0, 0), 1.0f, 0);
+
+	UINT nPasses = 0;
+	HRESULT r1 = GBufferEffect->Begin(&nPasses, 0);
+	HRESULT r2 = GBufferEffect->BeginPass(0);
 
 	for (int i = 0; i < mRenderUtilList.size(); ++i)
 	{
-		mRenderUtilList[i]->RenderDiffuse();
+		mRenderUtilList[i]->RenderDeferredGeometry(GBufferEffect);
 	}
+
+	GBufferEffect->EndPass();
+	GBufferEffect->End();
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, NULL);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(1, NULL);
+}
+
+void RenderPipe::RenderDiffuse()
+{
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pDiffuseSurface);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 0, 0, 0), 1.0f, 0);
+
+	UINT nPasses = 0;
+	HRESULT r1 = RENDERDEVICE::Instance().GetDiffuseEffect()->Begin(&nPasses, 0);
+	HRESULT r2 = RENDERDEVICE::Instance().GetDiffuseEffect()->BeginPass(0);
+
+	for (int i = 0; i < mRenderUtilList.size(); ++i)
+	{
+		mRenderUtilList[i]->RenderDeferredGeometry(RENDERDEVICE::Instance().GetDiffuseEffect());
+	}
+
+	RENDERDEVICE::Instance().GetDiffuseEffect()->EndPass();
+	RENDERDEVICE::Instance().GetDiffuseEffect()->End();
 }
 
 void RenderPipe::RenderNormalDepth()
@@ -168,10 +216,18 @@ void RenderPipe::RenderNormalDepth()
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pNormalDepthSurface);
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 0, 0, 0), 1.0f, 0);
 
+	UINT nPasses = 0;
+	HRESULT r1 = RENDERDEVICE::Instance().GetNormalDepthEffect()->Begin(&nPasses, 0);
+	HRESULT r2 = RENDERDEVICE::Instance().GetNormalDepthEffect()->BeginPass(0);
+
 	for (int i = 0; i < mRenderUtilList.size(); ++i)
 	{
-		mRenderUtilList[i]->RenderNormalDepth();
+		//mRenderUtilList[i]->RenderNormalDepth();
+		mRenderUtilList[i]->RenderDeferredGeometry(RENDERDEVICE::Instance().GetNormalDepthEffect());
 	}
+
+	RENDERDEVICE::Instance().GetNormalDepthEffect()->EndPass();
+	RENDERDEVICE::Instance().GetNormalDepthEffect()->End();
 }
 
 void RenderPipe::RenderPosition()
@@ -179,10 +235,18 @@ void RenderPipe::RenderPosition()
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pPositionSurface);
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 0, 0, 0), 1.0f, 0);
 
+	UINT nPasses = 0;
+	HRESULT r1 = RENDERDEVICE::Instance().GetPositionEffect()->Begin(&nPasses, 0);
+	HRESULT r2 = RENDERDEVICE::Instance().GetPositionEffect()->BeginPass(0);
+
 	for (int i = 0; i < mRenderUtilList.size(); ++i)
 	{
-		mRenderUtilList[i]->RenderPosition();
+		//mRenderUtilList[i]->RenderPosition();
+		mRenderUtilList[i]->RenderDeferredGeometry(RENDERDEVICE::Instance().GetPositionEffect());
 	}
+
+	RENDERDEVICE::Instance().GetPositionEffect()->EndPass();
+	RENDERDEVICE::Instance().GetPositionEffect()->End();
 }
 
 void RenderPipe::RenderShadow()
@@ -436,16 +500,16 @@ void RenderPipe::RenderAll()
 
 	RenderShadow();
 
-	RenderDiffuse();
-	
-	RenderNormalDepth();
+	RenderGBuffer();
+
+	//RenderDiffuse();
+	//RenderNormalDepth();
 
 #if USE_POSITIONBUFFER
 	//位置缓冲可以通过深度重建，但是如果需要较高精度的时候，可以考虑渲染位置图
 	RenderPosition();
 #endif	
 	
-
 	//ForwardRender();
 
 	ssao.RenderPost();

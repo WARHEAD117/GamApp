@@ -222,23 +222,33 @@ void RenderUtil::RenderShadow(int lightIndex)
 	}
 }
 
-
-void RenderUtil::RenderDeferred(ID3DXEffect* pEffect)
+void RenderUtil::RenderDeferredGeometry(ID3DXEffect* pEffect)
 {
-	pEffect->SetMatrix(WORLDVIEWPROJMATRIX, &mWorldViewProj);
-	pEffect->SetMatrix(WORLDVIEWMATRIX, &mWorldView);
-	pEffect->CommitChanges();
+	BuildEffectInfo();
 
 	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, mVertexBuffer, 0, D3DXGetFVFVertexSize(mFVF));
 	RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(mFVF);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetIndices(mIndexBuffer);
 	for (DWORD i = 0; i < mSubMeshList.size(); i++)
 	{
+		pEffect->SetMatrix(WORLDVIEWPROJMATRIX, &mWorldViewProj);
+		pEffect->SetMatrix(WORLDVIEWMATRIX, &mWorldView);
+
+		if (mSubMeshList[i].pTexture)
+		{
+			pEffect->SetTexture(DIFFUSETEXTURE, mSubMeshList[i].pTexture);
+		}
+		else
+		{
+			pEffect->SetTexture(DIFFUSETEXTURE, RENDERDEVICE::Instance().GetDefaultTexture());
+		}
+
+		pEffect->CommitChanges();
+
 		RENDERDEVICE::Instance().g_pD3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0,
 			mSubMeshList[i].vertexCount, mSubMeshList[i].indexStart, mSubMeshList[i].faceCount);
 	}
 }
-
 
 void RenderUtil::SetVertexBuffer(const LPDIRECT3DVERTEXBUFFER9& vertexBuffer)
 {

@@ -30,9 +30,9 @@ public:
 	void	RenderNormalDepth();
 	void	RenderDiffuse();
 	void	RenderPosition();
-	void RenderShadow(int lightIndex);
+	void	RenderShadow(int lightIndex);
 
-	void	RenderDeferred(ID3DXEffect* pEffect);
+	void	RenderDeferredGeometry(ID3DXEffect* pEffect);
 
 	void	SetVertexBuffer(const LPDIRECT3DVERTEXBUFFER9& vertexBuffer);
 	void	SetIndexBuffer(const LPDIRECT3DINDEXBUFFER9& indexBuffer);

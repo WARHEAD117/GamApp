@@ -34,8 +34,6 @@ public:
 	LPDIRECT3DTEXTURE9	m_pNormalDepthTarget;
 	LPDIRECT3DTEXTURE9	m_pPositionTarget;
 
-	LPDIRECT3DTEXTURE9	m_GBuffer;
-
 	LPDIRECT3DTEXTURE9	m_pAOTarget;
 	LPDIRECT3DTEXTURE9	m_pShadowTarget;
 

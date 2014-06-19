@@ -7,20 +7,29 @@ const D3DXVECTOR3 defaultPos(0.0f, 0.0f, 0.0f);
 const D3DXVECTOR3 defaultLookAt(0.0f, -1.0f, 0.0f);
 const D3DXVECTOR3 defaultUp(1.0f, 0.0f, 0.0f);
 const int SHADOWMAP_SIZE = 1024;
-BaseLight::BaseLight()
+BaseLight::BaseLight() :
+m_LightType(eDirectionLight),
+m_bUseShadow(false),
+m_LightRange(5.0f),
+m_LightAngle(D3DXVECTOR2(45.0f, 20.0f)),
+m_LightDir(ZEROVECTOR3),
+m_LightColor(D3DXCOLOR(0.3,0.3f,0.3f,1.0f)),
+m_LightAttenuation(D3DXVECTOR4(0.0, 1.0f, 0.0f, 1.0f))
 {
-	m_LightDir = ZEROVECTOR3;
+	Init();
+}
 
+BaseLight::~BaseLight()
+{
+}
+
+void BaseLight::Init()
+{
 	D3DXMatrixLookAtLH(&m_lightViewMat, &defaultPos, &defaultLookAt, &defaultUp);
 	D3DXMatrixInverse(&mWorldTransform, NULL, &m_lightViewMat);
 
 	D3DXMatrixOrthoLH(&m_lightProjMat, 20, 20, 0.01f, 50.0f);
 	D3DXMatrixInverse(&m_lightInvProjMat, NULL, &m_lightProjMat);
-}
-
-
-BaseLight::~BaseLight()
-{
 }
 
 void BaseLight::OnFrame()
@@ -41,14 +50,40 @@ void BaseLight::OnFrame()
 	D3DXMatrixLookAtLH(&m_lightViewMat, &m_LightPos, &m_LightDir, &m_LightUp);
 }
 
-D3DXVECTOR3 BaseLight::GetLightDir()
+D3DXVECTOR3 BaseLight::GetLightWorldDir()
 {
 	return m_LightDir;
 }
 
-D3DXVECTOR3 BaseLight::GetLightUp()
+D3DXVECTOR3 BaseLight::GetLightViewDir()
+{
+	D3DXVECTOR3 tempDir;
+	D3DXVec3TransformNormal(&tempDir, &m_LightDir, &RENDERDEVICE::Instance().ViewMatrix);
+	return tempDir;
+}
+
+D3DXVECTOR3 BaseLight::GetLightWorldUp()
 {
 	return m_LightUp;
+}
+
+D3DXVECTOR3 BaseLight::GetLightViewUp()
+{
+	D3DXVECTOR3 tempUp;
+	D3DXVec3TransformNormal(&tempUp, &m_LightUp, &RENDERDEVICE::Instance().ViewMatrix);
+	return tempUp;
+}
+
+D3DXVECTOR3 BaseLight::GetLightWorldPos()
+{
+	return m_LightPos;
+}
+
+D3DXVECTOR3 BaseLight::GetLightViewPos()
+{
+	D3DXVECTOR3 tempPos;
+	D3DXVec3TransformCoord(&tempPos, &m_LightPos, &RENDERDEVICE::Instance().ViewMatrix);
+	return tempPos;
 }
 
 D3DXCOLOR BaseLight::GetLightColor()
@@ -59,11 +94,6 @@ D3DXCOLOR BaseLight::GetLightColor()
 void BaseLight::SetLightColor(D3DXCOLOR color)
 {
 	m_LightColor = color;
-}
-
-D3DXVECTOR3 BaseLight::GetLightPos()
-{
-	return m_LightPos;
 }
 
 D3DXMATRIX BaseLight::GetLightViewMatrix()
@@ -84,8 +114,8 @@ D3DXMATRIX BaseLight::GetLightProjMatrix()
 
 void BaseLight::SetUseShadow(bool useShadow)
 {
-	mUseShadow = useShadow;
-	if (useShadow)
+	m_bUseShadow = useShadow;
+	if (useShadow && m_LightType == eDirectionLight)
 		BuildShadowMap();
 }
 
@@ -114,4 +144,42 @@ void BaseLight::SetShadowTarget()
 LPDIRECT3DTEXTURE9 BaseLight::GetShadowTarget()
 {
 	return m_pShadowTarget;
+}
+
+float BaseLight::GetLightRange()
+{
+	return m_LightRange;
+}
+
+void BaseLight::SetLightRange(float range)
+{
+	m_LightRange = range;
+}
+
+D3DXVECTOR2 BaseLight::GetLightAngle()
+{
+	return m_LightAngle;
+}
+
+D3DXVECTOR2 BaseLight::GetLightCosHalfAngle()
+{
+	float half_outer = cos(m_LightAngle.x / 360.0f * D3DX_PI);
+	float half_inner = cos(m_LightAngle.y / 360.0f * D3DX_PI);
+
+	return D3DXVECTOR2(half_outer, half_inner);
+}
+
+void BaseLight::SetLightAngle(D3DXVECTOR2 angle)
+{
+	m_LightAngle = angle;
+}
+
+D3DXVECTOR4 BaseLight::GetLightAttenuation()
+{
+	return m_LightAttenuation;
+}
+
+void BaseLight::SetLightAttenuation(D3DXVECTOR4 lightAttenuation)
+{
+	m_LightAttenuation = lightAttenuation;
 }

@@ -17,6 +17,8 @@ public:
 
 	BaseLight* GetLight(int lightIndex);
 	int GetLightCount();
+
+	BaseLight* CreateLight(LightType lightType);
 };
 
 

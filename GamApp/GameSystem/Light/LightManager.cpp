@@ -35,3 +35,11 @@ int LightManager::GetLightCount()
 {
 	return mLightList.size();
 }
+
+BaseLight* LightManager::CreateLight(LightType lightType)
+{
+	BaseLight * newLight = new BaseLight();
+	newLight->SetLightType(lightType);
+	AddLight(newLight);
+	return newLight;
+}

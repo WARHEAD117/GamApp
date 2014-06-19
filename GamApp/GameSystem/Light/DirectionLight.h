@@ -10,8 +10,8 @@ public:
 
 	void OnFrame();
 
-	D3DXVECTOR3 GetLightDir();
-	D3DXVECTOR3 GetLightPos();
+	D3DXVECTOR3 GetLightWorldDir();
+	D3DXVECTOR3 GetLightWorldPos();
 	D3DXCOLOR GetLightColor();
 
 	void SetLightDir(D3DXVECTOR3 dir);

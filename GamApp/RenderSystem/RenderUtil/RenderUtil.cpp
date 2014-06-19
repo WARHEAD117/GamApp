@@ -48,7 +48,7 @@ void RenderUtil::SetlightInfo(LPD3DXEFFECT effect)
 // 	LIGHTMANAGER::Instance().
 	BaseLight* pLight = LIGHTMANAGER::Instance().GetLight(0);
 	DirectionLight* pDirLight = dynamic_cast<DirectionLight*>(pLight);
-	D3DXVECTOR3 lightDir = pDirLight->GetLightDir();
+	D3DXVECTOR3 lightDir = pDirLight->GetLightWorldDir();
 
 	D3DXVECTOR3 viewPos = RENDERDEVICE::Instance().ViewPosition;
 	effect->SetVector(LIGHTDIRECTION, &D3DXVECTOR4(lightDir.x, lightDir.y, lightDir.z, 1.0));

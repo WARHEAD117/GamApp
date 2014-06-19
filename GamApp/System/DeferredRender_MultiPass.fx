@@ -21,8 +21,13 @@ float		g_ShadowBias = 0.2f;
 float		g_MinVariance = 0.02;
 float		g_Amount = 1.0f;
 
-bool		g_bUseShadow;
 float4		g_LightDir;
+float4		g_LightPos;
+float		g_LightRange;
+float4		g_LightCosAngle;
+float4		g_LightAttenuation;
+
+bool		g_bUseShadow;
 float4		g_LightColor;
 float4		g_AmbientColor;
 
@@ -159,7 +164,7 @@ float ChebyshevUpperBound(float2 Moments, float t)
 	return max(p, p_max);
 }
 
-float4 GaussianBlur(int mapWidth, int mapHeight, float2 texCoords)
+float4 GaussianBlur(int mapWidth, int mapHeight, sampler2D texSampler, float2 texCoords)
 {
 	float weights[6] = { 0.00078633, 0.00655965, 0.01330373, 0.05472157, 0.11098164, 0.22508352 };
 
@@ -172,41 +177,135 @@ float4 GaussianBlur(int mapWidth, int mapHeight, float2 texCoords)
 	//2,4,5,4,2
 	//1,3,4,3,1
 	//0,1,2,1,0
-	color = tex2D(g_sampleShadow, texCoords + float2(-2 * stepU, -2 * stepV)) * (weights[0]);
-	color += tex2D(g_sampleShadow, texCoords + float2(-1 * stepU, -2 * stepV)) * (weights[1]);
-	color += tex2D(g_sampleShadow, texCoords + float2(0 * stepU, -2 * stepV)) * (weights[2]);
-	color += tex2D(g_sampleShadow, texCoords + float2(1 * stepU, -2 * stepV)) * (weights[1]);
-	color += tex2D(g_sampleShadow, texCoords + float2(2 * stepU, -2 * stepV)) * (weights[0]);
+	color = tex2D(texSampler, texCoords + float2(-2 * stepU, -2 * stepV)) * (weights[0]);
+	color += tex2D(texSampler, texCoords + float2(-1 * stepU, -2 * stepV)) * (weights[1]);
+	color += tex2D(texSampler, texCoords + float2(0 * stepU, -2 * stepV)) * (weights[2]);
+	color += tex2D(texSampler, texCoords + float2(1 * stepU, -2 * stepV)) * (weights[1]);
+	color += tex2D(texSampler, texCoords + float2(2 * stepU, -2 * stepV)) * (weights[0]);
 
-	color += tex2D(g_sampleShadow, texCoords + float2(-2 * stepU, -1 * stepV)) * (weights[1]);
-	color += tex2D(g_sampleShadow, texCoords + float2(-1 * stepU, -1 * stepV)) * (weights[3]);
-	color += tex2D(g_sampleShadow, texCoords + float2(0 * stepU, -1 * stepV)) * (weights[4]);
-	color += tex2D(g_sampleShadow, texCoords + float2(1 * stepU, -1 * stepV)) * (weights[3]);
-	color += tex2D(g_sampleShadow, texCoords + float2(2 * stepU, -1 * stepV)) * (weights[1]);
+	color += tex2D(texSampler, texCoords + float2(-2 * stepU, -1 * stepV)) * (weights[1]);
+	color += tex2D(texSampler, texCoords + float2(-1 * stepU, -1 * stepV)) * (weights[3]);
+	color += tex2D(texSampler, texCoords + float2(0 * stepU, -1 * stepV)) * (weights[4]);
+	color += tex2D(texSampler, texCoords + float2(1 * stepU, -1 * stepV)) * (weights[3]);
+	color += tex2D(texSampler, texCoords + float2(2 * stepU, -1 * stepV)) * (weights[1]);
 
-	color += tex2D(g_sampleShadow, texCoords + float2(-2 * stepU, 0 * stepV)) * (weights[2]);
-	color += tex2D(g_sampleShadow, texCoords + float2(-1 * stepU, 0 * stepV)) * (weights[4]);
-	color += tex2D(g_sampleShadow, texCoords + float2(0 * stepU, 0 * stepV)) * (weights[5]);
-	color += tex2D(g_sampleShadow, texCoords + float2(1 * stepU, 0 * stepV)) * (weights[4]);
-	color += tex2D(g_sampleShadow, texCoords + float2(2 * stepU, 0 * stepV)) * (weights[2]);
+	color += tex2D(texSampler, texCoords + float2(-2 * stepU, 0 * stepV)) * (weights[2]);
+	color += tex2D(texSampler, texCoords + float2(-1 * stepU, 0 * stepV)) * (weights[4]);
+	color += tex2D(texSampler, texCoords + float2(0 * stepU, 0 * stepV)) * (weights[5]);
+	color += tex2D(texSampler, texCoords + float2(1 * stepU, 0 * stepV)) * (weights[4]);
+	color += tex2D(texSampler, texCoords + float2(2 * stepU, 0 * stepV)) * (weights[2]);
 
-	color += tex2D(g_sampleShadow, texCoords + float2(-2 * stepU, 1 * stepV)) * (weights[1]);
-	color += tex2D(g_sampleShadow, texCoords + float2(-1 * stepU, 1 * stepV)) * (weights[3]);
-	color += tex2D(g_sampleShadow, texCoords + float2(0 * stepU, 1 * stepV)) * (weights[4]);
-	color += tex2D(g_sampleShadow, texCoords + float2(1 * stepU, 1 * stepV)) * (weights[3]);
-	color += tex2D(g_sampleShadow, texCoords + float2(2 * stepU, 1 * stepV)) * (weights[1]);
+	color += tex2D(texSampler, texCoords + float2(-2 * stepU, 1 * stepV)) * (weights[1]);
+	color += tex2D(texSampler, texCoords + float2(-1 * stepU, 1 * stepV)) * (weights[3]);
+	color += tex2D(texSampler, texCoords + float2(0 * stepU, 1 * stepV)) * (weights[4]);
+	color += tex2D(texSampler, texCoords + float2(1 * stepU, 1 * stepV)) * (weights[3]);
+	color += tex2D(texSampler, texCoords + float2(2 * stepU, 1 * stepV)) * (weights[1]);
 
-	color += tex2D(g_sampleShadow, texCoords + float2(-2 * stepU, 2 * stepV)) * (weights[0]);
-	color += tex2D(g_sampleShadow, texCoords + float2(-1 * stepU, 2 * stepV)) * (weights[1]);
-	color += tex2D(g_sampleShadow, texCoords + float2(0 * stepU, 2 * stepV)) * (weights[2]);
-	color += tex2D(g_sampleShadow, texCoords + float2(1 * stepU, 2 * stepV)) * (weights[1]);
-	color += tex2D(g_sampleShadow, texCoords + float2(2 * stepU, 2 * stepV)) * (weights[0]);
+	color += tex2D(texSampler, texCoords + float2(-2 * stepU, 2 * stepV)) * (weights[0]);
+	color += tex2D(texSampler, texCoords + float2(-1 * stepU, 2 * stepV)) * (weights[1]);
+	color += tex2D(texSampler, texCoords + float2(0 * stepU, 2 * stepV)) * (weights[2]);
+	color += tex2D(texSampler, texCoords + float2(1 * stepU, 2 * stepV)) * (weights[1]);
+	color += tex2D(texSampler, texCoords + float2(2 * stepU, 2 * stepV)) * (weights[0]);
 
 	return color;
 }
 
+void LightFunc(float3 normal, float3 toLight, float3 toEye, float4 lightColor, inout float4 DiffuseLight, inout float4 SpecularLight)
+{
+	//计算漫反射
+	float DiffuseRatio = max(dot(toLight, normal), 0);
+	DiffuseLight += lightColor * DiffuseRatio;
 
-float4 LightPass(float2 TexCoord : TEXCOORD0) : COLOR
+	//Blinn-Phong光照
+	//计算半角向量
+	float3 H = normalize(toLight + toEye);
+
+	float SpecularRatio = max(dot(normal, H), 0);
+	float PoweredSpecular = pow(SpecularRatio, 24);
+	SpecularLight += lightColor * PoweredSpecular;
+}
+
+float ShadowFunc(bool useShadow, float3 objViewPos)
+{
+	float shadowContribute = 1.0f;
+	if (useShadow)
+	{
+		//Shadow
+		float4 worldPos = mul(float4(objViewPos, 1.0f), g_invView);
+		float4 lightViewPos = mul(worldPos, g_ShadowView);
+		float4 lightProjPos = mul(lightViewPos, g_ShadowProj);
+		float lightU = (lightProjPos.x / lightProjPos.w + 1.0f) / 2.0f;
+		float lightV = (1.0f - lightProjPos.y / lightProjPos.w) / 2.0f;
+
+		float2 ShadowTexCoord = float2(lightU, lightV);
+
+		//float2 Moments = tex2D(g_sampleShadow, ShadowTexCoord);
+		float2 Moments = GaussianBlur(g_ShadowMapSize, g_ShadowMapSize, g_sampleShadow, ShadowTexCoord);
+
+		shadowContribute = ChebyshevUpperBound(Moments, lightViewPos.z);
+	}
+	return shadowContribute;
+}
+
+float PCFShadow(bool useShadow, float3 objViewPos)
+{
+	float shadowContribute = 1.0f;
+	if (useShadow)
+	{
+		//Shadow
+		float4 worldPos = mul(float4(objViewPos, 1.0f), g_invView);
+		float4 lightViewPos = mul(worldPos, g_ShadowView);
+		float4 lightProjPos = mul(lightViewPos, g_ShadowProj);
+		float lightU = (lightProjPos.x / lightProjPos.w + 1.0f) / 2.0f;
+		float lightV = (1.0f - lightProjPos.y / lightProjPos.w) / 2.0f;
+
+		int SHADOWMAP_SIZE = g_ShadowMapSize;
+		float2 ShadowTexCoord = float2(lightU, lightV);
+		float2 texturePos = ShadowTexCoord * SHADOWMAP_SIZE;
+		float2 lerps = frac(texturePos);
+
+		float shadowBias = g_ShadowBias;
+
+		float shadowVal[4];
+		shadowVal[0] = (tex2D(g_sampleShadow, ShadowTexCoord) + shadowBias < lightViewPos.z / lightViewPos.w) ? 0.0f : 1.0f;
+		shadowVal[1] = (tex2D(g_sampleShadow, ShadowTexCoord + float2(1.0f / SHADOWMAP_SIZE, 0.0f)) + shadowBias < lightViewPos.z / lightViewPos.w) ? 0.0f : 1.0f;
+		shadowVal[2] = (tex2D(g_sampleShadow, ShadowTexCoord + float2(0.0f, 1.0f / SHADOWMAP_SIZE)) + shadowBias < lightViewPos.z / lightViewPos.w) ? 0.0f : 1.0f;
+		shadowVal[3] = (tex2D(g_sampleShadow, ShadowTexCoord + float2(1.0f / SHADOWMAP_SIZE, 1.0f / SHADOWMAP_SIZE)) + shadowBias < lightViewPos.z / lightViewPos.w) ? 0.0f : 1.0f;
+
+		shadowContribute = lerp(lerp(shadowVal[0], shadowVal[1], lerps.x), lerp(shadowVal[2], shadowVal[3], lerps.x), lerps.y);
+
+	}
+	return shadowContribute;
+}
+
+float4 DirectionLightPass(float2 TexCoord : TEXCOORD0) : COLOR
+{
+	float4 NormalDepth = tex2D(g_sampleNormalDepth, TexCoord);
+	float3 NormalV = normalize(NormalDepth.xyz * 2.0f - 1.0f);
+
+	float3 pos = GetPosition(TexCoord);
+
+	if (pos.z > g_zFar - 0.1)
+		return float4(0, 0, 0, 1);
+
+	float3 ToEyeDirV = normalize(pos * -1.0f);
+	float3 toLight = normalize(-g_LightDir.xyz);
+
+
+	float4 DiffuseLight = float4(0.0f, 0.0f, 0.0f, 1.0f);
+	float4 SpecularLight = float4(0.0f, 0.0f, 0.0f, 1.0f);
+
+	LightFunc(NormalV, toLight, ToEyeDirV, g_LightColor, DiffuseLight, SpecularLight);
+
+	float shadowFinal = 1.0f;
+	shadowFinal = ShadowFunc(g_bUseShadow, pos);
+
+	//混合光照和纹理
+	float4 finalColor = DiffuseLight +SpecularLight;
+	return finalColor * shadowFinal;
+}
+
+float4 PointLightPass(float2 TexCoord : TEXCOORD0) : COLOR
 {
 	float4 NormalDepth = tex2D(g_sampleNormalDepth, TexCoord);
 	float3 NormalV = normalize(NormalDepth.xyz * 2.0f - 1.0f);
@@ -219,48 +318,76 @@ float4 LightPass(float2 TexCoord : TEXCOORD0) : COLOR
 
 	float4 DiffuseLight = float4(0.0f, 0.0f, 0.0f, 1.0f);
 	float4 SpecularLight = float4(0.0f, 0.0f, 0.0f, 1.0f);
-	
-	float3 toLight = g_LightDir.xyz;
-	//float4 toLightV4 = mul(float4(toLight,1.0f), g_View);
-	//toLight = toLightV4.xyz / toLightV4.w;
 
-	toLight = normalize(-toLight);
-	//计算漫反射
-	float DiffuseRatio = max(dot(toLight, NormalV), 0);
-	DiffuseLight += g_LightColor * float4(1.0f, 1.0f, 1.0f, 1.0f) * DiffuseRatio;
+	float3 toLight = g_LightPos.xyz - pos;
+	float toLightDistance = length(toLight);
+	if (toLightDistance > g_LightRange)
+		return float4(0.0f, 0.0f, 0.0f, 1.0f);
 
-	//计算半角向量
-	float3 H = normalize(toLight + ToEyeDirV);
+	float attenuation = 1.0f / (g_LightAttenuation.x + g_LightAttenuation.y * toLightDistance + g_LightAttenuation.z * toLightDistance * toLightDistance);
 
-	//Phong光照
-	//float4 Reflect = normalize(float4(g_LightDir.xyz - 2 * DiffuseRatio * NormalW, 1.0f));
-	//float SpecularRatio = max(dot(Reflect, ToEyeDirW), 0);
+	float4 lightColor = attenuation * g_LightColor;
 
-	//Blinn-Phong光照
-	float SpecularRatio = max(dot(NormalV, H), 0);
-	float PoweredSpecular = pow(SpecularRatio, 24);
-	SpecularLight += g_LightColor * PoweredSpecular;
+	toLight = normalize(toLight);
+
+	LightFunc(NormalV, toLight, ToEyeDirV, lightColor, DiffuseLight, SpecularLight);
 
 	float shadowFinal = 1.0f;
-	if (g_bUseShadow)
-	{
-		//Shadow
-		float4 worldPos = mul(float4(pos, 1.0f), g_invView);
-		float4 lightViewPos = mul(worldPos, g_ShadowView);
-		float4 lightProjPos = mul(lightViewPos, g_ShadowProj);
-		float lightU = (lightProjPos.x / lightProjPos.w + 1.0f) / 2.0f;
-		float lightV = (1.0f - lightProjPos.y / lightProjPos.w) / 2.0f;
-
-		float2 ShadowTexCoord = float2(lightU, lightV);
-
-		//float2 Moments = tex2D(g_sampleShadow, ShadowTexCoord);
-		float2 Moments = GaussianBlur(g_ShadowMapSize, g_ShadowMapSize, ShadowTexCoord);
-
-		shadowFinal = ChebyshevUpperBound(Moments, lightViewPos.z);
-	}
+	shadowFinal = ShadowFunc(g_bUseShadow, pos);
 
 	//混合光照和纹理
-	float4 finalColor = DiffuseLight +SpecularLight;
+	float4 finalColor = DiffuseLight + SpecularLight;
+		return finalColor * shadowFinal;
+}
+
+float4 SpotLightPass(float2 TexCoord : TEXCOORD0) : COLOR
+{
+	float4 NormalDepth = tex2D(g_sampleNormalDepth, TexCoord);
+	float3 NormalV = normalize(NormalDepth.xyz * 2.0f - 1.0f);
+
+	float3 pos = GetPosition(TexCoord);
+	if (pos.z > g_zFar - 0.1)
+		return float4(0, 0, 0, 1);
+
+	float3 ToEyeDirV = normalize(pos * -1.0f);
+
+	float4 DiffuseLight = float4(0.0f, 0.0f, 0.0f, 1.0f);
+	float4 SpecularLight = float4(0.0f, 0.0f, 0.0f, 1.0f);
+
+	float3 toLight = g_LightPos.xyz - pos;
+	float toLightDistance = length(toLight);
+	toLight = normalize(toLight);
+
+	
+	//光源到像素的向量与光源方向的夹角
+	float cosAlpha = dot(-toLight, g_LightDir);
+	//内锥角的一半的cos
+	float cosTheta = g_LightCosAngle.y;
+	//外锥角的一半的cos
+	float cosPhi = g_LightCosAngle.x;
+
+	//聚光灯外角以外和范围以外都没有光照
+	if (toLightDistance > g_LightRange || cosAlpha < cosPhi)
+		return float4(0.0f, 0.0f, 0.0f, 1.0f);
+	
+	float falloff = 1.0f;
+	if (cosAlpha < cosTheta)
+	{
+		falloff = (cosAlpha - cosPhi) / (cosTheta - cosPhi);
+	}
+	//下面的公式可以简化掉if，但是看起来没有效率提升
+	//falloff = 1 - (cosAlpha < cosTheta)* (1 - (cosAlpha - cosPhi) / (cosTheta - cosPhi));
+	
+	float attenuation = 1.0f / (g_LightAttenuation.x + g_LightAttenuation.y * toLightDistance + g_LightAttenuation.z * toLightDistance * toLightDistance);
+	float4 lightColor = attenuation * g_LightColor * falloff;
+
+	LightFunc(NormalV, toLight, ToEyeDirV, lightColor, DiffuseLight, SpecularLight);
+
+	float shadowFinal = 1.0f;
+	shadowFinal = ShadowFunc(g_bUseShadow, pos);
+
+	//混合光照和纹理
+	float4 finalColor = DiffuseLight + SpecularLight;
 	return finalColor * shadowFinal;
 }
 
@@ -273,54 +400,6 @@ float4 DiffusePass(float2 TexCoord : TEXCOORD0) : COLOR
 	float4 AO = tex2D(g_sampleAO, TexCoord);
 
 	return Texture * AO;
-}
-
-float4 ShadowVSMPass(float2 TexCoord : TEXCOORD0) : COLOR
-{
-	//Shadow
-	float3 pos = GetPosition(TexCoord);
-	float4 worldPos = mul(float4(pos, 1.0f), g_invView);
-	float4 lightViewPos = mul(worldPos, g_ShadowView);
-	float4 lightProjPos = mul(lightViewPos, g_ShadowProj);
-	float lightU = (lightProjPos.x / lightProjPos.w + 1.0f) / 2.0f;
-	float lightV = (1.0f - lightProjPos.y / lightProjPos.w) / 2.0f;
-
-	float2 ShadowTexCoord = float2(lightU, lightV);
-
-	//float2 Moments = tex2D(g_sampleShadow, ShadowTexCoord);
-	float2 Moments = GaussianBlur(g_ShadowMapSize, g_ShadowMapSize, ShadowTexCoord);
-
-	float shadowFinal = ChebyshevUpperBound(Moments, lightViewPos.z);
-
-	return float4(shadowFinal, shadowFinal, shadowFinal, 1.0f);
-}
-
-float4 ShadowPass(float2 TexCoord : TEXCOORD0) : COLOR
-{
-	//Shadow
-	float3 pos = GetPosition(TexCoord);
-	float4 worldPos = mul(float4(pos, 1.0f), g_invView);
-	float4 lightViewPos = mul(worldPos, g_ShadowView);
-	float4 lightProjPos = mul(lightViewPos, g_ShadowProj);
-	float lightU = (lightProjPos.x / lightProjPos.w + 1.0f) / 2.0f;
-	float lightV = (1.0f - lightProjPos.y / lightProjPos.w) / 2.0f;
-
-	int SHADOWMAP_SIZE = g_ShadowMapSize;
-	float2 ShadowTexCoord = float2(lightU, lightV);
-	float2 texturePos = ShadowTexCoord * SHADOWMAP_SIZE;
-	float2 lerps = frac(texturePos);
-
-	float shadowBias = g_ShadowBias;
-
-	float shadowVal[4];
-	shadowVal[0] = (tex2D(g_sampleShadow, ShadowTexCoord) + shadowBias < lightViewPos.z / lightViewPos.w) ? 0.0f : 1.0f;
-	shadowVal[1] = (tex2D(g_sampleShadow, ShadowTexCoord + float2(1.0f / SHADOWMAP_SIZE, 0.0f)) + shadowBias < lightViewPos.z / lightViewPos.w) ? 0.0f : 1.0f;
-	shadowVal[2] = (tex2D(g_sampleShadow, ShadowTexCoord + float2(0.0f, 1.0f / SHADOWMAP_SIZE)) + shadowBias < lightViewPos.z / lightViewPos.w) ? 0.0f : 1.0f;
-	shadowVal[3] = (tex2D(g_sampleShadow, ShadowTexCoord + float2(1.0f / SHADOWMAP_SIZE, 1.0f / SHADOWMAP_SIZE)) + shadowBias < lightViewPos.z / lightViewPos.w) ? 0.0f : 1.0f;
-
-	float shadowFinal = lerp(lerp(shadowVal[0], shadowVal[1], lerps.x), lerp(shadowVal[2], shadowVal[3], lerps.x), lerps.y);
-
-	return float4(shadowFinal, shadowFinal, shadowFinal,1.0f);
 }
 
 float4 DebugPass(float2 TexCoord : TEXCOORD0) : COLOR
@@ -346,7 +425,7 @@ technique DeferredRender
 	pass p0 //渲染灯光
 	{
 		vertexShader = compile vs_3_0 VShader();
-		pixelShader = compile ps_3_0 LightPass();
+		pixelShader = compile ps_3_0 DirectionLightPass();
 		AlphaBlendEnable = true;                        //设置渲染状态        
 		SrcBlend = ONE;
 		DestBlend = ONE;
@@ -374,6 +453,22 @@ technique DeferredRender
 		AlphaBlendEnable = true;                        //设置渲染状态        
 		SrcBlend = ONE;
 		DestBlend = ZERO;
+	}
+	pass p4 //PointLight
+	{
+		vertexShader = compile vs_3_0 VShader();
+		pixelShader = compile ps_3_0 PointLightPass();
+		AlphaBlendEnable = true;                        //设置渲染状态        
+		SrcBlend = ONE;
+		DestBlend = ONE;
+	}
+	pass p5 //SpotLight
+	{
+		vertexShader = compile vs_3_0 VShader();
+		pixelShader = compile ps_3_0 SpotLightPass();
+		AlphaBlendEnable = true;                        //设置渲染状态        
+		SrcBlend = ONE;
+		DestBlend = ONE;
 	}
 	
 }

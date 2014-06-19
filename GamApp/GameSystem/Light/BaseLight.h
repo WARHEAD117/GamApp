@@ -17,14 +17,18 @@ public:
 	BaseLight();
 	~BaseLight();
 
-	LightType mLightType;
+	LightType m_LightType;
 
 	void SetLightType(LightType lightType);
 	LightType GetLightType();
 
-	D3DXVECTOR3 GetLightDir();
-	D3DXVECTOR3 GetLightUp();
-	D3DXVECTOR3 GetLightPos();
+	D3DXVECTOR3 GetLightWorldDir();
+	D3DXVECTOR3 GetLightWorldUp();
+	D3DXVECTOR3 GetLightWorldPos();
+
+	D3DXVECTOR3 GetLightViewDir();
+	D3DXVECTOR3 GetLightViewUp();
+	D3DXVECTOR3 GetLightViewPos();
 
 	D3DXCOLOR GetLightColor();
 	void SetLightColor(D3DXCOLOR color);
@@ -39,11 +43,25 @@ public:
 	void	BuildShadowMap();
 	void	SetShadowTarget();
 	LPDIRECT3DTEXTURE9	GetShadowTarget();
+
+	float GetLightRange();
+	void SetLightRange(float range);
+
+	D3DXVECTOR2 GetLightCosHalfAngle();
+	D3DXVECTOR2 GetLightAngle(); //Íâ½Ç¡¢ÄÚ½Ç
+	void SetLightAngle(D3DXVECTOR2 angle);
+
+	D3DXVECTOR4 GetLightAttenuation();
+	void SetLightAttenuation(D3DXVECTOR4 lightAttenuation);
+
+	virtual void OnFrame();
+
+private:
 	LPDIRECT3DTEXTURE9 m_pShadowTarget;
 	LPDIRECT3DSURFACE9	m_pShadowSurface;
 	LPDIRECT3DSURFACE9	m_pDepthStencilShadowSurface;
 
-	bool		mUseShadow;
+	bool		m_bUseShadow;
 	D3DXVECTOR3 m_LightPos;
 	D3DXVECTOR3 m_LightDir;
 	D3DXVECTOR3 m_LightUp;
@@ -55,21 +73,26 @@ public:
 	float		mLightIntensity;
 	D3DXCOLOR	m_LightColor;
 
-	virtual void OnFrame();
+	float		m_LightRange;
+	D3DXVECTOR2		m_LightAngle;
+
+	D3DXVECTOR4	m_LightAttenuation;
+
+	void Init();
 };
 
 inline void BaseLight::SetLightType(LightType lightType)
 {
-	mLightType = lightType;
+	m_LightType = lightType;
 }
 
 inline LightType BaseLight::GetLightType()
 {
-	return mLightType;
+	return m_LightType;
 }
 
 
 inline bool BaseLight::GetUseShadow()
 {
-	return mUseShadow;
+	return m_bUseShadow;
 }

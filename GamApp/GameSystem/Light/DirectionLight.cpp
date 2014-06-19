@@ -20,7 +20,7 @@ void DirectionLight::OnFrame()
 	D3DXVec3Normalize(&m_LightDir, &m_LightDir);
 }
 
-D3DXVECTOR3 DirectionLight::GetLightDir()
+D3DXVECTOR3 DirectionLight::GetLightWorldDir()
 {
 	return m_LightDir;
 }
@@ -40,7 +40,7 @@ void DirectionLight::SetLightColor(D3DXCOLOR color)
 	m_LightColor = color;
 }
 
-D3DXVECTOR3 DirectionLight::GetLightPos()
+D3DXVECTOR3 DirectionLight::GetLightWorldPos()
 {
 	return mPosition;
 }

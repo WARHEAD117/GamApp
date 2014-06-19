@@ -61,14 +61,6 @@ RenderPipe::RenderPipe()
 		&m_pMainColorTarget, NULL);
 	hr = m_pMainColorTarget->GetSurfaceLevel(0, &m_pMainColorSurface);
 
-	//-----------------------------------------------------------------------
-	//G-Buffer
-// 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
-// 		1, D3DUSAGE_RENDERTARGET,
-// 		D3DFMT_A32B32G32R32F, D3DPOOL_DEFAULT,
-// 		&m_GBuffer, NULL);
-// 	hr = m_GBuffer->GetSurfaceLevel(0, &m_pDIffuseSurface);
-// 	hr = m_GBuffer->GetSurfaceLevel(1, &m_pNormalDepthSurface);
 	//=======================================================================
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateVertexBuffer(4 * sizeof(VERTEX)
 		, 0
@@ -389,15 +381,23 @@ void RenderPipe::DeferredRender_MultiPass()
 	for (int i = 0; i < lightCount; i++)
 	{
 		BaseLight* pLight = LIGHTMANAGER::Instance().GetLight(i);
-		D3DXVECTOR3 lightDir = pLight->GetLightDir();
-		bool useShadow = pLight->GetUseShadow();
+		D3DXVECTOR3 lightDir = pLight->GetLightViewDir();
+		D3DXVECTOR3 lightPos = pLight->GetLightViewPos();
 		D3DXVECTOR4 lightColor = pLight->GetLightColor();
+		D3DXVECTOR4 lightAttenuation = pLight->GetLightAttenuation();
+		D3DXVECTOR4 lightCosHalfAngle = pLight->GetLightCosHalfAngle();
+		float lightRange = pLight->GetLightRange();
+		bool useShadow = pLight->GetUseShadow();
 
-		D3DXVECTOR3 temp;
-		D3DXVec3TransformNormal(&temp, &lightDir, &RENDERDEVICE::Instance().ViewMatrix);
-		D3DXVECTOR4 lightDir_View = D3DXVECTOR4(temp, 1.0f);
+		D3DXVECTOR4 lightDir_View = D3DXVECTOR4(lightDir, 1.0f);
+		D3DXVECTOR4 lightPos_View = D3DXVECTOR4(lightPos, 1.0f);
 
-		deferredMultiPassEffect->BeginPass(0);
+		deferredMultiPassEffect->SetVector("g_LightDir", &lightDir_View);
+		deferredMultiPassEffect->SetVector("g_LightPos", &lightPos_View);
+		deferredMultiPassEffect->SetVector("g_LightColor", &lightColor);
+		deferredMultiPassEffect->SetVector("g_LightAttenuation", &lightAttenuation);
+		deferredMultiPassEffect->SetFloat("g_LightRange", lightRange);
+		deferredMultiPassEffect->SetVector("g_LightCosAngle", &D3DXVECTOR4(lightCosHalfAngle.x, lightCosHalfAngle.y, 0.0f, 0.0f));
 
 		D3DXMATRIX invView;
 		D3DXMatrixInverse(&invView, NULL, &RENDERDEVICE::Instance().ViewMatrix);
@@ -409,38 +409,33 @@ void RenderPipe::DeferredRender_MultiPass()
 		if (useShadow)
 			deferredMultiPassEffect->SetTexture("g_ShadowBuffer", pLight->GetShadowTarget());
 
-		deferredMultiPassEffect->SetVector("g_LightDir", &lightDir_View);
-		deferredMultiPassEffect->SetVector("g_LightColor", &lightColor);
+		UINT pass = 0;
+		LightType lt = pLight->GetLightType();
+		if (lt == eDirectionLight)
+		{
+			pass = 0;
+		}
+		else if (lt == ePointLight)
+		{
+			pass = 4;
+		}
+		else if (lt == eSpotLight)
+		{
+			pass = 5;
+		}
+		else
+		{
+			pass = 0;
+		}
 
 		deferredMultiPassEffect->CommitChanges();
+
+		deferredMultiPassEffect->BeginPass(pass);
 
 		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 
 		deferredMultiPassEffect->EndPass();
 	}
-	
-	/*
-	lightCount = 4;
-	for (int i = 0; i < lightCount; i++)
-	{
-
-		deferredMultiPassEffect->BeginPass(0);
-
-		if (i==0)
-			deferredMultiPassEffect->SetBool("g_bUseShadow", true);
-		else
-			deferredMultiPassEffect->SetBool("g_bUseShadow", false);
-
-		deferredMultiPassEffect->SetVector("g_LightDir", &lightDirArrayView[i]);
-		deferredMultiPassEffect->SetVector("g_LightColor", &lightColorArray[i]);
-		deferredMultiPassEffect->CommitChanges();
-
-		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
-
-		deferredMultiPassEffect->EndPass();
-	}*/
-
-	
 
 	//»·¾³¹âPass
 	deferredMultiPassEffect->BeginPass(1);

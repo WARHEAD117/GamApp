@@ -24,6 +24,7 @@ struct OutputVS
 	float3 normalWV			: NORMAL;
 	float2 TexCoord			: TEXCOORD0;
 	float4 posP				: TEXCOORD1;
+	float4 posWV			: TEXCOORD2;
 };
 
 
@@ -31,6 +32,7 @@ struct OutputPS
 {
 	float4 diffuse			: COLOR0;
 	float4 normalDepth		: COLOR1;
+	float4 position			: COLOR2;
 };
 
 OutputVS VShader(float4 posL		: POSITION,
@@ -45,6 +47,8 @@ OutputVS VShader(float4 posL		: POSITION,
 
 	//观察空间下的法线
 	outVS.normalWV = mul(normalL, g_WorldView);
+
+	outVS.posWV = mul(posL, g_WorldView);
 	outVS.TexCoord = TexCoord;
 
 	return outVS;
@@ -52,7 +56,8 @@ OutputVS VShader(float4 posL		: POSITION,
 
 OutputPS PShader(float3 NormalWV		: NORMAL,
 				float2 TexCoord		: TEXCOORD0,
-				float4 posP			: TEXCOORD1)
+				float4 posP			: TEXCOORD1,
+				float4 posWV		: TEXCOORD2)
 {
 	OutputPS PsOut;
 
@@ -68,7 +73,7 @@ OutputPS PShader(float3 NormalWV		: NORMAL,
 
 	PsOut.diffuse = Texture;
 	PsOut.normalDepth = normalDepth;
-
+	PsOut.position = posWV;
 	return PsOut;
 }
 

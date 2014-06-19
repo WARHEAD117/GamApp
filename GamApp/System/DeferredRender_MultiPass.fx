@@ -58,7 +58,7 @@ sampler_state
 	MipFilter = Linear;
 };
 
-/*
+
 sampler2D g_samplePosition =
 sampler_state
 {
@@ -67,7 +67,7 @@ sampler_state
 	MagFilter = Point;
 	MipFilter = Point;
 };
-*/
+
 
 //----------------------------
 
@@ -110,10 +110,10 @@ OutputVS VShader(float4 posL       : POSITION0,
 
 float3 GetPosition(in float2 uv)
 {
-	//使用positionBuffer来获取位置，精度较高，但是慢
-	//return tex2D(g_samplePosition, uv).xyz;
+	//使用positionBuffer来获取位置，精度较高，但是要占用三个通道
+	return tex2D(g_samplePosition, uv).xyz;
 
-	//使用深度重建位置信息，精度较低，误差在小数点后第二位出现，但是速度很好
+	//使用深度重建位置信息，精度较低，误差在小数点后第二位出现，但是速度很好。但是为了能精确还原，必须使用128位纹理，太大太慢
 	//法线深度图采样
 	float4 NormalDepth = tex2D(g_sampleNormalDepth, uv);
 

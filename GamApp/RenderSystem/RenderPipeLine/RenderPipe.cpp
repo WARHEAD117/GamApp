@@ -39,25 +39,25 @@ RenderPipe::RenderPipe()
 
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
 		1, D3DUSAGE_RENDERTARGET,
-		D3DFMT_A32B32G32R32F, D3DPOOL_DEFAULT,
+		D3DFMT_A16B16G16R16F, D3DPOOL_DEFAULT,
 		&m_pDiffuseTarget, NULL);
 	HRESULT hr = m_pDiffuseTarget->GetSurfaceLevel(0, &m_pDiffuseSurface);
 
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
 		1, D3DUSAGE_RENDERTARGET,
-		D3DFMT_A32B32G32R32F, D3DPOOL_DEFAULT,
+		D3DFMT_A16B16G16R16F, D3DPOOL_DEFAULT,
 		&m_pNormalDepthTarget, NULL);
 	hr = m_pNormalDepthTarget->GetSurfaceLevel(0, &m_pNormalDepthSurface);
 
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
 		1, D3DUSAGE_RENDERTARGET,
-		D3DFMT_A32B32G32R32F, D3DPOOL_DEFAULT,
+		D3DFMT_A16B16G16R16F, D3DPOOL_DEFAULT,
 		&m_pPositionTarget, NULL);
 	hr = m_pPositionTarget->GetSurfaceLevel(0, &m_pPositionSurface);
 
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
 		1, D3DUSAGE_RENDERTARGET,
-		D3DFMT_A32B32G32R32F, D3DPOOL_DEFAULT,
+		D3DFMT_A16B16G16R16F, D3DPOOL_DEFAULT,
 		&m_pMainColorTarget, NULL);
 	hr = m_pMainColorTarget->GetSurfaceLevel(0, &m_pMainColorSurface);
 
@@ -168,6 +168,7 @@ void RenderPipe::RenderGBuffer()
 {
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pDiffuseSurface);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(1, m_pNormalDepthSurface);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(2, m_pPositionSurface);
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 0, 0, 0), 1.0f, 0);
 
 	UINT nPasses = 0;
@@ -183,6 +184,7 @@ void RenderPipe::RenderGBuffer()
 	GBufferEffect->End();
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, NULL);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(1, NULL);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(2, NULL);
 }
 
 void RenderPipe::RenderDiffuse()
@@ -327,12 +329,9 @@ void RenderPipe::DeferredRender_MultiPass()
 
 	deferredMultiPassEffect->SetTexture(DIFFUSEBUFFER, m_pDiffuseTarget);
 	deferredMultiPassEffect->SetTexture(NORMALDEPTHBUFFER, m_pNormalDepthTarget);
-	deferredMultiPassEffect->SetTexture("g_AOBuffer", ssao.GetPostTarget());
+	deferredMultiPassEffect->SetTexture(POSITIONBUFFER, m_pPositionTarget);
 
-#if USE_POSITIONBUFFER
-	deferredEffect->SetTexture("g_PositionBuffer", m_pPositionTarget);
-#endif
-	
+	deferredMultiPassEffect->SetTexture("g_AOBuffer", ssao.GetPostTarget());
 	
 
 	deferredMultiPassEffect->SetFloat("g_zNear", CameraParam::zNear);

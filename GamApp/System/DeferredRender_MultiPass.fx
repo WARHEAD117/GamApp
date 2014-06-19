@@ -325,11 +325,11 @@ float4 PointLightPass(float2 TexCoord : TEXCOORD0) : COLOR
 		return float4(0.0f, 0.0f, 0.0f, 1.0f);
 
 	float attenuation = 1.0f / (g_LightAttenuation.x + g_LightAttenuation.y * toLightDistance + g_LightAttenuation.z * toLightDistance * toLightDistance);
+	attenuation = 1 - dot(toLight / g_LightRange, toLight / g_LightRange);
 
 	float4 lightColor = attenuation * g_LightColor;
 
 	toLight = normalize(toLight);
-
 	LightFunc(NormalV, toLight, ToEyeDirV, lightColor, DiffuseLight, SpecularLight);
 
 	float shadowFinal = 1.0f;
@@ -356,9 +356,12 @@ float4 SpotLightPass(float2 TexCoord : TEXCOORD0) : COLOR
 
 	float3 toLight = g_LightPos.xyz - pos;
 	float toLightDistance = length(toLight);
+	
+	float attenuation = 1.0f / (g_LightAttenuation.x + g_LightAttenuation.y * toLightDistance + g_LightAttenuation.z * toLightDistance * toLightDistance);
+	attenuation = 1 - dot(toLight / g_LightRange, toLight / g_LightRange);
+	
 	toLight = normalize(toLight);
 
-	
 	//光源到像素的向量与光源方向的夹角
 	float cosAlpha = dot(-toLight, g_LightDir);
 	//内锥角的一半的cos
@@ -378,7 +381,7 @@ float4 SpotLightPass(float2 TexCoord : TEXCOORD0) : COLOR
 	//下面的公式可以简化掉if，但是看起来没有效率提升
 	//falloff = 1 - (cosAlpha < cosTheta)* (1 - (cosAlpha - cosPhi) / (cosTheta - cosPhi));
 	
-	float attenuation = 1.0f / (g_LightAttenuation.x + g_LightAttenuation.y * toLightDistance + g_LightAttenuation.z * toLightDistance * toLightDistance);
+	
 	float4 lightColor = attenuation * g_LightColor * falloff;
 
 	LightFunc(NormalV, toLight, ToEyeDirV, lightColor, DiffuseLight, SpecularLight);
@@ -415,7 +418,7 @@ float4 DebugPass(float2 TexCoord : TEXCOORD0) : COLOR
 
 	//return Texture;
 	//return AO;
-	//return float4(Shadow.x / 100, Shadow.x / 100, Shadow.x / 100, 1.0f);
+	return float4(Shadow.x / 100, Shadow.x / 100, Shadow.x / 100, 1.0f);
 	return NormalDepth;
 	return float4(NormalDepth.w, NormalDepth.w, NormalDepth.w,1.0f);
 }

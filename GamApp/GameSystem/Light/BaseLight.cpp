@@ -28,7 +28,18 @@ void BaseLight::Init()
 	D3DXMatrixLookAtLH(&m_lightViewMat, &defaultPos, &defaultLookAt, &defaultUp);
 	D3DXMatrixInverse(&mWorldTransform, NULL, &m_lightViewMat);
 
-	D3DXMatrixOrthoLH(&m_lightProjMat, 20, 20, 0.01f, 50.0f);
+	if (m_LightType == eDirectionLight)
+	{
+		D3DXMatrixOrthoLH(&m_lightProjMat, 20, 20, 0.01f, 50.0f);
+	}
+	else if (m_LightType == ePointLight)
+	{
+		
+	}
+	else if (m_LightType == eSpotLight)
+	{
+		D3DXMatrixPerspectiveFovLH(&m_lightProjMat, m_LightAngle.x / 180.0f * D3DX_PI, 1.0f, 0.01, m_LightRange);
+	}
 	D3DXMatrixInverse(&m_lightInvProjMat, NULL, &m_lightProjMat);
 }
 
@@ -114,9 +125,12 @@ D3DXMATRIX BaseLight::GetLightProjMatrix()
 
 void BaseLight::SetUseShadow(bool useShadow)
 {
-	m_bUseShadow = useShadow;
-	if (useShadow && m_LightType == eDirectionLight)
+	m_bUseShadow = false;
+	if (useShadow && (m_LightType == eDirectionLight || m_LightType == eSpotLight))
+	{
+		m_bUseShadow = useShadow;
 		BuildShadowMap();
+	}
 }
 
 void BaseLight::BuildShadowMap()

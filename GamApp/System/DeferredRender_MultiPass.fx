@@ -359,8 +359,11 @@ float4 PointLightPass(float2 TexCoord : TEXCOORD0) : COLOR
 	if (toLightDistance > g_LightRange)
 		return float4(0.0f, 0.0f, 0.0f, 1.0f);
 
-	float attenuation = 1.0f / (g_LightAttenuation.x + g_LightAttenuation.y * toLightDistance + g_LightAttenuation.z * toLightDistance * toLightDistance);
-	attenuation = 1 - dot(toLight / g_LightRange, toLight / g_LightRange);
+	float disRange = clamp(toLightDistance / g_LightRange, 0.0f, 1.0f);
+
+
+	float attenuation = (1.0f - disRange) / (g_LightAttenuation.x + g_LightAttenuation.y * disRange + g_LightAttenuation.z * disRange * disRange);
+	//attenuation = 1 - dot(toLight / g_LightRange, toLight / g_LightRange);
 
 	float4 lightColor = attenuation * g_LightColor;
 
@@ -392,8 +395,10 @@ float4 SpotLightPass(float2 TexCoord : TEXCOORD0) : COLOR
 	float3 toLight = g_LightPos.xyz - pos;
 	float toLightDistance = length(toLight);
 	
-	float attenuation = 1.0f / (g_LightAttenuation.x + g_LightAttenuation.y * toLightDistance + g_LightAttenuation.z * toLightDistance * toLightDistance);
-	attenuation = 1 - dot(toLight / g_LightRange, toLight / g_LightRange);
+	float disRange = clamp(toLightDistance / g_LightRange, 0.0f, 1.0f);
+
+	float attenuation = (1.0f - disRange) / (g_LightAttenuation.x + g_LightAttenuation.y * disRange + g_LightAttenuation.z * disRange * disRange);
+	//attenuation = 1 - dot(toLight / g_LightRange, toLight / g_LightRange);
 	
 	toLight = normalize(toLight);
 

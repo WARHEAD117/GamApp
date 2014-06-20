@@ -169,7 +169,7 @@ void BaseLight::BuildPointShadowMap()
 {
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateCubeTexture(SHADOWMAP_SIZE,
 		1, D3DUSAGE_RENDERTARGET,
-		D3DFMT_A32B32G32R32F, D3DPOOL_DEFAULT,
+		D3DFMT_G16R16F, D3DPOOL_DEFAULT,
 		&m_pPointShadowTarget, NULL);
 
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateDepthStencilSurface(SHADOWMAP_SIZE, SHADOWMAP_SIZE,
@@ -181,7 +181,7 @@ void BaseLight::BuildShadowMap()
 {
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(SHADOWMAP_SIZE, SHADOWMAP_SIZE,
 		1, D3DUSAGE_RENDERTARGET,
-		D3DFMT_A32B32G32R32F, D3DPOOL_DEFAULT,
+		D3DFMT_G16R16F, D3DPOOL_DEFAULT,
 		&m_pShadowTarget, NULL);
 	HRESULT hr = m_pShadowTarget->GetSurfaceLevel(0, &m_pShadowSurface);
 

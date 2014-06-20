@@ -22,27 +22,27 @@ sampler2D g_sampleNormalDepth =
 sampler_state
 {
 	Texture = <g_NormalDepthBuffer>;
-	MinFilter = Linear;
-	MagFilter = Linear;
-	MipFilter = Linear;
+	MinFilter = Point;
+	MagFilter = Point;
+	MipFilter = Point;
 };
 
 sampler2D g_sampleRandomNormal =
 sampler_state
 {
 	Texture = <g_RandomNormal>;
-	MinFilter = Linear;
-	MagFilter = Linear;
-	MipFilter = Linear;
+	MinFilter = Point;
+	MagFilter = Point;
+	MipFilter = Point;
 };
 
 sampler2D g_samplePosition =
 sampler_state
 {
 	Texture = <g_PositionBuffer>;
-	MinFilter = Linear;
-	MagFilter = Linear;
-	MipFilter = Linear;
+	MinFilter = Point;
+	MagFilter = Point;
+	MipFilter = Point;
 };
 
 struct OutputVS

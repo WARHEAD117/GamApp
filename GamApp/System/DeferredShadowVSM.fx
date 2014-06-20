@@ -11,6 +11,8 @@ float		g_zFar = 1000.0f;
 
 float4		g_ViewPos;
 
+bool		g_IsDisLight;
+
 struct OutputVS
 {
 	float4 posWVP			: POSITION;
@@ -47,8 +49,11 @@ float4 PShader(float3 posWV : TEXCOORD0) : COLOR
 {
 	//Êä³öÑÕÉ«
 	float4 Color = posWV.z;
-
-	float2 monents = ComputeMoments(posWV.z);
+	if (g_IsDisLight)
+	{
+		Color.x = length(posWV);
+	}
+	float2 monents = ComputeMoments(Color.x);
 	Color = float4(monents, 0.0f, 1.0f);
 
 	return Color;// float4(1.0f, 0.0f, 0.0f, 1.0f);

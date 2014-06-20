@@ -25,21 +25,43 @@ BaseLight::~BaseLight()
 
 void BaseLight::Init()
 {
-	D3DXMatrixLookAtLH(&m_lightViewMat, &defaultPos, &defaultLookAt, &defaultUp);
-	D3DXMatrixInverse(&mWorldTransform, NULL, &m_lightViewMat);
+	m_LightPos = defaultPos;
+	m_LightDir = defaultLookAt;
+	m_LightUp = defaultUp;
 
+	RebuildViewMatrix();
+	RebuildProjMatrix();
+}
+
+void BaseLight::RebuildViewMatrix()
+{
+	D3DXMatrixLookAtLH(&m_lightViewMat, &m_LightPos, &(m_LightPos + m_LightDir), &m_LightUp);
+	if (m_LightType == ePointLight)
+	{
+		D3DXMatrixLookAtLH(&m_PointlightViewMat[0], &m_LightPos, &(m_LightPos + D3DXVECTOR3(1, 0, 0)), &D3DXVECTOR3(0, 1, 0)); //+X
+		D3DXMatrixLookAtLH(&m_PointlightViewMat[1], &m_LightPos, &(m_LightPos + D3DXVECTOR3(-1, 0, 0)), &D3DXVECTOR3(0, 1, 0)); //-X
+		D3DXMatrixLookAtLH(&m_PointlightViewMat[2], &m_LightPos, &(m_LightPos + D3DXVECTOR3(0, 1, 0)), &D3DXVECTOR3(0, 0, -1)); //+Y
+		D3DXMatrixLookAtLH(&m_PointlightViewMat[3], &m_LightPos, &(m_LightPos + D3DXVECTOR3(0, -1, 0)), &D3DXVECTOR3(0, 0, 1)); //-Y
+		D3DXMatrixLookAtLH(&m_PointlightViewMat[4], &m_LightPos, &(m_LightPos + D3DXVECTOR3(0, 0, 1)), &D3DXVECTOR3(0, 1, 0)); //+Z
+		D3DXMatrixLookAtLH(&m_PointlightViewMat[5], &m_LightPos, &(m_LightPos + D3DXVECTOR3(0, 0, -1)), &D3DXVECTOR3(0, 1, 0)); //-Z
+	}
+}
+
+void BaseLight::RebuildProjMatrix()
+{
 	if (m_LightType == eDirectionLight)
 	{
 		D3DXMatrixOrthoLH(&m_lightProjMat, 20, 20, 0.01f, 50.0f);
 	}
 	else if (m_LightType == ePointLight)
 	{
-		
+		D3DXMatrixPerspectiveFovLH(&m_lightProjMat, 0.5f * D3DX_PI, 1.0f, 0.01, m_LightRange);
 	}
 	else if (m_LightType == eSpotLight)
 	{
 		D3DXMatrixPerspectiveFovLH(&m_lightProjMat, m_LightAngle.x / 180.0f * D3DX_PI, 1.0f, 0.01, m_LightRange);
 	}
+
 	D3DXMatrixInverse(&m_lightInvProjMat, NULL, &m_lightProjMat);
 }
 
@@ -58,7 +80,7 @@ void BaseLight::OnFrame()
 
 	m_LightPos = D3DXVECTOR3(mWorldTransform._41, mWorldTransform._42, mWorldTransform._43);
 
-	D3DXMatrixLookAtLH(&m_lightViewMat, &m_LightPos, &m_LightDir, &m_LightUp);
+	RebuildViewMatrix();
 }
 
 D3DXVECTOR3 BaseLight::GetLightWorldDir()
@@ -112,6 +134,11 @@ D3DXMATRIX BaseLight::GetLightViewMatrix()
 	return m_lightViewMat;
 }
 
+D3DXMATRIX BaseLight::GetPointLightViewMatrix(int index)
+{
+	return m_PointlightViewMat[index];
+}
+
 D3DXMATRIX BaseLight::GetLightInvProjMatrix()
 {
 	return m_lightInvProjMat;
@@ -131,6 +158,23 @@ void BaseLight::SetUseShadow(bool useShadow)
 		m_bUseShadow = useShadow;
 		BuildShadowMap();
 	}
+	else if (useShadow && m_LightType == ePointLight)
+	{
+		m_bUseShadow = useShadow;
+		BuildPointShadowMap();
+	}
+}
+
+void BaseLight::BuildPointShadowMap()
+{
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateCubeTexture(SHADOWMAP_SIZE,
+		1, D3DUSAGE_RENDERTARGET,
+		D3DFMT_A32B32G32R32F, D3DPOOL_DEFAULT,
+		&m_pPointShadowTarget, NULL);
+
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateDepthStencilSurface(SHADOWMAP_SIZE, SHADOWMAP_SIZE,
+		D3DFMT_D24X8, D3DMULTISAMPLE_NONE, 0, TRUE,
+		&m_pDepthStencilShadowSurface, NULL);
 }
 
 void BaseLight::BuildShadowMap()
@@ -160,6 +204,21 @@ LPDIRECT3DTEXTURE9 BaseLight::GetShadowTarget()
 	return m_pShadowTarget;
 }
 
+void BaseLight::SetPointShadowTarget(int index)
+{
+	RENDERDEVICE::Instance().g_pD3DDevice->SetDepthStencilSurface(m_pDepthStencilShadowSurface);
+
+	LPDIRECT3DSURFACE9 pSurf;
+	m_pPointShadowTarget->GetCubeMapSurface((D3DCUBEMAP_FACES)index, 0, &pSurf);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(255, 255, 255, 255), 1.0f, 0);
+}
+
+LPDIRECT3DCUBETEXTURE9 BaseLight::GetPointShadowTarget()
+{
+	return m_pPointShadowTarget;
+}
+
 float BaseLight::GetLightRange()
 {
 	return m_LightRange;
@@ -168,6 +227,8 @@ float BaseLight::GetLightRange()
 void BaseLight::SetLightRange(float range)
 {
 	m_LightRange = range;
+
+	RebuildProjMatrix();
 }
 
 D3DXVECTOR2 BaseLight::GetLightAngle()
@@ -186,6 +247,9 @@ D3DXVECTOR2 BaseLight::GetLightCosHalfAngle()
 void BaseLight::SetLightAngle(D3DXVECTOR2 angle)
 {
 	m_LightAngle = angle;
+
+	RebuildProjMatrix();
+	
 }
 
 D3DXVECTOR4 BaseLight::GetLightAttenuation()
@@ -197,3 +261,4 @@ void BaseLight::SetLightAttenuation(D3DXVECTOR4 lightAttenuation)
 {
 	m_LightAttenuation = lightAttenuation;
 }
+

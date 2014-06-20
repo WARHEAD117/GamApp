@@ -8,9 +8,12 @@ matrix		g_InverseProj;
 
 texture		g_DiffuseBuffer;
 texture		g_NormalDepthBuffer;
-texture		g_AOBuffer;
-texture		g_ShadowBuffer;
 texture		g_PositionBuffer;
+
+texture		g_AOBuffer;
+
+texture		g_ShadowBuffer;
+texture		g_PointShadowBuffer;
 
 float		g_zNear = 1.0f;
 float		g_zFar = 1000.0f;
@@ -35,27 +38,27 @@ sampler2D g_sampleDiffuse =
 sampler_state
 {
 	Texture = <g_DiffuseBuffer>;
-	MinFilter = Linear;
-	MagFilter = Linear;
-	MipFilter = Linear;
+	MinFilter = Point;
+	MagFilter = Point;
+	MipFilter = Point;
 };
 
 sampler2D g_sampleNormalDepth =
 sampler_state
 {
 	Texture = <g_NormalDepthBuffer>;
-	MinFilter = Linear;
-	MagFilter = Linear;
-	MipFilter = Linear;
+	MinFilter = Point;
+	MagFilter = Point;
+	MipFilter = Point;
 };
 
 sampler2D g_sampleAO =
 sampler_state
 {
 	Texture = <g_AOBuffer>;
-	MinFilter = Linear;
-	MagFilter = Linear;
-	MipFilter = Linear;
+	MinFilter = Point;
+	MagFilter = Point;
+	MipFilter = Point;
 };
 
 
@@ -75,6 +78,17 @@ sampler2D g_sampleShadow =
 sampler_state
 {
 	Texture = <g_ShadowBuffer>;
+	MinFilter = ANISOTROPIC;
+	MagFilter = ANISOTROPIC;
+	MipFilter = ANISOTROPIC;// ANISOTROPIC;
+	AddressU = Clamp;
+	AddressV = Clamp;
+};
+
+sampler g_samplePointShadow =
+sampler_state
+{
+	Texture = <g_PointShadowBuffer>;
 	MinFilter = ANISOTROPIC;
 	MagFilter = ANISOTROPIC;
 	MipFilter = ANISOTROPIC;// ANISOTROPIC;
@@ -247,6 +261,27 @@ float ShadowFunc(bool useShadow, float3 objViewPos)
 	return shadowContribute;
 }
 
+float PointShadowFunc(bool useShadow, float3 objViewPos)
+{
+	float shadowContribute = 1.0f;
+	if (useShadow)
+	{
+		//Shadow
+		float3 toObj = objViewPos - g_LightPos.xyz;
+
+		float4 worldToObj = mul(float4(toObj, 0.0f), g_invView);
+
+		//float2 Moments = tex2D(g_sampleShadow, ShadowTexCoord);
+		//float2 Moments = GaussianBlur(g_ShadowMapSize, g_ShadowMapSize, g_sampleShadow, ShadowTexCoord);
+			
+		float2 Moments = texCUBE(g_samplePointShadow, normalize(worldToObj.xyz));
+
+			
+		shadowContribute = ChebyshevUpperBound(Moments, length(worldToObj.xyz));
+	}
+	return shadowContribute;
+}
+
 float PCFShadow(bool useShadow, float3 objViewPos)
 {
 	float shadowContribute = 1.0f;
@@ -333,7 +368,7 @@ float4 PointLightPass(float2 TexCoord : TEXCOORD0) : COLOR
 	LightFunc(NormalV, toLight, ToEyeDirV, lightColor, DiffuseLight, SpecularLight);
 
 	float shadowFinal = 1.0f;
-	shadowFinal = ShadowFunc(g_bUseShadow, pos);
+	shadowFinal = PointShadowFunc(g_bUseShadow, pos);
 
 	//混合光照和纹理
 	float4 finalColor = DiffuseLight + SpecularLight;

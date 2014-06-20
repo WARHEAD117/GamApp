@@ -1,7 +1,6 @@
 #include "RenderUtil.h"
 #include "D3D9Device.h"
 #include "EntityFeature/Entity.h"
-#include "Light/LightManager.h"
 #include "Light/DirectionLight.h"
 
 #include "Camera/CameraParam.h"
@@ -27,16 +26,12 @@ void RenderUtil::BuildEffectInfo()
 	mWorldViewProj	= mWorldMat * mViewProj;
 }
 
-void RenderUtil::BuildShadowEffectInfo(int lightIndex)
+void RenderUtil::BuildShadowEffectInfo(D3DXMATRIX lightViewMat, D3DXMATRIX lightProjMat)
 {
 	mWorldMat = mOwner->GetWorldTransform();
-	mViewMat = RENDERDEVICE::Instance().ViewMatrix;
-	mProjMat = RENDERDEVICE::Instance().ProjMatrix;
 
-	BaseLight* pLight = LIGHTMANAGER::Instance().GetLight(lightIndex);
-
-	mViewMat = pLight->GetLightViewMatrix();
-	mProjMat = pLight->GetLightProjMatrix();
+	mViewMat = lightViewMat;
+	mProjMat = lightProjMat;
 
 	mWorldView = mWorldMat * mViewMat;
 	mViewProj = mViewMat * mProjMat;
@@ -196,9 +191,9 @@ void RenderUtil::RenderPosition()
 	}
 }
 
-void RenderUtil::RenderShadow(int lightIndex)
+void RenderUtil::RenderShadow(D3DXMATRIX lightViewMat, D3DXMATRIX lightProjMat, LightType lightType)
 {
-	BuildShadowEffectInfo(lightIndex);
+	BuildShadowEffectInfo(lightViewMat, lightProjMat);
 
 	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, mVertexBuffer, 0, D3DXGetFVFVertexSize(mFVF));
 	RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(mFVF);
@@ -207,6 +202,9 @@ void RenderUtil::RenderShadow(int lightIndex)
 	{
 		RENDERDEVICE::Instance().GetShadowEffect()->SetMatrix(WORLDVIEWPROJMATRIX, &mWorldViewProj);
 		RENDERDEVICE::Instance().GetShadowEffect()->SetMatrix(WORLDVIEWMATRIX, &mWorldView);
+
+		if (lightType == ePointLight || lightType == eSpotLight)
+			RENDERDEVICE::Instance().GetShadowEffect()->SetBool("g_IsDisLight", true);
 
 		UINT nPasses = 0;
 		HRESULT r1 = RENDERDEVICE::Instance().GetShadowEffect()->Begin(&nPasses, 0);

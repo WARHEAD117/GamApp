@@ -33,7 +33,11 @@ public:
 	D3DXCOLOR GetLightColor();
 	void SetLightColor(D3DXCOLOR color);
 
+	void RebuildProjMatrix();
+	void RebuildViewMatrix();
+
 	D3DXMATRIX GetLightViewMatrix();
+	D3DXMATRIX GetPointLightViewMatrix(int index);
 	D3DXMATRIX GetLightProjMatrix();
 	D3DXMATRIX GetLightInvProjMatrix();
 
@@ -43,6 +47,10 @@ public:
 	void	BuildShadowMap();
 	void	SetShadowTarget();
 	LPDIRECT3DTEXTURE9	GetShadowTarget();
+
+	void	BuildPointShadowMap();
+	void SetPointShadowTarget(int index);
+	LPDIRECT3DCUBETEXTURE9 GetPointShadowTarget();
 
 	float GetLightRange();
 	void SetLightRange(float range);
@@ -61,10 +69,14 @@ private:
 	LPDIRECT3DSURFACE9	m_pShadowSurface;
 	LPDIRECT3DSURFACE9	m_pDepthStencilShadowSurface;
 
+	LPDIRECT3DCUBETEXTURE9 m_pPointShadowTarget;
+
 	bool		m_bUseShadow;
 	D3DXVECTOR3 m_LightPos;
 	D3DXVECTOR3 m_LightDir;
 	D3DXVECTOR3 m_LightUp;
+
+	D3DXMATRIX m_PointlightViewMat[6];
 
 	D3DXMATRIX m_lightViewMat;
 	D3DXMATRIX m_lightProjMat;

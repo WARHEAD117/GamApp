@@ -1,9 +1,9 @@
 #pragma once
 #include "CommonUtil/GlobalHeader.h"
 #include "CommonUtil/D3D9Header.h"
+#include "Light/LightManager.h"
 
 class Entity;
-
 
 
 struct SubMesh
@@ -30,7 +30,7 @@ public:
 	void	RenderNormalDepth();
 	void	RenderDiffuse();
 	void	RenderPosition();
-	void	RenderShadow(int lightIndex);
+	void	RenderShadow(D3DXMATRIX lightViewMat, D3DXMATRIX lightProjMat, LightType lightType);
 
 	void	RenderDeferredGeometry(ID3DXEffect* pEffect);
 
@@ -65,7 +65,7 @@ private:
 	Entity*						mOwner;
 private:
 	void	BuildEffectInfo();
-	void BuildShadowEffectInfo(int lightIndex);
+	void BuildShadowEffectInfo(D3DXMATRIX lightViewMat, D3DXMATRIX lightProjMat);
 };
 
 inline void RenderUtil::SetFVF(DWORD fvf)

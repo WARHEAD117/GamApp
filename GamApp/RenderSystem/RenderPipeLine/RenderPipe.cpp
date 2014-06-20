@@ -39,7 +39,7 @@ RenderPipe::RenderPipe()
 
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
 		1, D3DUSAGE_RENDERTARGET,
-		D3DFMT_A16B16G16R16F, D3DPOOL_DEFAULT,
+		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
 		&m_pDiffuseTarget, NULL);
 	HRESULT hr = m_pDiffuseTarget->GetSurfaceLevel(0, &m_pDiffuseSurface);
 
@@ -51,7 +51,7 @@ RenderPipe::RenderPipe()
 
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
 		1, D3DUSAGE_RENDERTARGET,
-		D3DFMT_A16B16G16R16F, D3DPOOL_DEFAULT,
+		D3DFMT_A32B32G32R32F, D3DPOOL_DEFAULT,
 		&m_pPositionTarget, NULL);
 	hr = m_pPositionTarget->GetSurfaceLevel(0, &m_pPositionSurface);
 
@@ -257,12 +257,32 @@ void RenderPipe::RenderShadow()
 			continue;
 		else
 		{
-			pLight->SetShadowTarget();
-
-			for (int i = 0; i < mRenderUtilList.size(); ++i)
+			if (pLight->GetLightType() == eDirectionLight || pLight->GetLightType() == eSpotLight)
 			{
-				mRenderUtilList[i]->RenderShadow(index);
+				D3DXMATRIX lightViewMat = pLight->GetLightViewMatrix();
+				D3DXMATRIX lightProjMat = pLight->GetLightProjMatrix();
+				pLight->SetShadowTarget();
+
+				for (int i = 0; i < mRenderUtilList.size(); ++i)
+				{
+					mRenderUtilList[i]->RenderShadow(lightViewMat, lightProjMat, pLight->GetLightType());
+				}
 			}
+			else if (pLight->GetLightType() == ePointLight)
+			{
+				for (int pointDir = 0; pointDir < 6; pointDir++)
+				{
+					D3DXMATRIX lightViewMat = pLight->GetPointLightViewMatrix(pointDir);
+					D3DXMATRIX lightProjMat = pLight->GetLightProjMatrix();
+					pLight->SetPointShadowTarget(pointDir);
+
+					for (int i = 0; i < mRenderUtilList.size(); ++i)
+					{
+						mRenderUtilList[i]->RenderShadow(lightViewMat, lightProjMat, pLight->GetLightType());
+					}
+				}
+			}
+			
 		}
 	}
 
@@ -400,13 +420,23 @@ void RenderPipe::DeferredRender_MultiPass()
 
 		D3DXMATRIX invView;
 		D3DXMatrixInverse(&invView, NULL, &RENDERDEVICE::Instance().ViewMatrix);
+		deferredMultiPassEffect->SetMatrix("g_invView", &invView);
 		deferredMultiPassEffect->SetMatrix("g_ShadowView", &pLight->GetLightViewMatrix());
 		deferredMultiPassEffect->SetMatrix("g_ShadowProj", &pLight->GetLightProjMatrix());
-		deferredMultiPassEffect->SetMatrix("g_invView", &invView);
 		deferredMultiPassEffect->SetBool("g_bUseShadow", useShadow);
 
 		if (useShadow)
-			deferredMultiPassEffect->SetTexture("g_ShadowBuffer", pLight->GetShadowTarget());
+		{
+			if (pLight->GetLightType() == eDirectionLight || pLight->GetLightType() == eSpotLight)
+			{
+				deferredMultiPassEffect->SetTexture("g_ShadowBuffer", pLight->GetShadowTarget());
+			}
+			else if (pLight->GetLightType() == ePointLight)
+			{
+				deferredMultiPassEffect->SetTexture("g_PointShadowBuffer", pLight->GetPointShadowTarget());
+			}
+		}
+			
 
 		UINT pass = 0;
 		LightType lt = pLight->GetLightType();

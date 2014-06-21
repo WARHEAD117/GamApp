@@ -13,7 +13,7 @@ public:
 	LPD3DXEFFECT GetDefaultEffect();
 	LPD3DXEFFECT GetDiffuseEffect();
 	LPD3DXEFFECT GetPositionEffect();
-	LPD3DXEFFECT GetNormalDepthEffect();
+	LPD3DXEFFECT GetNormalEffect();
 	LPD3DXEFFECT GetShadowEffect();
 	LPDIRECT3DTEXTURE9 GetDefaultTexture();
 	Material* GetDefaultMaterial();
@@ -25,7 +25,7 @@ public:
 	Material								defaultMaterial;
 	LPD3DXEFFECT							defaultEffect;
 	LPD3DXEFFECT							diffuseEffect;
-	LPD3DXEFFECT							normalDepthEffect;
+	LPD3DXEFFECT							normalEffect;
 	LPD3DXEFFECT							positionEffect;
 	LPD3DXEFFECT							shadowEffect;
 	LPDIRECT3DTEXTURE9						defaultTexture;

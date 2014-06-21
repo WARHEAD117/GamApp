@@ -26,6 +26,7 @@ OutputVS VShader(float4 posL		: POSITION,
 
 	//最终输出的顶点位置（经过世界、观察、投影矩阵变换）
 	outVS.posWVP = mul(posL, g_WorldViewProj);
+	//outVS.posP = mul(posL, g_WorldView);
 	outVS.posP = outVS.posWVP;
 
 	//观察空间下的法线
@@ -49,7 +50,7 @@ float4 PShader(float3 NormalWV			: NORMAL,
 	return finalColor;// float4(1.0f, 0.0f, 0.0f, 1.0f);
 }
 
-technique DeferredNormalDepth
+technique DeferredNormal
 {
 	pass p0
 	{

@@ -20,6 +20,7 @@ public:
 	~PostEffectBase();
 
 	virtual void RenderPost();
+	virtual void RenderPost(LPDIRECT3DTEXTURE9 lastBuffer);
 	void CreatePostEffect(std::string effectName);
 	LPDIRECT3DTEXTURE9 GetPostTarget();
 private:

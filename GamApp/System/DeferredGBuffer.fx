@@ -31,7 +31,7 @@ struct OutputVS
 struct OutputPS
 {
 	float4 diffuse			: COLOR0;
-	float4 normalDepth		: COLOR1;
+	float4 normal			: COLOR1;
 	float4 position			: COLOR2;
 };
 
@@ -69,10 +69,10 @@ OutputPS PShader(float3 NormalWV		: NORMAL,
 
 	//投影后的非线性深度
 	float Depth = posP.z / posP.w;
-	float4 normalDepth = float4(NormalWV, Depth);
+	float4 normal = float4(NormalWV, Depth);
 
 	PsOut.diffuse = Texture;
-	PsOut.normalDepth = normalDepth;
+	PsOut.normal = normal;
 	PsOut.position = posWV;
 	return PsOut;
 }

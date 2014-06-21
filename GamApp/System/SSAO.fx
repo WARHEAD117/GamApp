@@ -14,14 +14,14 @@ float		g_scale = 1;
 float		g_bias = 0;
 float		g_sample_rad = 0.03;
 
-texture		g_NormalDepthBuffer;
+texture		g_NormalBuffer;
 texture		g_RandomNormal; 
 texture		g_PositionBuffer;
 
-sampler2D g_sampleNormalDepth =
+sampler2D g_sampleNormal =
 sampler_state
 {
-	Texture = <g_NormalDepthBuffer>;
+	Texture = <g_NormalBuffer>;
 	MinFilter = Point;
 	MagFilter = Point;
 	MipFilter = Point;
@@ -71,14 +71,14 @@ float3 GetPosition(in float2 uv)
 	return tex2D(g_samplePosition, uv).xyz;
 
 	//使用深度重建位置信息，精度较低，误差在小数点后第二位出现，但是速度很好。但是为了能精确还原，必须使用128位纹理，太大太慢
-	//法线深度图采样
-	float4 NormalDepth = tex2D(g_sampleNormalDepth, uv);
+	//现在这行是错的，必须要使用投影Z才行，position的z是观察z
+	float Depth = tex2D(g_samplePosition, uv).z;
 
 	// 从视口坐标中获取 x/w 和 y/w  
 	float x = uv.x * 2.0f - 1;
 	float y = (1 - uv.y) * 2.0f - 1.0f;
 	//这里的z值是投影后的非线性深度
-	float4 vProjectedPos = float4(x, y, NormalDepth.w, 1.0f);
+	float4 vProjectedPos = float4(x, y, Depth, 1.0f);
 	// 通过转置的投影矩阵进行转换到视图空间  
 	float4 vPositionVS = mul(vProjectedPos, g_InverseProj);
 	float3 vPositionVS3 = vPositionVS.xyz / vPositionVS.w;
@@ -87,7 +87,7 @@ float3 GetPosition(in float2 uv)
 
 float3 getNormal(in float2 uv)
 {
-	return normalize(tex2D(g_sampleNormalDepth, uv).xyz * 2.0f - 1.0f);
+	return normalize(tex2D(g_sampleNormal, uv).xyz * 2.0f - 1.0f);
 }
 
 float2 getRandom(in float2 uv)

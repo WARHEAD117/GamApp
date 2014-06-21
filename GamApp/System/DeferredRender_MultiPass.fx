@@ -7,7 +7,7 @@ matrix		g_mWorldInv;
 matrix		g_InverseProj;
 
 texture		g_DiffuseBuffer;
-texture		g_NormalDepthBuffer;
+texture		g_NormalBuffer;
 texture		g_PositionBuffer;
 
 texture		g_AOBuffer;
@@ -43,10 +43,10 @@ sampler_state
 	MipFilter = Point;
 };
 
-sampler2D g_sampleNormalDepth =
+sampler2D g_sampleNormal =
 sampler_state
 {
-	Texture = <g_NormalDepthBuffer>;
+	Texture = <g_NormalBuffer>;
 	MinFilter = Point;
 	MagFilter = Point;
 	MipFilter = Point;
@@ -121,6 +121,10 @@ OutputVS VShader(float4 posL       : POSITION0,
 	return outVS;
 }
 
+float3 GetNormal(in float2 uv)
+{
+	return normalize(tex2D(g_sampleNormal, uv).xyz * 2.0f - 1.0f);
+}
 
 float3 GetPosition(in float2 uv)
 {
@@ -128,14 +132,14 @@ float3 GetPosition(in float2 uv)
 	return tex2D(g_samplePosition, uv).xyz;
 
 	//使用深度重建位置信息，精度较低，误差在小数点后第二位出现，但是速度很好。但是为了能精确还原，必须使用128位纹理，太大太慢
-	//法线深度图采样
-	float4 NormalDepth = tex2D(g_sampleNormalDepth, uv);
+	//现在这行是错的，必须要使用投影Z才行，position的z是观察z
+	float Depth = tex2D(g_samplePosition, uv).z;
 
 	// 从视口坐标中获取 x/w 和 y/w  
 	float x = uv.x * 2.0f - 1;
 	float y = (1 - uv.y) * 2.0f - 1.0f;
 	//这里的z值是投影后的非线性深度
-	float4 vProjectedPos = float4(x, y, NormalDepth.w, 1.0f);
+	float4 vProjectedPos = float4(x, y, Depth, 1.0f);
 	// 通过转置的投影矩阵进行转换到视图空间  
 	float4 vPositionVS = mul(vProjectedPos, g_InverseProj);
 	float3 vPositionVS3 = vPositionVS.xyz / vPositionVS.w;
@@ -315,8 +319,7 @@ float PCFShadow(bool useShadow, float3 objViewPos)
 
 float4 DirectionLightPass(float2 TexCoord : TEXCOORD0) : COLOR
 {
-	float4 NormalDepth = tex2D(g_sampleNormalDepth, TexCoord);
-	float3 NormalV = normalize(NormalDepth.xyz * 2.0f - 1.0f);
+	float3 Normal = GetNormal(TexCoord);
 
 	float3 pos = GetPosition(TexCoord);
 
@@ -330,7 +333,7 @@ float4 DirectionLightPass(float2 TexCoord : TEXCOORD0) : COLOR
 	float4 DiffuseLight = float4(0.0f, 0.0f, 0.0f, 1.0f);
 	float4 SpecularLight = float4(0.0f, 0.0f, 0.0f, 1.0f);
 
-	LightFunc(NormalV, toLight, ToEyeDirV, g_LightColor, DiffuseLight, SpecularLight);
+	LightFunc(Normal, toLight, ToEyeDirV, g_LightColor, DiffuseLight, SpecularLight);
 
 	float shadowFinal = 1.0f;
 	shadowFinal = ShadowFunc(g_bUseShadow, pos);
@@ -342,8 +345,7 @@ float4 DirectionLightPass(float2 TexCoord : TEXCOORD0) : COLOR
 
 float4 PointLightPass(float2 TexCoord : TEXCOORD0) : COLOR
 {
-	float4 NormalDepth = tex2D(g_sampleNormalDepth, TexCoord);
-	float3 NormalV = normalize(NormalDepth.xyz * 2.0f - 1.0f);
+	float3 Normal = GetNormal(TexCoord);
 
 	float3 pos = GetPosition(TexCoord);
 	if (pos.z > g_zFar - 0.1)
@@ -368,7 +370,7 @@ float4 PointLightPass(float2 TexCoord : TEXCOORD0) : COLOR
 	float4 lightColor = attenuation * g_LightColor;
 
 	toLight = normalize(toLight);
-	LightFunc(NormalV, toLight, ToEyeDirV, lightColor, DiffuseLight, SpecularLight);
+	LightFunc(Normal, toLight, ToEyeDirV, lightColor, DiffuseLight, SpecularLight);
 
 	float shadowFinal = 1.0f;
 	shadowFinal = PointShadowFunc(g_bUseShadow, pos);
@@ -380,8 +382,7 @@ float4 PointLightPass(float2 TexCoord : TEXCOORD0) : COLOR
 
 float4 SpotLightPass(float2 TexCoord : TEXCOORD0) : COLOR
 {
-	float4 NormalDepth = tex2D(g_sampleNormalDepth, TexCoord);
-	float3 NormalV = normalize(NormalDepth.xyz * 2.0f - 1.0f);
+	float3 Normal = GetNormal(TexCoord);
 
 	float3 pos = GetPosition(TexCoord);
 	if (pos.z > g_zFar - 0.1)
@@ -424,7 +425,7 @@ float4 SpotLightPass(float2 TexCoord : TEXCOORD0) : COLOR
 	
 	float4 lightColor = attenuation * g_LightColor * falloff;
 
-	LightFunc(NormalV, toLight, ToEyeDirV, lightColor, DiffuseLight, SpecularLight);
+	LightFunc(Normal, toLight, ToEyeDirV, lightColor, DiffuseLight, SpecularLight);
 
 	float shadowFinal = 1.0f;
 	shadowFinal = ShadowFunc(g_bUseShadow, pos);
@@ -453,14 +454,13 @@ float4 DebugPass(float2 TexCoord : TEXCOORD0) : COLOR
 	float4 AO = tex2D(g_sampleAO, TexCoord);
 	//ShadowMap
 	float4 Shadow = tex2D(g_sampleShadow, TexCoord);
-	//NormalDepth
-	float4 NormalDepth = tex2D(g_sampleNormalDepth, TexCoord);
+	//Normal
+	float4 Normal = tex2D(g_sampleNormal, TexCoord);
 
 	//return Texture;
 	//return AO;
 	return float4(Shadow.x / 100, Shadow.x / 100, Shadow.x / 100, 1.0f);
-	return NormalDepth;
-	return float4(NormalDepth.w, NormalDepth.w, NormalDepth.w,1.0f);
+	return Normal;
 }
 
 technique DeferredRender
@@ -490,7 +490,6 @@ technique DeferredRender
 	pass p3 //DEBUG PASS
 	{
 		pixelShader = compile ps_3_0 DebugPass();
-		//pixelShader = compile ps_3_0 ShadowVSMPass();
 		//pixelShader = compile ps_3_0 AmbientPass();
 		//pixelShader = compile ps_3_0 DiffusePass();
 		AlphaBlendEnable = true;                        //设置渲染状态        

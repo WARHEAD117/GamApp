@@ -7,7 +7,7 @@ matrix		g_mWorldInv;
 matrix		g_InverseProj;
 
 texture		g_DiffuseBuffer;
-texture		g_NormalDepthBuffer;
+texture		g_NormalBuffer;
 texture		g_AOBuffer;
 texture		g_ShadowBuffer;
 
@@ -23,10 +23,10 @@ sampler_state
 	MipFilter = Linear;
 };
 
-sampler2D g_sampleNormalDepth =
+sampler2D g_sampleNormal =
 sampler_state
 {
-	Texture = <g_NormalDepthBuffer>;
+	Texture = <g_NormalBuffer>;
 	MinFilter = Linear;
 	MagFilter = Linear;
 	MipFilter = Linear;

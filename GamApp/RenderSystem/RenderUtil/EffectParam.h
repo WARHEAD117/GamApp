@@ -19,6 +19,7 @@
 #define SPECULARPOWER		"g_SpecularPower"
 
 #define MAINCOLORBUFFER		"g_MainColorBuffer"
-#define NORMALDEPTHBUFFER	"g_NormalDepthBuffer"
+#define NORMALBUFFER		"g_NormalBuffer"
 #define POSITIONBUFFER		"g_PositionBuffer"
 #define DIFFUSEBUFFER		"g_DiffuseBuffer"
+#define FINALCOLORBUFFER		"g_FinalColorBuffer"

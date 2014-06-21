@@ -36,15 +36,15 @@ OutputVS VShader(float4 posL       : POSITION0,
 	return outVS;
 }
 
+
 float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
 {
-	//ÎÆÀí²ÉÑù
-	float4 Texture = tex2D(g_sampleMainColor, TexCoord);
-	
-	return Texture;
+	float4 color = tex2D(g_sampleMainColor, TexCoord);
+	color.r = 0.0f;
+	return color;
 }
 
-technique DeferredRender
+technique HDRLighting
 {
 	pass p0
 	{

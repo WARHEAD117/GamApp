@@ -166,6 +166,9 @@
     <ClInclude Include="RenderSystem\RenderPipeLine\PostEffect\SSAO.h">
       <Filter>RenderSystem\PostEffect</Filter>
     </ClInclude>
+    <ClInclude Include="RenderSystem\RenderPipeLine\PostEffect\HDRLighting.h">
+      <Filter>RenderSystem\PostEffect</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DrawSkyBox.cpp" />
@@ -256,6 +259,9 @@
     <ClCompile Include="RenderSystem\RenderPipeLine\PostEffect\SSAO.cpp">
       <Filter>RenderSystem\PostEffect</Filter>
     </ClCompile>
+    <ClCompile Include="RenderSystem\RenderPipeLine\PostEffect\HDRLighting.cpp">
+      <Filter>RenderSystem\PostEffect</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="System\commonDiffuse.fx">
@@ -264,13 +270,7 @@
     <FxCompile Include="System\BankBRDFLight.fx">
       <Filter>System</Filter>
     </FxCompile>
-    <FxCompile Include="System\DeferredNormalDepth.fx">
-      <Filter>System</Filter>
-    </FxCompile>
     <FxCompile Include="System\DeferredDiffuse.fx">
-      <Filter>System</Filter>
-    </FxCompile>
-    <FxCompile Include="System\DeferredRender.fx">
       <Filter>System</Filter>
     </FxCompile>
     <FxCompile Include="System\SSAO.fx">
@@ -279,16 +279,7 @@
     <FxCompile Include="System\DeferredPosition.fx">
       <Filter>System</Filter>
     </FxCompile>
-    <FxCompile Include="System\SSAO_Old.fx">
-      <Filter>System</Filter>
-    </FxCompile>
-    <FxCompile Include="System\PosTest.fx">
-      <Filter>System</Filter>
-    </FxCompile>
     <FxCompile Include="System\DeferredShadow.fx">
-      <Filter>System</Filter>
-    </FxCompile>
-    <FxCompile Include="System\MainColor.fx">
       <Filter>System</Filter>
     </FxCompile>
     <FxCompile Include="System\DeferredRender_MultiPass.fx">
@@ -298,6 +289,15 @@
       <Filter>System</Filter>
     </FxCompile>
     <FxCompile Include="System\DeferredGBuffer.fx">
+      <Filter>System</Filter>
+    </FxCompile>
+    <FxCompile Include="System\HDRLighting.fx">
+      <Filter>System</Filter>
+    </FxCompile>
+    <FxCompile Include="System\DeferredNormal.fx">
+      <Filter>System</Filter>
+    </FxCompile>
+    <FxCompile Include="System\FinalColor.fx">
       <Filter>System</Filter>
     </FxCompile>
   </ItemGroup>

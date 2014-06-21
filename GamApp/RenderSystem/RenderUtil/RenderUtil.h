@@ -27,7 +27,7 @@ public:
 	~RenderUtil();
 
 	void	Render();
-	void	RenderNormalDepth();
+	void	RenderNormal();
 	void	RenderDiffuse();
 	void	RenderPosition();
 	void	RenderShadow(D3DXMATRIX lightViewMat, D3DXMATRIX lightProjMat, LightType lightType);

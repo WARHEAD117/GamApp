@@ -45,7 +45,7 @@ void SSAO::RenderPost()
 	m_postEffect->SetMatrix(WORLDVIEWPROJMATRIX, &RENDERDEVICE::Instance().OrthoWVPMatrix);
 	m_postEffect->SetMatrix(INVPROJMATRIX, &RENDERDEVICE::Instance().InvProjMatrix);
 
-	m_postEffect->SetTexture(NORMALDEPTHBUFFER, RENDERPIPE::Instance().m_pNormalDepthTarget);
+	m_postEffect->SetTexture(NORMALBUFFER, RENDERPIPE::Instance().m_pNormalTarget);
 	m_postEffect->SetTexture(POSITIONBUFFER, RENDERPIPE::Instance().m_pPositionTarget);
 
 	m_postEffect->SetTexture("g_RandomNormal", m_pRandomNormal);

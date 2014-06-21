@@ -99,20 +99,20 @@ void RenderUtil::Render()
 	RENDERDEVICE::Instance().g_pD3DDevice->SetTexture(0, NULL);
 }
 
-void RenderUtil::RenderNormalDepth()
+void RenderUtil::RenderNormal()
 {
 	BuildEffectInfo();
 
-	RENDERDEVICE::Instance().GetNormalDepthEffect()->SetMatrix(WORLDVIEWPROJMATRIX, &mWorldViewProj);
-	RENDERDEVICE::Instance().GetNormalDepthEffect()->SetMatrix(WORLDVIEWMATRIX, &mWorldView);
-	RENDERDEVICE::Instance().GetNormalDepthEffect()->SetFloat("g_zNear", CameraParam::zNear);
-	RENDERDEVICE::Instance().GetNormalDepthEffect()->SetFloat("g_zFar", CameraParam::zFar);
+	RENDERDEVICE::Instance().GetNormalEffect()->SetMatrix(WORLDVIEWPROJMATRIX, &mWorldViewProj);
+	RENDERDEVICE::Instance().GetNormalEffect()->SetMatrix(WORLDVIEWMATRIX, &mWorldView);
+	RENDERDEVICE::Instance().GetNormalEffect()->SetFloat("g_zNear", CameraParam::zNear);
+	RENDERDEVICE::Instance().GetNormalEffect()->SetFloat("g_zFar", CameraParam::zFar);
 
 	UINT nPasses = 0;
-	HRESULT r1 = RENDERDEVICE::Instance().GetNormalDepthEffect()->Begin(&nPasses, 0);
-	HRESULT r2 = RENDERDEVICE::Instance().GetNormalDepthEffect()->BeginPass(0);
+	HRESULT r1 = RENDERDEVICE::Instance().GetNormalEffect()->Begin(&nPasses, 0);
+	HRESULT r2 = RENDERDEVICE::Instance().GetNormalEffect()->BeginPass(0);
 
-	RENDERDEVICE::Instance().GetNormalDepthEffect()->CommitChanges();
+	RENDERDEVICE::Instance().GetNormalEffect()->CommitChanges();
 
 	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, mVertexBuffer, 0, D3DXGetFVFVertexSize(mFVF));
 	RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(mFVF);
@@ -123,8 +123,8 @@ void RenderUtil::RenderNormalDepth()
 			mSubMeshList[i].vertexCount, mSubMeshList[i].indexStart, mSubMeshList[i].faceCount);
 	}
 
-	RENDERDEVICE::Instance().GetNormalDepthEffect()->EndPass();
-	RENDERDEVICE::Instance().GetNormalDepthEffect()->End();
+	RENDERDEVICE::Instance().GetNormalEffect()->EndPass();
+	RENDERDEVICE::Instance().GetNormalEffect()->End();
 	RENDERDEVICE::Instance().g_pD3DDevice->SetTexture(0, NULL);
 }
 

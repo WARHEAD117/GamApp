@@ -754,7 +754,7 @@ void HDRLighting::RenderStarSourceToBloomSource()
 
 
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurfBloomSource);
-	m_postEffect->SetTexture(MAINCOLORBUFFER, m_pBrightPass);
+	m_postEffect->SetTexture(MAINCOLORBUFFER, m_pStarSourceTex);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
@@ -770,7 +770,7 @@ void HDRLighting::RenderStarSourceToBloomSource()
 
 	// Get the sample offsets used within the pixel shader
 	D3DSURFACE_DESC desc;
-	hr = m_pBrightPass->GetLevelDesc(0, &desc);
+	hr = m_pStarSourceTex->GetLevelDesc(0, &desc);
 
 	GetSampleOffsets_DownScale2x2(desc.Width, desc.Height, avSampleOffsets);
 	m_postEffect->SetValue("g_avSampleOffsets", avSampleOffsets, sizeof(avSampleOffsets));

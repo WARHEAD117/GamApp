@@ -21,10 +21,10 @@ sampler_state
 struct OutputVS
 {
 	float4 posWVP			: POSITION;
-	float3 normalWV			: NORMAL;
+	float3 normalV			: NORMAL;
 	float2 TexCoord			: TEXCOORD0;
 	float4 posP				: TEXCOORD1;
-	float4 posWV			: TEXCOORD2;
+	float4 posV				: TEXCOORD2;
 };
 
 
@@ -43,37 +43,36 @@ OutputVS VShader(float4 posL		: POSITION,
 
 	//最终输出的顶点位置（经过世界、观察、投影矩阵变换）
 	outVS.posWVP = mul(posL, g_WorldViewProj);
-	outVS.posP = outVS.posWVP;
+	
 
 	//观察空间下的法线
-	outVS.normalWV = mul(normalL, g_WorldView);
+	outVS.normalV = mul(normalL, g_WorldView);
 
-	outVS.posWV = mul(posL, g_WorldView);
+	outVS.posP = outVS.posWVP;
+	outVS.posV = mul(posL, g_WorldView);
 	outVS.TexCoord = TexCoord;
 
 	return outVS;
 }
 
-OutputPS PShader(float3 NormalWV		: NORMAL,
+OutputPS PShader(float3 NormalV		: NORMAL,
 				float2 TexCoord		: TEXCOORD0,
 				float4 posP			: TEXCOORD1,
-				float4 posWV		: TEXCOORD2)
+				float4 posV		: TEXCOORD2)
 {
 	OutputPS PsOut;
 
-	NormalWV = normalize(NormalWV);
-	NormalWV = (NormalWV + float3(1.0f, 1.0f, 1.0f)) / 2;
+	NormalV = (normalize(NormalV) + float3(1.0f, 1.0f, 1.0f)) / 2;
 
 	//纹理采样
 	float4 Texture = tex2D(g_sampleTexture, TexCoord);
 
 	//投影后的非线性深度
-	float Depth = posP.z / posP.w;
-	float4 normal = float4(NormalWV, Depth);
+	float DepthP = posP.z / posP.w;
 
 	PsOut.diffuse = Texture;
-	PsOut.normal = normal;
-	PsOut.position = posWV;
+	PsOut.normal = float4(NormalV, 1.0f);
+	PsOut.position = float4(posV.xyz, DepthP);
 	return PsOut;
 }
 

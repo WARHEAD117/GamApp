@@ -496,8 +496,8 @@ void RenderPipe::RenderAll()
 
 	DeferredRender_MultiPass();
 
-	//hdrLighting.RenderPost(m_pMainColorTarget);
-	//m_pPostTarget = hdrLighting.GetPostTarget();
+	hdrLighting.RenderPost(m_pMainColorTarget);
+	m_pPostTarget = hdrLighting.GetPostTarget();
 
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pOriSurface);
 

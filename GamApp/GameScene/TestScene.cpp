@@ -94,7 +94,7 @@ void TestScene::OnLoad()
 	pointLight1->SetUseShadow(true);
 	pointLight1->SetLightRange(20);
 	
-	D3DXMatrixTranslation(&lightMoveMat, 0, -4, 0);
+	D3DXMatrixTranslation(&lightMoveMat, -10, -4, 0);
 	pointLight1->SetWorldTransform(lightMoveMat);
 	//--------------------------------------------------------------------------
 	spotLight1 = LIGHTMANAGER::Instance().CreateLight(eSpotLight);

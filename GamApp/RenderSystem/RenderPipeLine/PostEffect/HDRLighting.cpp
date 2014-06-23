@@ -596,43 +596,13 @@ void HDRLighting::RenderPost(LPDIRECT3DTEXTURE9 hdrBuffer)
 	m_postEffect->SetTexture("g_BloomTex", m_apBloomTex[0]);// [0]);
 	m_postEffect->SetTexture("g_StarTex", hdrBuffer);// [0]);
 	m_postEffect->SetTexture("g_LuminanceCur", m_pAdaptedLuminanceCur);
-	
-	m_postEffect->CommitChanges();
 
-	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, m_pBufferVex, 0, sizeof(VERTEX));
-	RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(D3DFVF_VERTEX);
-	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
-	m_postEffect->SetTexture(0, NULL);
-
-	m_postEffect->EndPass();
-	m_postEffect->End();
-
-	
-}
-
-
-void HDRLighting::RenderMainToScaled( LPDIRECT3DTEXTURE9 hdrBuffer )
-{
-	D3DXVECTOR2 avSampleOffsets[MAX_SAMPLES];
-	GetSampleOffsets_DownScale4x4(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight, avSampleOffsets);
-	m_postEffect->SetValue("g_avSampleOffsets", avSampleOffsets, sizeof(avSampleOffsets));
-
-	// Get the new render target surface
-	PDIRECT3DSURFACE9 pSurfScaledScene = NULL;
-	HRESULT hr = m_pScaledColor->GetSurfaceLevel(0, &pSurfScaledScene);
-
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurfScaledScene);
-	m_postEffect->SetTexture(MAINCOLORBUFFER, hdrBuffer);
-	RENDERDEVICE::Instance().g_pD3DDevice->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
-	RENDERDEVICE::Instance().g_pD3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
-	RENDERDEVICE::Instance().g_pD3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
-
-	m_postEffect->SetTechnique("DownScale4x4");
-	UINT numPasses = 0;
-	m_postEffect->Begin(&numPasses, 0);
-	m_postEffect->BeginPass(0);
-
-	m_postEffect->SetMatrix(WORLDVIEWPROJMATRIX, &RENDERDEVICE::Instance().OrthoWVPMatrix);
+// 	m_postEffect->SetTexture(MAINCOLORBUFFER, hdrBuffer);
+// 	m_postEffect->SetTexture("g_BloomTex", m_apBloomTex[0]);// [0]);
+// 	m_postEffect->SetTexture("g_StarTex", m_apToneMap[0]);// [0]);
+// 	m_postEffect->SetTexture("g_LuminanceCur", m_pAdaptedLuminanceCur);
+//	RENDERDEVICE::Instance().g_pD3DDevice->SetSamplerState(2, D3DSAMP_MAGFILTER, D3DTEXF_POINT);
+//	RENDERDEVICE::Instance().g_pD3DDevice->SetSamplerState(2, D3DSAMP_MINFILTER, D3DTEXF_POINT);
 
 	m_postEffect->CommitChanges();
 
@@ -643,160 +613,8 @@ void HDRLighting::RenderMainToScaled( LPDIRECT3DTEXTURE9 hdrBuffer )
 
 	m_postEffect->EndPass();
 	m_postEffect->End();
-
-	SafeRelease(pSurfScaledScene);
-}
-
-void HDRLighting::RenderScaledToBrightPass()
-{
-	D3DXVECTOR2 avSampleOffsets[MAX_SAMPLES];
-	D3DXVECTOR4 avSampleWeights[MAX_SAMPLES];
-
-	// Get the new render target surface
-	PDIRECT3DSURFACE9 pSurfBrightPass = NULL;
-	HRESULT hr = m_pBrightPass->GetSurfaceLevel(0, &pSurfBrightPass);
 
 	
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurfBrightPass);
-	m_postEffect->SetTexture(MAINCOLORBUFFER, m_pScaledColor);
-	m_postEffect->SetTexture("g_LuminanceCur", m_pAdaptedLuminanceCur);
-	RENDERDEVICE::Instance().g_pD3DDevice->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
-	RENDERDEVICE::Instance().g_pD3DDevice->SetSamplerState(3, D3DSAMP_MINFILTER, D3DTEXF_POINT);
-
-	// Get the destination rectangle.
-	// Decrease the rectangle to adjust for the single pixel black border.
-	RECT rectDest;
-	GetTextureRect(m_pBrightPass, &rectDest);
-	InflateRect(&rectDest, -1, -1);
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE);
-	RENDERDEVICE::Instance().g_pD3DDevice->SetScissorRect(&rectDest);
-
-	m_postEffect->SetTechnique("BrightPassFilter");
-	UINT numPasses = 0;
-	m_postEffect->Begin(&numPasses, 0);
-	m_postEffect->BeginPass(0);
-
-	m_postEffect->SetMatrix(WORLDVIEWPROJMATRIX, &RENDERDEVICE::Instance().OrthoWVPMatrix);
-
-	m_postEffect->CommitChanges();
-
-	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, m_pBufferVex, 0, sizeof(VERTEX));
-	RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(D3DFVF_VERTEX);
-	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
-	m_postEffect->SetTexture(0, NULL);
-
-	m_postEffect->EndPass();
-	m_postEffect->End();
-
-	SafeRelease(pSurfBrightPass);
-}
-
-void HDRLighting::RenderBrightPassToStarSource()
-{
-	D3DXVECTOR2 avSampleOffsets[MAX_SAMPLES];
-	D3DXVECTOR4 avSampleWeights[MAX_SAMPLES];
-
-	// Get the new render target surface
-	PDIRECT3DSURFACE9 pSurfStarSource = NULL;
-	HRESULT hr = m_pStarSourceTex->GetSurfaceLevel(0, &pSurfStarSource);
-
-
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurfStarSource);
-	m_postEffect->SetTexture(MAINCOLORBUFFER, m_pBrightPass);
-	RENDERDEVICE::Instance().g_pD3DDevice->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
-	RENDERDEVICE::Instance().g_pD3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
-	RENDERDEVICE::Instance().g_pD3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
-
-	// Get the destination rectangle.
-	// Decrease the rectangle to adjust for the single pixel black border.
-	RECT rectDest;
-	GetTextureRect(m_pStarSourceTex, &rectDest);
-	InflateRect(&rectDest, -1, -1);
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE);
-	RENDERDEVICE::Instance().g_pD3DDevice->SetScissorRect(&rectDest);
-
-	D3DSURFACE_DESC desc;
-	hr = m_pBrightPass->GetLevelDesc(0, &desc);
-	GetSampleOffsets_GaussBlur5x5(desc.Width, desc.Height, avSampleOffsets, avSampleWeights);
-	m_postEffect->SetValue("g_avSampleOffsets", avSampleOffsets, sizeof(avSampleOffsets));
-	m_postEffect->SetValue("g_avSampleWeights", avSampleWeights, sizeof(avSampleWeights));
-
-	// The gaussian blur smooths out rough edges to avoid aliasing effects
-	// when the star effect is run
-	m_postEffect->SetTechnique("GaussBlur5x5");
-
-	UINT numPasses = 0;
-	m_postEffect->Begin(&numPasses, 0);
-	m_postEffect->BeginPass(0);
-
-	m_postEffect->SetMatrix(WORLDVIEWPROJMATRIX, &RENDERDEVICE::Instance().OrthoWVPMatrix);
-
-	m_postEffect->CommitChanges();
-
-	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, m_pBufferVex, 0, sizeof(VERTEX));
-	RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(D3DFVF_VERTEX);
-	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
-	m_postEffect->SetTexture(0, NULL);
-
-	m_postEffect->EndPass();
-	m_postEffect->End();
-
-	SafeRelease(pSurfStarSource);
-}
-
-void HDRLighting::RenderStarSourceToBloomSource()
-{
-	D3DXVECTOR2 avSampleOffsets[MAX_SAMPLES];
-
-	// Get the new render target surface
-	PDIRECT3DSURFACE9 pSurfBloomSource = NULL;
-	HRESULT hr = m_pBloomSourceTex->GetSurfaceLevel(0, &pSurfBloomSource);
-
-
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurfBloomSource);
-	m_postEffect->SetTexture(MAINCOLORBUFFER, m_pStarSourceTex);
-	RENDERDEVICE::Instance().g_pD3DDevice->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
-	RENDERDEVICE::Instance().g_pD3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
-	RENDERDEVICE::Instance().g_pD3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
-
-	// Get the destination rectangle.
-	// Decrease the rectangle to adjust for the single pixel black border.
-	RECT rectDest;
-	GetTextureRect(m_pBloomSourceTex, &rectDest);
-	InflateRect(&rectDest, -1, -1);
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE);
-	RENDERDEVICE::Instance().g_pD3DDevice->SetScissorRect(&rectDest);
-
-
-	// Get the sample offsets used within the pixel shader
-	D3DSURFACE_DESC desc;
-	hr = m_pStarSourceTex->GetLevelDesc(0, &desc);
-
-	GetSampleOffsets_DownScale2x2(desc.Width, desc.Height, avSampleOffsets);
-	m_postEffect->SetValue("g_avSampleOffsets", avSampleOffsets, sizeof(avSampleOffsets));
-
-
-	// The gaussian blur smooths out rough edges to avoid aliasing effects
-	// when the star effect is run
-	m_postEffect->SetTechnique("DownScale2x2");
-
-	UINT numPasses = 0;
-	m_postEffect->Begin(&numPasses, 0);
-	m_postEffect->BeginPass(0);
-
-	m_postEffect->SetMatrix(WORLDVIEWPROJMATRIX, &RENDERDEVICE::Instance().OrthoWVPMatrix);
-
-	m_postEffect->CommitChanges();
-
-	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, m_pBufferVex, 0, sizeof(VERTEX));
-	RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(D3DFVF_VERTEX);
-	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
-	m_postEffect->SetTexture(0, NULL);
-
-	m_postEffect->EndPass();
-	m_postEffect->End();
-
-	SafeRelease(pSurfBloomSource);
 }
 
 void HDRLighting::MeasureLuminance()
@@ -994,6 +812,196 @@ void HDRLighting::CalculateAdaptation()
 
 	SafeRelease(pSurfAdaptedLum);
 }
+
+void HDRLighting::RenderMainToScaled( LPDIRECT3DTEXTURE9 hdrBuffer )
+{
+	D3DXVECTOR2 avSampleOffsets[MAX_SAMPLES];
+	GetSampleOffsets_DownScale4x4(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight, avSampleOffsets);
+	m_postEffect->SetValue("g_avSampleOffsets", avSampleOffsets, sizeof(avSampleOffsets));
+
+	// Get the new render target surface
+	PDIRECT3DSURFACE9 pSurfScaledScene = NULL;
+	HRESULT hr = m_pScaledColor->GetSurfaceLevel(0, &pSurfScaledScene);
+
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurfScaledScene);
+	m_postEffect->SetTexture(MAINCOLORBUFFER, hdrBuffer);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
+
+	m_postEffect->SetTechnique("DownScale4x4");
+	UINT numPasses = 0;
+	m_postEffect->Begin(&numPasses, 0);
+	m_postEffect->BeginPass(0);
+
+	m_postEffect->SetMatrix(WORLDVIEWPROJMATRIX, &RENDERDEVICE::Instance().OrthoWVPMatrix);
+
+	m_postEffect->CommitChanges();
+
+	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, m_pBufferVex, 0, sizeof(VERTEX));
+	RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(D3DFVF_VERTEX);
+	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+	m_postEffect->SetTexture(0, NULL);
+
+	m_postEffect->EndPass();
+	m_postEffect->End();
+
+	SafeRelease(pSurfScaledScene);
+}
+
+void HDRLighting::RenderScaledToBrightPass()
+{
+	D3DXVECTOR2 avSampleOffsets[MAX_SAMPLES];
+	D3DXVECTOR4 avSampleWeights[MAX_SAMPLES];
+
+	// Get the new render target surface
+	PDIRECT3DSURFACE9 pSurfBrightPass = NULL;
+	HRESULT hr = m_pBrightPass->GetSurfaceLevel(0, &pSurfBrightPass);
+
+	
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurfBrightPass);
+	m_postEffect->SetTexture(MAINCOLORBUFFER, m_pScaledColor);
+	m_postEffect->SetTexture("g_LuminanceCur", m_pAdaptedLuminanceCur);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetSamplerState(3, D3DSAMP_MINFILTER, D3DTEXF_POINT);
+
+	// Get the destination rectangle.
+	// Decrease the rectangle to adjust for the single pixel black border.
+	RECT rectDest;
+	GetTextureRect(m_pBrightPass, &rectDest);
+	InflateRect(&rectDest, -1, -1);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetScissorRect(&rectDest);
+
+	m_postEffect->SetTechnique("BrightPassFilter");
+	UINT numPasses = 0;
+	m_postEffect->Begin(&numPasses, 0);
+	m_postEffect->BeginPass(0);
+
+	m_postEffect->SetMatrix(WORLDVIEWPROJMATRIX, &RENDERDEVICE::Instance().OrthoWVPMatrix);
+
+	m_postEffect->CommitChanges();
+
+	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, m_pBufferVex, 0, sizeof(VERTEX));
+	RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(D3DFVF_VERTEX);
+	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+	m_postEffect->SetTexture(0, NULL);
+
+	m_postEffect->EndPass();
+	m_postEffect->End();
+
+	SafeRelease(pSurfBrightPass);
+}
+
+void HDRLighting::RenderBrightPassToStarSource()
+{
+	D3DXVECTOR2 avSampleOffsets[MAX_SAMPLES];
+	D3DXVECTOR4 avSampleWeights[MAX_SAMPLES];
+
+	// Get the new render target surface
+	PDIRECT3DSURFACE9 pSurfStarSource = NULL;
+	HRESULT hr = m_pStarSourceTex->GetSurfaceLevel(0, &pSurfStarSource);
+
+
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurfStarSource);
+	m_postEffect->SetTexture(MAINCOLORBUFFER, m_pBrightPass);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
+
+	// Get the destination rectangle.
+	// Decrease the rectangle to adjust for the single pixel black border.
+	RECT rectDest;
+	GetTextureRect(m_pStarSourceTex, &rectDest);
+	InflateRect(&rectDest, -1, -1);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetScissorRect(&rectDest);
+
+	D3DSURFACE_DESC desc;
+	hr = m_pBrightPass->GetLevelDesc(0, &desc);
+	GetSampleOffsets_GaussBlur5x5(desc.Width, desc.Height, avSampleOffsets, avSampleWeights);
+	m_postEffect->SetValue("g_avSampleOffsets", avSampleOffsets, sizeof(avSampleOffsets));
+	m_postEffect->SetValue("g_avSampleWeights", avSampleWeights, sizeof(avSampleWeights));
+
+	// The gaussian blur smooths out rough edges to avoid aliasing effects
+	// when the star effect is run
+	m_postEffect->SetTechnique("GaussBlur5x5");
+
+	UINT numPasses = 0;
+	m_postEffect->Begin(&numPasses, 0);
+	m_postEffect->BeginPass(0);
+
+	m_postEffect->SetMatrix(WORLDVIEWPROJMATRIX, &RENDERDEVICE::Instance().OrthoWVPMatrix);
+
+	m_postEffect->CommitChanges();
+
+	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, m_pBufferVex, 0, sizeof(VERTEX));
+	RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(D3DFVF_VERTEX);
+	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+	m_postEffect->SetTexture(0, NULL);
+
+	m_postEffect->EndPass();
+	m_postEffect->End();
+
+	SafeRelease(pSurfStarSource);
+}
+
+void HDRLighting::RenderStarSourceToBloomSource()
+{
+	D3DXVECTOR2 avSampleOffsets[MAX_SAMPLES];
+
+	// Get the new render target surface
+	PDIRECT3DSURFACE9 pSurfBloomSource = NULL;
+	HRESULT hr = m_pBloomSourceTex->GetSurfaceLevel(0, &pSurfBloomSource);
+
+
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurfBloomSource);
+	m_postEffect->SetTexture(MAINCOLORBUFFER, m_pStarSourceTex);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
+
+	// Get the destination rectangle.
+	// Decrease the rectangle to adjust for the single pixel black border.
+	RECT rectDest;
+	GetTextureRect(m_pBloomSourceTex, &rectDest);
+	InflateRect(&rectDest, -1, -1);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetScissorRect(&rectDest);
+
+
+	// Get the sample offsets used within the pixel shader
+	D3DSURFACE_DESC desc;
+	hr = m_pStarSourceTex->GetLevelDesc(0, &desc);
+
+	GetSampleOffsets_DownScale2x2(desc.Width, desc.Height, avSampleOffsets);
+	m_postEffect->SetValue("g_avSampleOffsets", avSampleOffsets, sizeof(avSampleOffsets));
+
+
+	// The gaussian blur smooths out rough edges to avoid aliasing effects
+	// when the star effect is run
+	m_postEffect->SetTechnique("DownScale2x2");
+
+	UINT numPasses = 0;
+	m_postEffect->Begin(&numPasses, 0);
+	m_postEffect->BeginPass(0);
+
+	m_postEffect->SetMatrix(WORLDVIEWPROJMATRIX, &RENDERDEVICE::Instance().OrthoWVPMatrix);
+
+	m_postEffect->CommitChanges();
+
+	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, m_pBufferVex, 0, sizeof(VERTEX));
+	RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(D3DFVF_VERTEX);
+	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+	m_postEffect->SetTexture(0, NULL);
+
+	m_postEffect->EndPass();
+	m_postEffect->End();
+
+	SafeRelease(pSurfBloomSource);
+}
+
+
 
 void HDRLighting::RenderBloom( LPDIRECT3DTEXTURE9 hdrBuffer )
 {

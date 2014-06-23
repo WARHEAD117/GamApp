@@ -350,7 +350,7 @@ in float2 vScreenPosition : TEXCOORD0
 	for (int iSample = 0; iSample < 16; iSample++)
 	{
 		// Compute the sum of luminance throughout the sample points
-		fResampleSum += tex2D(g_sampleMainColor, vScreenPosition + g_avSampleOffsets[iSample]);
+		fResampleSum += tex2D(g_sampleMainColor, float2(0.5f,0.5f) + g_avSampleOffsets[iSample]);
 	}
 
 	// Divide the sum to complete the average, and perform an exp() to complete
@@ -502,7 +502,7 @@ in float2 vScreenPosition : TEXCOORD0
 	// Add the star and bloom post processing effects
 	//vSample += g_fStarScale * vStar;
 	vSample += g_fBloomScale * vBloom;
-
+	//return float4(vStar.x, vStar.x, vStar.x, 1.0f);
 	return vSample;
 }
 

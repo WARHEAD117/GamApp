@@ -132,60 +132,82 @@ void ComputeMove(D3DXVECTOR3& move)
 	double dTime = GLOBALTIMER::Instance().GetFrameTime();
 	
 	float speed = CameraParam::speed;
-	if (KEYDOWN(VK_SHIFT))
+	if (GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
 		speed *= 5;
 	}
 
-	if (KEYDOWN('W'))
+	if (GAMEINPUT::Instance().KeyDown(DIK_W))
 	{
 		move = D3DXVECTOR3(0, 0, 1) * speed*(float)dTime;
 	}
 
-	if (KEYDOWN('S'))
+	if (GAMEINPUT::Instance().KeyDown(DIK_S))
 	{
 		move = D3DXVECTOR3(0, 0, -1) * speed*(float)dTime;
 	}
 
-	if (KEYDOWN('A'))
+	if (GAMEINPUT::Instance().KeyDown(DIK_A))
 	{
 		move = D3DXVECTOR3(-1, 0, 0) * speed*(float)dTime;
 	}
 
-	if (KEYDOWN('D'))
+	if (GAMEINPUT::Instance().KeyDown(DIK_D))
 	{
 		move = D3DXVECTOR3(1, 0, 0) * speed*(float)dTime;
 	}
-	if (KEYDOWN('Q'))
+	if (GAMEINPUT::Instance().KeyDown(DIK_Q))
 	{
 		move = D3DXVECTOR3(0, 1, 0) * speed*(float)dTime;
 	}
 
-	if (KEYDOWN('E'))
+	if (GAMEINPUT::Instance().KeyDown(DIK_E))
 	{
 		move = D3DXVECTOR3(0, -1, 0) * speed*(float)dTime;
 	}
 }
 
-void ComputeRotate(D3DXMATRIX& rot)
+void ComputeRotate(D3DXMATRIX& rot, D3DXMATRIX& worldT)
 {
 	double dTime = GLOBALTIMER::Instance().GetFrameTime();
 
-	float speed = 0.1;
-	if (KEYDOWN(VK_SHIFT))
+	D3DXVECTOR2 mouseMove = GAMEINPUT::Instance().GetMouseMove();
+	float speed = 0.2;
+	if (GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
 		speed *= 5;
 	}
 
-	if (KEYDOWN('X'))
-	{
-		D3DXMatrixRotationY(&rot, speed*(float)dTime);
-	}
+	D3DXMATRIX rot2;
 
-	if (KEYDOWN('Z'))
-	{
-		D3DXMatrixRotationY(&rot, -speed*(float)dTime);
-	}
+	D3DXMatrixRotationY(&rot, mouseMove.x*speed*(float)dTime);
+	D3DXMatrixRotationX(&rot2, mouseMove.y*speed*(float)dTime);
+	rot = rot * rot2;
+}
+
+void NormalizeRotate(D3DXMATRIX& worldT)
+{
+	D3DXMATRIX invW;
+	D3DXMatrixInverse(&invW, NULL, &worldT);
+	D3DXVECTOR3 right = D3DXVECTOR3(invW(0, 0), 0.0f, invW(2, 0));
+	D3DXVec3Normalize(&right, &right);
+	D3DXVECTOR3 up = D3DXVECTOR3(invW(0, 1), invW(1, 1), invW(2, 1));
+	D3DXVECTOR3 dir;
+	D3DXVec3Cross(&dir, &right, &up);
+	D3DXVec3Cross(&up, &dir, &right);
+
+	invW(0, 0) = right.x;
+	invW(1, 0) = right.y;
+	invW(2, 0) = right.z;
+
+	invW(0, 1) = up.x;
+	invW(1, 1) = up.y;
+	invW(2, 1) = up.z;
+
+	invW(0, 2) = dir.x;
+	invW(1, 2) = dir.y;
+	invW(2, 2) = dir.z;
+	D3DXMatrixInverse(&worldT, NULL, &invW);
 }
 
 float R = 0;
@@ -199,10 +221,11 @@ void TestScene::OnBeginFrame()
 
 	D3DXMATRIX rot;
 	D3DXMatrixIdentity(&rot);
-	ComputeRotate(rot);
+	ComputeRotate(rot, cW);
 
 	D3DXMatrixTranslation(&moveMat, move.x, move.y, move.z);
-	cW = moveMat *cW *  rot;
+	cW = rot * moveMat *cW;
+	NormalizeRotate(cW);
 	mainCamera.SetWorldTransform(cW);
 	
 	move = D3DXVECTOR3(0, -5, -5);

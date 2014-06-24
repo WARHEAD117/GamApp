@@ -9,8 +9,15 @@ typedef struct MouseState
 {
 	bool   left;   //左键是否按下
 	bool   right;  //右键是否按下
-	POINT  pos;    //鼠标当前的位置
+	D3DXVECTOR2  pos;    //鼠标当前的位置
 }MSTATE, *PMSTATE;
+
+enum KeyState
+{
+	PRESS,
+	RELEASE,
+	CLICK
+};
 
 #define  DINPUT_BUFFERSIZE 16
 
@@ -19,7 +26,10 @@ class Input
 public:
 	LPDIRECTINPUT8			pDI;
 	LPDIRECTINPUTDEVICE8    m_pMouse;
-	 
+	LPDIRECTINPUTDEVICE8    m_pKeyboard;
+	char					m_KeyboardState[256];
+	char					m_LastFrameKeyboardState[256];
+
 	MSTATE                  m_OldMState;
 	MSTATE                  m_CurMState;
 
@@ -48,8 +58,15 @@ public:
 	~Input(void);
 	BOOL       InitInput(HWND hWnd, HINSTANCE  hInstance);  //初始化
 	BOOL       ReadMouse();									//读取鼠标函数
-//	BOOL       ReadKeyboard();								//读取键盘函数（没用）
+	BOOL       ReadKeyboard();								//读取键盘函数
+	bool		UpdateInputState();
+	
+	bool		KeyDown(int keyCode);
+	bool		KeyUp(int keyCode);
+	bool		KeyPressed(int keyCode);
+	bool		KeyReleased(int keyCode);
 
+	D3DXVECTOR2		GetMouseMove();
 //==//==============================================================================================//
 //	// Used to create the game controllers.//用于创建手柄（手柄是枚举的，必须要用回调函数）
 //	BOOL EnumDeviceCallBack(const DIDEVICEINSTANCE *inst, void* pData);

@@ -12,7 +12,6 @@ SSAO::SSAO()
 	m_bias = 0.1;
 	m_sample_rad = 0.1;
 	m_AOEnable = true;
-	m_BottonDown = false;
 }
 
 
@@ -22,13 +21,8 @@ SSAO::~SSAO()
 
 void SSAO::RenderPost()
 {
-	if (KEYDOWN('P'))
+	if (GAMEINPUT::Instance().KeyPressed(DIK_P))
 	{
-		m_BottonDown = true;
-	}
-	if (m_BottonDown == true && KEYUP('P'))
-	{
-		m_BottonDown = false;
 		m_AOEnable = !m_AOEnable;
 	}
 
@@ -50,41 +44,41 @@ void SSAO::RenderPost()
 
 	m_postEffect->SetTexture("g_RandomNormal", m_pRandomNormal);
 
-	if (KEYDOWN('T'))
+	if (GAMEINPUT::Instance().KeyDown(DIK_T))
 	{
 		m_intensity += 0.0001;
 	}
-	if (KEYDOWN('Y'))
+	if (GAMEINPUT::Instance().KeyDown(DIK_Y))
 	{
 		m_scale += 0.0001;
 	}
-	if (KEYDOWN('U'))
+	if (GAMEINPUT::Instance().KeyDown(DIK_U))
 	{
 		m_sample_rad += 0.0001;
 	}
-	if (KEYDOWN('I'))
+	if (GAMEINPUT::Instance().KeyDown(DIK_I))
 	{
 		m_bias += 0.0001;
 	}
 
-	if (KEYDOWN('G'))
+	if (GAMEINPUT::Instance().KeyDown(DIK_G))
 	{
 		m_intensity -= 0.0001;
 	}
-	if (KEYDOWN('H'))
+	if (GAMEINPUT::Instance().KeyDown(DIK_H))
 	{
 		m_scale -= 0.0001;
 	}
-	if (KEYDOWN('J'))
+	if (GAMEINPUT::Instance().KeyDown(DIK_J))
 	{
 		m_sample_rad -= 0.0001;
 	}
-	if (KEYDOWN('K'))
+	if (GAMEINPUT::Instance().KeyDown(DIK_K))
 	{
 		m_bias -= 0.0001;
 	}
 
-	if (KEYDOWN('R'))
+	if (GAMEINPUT::Instance().KeyDown(DIK_R))
 	{
 		m_intensity = 1;
 		m_scale = 1;

@@ -327,23 +327,23 @@ void RenderPipe::DeferredRender_MultiPass()
 	deferredMultiPassEffect->SetInt("g_ShadowMapSize", SHADOWMAPSIZE);
 	deferredMultiPassEffect->SetFloat("g_ShadowBias", 0.2f);
 
-	if (KEYDOWN('O'))
+	if (GAMEINPUT::Instance().KeyDown(DIK_O))
 	{
 		g_minVariance += 0.001;
 	}
-	if (KEYDOWN('L'))
+	if (GAMEINPUT::Instance().KeyDown(DIK_L))
 	{
 		g_minVariance -= 0.001;
 	}
-	if (KEYDOWN('N'))
+	if (GAMEINPUT::Instance().KeyDown(DIK_N))
 	{
 		g_Amount += 0.001;
 	}
-	if (KEYDOWN('M'))
+	if (GAMEINPUT::Instance().KeyDown(DIK_M))
 	{
 		g_Amount -= 0.001;
 	}
-	if (KEYDOWN('R'))
+	if (GAMEINPUT::Instance().KeyDown(DIK_R))
 	{
 		g_minVariance = 0.2f;
 		g_Amount = 0.8f;
@@ -527,27 +527,27 @@ void RenderPipe::ClearRenderUtil()
 
 void RenderPipe::UpdateRenderState()
 {
-	if (KEYDOWN(VK_F1))
+	if (GAMEINPUT::Instance().KeyDown(DIK_F1))
 	{
 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_FILLMODE, D3DFILL_POINT);
 	}
-	if (KEYDOWN(VK_F2))
+	if (GAMEINPUT::Instance().KeyDown(DIK_F2))
 	{
 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_FILLMODE, D3DFILL_WIREFRAME);
 	}
-	if (KEYDOWN(VK_F3))
+	if (GAMEINPUT::Instance().KeyDown(DIK_F3))
 	{
 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
 	}
-	if (KEYDOWN(VK_F4))
+	if (GAMEINPUT::Instance().KeyDown(DIK_F4))
 	{
 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_SHADEMODE, D3DSHADE_GOURAUD);
 	}
-	if (KEYDOWN(VK_F5))
+	if (GAMEINPUT::Instance().KeyDown(DIK_F5))
 	{
 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_SHADEMODE, D3DSHADE_FLAT);
 	}
-	if (KEYDOWN(VK_F6))
+	if (GAMEINPUT::Instance().KeyDown(DIK_F6))
 	{
 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_SHADEMODE, D3DSHADE_PHONG);
 	}

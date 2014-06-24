@@ -51,15 +51,41 @@ BOOL Input::InitInput( HWND  hWnd, HINSTANCE  hInstance )
    
 	//设定缓冲区大小
 	DIPROPDWORD       property;
-	property.diph.dwSize  = sizeof(DIPROPDWORD);
-    property.diph.dwHeaderSize = sizeof(DIPROPHEADER);
-    property.diph.dwObj = 0;
-	property.diph.dwHow  = DIPH_DEVICE;
-    property.dwData = DINPUT_BUFFERSIZE;
+	property.diph.dwSize = sizeof(DIPROPDWORD);
+	property.diph.dwHeaderSize = sizeof(DIPROPHEADER);
+	property.diph.dwObj = 0;
+	property.diph.dwHow = DIPH_DEVICE;
+	property.dwData = DINPUT_BUFFERSIZE;
 
-	m_pMouse->SetProperty( DIPROP_BUFFERSIZE, &property.diph );
-    m_pMouse->Acquire();
-	
+	m_pMouse->SetProperty(DIPROP_BUFFERSIZE, &property.diph);
+	m_pMouse->Acquire();
+
+
+	//键盘的初始化
+	pDI->CreateDevice(GUID_SysKeyboard, &m_pKeyboard, NULL);    //创建键盘设备
+	//设置键盘数据格式
+	m_pKeyboard->SetDataFormat(&c_dfDIKeyboard);
+	//创建键盘设备的协作等级
+	m_pKeyboard->SetCooperativeLevel(hWnd, DISCL_BACKGROUND | DISCL_NONEXCLUSIVE);
+	m_pKeyboard->Acquire();
+
+	/////////////////////////////////////////////////////////////////////////////////////////////
+
+	//为键盘设置缓冲方式
+
+	DIPROPDWORD dipdw;
+
+	dipdw.diph.dwSize = sizeof(DIPROPDWORD);
+	dipdw.diph.dwHeaderSize = sizeof(DIPROPHEADER);
+	dipdw.diph.dwObj = 0;
+	dipdw.diph.dwHow = DIPH_DEVICE;
+	dipdw.dwData = DINPUT_BUFFERSIZE; // Arbitary buffer size
+
+	m_pKeyboard->SetProperty(DIPROP_BUFFERSIZE, &dipdw.diph);
+
+	//为键盘安装事件通知关联，并准备获取采集
+	//m_pKeyboard->SetEventNotification(g_Event);
+	m_pKeyboard->Acquire();
 	//----------------------------------------------------------------------
 
 	return true;
@@ -124,6 +150,35 @@ BOOL Input::ReadMouse()
 	return true;
 }
 
+BOOL Input::ReadKeyboard()
+{
+	HRESULT		result;		//信息返回句柄
+
+	if (m_pKeyboard == NULL)
+	{
+		MessageBox(NULL, "键盘设备出错!", NULL, MB_OK);
+		return false;
+	}
+	ZeroMemory(m_LastFrameKeyboardState, sizeof(m_LastFrameKeyboardState));
+	CopyMemory(m_LastFrameKeyboardState, m_KeyboardState, sizeof(m_KeyboardState));
+	//ZeroMemory(m_KeyboardState, sizeof(m_KeyboardState));
+	result = m_pKeyboard->GetDeviceState(sizeof(m_KeyboardState), (void**)&m_KeyboardState);
+
+	if (result != DI_OK)
+	{
+		MessageBox(NULL, "键盘获得设备状态失败!", NULL, MB_OK);
+		return false;
+	}
+	result = m_pKeyboard->Acquire();
+	//死循环，鼠标和键盘随时可能被系统夺走 
+	while (result == DIERR_INPUTLOST)
+	{
+		result = m_pKeyboard->Acquire();
+	}
+
+	return true;
+}
+
 //-------------------------------------------
 void Input::Clearup()
 {
@@ -131,4 +186,45 @@ void Input::Clearup()
 
 	SafeRelease(pDI);	
 }
+
+bool Input::KeyUp(int keyCode)
+{
+	return (m_KeyboardState[keyCode] & 0x80) == 0;
+}
+
+bool Input::KeyDown(int keyCode)
+{
+	return (m_KeyboardState[keyCode] & 0x80) != 0;
+}
+
+bool Input::KeyPressed(int keyCode)
+{
+	bool LastFrameUp = (m_LastFrameKeyboardState[keyCode] & 0x80) == 0;
+	bool CurFrameDown = (m_KeyboardState[keyCode] & 0x80) != 0;
+	return LastFrameUp & CurFrameDown;
+}
+
+bool Input::KeyReleased(int keyCode)
+{	
+	bool LastFramePressed = (m_LastFrameKeyboardState[keyCode] & 0x80) != 0;
+	bool CurFrameReleased = (m_KeyboardState[keyCode] & 0x80) == 0;
+	return LastFramePressed & CurFrameReleased;
+}
+
+bool Input::UpdateInputState()
+{
+	bool mouseState, keyBoardState;
+	keyBoardState = ReadKeyboard();
+	mouseState = ReadMouse();
+	return keyBoardState & mouseState;
+}
+
+D3DXVECTOR2 Input::GetMouseMove()
+{
+	float dx = m_CurMState.pos.x - m_OldMState.pos.x;
+	float dy = m_CurMState.pos.y - m_OldMState.pos.y;
+	D3DXVECTOR2 move = D3DXVECTOR2(dx, dy);
+	return move;
+}
+
 

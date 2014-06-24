@@ -16,7 +16,6 @@ private:
 	float		m_bias;
 	float		m_sample_rad;
 	bool		m_AOEnable;
-	bool		m_BottonDown;
 
 	LPDIRECT3DTEXTURE9         m_pRandomNormal;
 };

@@ -144,6 +144,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 			//CheckDevice
 			//if (!isDeviceLost())
 			{
+				GAMEINPUT::Instance().UpdateInputState();
 				mainGame.GameLoop();
 			}
 		}

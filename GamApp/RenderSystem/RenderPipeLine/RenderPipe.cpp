@@ -163,7 +163,6 @@ RenderPipe::~RenderPipe()
 
 void RenderPipe::RenderGBuffer()
 {
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pDiffuseSurface);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(1, m_pNormalSurface);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(2, m_pPositionSurface);
@@ -379,15 +378,17 @@ void RenderPipe::DeferredRender_MultiPass()
 		deferredMultiPassEffect->SetFloat("g_LightRange", lightRange);
 		deferredMultiPassEffect->SetVector("g_LightCosAngle", &D3DXVECTOR4(lightCosHalfAngle.x, lightCosHalfAngle.y, 0.0f, 0.0f));
 
-		D3DXMATRIX invView;
-		D3DXMatrixInverse(&invView, NULL, &RENDERDEVICE::Instance().ViewMatrix);
-		deferredMultiPassEffect->SetMatrix("g_invView", &invView);
-		deferredMultiPassEffect->SetMatrix("g_ShadowView", &pLight->GetLightViewMatrix());
-		deferredMultiPassEffect->SetMatrix("g_ShadowProj", &pLight->GetLightProjMatrix());
+		
 		deferredMultiPassEffect->SetBool("g_bUseShadow", useShadow);
 
 		if (useShadow)
 		{
+			D3DXMATRIX invView;
+			D3DXMatrixInverse(&invView, NULL, &RENDERDEVICE::Instance().ViewMatrix);
+			deferredMultiPassEffect->SetMatrix("g_invView", &invView);
+			deferredMultiPassEffect->SetMatrix("g_ShadowView", &pLight->GetLightViewMatrix());
+			deferredMultiPassEffect->SetMatrix("g_ShadowProj", &pLight->GetLightProjMatrix());
+
 			if (pLight->GetLightType() == eDirectionLight || pLight->GetLightType() == eSpotLight)
 			{
 				deferredMultiPassEffect->SetTexture("g_ShadowBuffer", pLight->GetShadowTarget());
@@ -427,10 +428,9 @@ void RenderPipe::DeferredRender_MultiPass()
 		}
 		else
 		{
+			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
 			pass = 0;
 		}
-
-		
 
 		deferredMultiPassEffect->CommitChanges();
 
@@ -450,8 +450,10 @@ void RenderPipe::DeferredRender_MultiPass()
 
 		deferredMultiPassEffect->EndPass();
 	}
+
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZENABLE, TRUE);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
+
 	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, pBufferVex, 0, sizeof(VERTEX));
 	RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(D3DFVF_VERTEX);
 

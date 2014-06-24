@@ -7,6 +7,9 @@ const D3DXVECTOR3 defaultPos(0.0f, 0.0f, 0.0f);
 const D3DXVECTOR3 defaultLookAt(0.0f, -1.0f, 0.0f);
 const D3DXVECTOR3 defaultUp(1.0f, 0.0f, 0.0f);
 const int SHADOWMAP_SIZE = 1024;
+
+LPD3DXMESH box;
+
 BaseLight::BaseLight() :
 m_LightType(eDirectionLight),
 m_bUseShadow(false),
@@ -16,7 +19,113 @@ m_LightDir(ZEROVECTOR3),
 m_LightColor(D3DXCOLOR(0.3,0.3f,0.3f,1.0f)),
 m_LightAttenuation(D3DXVECTOR4(0.0, 1.0f, 0.0f, 1.0f))
 {
+	D3DXCreateBox(RENDERDEVICE::Instance().g_pD3DDevice, 2, 2, 2, &box, NULL);
+	//Create post vertex
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateVertexBuffer(24 * sizeof(VERTEX)
+		, 0
+		, D3DFVF_VERTEX
+		//,D3DPOOL_DEFAULT
+		, D3DPOOL_MANAGED
+		, &m_pBufferVex
+		, NULL);
+
+	VERTEX* pVertices;
+	m_pBufferVex->Lock(0, 24 * sizeof(VERTEX), (void**)&pVertices, 0);
+
+	//初始化顶点缓冲区
+
+	//==========================
+	//=============================================================下表面
+	pVertices->position = D3DXVECTOR3(1.0f, -1.0f, 1.0f);
+	pVertices++;
+
+	pVertices->position = D3DXVECTOR3(-1.0f, -1.0f, 1.0f);
+	pVertices++;
+
+	pVertices->position = D3DXVECTOR3(1.0f, -1.0f, -1.0f);
+	pVertices++;
+
+	pVertices->position = D3DXVECTOR3(-1.0f, -1.0f, -1.0f);
+	pVertices++;
+
+
+	//==========================================================================左表面 
+	pVertices->position = D3DXVECTOR3(-1.0f, 1.0f, 1.0f);
+	pVertices++;
+
+	pVertices->position = D3DXVECTOR3(-1.0f, 1.0f, -1.0f);
+	pVertices++;
+
+	pVertices->position = D3DXVECTOR3(-1.0f, -1.0f, 1.0f);
+	pVertices++;
+
+	pVertices->position = D3DXVECTOR3(-1.0f, -1.0f, -1.0f);
+	pVertices++;
+
+	//==========================================================================右表面
+	pVertices->position = D3DXVECTOR3(1.0f, 1.0f, -1.0f);
+	pVertices++;
+
+	pVertices->position = D3DXVECTOR3(1.0f, 1.0f, 1.0f);
+	pVertices++;
+
+	pVertices->position = D3DXVECTOR3(1.0f, -1.0f, -1.0f);
+	pVertices++;
+
+	pVertices->position = D3DXVECTOR3(1.0f, -1.0f, 1.0f);
+	pVertices++;
+
+	// 	//==========================================================================上表面
+	pVertices->position = D3DXVECTOR3(-1.0f, 1.0f, 1.0f);
+	pVertices++;
+
+	pVertices->position = D3DXVECTOR3(1.0f, 1.0f, 1.0f);
+	pVertices++;
+
+	pVertices->position = D3DXVECTOR3(-1.0f, 1.0f, -1.0f);
+	pVertices++;
+
+
+
+	pVertices->position = D3DXVECTOR3(1.0f, 1.0f, -1.0f);
+	pVertices++;
+
+	// 
+	// 	//==========================================================================后表面
+	pVertices->position = D3DXVECTOR3(-1.0f, -1.0f, 1.0f);
+	pVertices++;
+
+	pVertices->position = D3DXVECTOR3(1.0f, -1.0f, 1.0f);
+	pVertices++;
+
+	pVertices->position = D3DXVECTOR3(-1.0f, 1.0f, 1.0f);
+	pVertices++;
+
+	pVertices->position = D3DXVECTOR3(1.0f, 1.0f, 1.0f);
+	pVertices++;
+	// 
+	// 	//==========================================================================前表面
+	pVertices->position = D3DXVECTOR3(1.0f, -1.0f, -1.0f);
+	pVertices++;
+
+	pVertices->position = D3DXVECTOR3(-1.0f, -1.0f, -1.0f);
+	pVertices++;
+
+	pVertices->position = D3DXVECTOR3(1.0f, 1.0f, -1.0f);
+	pVertices++;
+
+	pVertices->position = D3DXVECTOR3(-1.0f, 1.0f, -1.0f);
+	pVertices++;
+
+
+	m_pBufferVex->Unlock();
+
 	Init();
+}
+
+void BaseLight::RenderLightVolume()
+{
+	box->DrawSubset(0);
 }
 
 BaseLight::~BaseLight()

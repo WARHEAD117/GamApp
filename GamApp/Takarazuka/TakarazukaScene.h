@@ -19,7 +19,6 @@ public:
 
 private:
 	NoteManager mNoteManager;
-	DirectionLight mDirLight;
 
 	Camera			mainCamera;
 };

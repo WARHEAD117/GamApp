@@ -17,7 +17,7 @@ void TakarazukaScene::OnLoad()
 {
 	mNoteManager.InitNote();
 
-	LIGHTMANAGER::Instance().AddLight(&mDirLight);
+	//LIGHTMANAGER::Instance().AddLight(&mDirLight);
 
 	//BuildCamera
 	mainCamera.Init();

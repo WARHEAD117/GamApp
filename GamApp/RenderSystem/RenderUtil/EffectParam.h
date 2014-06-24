@@ -23,3 +23,6 @@
 #define POSITIONBUFFER		"g_PositionBuffer"
 #define DIFFUSEBUFFER		"g_DiffuseBuffer"
 #define FINALCOLORBUFFER		"g_FinalColorBuffer"
+
+#define SCREENWIDTH			"g_ScreenWidth"
+#define SCREENHEIGHT		"g_ScreenHeight"

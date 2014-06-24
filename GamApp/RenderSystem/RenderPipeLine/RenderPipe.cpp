@@ -163,6 +163,7 @@ RenderPipe::~RenderPipe()
 
 void RenderPipe::RenderGBuffer()
 {
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pDiffuseSurface);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(1, m_pNormalSurface);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(2, m_pPositionSurface);
@@ -308,6 +309,9 @@ void RenderPipe::DeferredRender_MultiPass()
 	deferredMultiPassEffect->SetTexture(NORMALBUFFER, m_pNormalTarget);
 	deferredMultiPassEffect->SetTexture(POSITIONBUFFER, m_pPositionTarget);
 
+	deferredMultiPassEffect->SetInt(SCREENWIDTH, RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth);
+	deferredMultiPassEffect->SetInt(SCREENHEIGHT, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight);
+
 	deferredMultiPassEffect->SetTexture("g_AOBuffer", ssao.GetPostTarget());
 	
 
@@ -394,19 +398,31 @@ void RenderPipe::DeferredRender_MultiPass()
 			}
 		}
 			
+		D3DXMATRIX lightVolumeMatrix = pLight->GetWorldTransform();
+		D3DXMATRIX scaleMatrix;
+		D3DXMatrixScaling(&scaleMatrix, lightRange, lightRange, lightRange);
+		lightVolumeMatrix = scaleMatrix  * lightVolumeMatrix;
+		lightVolumeMatrix = lightVolumeMatrix * RENDERDEVICE::Instance().ViewMatrix * RENDERDEVICE::Instance().ProjMatrix;
+		
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZENABLE, FALSE);
 
 		UINT pass = 0;
 		LightType lt = pLight->GetLightType();
 		if (lt == eDirectionLight)
 		{
+			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
 			pass = 0;
 		}
 		else if (lt == ePointLight)
 		{
+			deferredMultiPassEffect->SetMatrix("g_LightVolumeWVP", &lightVolumeMatrix);
+			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CW);
 			pass = 4;
 		}
 		else if (lt == eSpotLight)
 		{
+			deferredMultiPassEffect->SetMatrix("g_LightVolumeWVP", &lightVolumeMatrix);
+			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CW);
 			pass = 5;
 		}
 		else
@@ -414,14 +430,30 @@ void RenderPipe::DeferredRender_MultiPass()
 			pass = 0;
 		}
 
+		
+
 		deferredMultiPassEffect->CommitChanges();
 
 		deferredMultiPassEffect->BeginPass(pass);
 
-		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+		if (lt == eDirectionLight)
+		{
+			RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, pBufferVex, 0, sizeof(VERTEX));
+			RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(D3DFVF_VERTEX);
+			RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+		}
+		else
+		{
+			pLight->RenderLightVolume();
+		}
+		
 
 		deferredMultiPassEffect->EndPass();
 	}
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZENABLE, TRUE);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, pBufferVex, 0, sizeof(VERTEX));
+	RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(D3DFVF_VERTEX);
 
 	//»·¾³¹âPass
 	deferredMultiPassEffect->BeginPass(1);

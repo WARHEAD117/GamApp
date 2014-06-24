@@ -13,11 +13,21 @@ enum LightType
 class BaseLight :
 	public Transform
 {
+#define D3DFVF_VERTEX (D3DFVF_XYZ)
+protected:
+	struct VERTEX
+	{
+		D3DXVECTOR3		position;
+	};
+	LPDIRECT3DVERTEXBUFFER9		m_pBufferVex;
+
 public:
 	BaseLight();
 	~BaseLight();
 
 	LightType m_LightType;
+
+	void RenderLightVolume();
 
 	void SetLightType(LightType lightType);
 	LightType GetLightType();

@@ -30,6 +30,12 @@ float		g_LightRange;
 float4		g_LightCosAngle;
 float4		g_LightAttenuation;
 
+int g_ScreenWidth;
+int g_ScreenHeight;
+//lightVolume================
+matrix g_LightVolumeWVP;
+//===========================
+
 bool		g_bUseShadow;
 float4		g_LightColor;
 float4		g_AmbientColor;
@@ -106,7 +112,11 @@ struct OutputVS
 	float4 posWVP         : POSITION0;
 	float2 TexCoord		: TEXCOORD0;
 };
-
+struct OutputVS2
+{
+	float4 posWVP         : POSITION0;
+	float4 TexCoord		: TEXCOORD0;
+};
 
 OutputVS VShader(float4 posL       : POSITION0,
 				 float2 TexCoord : TEXCOORD0)
@@ -117,6 +127,18 @@ OutputVS VShader(float4 posL       : POSITION0,
 	outVS.posWVP = mul(posL, g_WorldViewProj);
 
 	outVS.TexCoord = TexCoord;
+
+	return outVS;
+}
+
+OutputVS2 VShaderLightVolume(float4 posL       : POSITION0)
+{
+	OutputVS2 outVS = (OutputVS2)0;
+
+	//最终输出的顶点位置（经过世界、观察、投影矩阵变换）
+	outVS.posWVP = mul(posL, g_LightVolumeWVP);
+
+	outVS.TexCoord = outVS.posWVP;
 
 	return outVS;
 }
@@ -342,8 +364,12 @@ float4 DirectionLightPass(float2 TexCoord : TEXCOORD0) : COLOR
 	return finalColor * shadowFinal;
 }
 
-float4 PointLightPass(float2 TexCoord : TEXCOORD0) : COLOR
+float4 PointLightPass(float4 posWVP : TEXCOORD0) : COLOR
 {
+	float lightU = (posWVP.x / posWVP.w + 1.0f) / 2.0f + 0.5f / g_ScreenWidth;
+	float lightV = (1.0f - posWVP.y / posWVP.w) / 2.0f + 0.5f / g_ScreenHeight;
+	float2 TexCoord = float2(lightU, lightV);
+
 	float3 Normal = GetNormal(TexCoord);
 
 	float3 pos = GetPosition(TexCoord);
@@ -379,8 +405,12 @@ float4 PointLightPass(float2 TexCoord : TEXCOORD0) : COLOR
 		return finalColor * shadowFinal;
 }
 
-float4 SpotLightPass(float2 TexCoord : TEXCOORD0) : COLOR
+float4 SpotLightPass(float4 posWVP : TEXCOORD0) : COLOR
 {
+	float lightU = (posWVP.x / posWVP.w + 1.0f) / 2.0f + 0.5f / g_ScreenWidth;
+	float lightV = (1.0f - posWVP.y / posWVP.w) / 2.0f + 0.5f / g_ScreenHeight;
+	float2 TexCoord = float2(lightU, lightV);
+
 	float3 Normal = GetNormal(TexCoord);
 
 	float3 pos = GetPosition(TexCoord);
@@ -474,6 +504,7 @@ technique DeferredRender
 	}
 	pass p1 //添加环境光
 	{
+		vertexShader = compile vs_3_0 VShader();
 		pixelShader = compile ps_3_0 AmbientPass();
 		AlphaBlendEnable = true;                        //设置渲染状态        
 		SrcBlend = ONE;
@@ -481,6 +512,7 @@ technique DeferredRender
 	}
 	pass p2 //纹理及AO
 	{
+		vertexShader = compile vs_3_0 VShader();
 		pixelShader = compile ps_3_0 DiffusePass();
 		AlphaBlendEnable = true;                        //设置渲染状态        
 		SrcBlend = ZERO;
@@ -488,6 +520,7 @@ technique DeferredRender
 	}
 	pass p3 //DEBUG PASS
 	{
+		vertexShader = compile vs_3_0 VShader();
 		pixelShader = compile ps_3_0 DebugPass();
 		//pixelShader = compile ps_3_0 AmbientPass();
 		//pixelShader = compile ps_3_0 DiffusePass();
@@ -497,7 +530,7 @@ technique DeferredRender
 	}
 	pass p4 //PointLight
 	{
-		vertexShader = compile vs_3_0 VShader();
+		vertexShader = compile vs_3_0 VShaderLightVolume();
 		pixelShader = compile ps_3_0 PointLightPass();
 		AlphaBlendEnable = true;                        //设置渲染状态        
 		SrcBlend = ONE;
@@ -505,7 +538,7 @@ technique DeferredRender
 	}
 	pass p5 //SpotLight
 	{
-		vertexShader = compile vs_3_0 VShader();
+		vertexShader = compile vs_3_0 VShaderLightVolume();
 		pixelShader = compile ps_3_0 SpotLightPass();
 		AlphaBlendEnable = true;                        //设置渲染状态        
 		SrcBlend = ONE;

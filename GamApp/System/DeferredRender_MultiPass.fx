@@ -15,6 +15,8 @@ texture		g_AOBuffer;
 texture		g_ShadowBuffer;
 texture		g_PointShadowBuffer;
 
+texture		g_ShadowResult;
+
 float		g_zNear = 1.0f;
 float		g_zFar = 1000.0f;
 
@@ -101,6 +103,17 @@ sampler_state
 	AddressU = Clamp;
 	AddressV = Clamp;
 };
+
+sampler2D g_sampleShadowResult =
+sampler_state
+{
+	Texture = <g_ShadowResult>;
+	MinFilter = ANISOTROPIC;
+	MagFilter = ANISOTROPIC;
+	MipFilter = ANISOTROPIC;// ANISOTROPIC;
+	AddressU = Clamp;
+	AddressV = Clamp;
+}; 
 
 matrix g_ShadowView;
 matrix g_ShadowProj;
@@ -357,7 +370,8 @@ float4 DirectionLightPass(float2 TexCoord : TEXCOORD0) : COLOR
 	LightFunc(Normal, toLight, ToEyeDirV, g_LightColor, DiffuseLight, SpecularLight);
 
 	float shadowFinal = 1.0f;
-	shadowFinal = ShadowFunc(g_bUseShadow, pos);
+	//shadowFinal = ShadowFunc(g_bUseShadow, pos);
+	shadowFinal = tex2D(g_sampleShadowResult, TexCoord);
 
 	//混合光照和纹理
 	float4 finalColor = DiffuseLight +SpecularLight;
@@ -404,7 +418,8 @@ float4 PointLightPass(float4 posWVP : TEXCOORD0) : COLOR
 	LightFunc(Normal, toLight, ToEyeDirV, lightColor, DiffuseLight, SpecularLight);
 
 	float shadowFinal = 1.0f;
-	shadowFinal = PointShadowFunc(g_bUseShadow, pos);
+	//shadowFinal = PointShadowFunc(g_bUseShadow, pos);
+	shadowFinal = tex2D(g_sampleShadowResult, TexCoord);
 
 	//混合光照和纹理
 	float4 finalColor = DiffuseLight + SpecularLight;
@@ -466,11 +481,45 @@ float4 SpotLightPass(float4 posWVP : TEXCOORD0) : COLOR
 	LightFunc(Normal, toLight, ToEyeDirV, lightColor, DiffuseLight, SpecularLight);
 
 	float shadowFinal = 1.0f;
-	shadowFinal = ShadowFunc(g_bUseShadow, pos);
+	//shadowFinal = ShadowFunc(g_bUseShadow, pos);
+	shadowFinal = tex2D(g_sampleShadowResult, TexCoord);
 
 	//混合光照和纹理
 	float4 finalColor = DiffuseLight + SpecularLight;
 	return finalColor * shadowFinal;
+}
+
+float4 ShadowPass(float2 TexCoord : TEXCOORD0) : COLOR
+{
+	//return float4(0.5, 0.0f, 0.0f, 1.0f);
+	float3 pos = GetPosition(TexCoord);
+
+
+	float shadowFinal = 1.0f;
+	shadowFinal = ShadowFunc(g_bUseShadow, pos);
+
+	//混合光照和纹理
+	float4 finalColor = float4(shadowFinal, shadowFinal, shadowFinal, 1.0f);
+	return finalColor;
+}
+
+float4 PointShadowPass(float4 posWVP : TEXCOORD0) : COLOR
+{
+	//return float4(0.5, 0.0f, 0.0f, 1.0f);
+
+	float lightU = (posWVP.x / posWVP.w + 1.0f) / 2.0f + 0.5f / g_ScreenWidth;
+	float lightV = (1.0f - posWVP.y / posWVP.w) / 2.0f + 0.5f / g_ScreenHeight;
+	float2 TexCoord = float2(lightU, lightV);
+
+	float3 pos = GetPosition(TexCoord);
+
+
+	float shadowFinal = 1.0f;
+	shadowFinal = PointShadowFunc(g_bUseShadow, pos);
+
+	//混合光照和纹理
+	float4 finalColor = float4(shadowFinal, shadowFinal, shadowFinal, 1.0f);
+	return finalColor;
 }
 
 float4 DiffusePass(float2 TexCoord : TEXCOORD0) : COLOR
@@ -554,4 +603,17 @@ technique DeferredRender
 		DestBlend = ONE;
 	}
 	
+	pass p6 //DirShadow
+	{
+		vertexShader = compile vs_3_0 VShader();
+		pixelShader = compile ps_3_0 ShadowPass();
+		AlphaBlendEnable = false;
+	}
+
+	pass p7 //PointShadow
+	{
+		vertexShader = compile vs_3_0 VShaderLightVolume();
+		pixelShader = compile ps_3_0 PointShadowPass();
+		AlphaBlendEnable = false;
+	}
 }

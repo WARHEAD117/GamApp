@@ -104,10 +104,12 @@ void TestScene::OnLoad()
 	spotLight1->SetWorldTransform(lightMoveMat);
 	//--------------------------------------------------------------------------
 	spotLight2 = LIGHTMANAGER::Instance().CreateLight(eSpotLight);
-	spotLight2->SetLightRange(20);
+	spotLight2->SetLightRange(45);
+	spotLight2->SetUseShadow(false);
 	spotLight2->SetLightColor(D3DXCOLOR(0.0, 1.0, 0.0, 1.0f));
-	D3DXMatrixTranslation(&lightMoveMat, 5, 5, -5);
-	spotLight2->SetWorldTransform(lightMoveMat);
+	D3DXMatrixTranslation(&lightMoveMat, 5, 10, -5);
+	D3DXMatrixRotationX(&lightRot1Mat, 0.2f * D3DX_PI);
+	spotLight2->SetWorldTransform(lightMoveMat*lightRot1Mat);
 	//--------------------------------------------------------------------------
 	spotLight3 = LIGHTMANAGER::Instance().CreateLight(eSpotLight);
 	spotLight3->SetLightRange(2);
@@ -210,6 +212,70 @@ void NormalizeRotate(D3DXMATRIX& worldT)
 	D3DXMatrixInverse(&worldT, NULL, &invW);
 }
 
+void BuildRot(D3DXMATRIX& world)
+{
+	D3DXVECTOR3 pos;
+	pos.x = world(3, 0);
+	pos.y = world(3, 1);
+	pos.z = world(3, 2);
+
+	world(3, 0) = 0;
+	world(3, 1) = 0;
+	world(3, 2) = 0;
+
+	double dTime = GLOBALTIMER::Instance().GetFrameTime();
+	D3DXVECTOR2 mouseMove = GAMEINPUT::Instance().GetMouseMove();
+	float speed = 0.2;
+	if (GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
+	{
+		speed *= 5;
+	}
+
+	D3DXMATRIX rot1;
+	D3DXMATRIX rot2;
+
+	D3DXMatrixRotationY(&rot1, mouseMove.x*speed*(float)dTime);
+	//D3DXMatrixRotationX(&rot2, mouseMove.y*speed*(float)dTime);
+	//rot1 = rot1 * rot2;
+	world = rot1 *world;
+
+	world(3, 0) = pos.x;
+	world(3, 1) = pos.y;
+	world(3, 2) = pos.z;
+}
+
+void BuildRot2(D3DXMATRIX& world)
+{
+	D3DXVECTOR3 pos;
+	pos.x = world(3, 0);
+	pos.y = world(3, 1);
+	pos.z = world(3, 2);
+
+	world(3, 0) = 0;
+	world(3, 1) = 0;
+	world(3, 2) = 0;
+
+	double dTime = GLOBALTIMER::Instance().GetFrameTime();
+	D3DXVECTOR2 mouseMove = GAMEINPUT::Instance().GetMouseMove();
+	float speed = 0.2;
+	if (GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
+	{
+		speed *= 5;
+	}
+
+	D3DXMATRIX rot1;
+	D3DXMATRIX rot2;
+
+	D3DXMatrixRotationX(&rot1, mouseMove.y*speed*(float)dTime);
+	//D3DXMatrixRotationX(&rot2, mouseMove.y*speed*(float)dTime);
+	//rot1 = rot1 * rot2;
+	world = rot1 *world;
+
+	world(3, 0) = pos.x;
+	world(3, 1) = pos.y;
+	world(3, 2) = pos.z;
+}
+
 float R = 0;
 void TestScene::OnBeginFrame()
 {
@@ -224,8 +290,10 @@ void TestScene::OnBeginFrame()
 	ComputeRotate(rot, cW);
 
 	D3DXMatrixTranslation(&moveMat, move.x, move.y, move.z);
-	cW = rot * moveMat *cW;
-	NormalizeRotate(cW);
+	cW = moveMat *cW;
+	BuildRot(cW);
+	BuildRot2(cW);
+	//NormalizeRotate(cW);
 	mainCamera.SetWorldTransform(cW);
 	
 	move = D3DXVECTOR3(0, -5, -5);

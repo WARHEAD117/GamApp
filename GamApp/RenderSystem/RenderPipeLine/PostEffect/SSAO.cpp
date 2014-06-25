@@ -61,29 +61,29 @@ void SSAO::RenderPost()
 		m_bias += 0.0001;
 	}
 
-	if (GAMEINPUT::Instance().KeyDown(DIK_G))
+	if (GAMEINPUT::Instance().KeyDown(DIK_T) && GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
 		m_intensity -= 0.0001;
 	}
-	if (GAMEINPUT::Instance().KeyDown(DIK_H))
+	if (GAMEINPUT::Instance().KeyDown(DIK_Y) && GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
 		m_scale -= 0.0001;
 	}
-	if (GAMEINPUT::Instance().KeyDown(DIK_J))
+	if (GAMEINPUT::Instance().KeyDown(DIK_U) && GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
 		m_sample_rad -= 0.0001;
 	}
-	if (GAMEINPUT::Instance().KeyDown(DIK_K))
+	if (GAMEINPUT::Instance().KeyDown(DIK_I) && GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
 		m_bias -= 0.0001;
 	}
 
 	if (GAMEINPUT::Instance().KeyDown(DIK_R))
 	{
-		m_intensity = 1;
+		m_intensity = 2;
 		m_scale = 1;
-		m_bias = 0.3;
-		m_sample_rad = 0.03;
+		m_bias = 0.1;
+		m_sample_rad = 0.1;
 	}
 	m_postEffect->SetFloat("g_intensity", m_intensity);
 	m_postEffect->SetFloat("g_scale", m_scale);

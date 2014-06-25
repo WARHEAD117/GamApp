@@ -76,6 +76,7 @@ RenderPipe::RenderPipe()
 		D3DUSAGE_WRITEONLY, D3DFMT_INDEX32, D3DPOOL_MANAGED, &pBufferIndex, 0);
 	DWORD* indices = 0;
 	pBufferIndex->Lock(0, 0, (void**)&indices, 0);
+	//全部逆时针绘制，在延迟渲染时剔除正面，就可以保证灯光和渲染面的剔除是统一的
 	indices[0] = 0;
 	indices[1] = 2;
 	indices[2] = 1;
@@ -124,9 +125,9 @@ RenderPipe::RenderPipe()
 	D3DXMatrixOrthoLH(&shadowOrthoProj, 20, 20, 0.01f, 50.0f);
 	D3DXMatrixInverse(&invShadowOrthoProj, NULL, &shadowOrthoProj);
 
-	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(SHADOWMAPSIZE, SHADOWMAPSIZE,
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth/2, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight/2,
 		1, D3DUSAGE_RENDERTARGET,
-		D3DFMT_A32B32G32R32F, D3DPOOL_DEFAULT,
+		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
 		&m_pShadowTarget, NULL);
 	hr = m_pShadowTarget->GetSurfaceLevel(0, &m_pShadowSurface);
 
@@ -338,20 +339,20 @@ void RenderPipe::DeferredRender_MultiPass()
 
 	deferredMultiPassEffect->SetInt("g_ShadowMapSize", SHADOWMAPSIZE);
 	deferredMultiPassEffect->SetFloat("g_ShadowBias", 0.2f);
-
-	if (GAMEINPUT::Instance().KeyDown(DIK_O))
+	
+	if (GAMEINPUT::Instance().KeyDown(DIK_G))
 	{
 		g_minVariance += 0.001;
 	}
-	if (GAMEINPUT::Instance().KeyDown(DIK_L))
+	if (GAMEINPUT::Instance().KeyDown(DIK_G))
 	{
 		g_minVariance -= 0.001;
 	}
-	if (GAMEINPUT::Instance().KeyDown(DIK_N))
+	if (GAMEINPUT::Instance().KeyDown(DIK_H) && GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
 		g_Amount += 0.001;
 	}
-	if (GAMEINPUT::Instance().KeyDown(DIK_M))
+	if (GAMEINPUT::Instance().KeyDown(DIK_H) && GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
 		g_Amount -= 0.001;
 	}
@@ -389,9 +390,47 @@ void RenderPipe::DeferredRender_MultiPass()
 		deferredMultiPassEffect->SetFloat("g_LightRange", lightRange);
 		deferredMultiPassEffect->SetVector("g_LightCosAngle", &D3DXVECTOR4(lightCosHalfAngle.x, lightCosHalfAngle.y, 0.0f, 0.0f));
 
-		
 		deferredMultiPassEffect->SetBool("g_bUseShadow", useShadow);
 
+		RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, pBufferVex, 0, sizeof(VERTEX));
+		RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(D3DFVF_VERTEX);
+		RENDERDEVICE::Instance().g_pD3DDevice->SetIndices(pBufferIndex);
+
+		D3DXMATRIX lightVolumeMatrix = pLight->GetWorldTransform();
+		D3DXMATRIX scaleMatrix;
+		D3DXMatrixScaling(&scaleMatrix, lightRange, lightRange, lightRange);
+		lightVolumeMatrix = scaleMatrix  * lightVolumeMatrix;
+		lightVolumeMatrix = lightVolumeMatrix * RENDERDEVICE::Instance().ViewMatrix * RENDERDEVICE::Instance().ProjMatrix;
+
+		UINT pass = 0;
+		UINT shadowPass = 0;
+		LightType lt = pLight->GetLightType();
+
+		if (lt == eDirectionLight)
+		{
+			pass = 0;
+			shadowPass = 6;
+		}
+		else if (lt == ePointLight)
+		{
+			deferredMultiPassEffect->SetMatrix("g_LightVolumeWVP", &lightVolumeMatrix);
+			pass = 4;
+			shadowPass = 7;
+		}
+		else if (lt == eSpotLight)
+		{
+			deferredMultiPassEffect->SetMatrix("g_LightVolumeWVP", &lightVolumeMatrix);
+			pass = 5;
+			shadowPass = 6;
+		}
+		else
+		{
+			pass = 0;
+			shadowPass = 6;
+		}
+
+		HRESULT  ret = RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pShadowSurface);
+		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(255, 255, 255, 255), 1.0f, 0);
 		if (useShadow)
 		{
 			D3DXMATRIX invView;
@@ -408,46 +447,33 @@ void RenderPipe::DeferredRender_MultiPass()
 			{
 				deferredMultiPassEffect->SetTexture("g_PointShadowBuffer", pLight->GetPointShadowTarget());
 			}
-		}
 			
-		D3DXMATRIX lightVolumeMatrix = pLight->GetWorldTransform();
-		D3DXMATRIX scaleMatrix;
-		D3DXMatrixScaling(&scaleMatrix, lightRange, lightRange, lightRange);
-		lightVolumeMatrix = scaleMatrix  * lightVolumeMatrix;
-		lightVolumeMatrix = lightVolumeMatrix * RENDERDEVICE::Instance().ViewMatrix * RENDERDEVICE::Instance().ProjMatrix;
-		
-		
+			deferredMultiPassEffect->CommitChanges();
 
-		UINT pass = 0;
-		LightType lt = pLight->GetLightType();
-		if (lt == eDirectionLight)
-		{
-			pass = 0;
-		}
-		else if (lt == ePointLight)
-		{
-			deferredMultiPassEffect->SetMatrix("g_LightVolumeWVP", &lightVolumeMatrix);
-			pass = 4;
-		}
-		else if (lt == eSpotLight)
-		{
-			deferredMultiPassEffect->SetMatrix("g_LightVolumeWVP", &lightVolumeMatrix);
-			pass = 5;
-		}
-		else
-		{
-			pass = 0;
-		}
+			
+			deferredMultiPassEffect->BeginPass(shadowPass);
+			if (lt == eDirectionLight || pLight->GetLightType() == eSpotLight)
+			{
 
+				RENDERDEVICE::Instance().g_pD3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 4, 0, 2);
+			}
+			else
+			{
+				pLight->RenderLightVolume();
+			}
+
+			deferredMultiPassEffect->EndPass();
+
+		}
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pMainColorSurface);
+
+		deferredMultiPassEffect->SetTexture("g_ShadowResult", m_pShadowTarget);
 		deferredMultiPassEffect->CommitChanges();
 
 		deferredMultiPassEffect->BeginPass(pass);
 
 		if (lt == eDirectionLight)
 		{
-			RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, pBufferVex, 0, sizeof(VERTEX));
-			RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(D3DFVF_VERTEX);
-			RENDERDEVICE::Instance().g_pD3DDevice->SetIndices(pBufferIndex);
 			RENDERDEVICE::Instance().g_pD3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 4, 0, 2);
 		}
 		else
@@ -455,8 +481,8 @@ void RenderPipe::DeferredRender_MultiPass()
 			pLight->RenderLightVolume();
 		}
 		
-
 		deferredMultiPassEffect->EndPass();
+
 	}
 
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZENABLE, TRUE);
@@ -466,6 +492,7 @@ void RenderPipe::DeferredRender_MultiPass()
 	RENDERDEVICE::Instance().g_pD3DDevice->SetIndices(pBufferIndex);
 	
 
+	
 	//环境光Pass
 	deferredMultiPassEffect->BeginPass(1);
 
@@ -475,6 +502,7 @@ void RenderPipe::DeferredRender_MultiPass()
 	RENDERDEVICE::Instance().g_pD3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 4, 0, 2);
 	deferredMultiPassEffect->EndPass();
 	
+
 	//纹理及AO的Pass
 	deferredMultiPassEffect->BeginPass(2);
 	RENDERDEVICE::Instance().g_pD3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 4, 0, 2);

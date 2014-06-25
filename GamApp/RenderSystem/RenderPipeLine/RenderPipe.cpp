@@ -20,6 +20,7 @@ struct VERTEX
 #define D3DFVF_VERTEX (D3DFVF_XYZ|D3DFVF_TEX1)
 VERTEX vertices[4];
 LPDIRECT3DVERTEXBUFFER9		pBufferVex;
+LPDIRECT3DINDEXBUFFER9		pBufferIndex;
 
 LPD3DXEFFECT GBufferEffect;
 
@@ -71,6 +72,18 @@ RenderPipe::RenderPipe()
 		, D3DPOOL_MANAGED
 		, &pBufferVex
 		, NULL);
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateIndexBuffer(2 * 3 * sizeof(DWORD),
+		D3DUSAGE_WRITEONLY, D3DFMT_INDEX32, D3DPOOL_MANAGED, &pBufferIndex, 0);
+	DWORD* indices = 0;
+	pBufferIndex->Lock(0, 0, (void**)&indices, 0);
+	indices[0] = 0;
+	indices[1] = 2;
+	indices[2] = 1;
+
+	indices[3] = 1;
+	indices[4] = 2;
+	indices[5] = 3;
+	pBufferIndex->Unlock();
 
 	VERTEX* pVertices1;
 	pBufferVex->Lock(0, 4 * sizeof(VERTEX), (void**)&pVertices1, 0);
@@ -297,6 +310,8 @@ float g_Amount = 0.8f;
 
 void RenderPipe::DeferredRender_MultiPass()
 {
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CW);
+
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pMainColorSurface);
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 0, 0, 0), 1.0f, 0);
 
@@ -310,23 +325,17 @@ void RenderPipe::DeferredRender_MultiPass()
 
 	deferredMultiPassEffect->SetInt(SCREENWIDTH, RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth);
 	deferredMultiPassEffect->SetInt(SCREENHEIGHT, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight);
-
-	deferredMultiPassEffect->SetTexture("g_AOBuffer", ssao.GetPostTarget());
-	
-
 	deferredMultiPassEffect->SetFloat("g_zNear", CameraParam::zNear);
 	deferredMultiPassEffect->SetFloat("g_zFar", CameraParam::zFar);
 
+	deferredMultiPassEffect->SetTexture("g_AOBuffer", ssao.GetPostTarget());
+	
 	deferredMultiPassEffect->CommitChanges();
-
-	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, pBufferVex, 0, sizeof(VERTEX));
-	RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(D3DFVF_VERTEX);
 
 	UINT numPasses = 0;
 	deferredMultiPassEffect->Begin(&numPasses, 0);
 
 
-	
 	deferredMultiPassEffect->SetInt("g_ShadowMapSize", SHADOWMAPSIZE);
 	deferredMultiPassEffect->SetFloat("g_ShadowBias", 0.2f);
 
@@ -355,6 +364,8 @@ void RenderPipe::DeferredRender_MultiPass()
 	deferredMultiPassEffect->SetFloat("g_Amount", g_Amount);
 
 	deferredMultiPassEffect->CommitChanges();
+
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZENABLE, FALSE);
 
 	int lightCount = LIGHTMANAGER::Instance().GetLightCount();
 	for (int i = 0; i < lightCount; i++)
@@ -405,30 +416,26 @@ void RenderPipe::DeferredRender_MultiPass()
 		lightVolumeMatrix = scaleMatrix  * lightVolumeMatrix;
 		lightVolumeMatrix = lightVolumeMatrix * RENDERDEVICE::Instance().ViewMatrix * RENDERDEVICE::Instance().ProjMatrix;
 		
-		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZENABLE, FALSE);
+		
 
 		UINT pass = 0;
 		LightType lt = pLight->GetLightType();
 		if (lt == eDirectionLight)
 		{
-			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
 			pass = 0;
 		}
 		else if (lt == ePointLight)
 		{
 			deferredMultiPassEffect->SetMatrix("g_LightVolumeWVP", &lightVolumeMatrix);
-			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CW);
 			pass = 4;
 		}
 		else if (lt == eSpotLight)
 		{
 			deferredMultiPassEffect->SetMatrix("g_LightVolumeWVP", &lightVolumeMatrix);
-			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CW);
 			pass = 5;
 		}
 		else
 		{
-			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
 			pass = 0;
 		}
 
@@ -440,7 +447,8 @@ void RenderPipe::DeferredRender_MultiPass()
 		{
 			RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, pBufferVex, 0, sizeof(VERTEX));
 			RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(D3DFVF_VERTEX);
-			RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+			RENDERDEVICE::Instance().g_pD3DDevice->SetIndices(pBufferIndex);
+			RENDERDEVICE::Instance().g_pD3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 4, 0, 2);
 		}
 		else
 		{
@@ -452,10 +460,11 @@ void RenderPipe::DeferredRender_MultiPass()
 	}
 
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZENABLE, TRUE);
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
-
+	
 	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, pBufferVex, 0, sizeof(VERTEX));
 	RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(D3DFVF_VERTEX);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetIndices(pBufferIndex);
+	
 
 	//环境光Pass
 	deferredMultiPassEffect->BeginPass(1);
@@ -463,21 +472,22 @@ void RenderPipe::DeferredRender_MultiPass()
 	deferredMultiPassEffect->SetVector("g_AmbientColor", &AmbientColor);
 	deferredMultiPassEffect->CommitChanges();
 
-	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+	RENDERDEVICE::Instance().g_pD3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 4, 0, 2);
 	deferredMultiPassEffect->EndPass();
 	
 	//纹理及AO的Pass
 	deferredMultiPassEffect->BeginPass(2);
-	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+	RENDERDEVICE::Instance().g_pD3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 4, 0, 2);
 	deferredMultiPassEffect->EndPass();
 
 	//DebugPass
 	deferredMultiPassEffect->BeginPass(3);
-	//RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+	//RENDERDEVICE::Instance().g_pD3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 4, 0, 2);
 	deferredMultiPassEffect->EndPass();
 
 	deferredMultiPassEffect->End();
 
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
 	deferredMultiPassEffect->SetTexture(0, NULL);
 }
 

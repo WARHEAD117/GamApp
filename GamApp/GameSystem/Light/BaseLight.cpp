@@ -8,7 +8,7 @@ const D3DXVECTOR3 defaultLookAt(0.0f, -1.0f, 0.0f);
 const D3DXVECTOR3 defaultUp(1.0f, 0.0f, 0.0f);
 const int SHADOWMAP_SIZE = 1024;
 
-LPD3DXMESH box;
+LPD3DXMESH m_lightVolume;
 
 BaseLight::BaseLight() :
 m_LightType(eDirectionLight),
@@ -19,7 +19,32 @@ m_LightDir(ZEROVECTOR3),
 m_LightColor(D3DXCOLOR(0.3,0.3f,0.3f,1.0f)),
 m_LightAttenuation(D3DXVECTOR4(0.0, 1.0f, 0.0f, 1.0f))
 {
-	D3DXCreateBox(RENDERDEVICE::Instance().g_pD3DDevice, 2, 2, 2, &box, NULL);
+	BuildLightVolume();
+	Init();
+}
+
+void BaseLight::BuildLightVolume()
+{
+	//灯光实际范围应该是灯光体的内切球，根据1/cos(PI/(经线数量+1))来计算半径放大的比例，加0.2来防止误差（这里有疑问）
+	int sphereSlices = 16;
+	float factor = 1.0f / cos(D3DX_PI / (sphereSlices)) + 0.2;
+	
+	if (m_LightType == eDirectionLight)
+	{
+	}
+	else if (m_LightType == ePointLight)
+	{
+		D3DXCreateSphere(RENDERDEVICE::Instance().g_pD3DDevice, 1 * factor, sphereSlices, sphereSlices, &m_lightVolume, NULL);
+	}
+	else if (m_LightType == eSpotLight)
+	{
+		D3DXCreateSphere(RENDERDEVICE::Instance().g_pD3DDevice, 1 * factor, sphereSlices, sphereSlices, &m_lightVolume, NULL);
+	}
+	else
+	{
+	}
+	
+
 	//Create post vertex
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateVertexBuffer(24 * sizeof(VERTEX)
 		, 0
@@ -119,13 +144,28 @@ m_LightAttenuation(D3DXVECTOR4(0.0, 1.0f, 0.0f, 1.0f))
 
 
 	m_pBufferVex->Unlock();
-
-	Init();
 }
 
 void BaseLight::RenderLightVolume()
 {
-	box->DrawSubset(0);
+	m_lightVolume->DrawSubset(0);
+}
+
+void BaseLight::SetLightType(LightType lightType)
+{
+	m_LightType = lightType;
+	BuildLightVolume();
+}
+
+LightType BaseLight::GetLightType()
+{
+	return m_LightType;
+}
+
+
+bool BaseLight::GetUseShadow()
+{
+	return m_bUseShadow;
 }
 
 BaseLight::~BaseLight()
@@ -164,11 +204,11 @@ void BaseLight::RebuildProjMatrix()
 	}
 	else if (m_LightType == ePointLight)
 	{
-		D3DXMatrixPerspectiveFovLH(&m_lightProjMat, 0.5f * D3DX_PI, 1.0f, 0.01, m_LightRange);
+		D3DXMatrixPerspectiveFovLH(&m_lightProjMat, 0.5f * D3DX_PI, 1.0f, 0.01, m_LightRange + 1);
 	}
 	else if (m_LightType == eSpotLight)
 	{
-		D3DXMatrixPerspectiveFovLH(&m_lightProjMat, m_LightAngle.x / 180.0f * D3DX_PI, 1.0f, 0.01, m_LightRange);
+		D3DXMatrixPerspectiveFovLH(&m_lightProjMat, m_LightAngle.x / 180.0f * D3DX_PI, 1.0f, 0.01, m_LightRange + 1);
 	}
 
 	D3DXMatrixInverse(&m_lightInvProjMat, NULL, &m_lightProjMat);

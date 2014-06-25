@@ -366,6 +366,8 @@ float4 DirectionLightPass(float2 TexCoord : TEXCOORD0) : COLOR
 
 float4 PointLightPass(float4 posWVP : TEXCOORD0) : COLOR
 {
+	//return float4(0.0, 0.5f, 0.0f, 1.0f);
+
 	float lightU = (posWVP.x / posWVP.w + 1.0f) / 2.0f + 0.5f / g_ScreenWidth;
 	float lightV = (1.0f - posWVP.y / posWVP.w) / 2.0f + 0.5f / g_ScreenHeight;
 	float2 TexCoord = float2(lightU, lightV);
@@ -373,8 +375,10 @@ float4 PointLightPass(float4 posWVP : TEXCOORD0) : COLOR
 	float3 Normal = GetNormal(TexCoord);
 
 	float3 pos = GetPosition(TexCoord);
-	if (pos.z > g_zFar - 0.1)
-		return float4(0, 0, 0, 1);
+	
+	//加入灯光体之后就可以省略掉这个判断了
+	//if (pos.z > g_zFar - 0.1)
+	//	return float4(0, 0, 0, 1);
 
 	float3 ToEyeDirV = normalize(pos * -1.0f);
 
@@ -383,8 +387,10 @@ float4 PointLightPass(float4 posWVP : TEXCOORD0) : COLOR
 
 	float3 toLight = g_LightPos.xyz - pos;
 	float toLightDistance = length(toLight);
-	if (toLightDistance > g_LightRange)
-		return float4(0.0f, 0.0f, 0.0f, 1.0f);
+	
+	//加入灯光体之后就可以省略掉这个判断了
+	//if (toLightDistance > g_LightRange)
+	//	return float4(0.0f, 0.0f, 0.0f, 1.0f);
 
 	float disRange = clamp(toLightDistance / g_LightRange, 0.0f, 1.0f);
 
@@ -407,6 +413,8 @@ float4 PointLightPass(float4 posWVP : TEXCOORD0) : COLOR
 
 float4 SpotLightPass(float4 posWVP : TEXCOORD0) : COLOR
 {
+	//return float4(0.5, 0.0f, 0.0f, 1.0f);
+
 	float lightU = (posWVP.x / posWVP.w + 1.0f) / 2.0f + 0.5f / g_ScreenWidth;
 	float lightV = (1.0f - posWVP.y / posWVP.w) / 2.0f + 0.5f / g_ScreenHeight;
 	float2 TexCoord = float2(lightU, lightV);
@@ -414,8 +422,9 @@ float4 SpotLightPass(float4 posWVP : TEXCOORD0) : COLOR
 	float3 Normal = GetNormal(TexCoord);
 
 	float3 pos = GetPosition(TexCoord);
-	if (pos.z > g_zFar - 0.1)
-		return float4(0, 0, 0, 1);
+	
+	//if (pos.z > g_zFar - 0.1)
+	//	return float4(0, 0, 0, 1);
 
 	float3 ToEyeDirV = normalize(pos * -1.0f);
 
@@ -439,8 +448,8 @@ float4 SpotLightPass(float4 posWVP : TEXCOORD0) : COLOR
 	//外锥角的一半的cos
 	float cosPhi = g_LightCosAngle.x;
 
-	//聚光灯外角以外和范围以外都没有光照
-	if (toLightDistance > g_LightRange || cosAlpha < cosPhi)
+	//聚光灯外角以外和范围以外都没有光照(加入灯光体之后就可以省略掉这个判断了)
+	if (/*toLightDistance > g_LightRange || */cosAlpha < cosPhi)
 		return float4(0.0f, 0.0f, 0.0f, 1.0f);
 	
 	float falloff = 1.0f;

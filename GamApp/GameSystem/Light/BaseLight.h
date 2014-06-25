@@ -28,6 +28,7 @@ public:
 	LightType m_LightType;
 
 	void RenderLightVolume();
+	void BuildLightVolume();
 
 	void SetLightType(LightType lightType);
 	LightType GetLightType();
@@ -102,19 +103,3 @@ private:
 
 	void Init();
 };
-
-inline void BaseLight::SetLightType(LightType lightType)
-{
-	m_LightType = lightType;
-}
-
-inline LightType BaseLight::GetLightType()
-{
-	return m_LightType;
-}
-
-
-inline bool BaseLight::GetUseShadow()
-{
-	return m_bUseShadow;
-}

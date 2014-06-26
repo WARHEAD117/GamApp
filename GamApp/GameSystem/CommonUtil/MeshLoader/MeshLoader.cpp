@@ -57,6 +57,7 @@ HRESULT MeshLoader::LoadXMesh(std::string filePath)
 	}
 		
 	bool hasTangents = false;
+	bool hasBinormals = false;
 	term = D3DDECL_END();
 	for (int i = 0; i < MAX_FVF_DECL_SIZE; ++i)
 	{
@@ -68,11 +69,18 @@ HRESULT MeshLoader::LoadXMesh(std::string filePath)
 			elems[i].Usage == D3DDECLUSAGE_TANGENT &&
 			elems[i].UsageIndex == 0)
 		{
-			hasTangents = true;
-			break;
+			hasTangents |= true;
+		}
+
+		if (elems[i].Type == D3DDECLTYPE_FLOAT3 &&
+			elems[i].Usage == D3DDECLUSAGE_BINORMAL &&
+			elems[i].UsageIndex == 0)
+		{
+			hasBinormals |= true;
 		}
 	}
-	
+
+	/*
 	DWORD* rgdwAdjacency = NULL;
 	rgdwAdjacency = new DWORD[m_pMesh->GetNumFaces() * 3];
 
@@ -88,7 +96,7 @@ HRESULT MeshLoader::LoadXMesh(std::string filePath)
 	// on those vertices so it will improve perf.     
 	m_pMesh->OptimizeInplace(D3DXMESHOPT_VERTEXCACHE, rgdwAdjacency, NULL, NULL, NULL);
 
-	if (!hasTangents)// || !bHadBinormal)
+	if (!hasTangents || !hasBinormals)
 	{
 		ID3DXMesh* pNewMesh;
 
@@ -104,7 +112,10 @@ HRESULT MeshLoader::LoadXMesh(std::string filePath)
 		SafeRelease(m_pMesh);
 		m_pMesh = pNewMesh;
 	}
-	
+
+	SafeDeleteArray(rgdwAdjacency);
+	*/
+
 	//Optimize the mesh
 	m_pMesh->Optimize(D3DXMESH_MANAGED |
 		D3DXMESHOPT_COMPACT | D3DXMESHOPT_ATTRSORT | D3DXMESHOPT_VERTEXCACHE,

@@ -98,7 +98,7 @@ BOOL Input::ReadMouse()
 {
 	HRESULT		result;		//信息返回句柄
 	DIMOUSESTATE2 dims2;
-	ShowCursor(FALSE);     //隐藏鼠标
+	ShowCursor(TRUE);     //隐藏鼠标
 		
     if( m_pMouse == NULL )
 	{

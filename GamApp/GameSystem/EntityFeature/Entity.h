@@ -28,6 +28,9 @@ public:
 	virtual void SetMeshFileName(std::string fileName);
 	virtual void SetEffect(std::string fileName, int subMeshIndex = -1);
 	virtual void SetEffect(LPD3DXEFFECT effect, int subMeshIndex = -1);
+	virtual void SetTexture(std::string fileName, int subMeshIndex = -1);
+	virtual void SetNormalMap(std::string fileName, int subMeshIndex = -1);
+	virtual void SetSpecularMap(std::string fileName, int subMeshIndex = -1);
 
 	virtual void SetMaterial(Material* material, int subMeshIndex = -1);
 

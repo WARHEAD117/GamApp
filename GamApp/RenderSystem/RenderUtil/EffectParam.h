@@ -9,6 +9,8 @@
 #define WORLDVIEWPROJMATRIX "g_WorldViewProj"
 #define INVPROJMATRIX		"g_InverseProj"
 #define	DIFFUSETEXTURE		"g_Texture"
+#define	NORMALMAP			"g_NormalMap"
+#define	SPECULARMAP			"g_SpecularMap"
 
 #define	LIGHTDIRECTION		"g_LightDir"
 #define VIEWPOSITION		"g_ViewPos"

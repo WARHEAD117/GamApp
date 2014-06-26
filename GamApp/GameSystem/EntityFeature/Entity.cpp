@@ -107,3 +107,54 @@ void Entity::SetMaterial(Material* material, int subMeshIndex /*= -1*/)
 		}
 	}
 }
+
+void Entity::SetTexture(std::string fileName, int subMeshIndex /*= -1*/)
+{
+	if (subMeshIndex >= 0)
+	{
+		mMeshLoader.LoadTexture(fileName, subMeshIndex);
+	}
+	else
+	{
+		int subMeshCount = mMeshLoader.GetSubMeshCount();
+		for (int i = 0; i < subMeshCount; i++)
+		{
+			mMeshLoader.LoadTexture(fileName, i);
+		}
+	}
+	mRenderUtil.SetSubMeshList(mMeshLoader.GetSubMeshList());
+}
+
+void Entity::SetNormalMap(std::string fileName, int subMeshIndex /*= -1*/)
+{
+	if (subMeshIndex >= 0)
+	{
+		mMeshLoader.LoadNormal(fileName, subMeshIndex);
+	}
+	else
+	{
+		int subMeshCount = mMeshLoader.GetSubMeshCount();
+		for (int i = 0; i < subMeshCount; i++)
+		{
+			mMeshLoader.LoadNormal(fileName, i);
+		}
+	}
+	mRenderUtil.SetSubMeshList(mMeshLoader.GetSubMeshList());
+}
+
+void Entity::SetSpecularMap(std::string fileName, int subMeshIndex /*= -1*/)
+{
+	if (subMeshIndex >= 0)
+	{
+		mMeshLoader.LoadSpecular(fileName, subMeshIndex);
+	}
+	else
+	{
+		int subMeshCount = mMeshLoader.GetSubMeshCount();
+		for (int i = 0; i < subMeshCount; i++)
+		{
+			mMeshLoader.LoadSpecular(fileName, i);
+		}
+	}
+	mRenderUtil.SetSubMeshList(mMeshLoader.GetSubMeshList());
+}

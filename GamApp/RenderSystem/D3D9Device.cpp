@@ -4,6 +4,7 @@ static std::string defaultEffectName = "System\\commonDiffuse.fx";
 static std::string diffuseEffectName = "System\\DeferredDiffuse.fx";
 static std::string normalEffectName = "System\\DeferredNormal.fx";
 static std::string defaultTextureName = "System\\white.dds";
+static std::string defaultNormalMapName = "System\\defaultNormal.dds";
 static std::string positionEffectName = "System\\DeferredPosition.fx";
 static std::string shadowEffectName = "System\\DeferredShadowVSM.fx";
 
@@ -181,6 +182,20 @@ LPDIRECT3DTEXTURE9 D3D9Device::GetDefaultTexture()
 	}
 	
 	return defaultTexture;
+}
+
+LPDIRECT3DTEXTURE9 D3D9Device::GetDefaultNormalMap()
+{
+	if (!defaultNormalMap)
+	{
+		if (FAILED(D3DXCreateTextureFromFile(g_pD3DDevice, defaultNormalMapName.c_str(), &defaultNormalMap)))
+		{
+			MessageBox(GetForegroundWindow(), "Can't find default texture", "Texture", MB_OK);
+			abort();
+		}
+	}
+
+	return defaultNormalMap;
 }
 
 Material* D3D9Device::GetDefaultMaterial()

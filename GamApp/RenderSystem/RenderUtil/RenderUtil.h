@@ -16,6 +16,8 @@ struct SubMesh
 	DWORD vertexCount;
 	DWORD indexCount;
 	LPDIRECT3DTEXTURE9 pTexture;
+	LPDIRECT3DTEXTURE9 pNormalMap;
+	LPDIRECT3DTEXTURE9 pSpecularMap;
 	Material pMaterial;
 	ID3DXEffect* pEffect;
 };

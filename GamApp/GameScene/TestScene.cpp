@@ -21,6 +21,7 @@ TestScene::~TestScene()
 
 Entity* krisEntity;
 Entity* shevaEntity;
+Entity* horseEntity;
 Material testMat1;
 EffectLoader effectLoader;
 BaseLight* dirLight1;
@@ -58,12 +59,29 @@ void TestScene::OnLoad()
 	shevaEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\kris_sheva\\sheva.X");
 	//testEntity.SetMeshFileName("Res\\Mesh\\car\\car25.X");
 	//testEntity.SetMeshFileName("Res\\Mesh\\tree3\\tree3.X");
+	horseEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\Disc.X");
 
-	Entity* planeEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\room.x");
+	Entity* roomEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\room\\room.x");
+	roomEntity->SetTexture("Res\\Mesh\\room\\wallpaper.dds",0);
+	roomEntity->SetTexture("Res\\Mesh\\room\\DoorDiff.dds", 1);
+	roomEntity->SetTexture("Res\\Mesh\\room\\oldwood.dds", 2);
+	roomEntity->SetTexture("Res\\Mesh\\room\\FireplaceDiff.dds", 3);
+
+	horseEntity->SetTexture("Res\\Mesh\\horse\\HorseB_512.jpg");
+	horseEntity->SetNormalMap("Res\\Mesh\\horse\\HorseB _NRM_512.jpg");
+
 	D3DXMATRIX planeM;
 	D3DXVECTOR3 move = D3DXVECTOR3(0, -5, 0);
 	D3DXMatrixTranslation(&planeM, move.x, move.y, move.z); 
-	planeEntity->SetWorldTransform(planeM);
+	roomEntity->SetWorldTransform(planeM);
+
+	D3DXMATRIX horseM;
+	move = D3DXVECTOR3(0, -5, 0);
+	D3DXMatrixTranslation(&horseM, move.x, move.y, move.z);
+	move = D3DXVECTOR3(0.1, 0.1, 0.1);
+	D3DXMATRIX horseS;
+	D3DXMatrixScaling(&horseS, move.x, move.y, move.z);
+	horseEntity->SetWorldTransform(horseS * horseM);
 
 	effectLoader.LoadFxEffect("System\\BankBRDFLight.fx");
 	testMat1.effect = effectLoader.GetEffect();

@@ -49,10 +49,62 @@ HRESULT MeshLoader::LoadXMesh(std::string filePath)
 		}
 	}
 
+	HRESULT hr;
 	//generate normals
 	if (hasNormals == false)
-		D3DXComputeNormals(m_pMesh, 0);
+	{
+		hr = D3DXComputeNormals(m_pMesh, NULL);
+	}
+		
+	bool hasTangents = false;
+	term = D3DDECL_END();
+	for (int i = 0; i < MAX_FVF_DECL_SIZE; ++i)
+	{
+		// Did we reach D3DDECL_END() {0xFF,0,D3DDECLTYPE_UNUSED, 0,0,0}?
+		if (elems[i].Stream == 0xff)
+			break;
 
+		if (elems[i].Type == D3DDECLTYPE_FLOAT3 &&
+			elems[i].Usage == D3DDECLUSAGE_TANGENT &&
+			elems[i].UsageIndex == 0)
+		{
+			hasTangents = true;
+			break;
+		}
+	}
+	
+	DWORD* rgdwAdjacency = NULL;
+	rgdwAdjacency = new DWORD[m_pMesh->GetNumFaces() * 3];
+
+	if (rgdwAdjacency == NULL)
+	{
+		return E_OUTOFMEMORY;
+	}
+	m_pMesh->GenerateAdjacency(1e-6f, rgdwAdjacency);
+
+	// Optimize the mesh for this graphics card's vertex cache 
+	// so when rendering the mesh's triangle list the vertices will 
+	// cache hit more often so it won't have to re-execute the vertex shader 
+	// on those vertices so it will improve perf.     
+	m_pMesh->OptimizeInplace(D3DXMESHOPT_VERTEXCACHE, rgdwAdjacency, NULL, NULL, NULL);
+
+	if (!hasTangents)// || !bHadBinormal)
+	{
+		ID3DXMesh* pNewMesh;
+
+		// Compute tangents, which are required for normal mapping
+		if (S_OK != D3DXComputeTangentFrameEx(m_pMesh, D3DDECLUSAGE_TEXCOORD, 0, D3DDECLUSAGE_TANGENT, 0,
+			D3DDECLUSAGE_BINORMAL, 0,
+			D3DDECLUSAGE_NORMAL, 0, 0, rgdwAdjacency, -1.01f,
+			-0.01f, -1.01f, &pNewMesh, NULL))
+		{
+			return E_FAIL;
+		}
+
+		SafeRelease(m_pMesh);
+		m_pMesh = pNewMesh;
+	}
+	
 	//Optimize the mesh
 	m_pMesh->Optimize(D3DXMESH_MANAGED |
 		D3DXMESHOPT_COMPACT | D3DXMESHOPT_ATTRSORT | D3DXMESHOPT_VERTEXCACHE,
@@ -63,11 +115,14 @@ HRESULT MeshLoader::LoadXMesh(std::string filePath)
 	D3DXMATERIAL *Material = (D3DXMATERIAL *)pXBuffer->GetBufferPointer();
 	m_Materials.resize(m_dwMtrlNum);
 	m_pTextures.resize(m_dwMtrlNum);
+	m_pNormalMaps.resize(m_dwMtrlNum);
+	m_pSpecularMap.resize(m_dwMtrlNum);
 	for (DWORD i = 0; i<m_dwMtrlNum; i++)
 	{
 		m_Materials[i] = Material[i].MatD3D;
 		m_Materials[i].Ambient = m_Materials[i].Diffuse;
 		m_pTextures[i] = NULL;  //纹理指针先清空 ;
+		m_pTextures[i] = RENDERDEVICE::Instance().GetDefaultTexture();
 		if (Material[i].pTextureFilename != NULL &&
 			lstrlen(Material[i].pTextureFilename) > 0)
 		{
@@ -79,7 +134,10 @@ HRESULT MeshLoader::LoadXMesh(std::string filePath)
 			{
 				m_pTextures[i] = RENDERDEVICE::Instance().GetDefaultTexture();
 			}
+			
 		}
+		m_pNormalMaps[i] = RENDERDEVICE::Instance().GetDefaultTexture();
+		m_pSpecularMap[i] = RENDERDEVICE::Instance().GetDefaultTexture();
 	}
 	
 	pXBuffer->Release();
@@ -110,6 +168,8 @@ HRESULT MeshLoader::LoadXMesh(std::string filePath)
 		mSubMeshList[i].indexStart = m_AttTable[i].FaceStart*3;
 		mSubMeshList[i].indexCount = m_AttTable[i].FaceCount*3;
 		mSubMeshList[i].pTexture = m_pTextures[i];
+		mSubMeshList[i].pNormalMap = m_pNormalMaps[i];
+		mSubMeshList[i].pSpecularMap = m_pSpecularMap[i];
 		mSubMeshList[i].pMaterial = m_Materials[i];
 	}
 
@@ -162,6 +222,42 @@ void MeshLoader::ComputeBoundingSphere()
 
 	mBoundingSphereInfo.center = center;
 	mBoundingSphereInfo.radius = radius;
+}
+
+HRESULT MeshLoader::LoadTexture(std::string filePath, int subMeshIndex)
+{
+	if (m_pTextures.size() <= subMeshIndex || mSubMeshList.size() <= subMeshIndex)
+		return S_FALSE;
+	if (FAILED(D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, filePath.c_str(), &m_pTextures[subMeshIndex])))
+	{
+		m_pTextures[subMeshIndex] = RENDERDEVICE::Instance().GetDefaultTexture();
+	}
+	mSubMeshList[subMeshIndex].pTexture = m_pTextures[subMeshIndex];
+	return S_OK;
+}
+
+HRESULT MeshLoader::LoadNormal(std::string filePath, int subMeshIndex)
+{
+	if (m_pNormalMaps.size() <= subMeshIndex || mSubMeshList.size() <= subMeshIndex)
+		return S_FALSE;
+	if (FAILED(D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, filePath.c_str(), &m_pNormalMaps[subMeshIndex])))
+	{
+		m_pNormalMaps[subMeshIndex] = RENDERDEVICE::Instance().GetDefaultTexture();
+	}
+	mSubMeshList[subMeshIndex].pNormalMap = m_pNormalMaps[subMeshIndex];
+	return S_OK;
+}
+
+HRESULT MeshLoader::LoadSpecular(std::string filePath, int subMeshIndex)
+{
+	if (m_pSpecularMap.size() <= subMeshIndex || mSubMeshList.size() <= subMeshIndex)
+		return S_FALSE;
+	if (FAILED(D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, filePath.c_str(), &m_pSpecularMap[subMeshIndex])))
+	{
+		m_pSpecularMap[subMeshIndex] = RENDERDEVICE::Instance().GetDefaultTexture();
+	}
+	mSubMeshList[subMeshIndex].pSpecularMap = m_pSpecularMap[subMeshIndex];
+	return S_OK;
 }
 
 

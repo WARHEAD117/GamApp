@@ -16,6 +16,7 @@ public:
 	LPD3DXEFFECT GetNormalEffect();
 	LPD3DXEFFECT GetShadowEffect();
 	LPDIRECT3DTEXTURE9 GetDefaultTexture();
+	LPDIRECT3DTEXTURE9 GetDefaultNormalMap();
 	Material* GetDefaultMaterial();
 
 	LPDIRECT3D9								g_pD3D;       //--Direct3D∂‘œÛ÷∏’Î
@@ -29,6 +30,7 @@ public:
 	LPD3DXEFFECT							positionEffect;
 	LPD3DXEFFECT							shadowEffect;
 	LPDIRECT3DTEXTURE9						defaultTexture;
+	LPDIRECT3DTEXTURE9						defaultNormalMap;
 
 	D3DXMATRIX								ViewMatrix;
 	D3DXMATRIX								ProjMatrix;

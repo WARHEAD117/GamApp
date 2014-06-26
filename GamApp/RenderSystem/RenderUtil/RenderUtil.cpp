@@ -241,6 +241,24 @@ void RenderUtil::RenderDeferredGeometry(ID3DXEffect* pEffect)
 			pEffect->SetTexture(DIFFUSETEXTURE, RENDERDEVICE::Instance().GetDefaultTexture());
 		}
 
+		if (mSubMeshList[i].pNormalMap)
+		{
+			pEffect->SetTexture(NORMALMAP, mSubMeshList[i].pTexture);
+		}
+		else
+		{
+			pEffect->SetTexture(NORMALMAP, RENDERDEVICE::Instance().GetDefaultNormalMap());
+		}
+
+		if (mSubMeshList[i].pSpecularMap)
+		{
+			pEffect->SetTexture(SPECULARMAP, mSubMeshList[i].pTexture);
+		}
+		else
+		{
+			pEffect->SetTexture(SPECULARMAP, RENDERDEVICE::Instance().GetDefaultTexture());
+		}
+
 		pEffect->CommitChanges();
 
 		RENDERDEVICE::Instance().g_pD3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0,

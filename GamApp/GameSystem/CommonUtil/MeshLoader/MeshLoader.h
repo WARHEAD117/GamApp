@@ -36,6 +36,10 @@ public:
 	HRESULT		LoadXMesh(std::string filePath);
 	LPD3DXMESH&	GetD3DMesh();
 
+	HRESULT		LoadTexture(std::string filePath, int subMeshIndex);
+	HRESULT		LoadNormal(std::string filePath, int subMeshIndex);
+	HRESULT		LoadSpecular(std::string filePath, int subMeshIndex);
+
 	void						GetVertexBuffer(LPDIRECT3DVERTEXBUFFER9& vertexBuffer);
 	void						GetIndexBuffer(LPDIRECT3DINDEXBUFFER9& indexBuffer);
 	const std::vector<SubMesh>& GetSubMeshList();
@@ -52,6 +56,8 @@ public:
 private:
 	LPD3DXMESH						m_pMesh;
 	std::vector<LPDIRECT3DTEXTURE9>	m_pTextures;
+	std::vector<LPDIRECT3DTEXTURE9>	m_pNormalMaps;
+	std::vector<LPDIRECT3DTEXTURE9>	m_pSpecularMap;
 	std::vector<D3DMATERIAL9>		m_Materials; //材质
 	DWORD							m_dwMtrlNum; //材质数量
 

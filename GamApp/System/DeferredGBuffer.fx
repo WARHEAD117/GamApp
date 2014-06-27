@@ -46,9 +46,8 @@ struct OutputVS
 {
 	float4 posWVP			: POSITION;
 	float3 normalV			: NORMAL;
-	float4 tangentL			: TANGENT;
-	float3 binormalL		: BINORMAL;
-	float3 normalL			: TEXCOORD3;
+	float4 tangentV			: TANGENT;
+	float3 binormalV		: BINORMAL;
 
 	float2 TexCoord			: TEXCOORD0;
 	float4 posP				: TEXCOORD1;
@@ -65,7 +64,7 @@ struct OutputPS
 
 OutputVS VShader(float4 posL		: POSITION,
 				float3 normalL : NORMAL,
-				float4 tangentL : TANGENT,
+				float3 tangentL : TANGENT,
 				float3 binormalL : BINORMAL,
 				float2 TexCoord : TEXCOORD0)
 {
@@ -75,15 +74,14 @@ OutputVS VShader(float4 posL		: POSITION,
 	outVS.posWVP = mul(posL, g_WorldViewProj);
 	
 
+	//这里不该直接乘以WV，而是应该乘以world的逆的转置，这样在有缩放的时候法线才能保证与平面垂直
 	//观察空间下的法线
 	outVS.normalV = mul(normalL, g_WorldView);
 
-	//观察空间下的副法线
-	outVS.normalL = normalL;
 	//观察空间下的切线
-	outVS.tangentL = tangentL;
+	outVS.tangentV = mul(tangentL, g_WorldView);
 	//观察空间下的副法线
-	outVS.binormalL = binormalL;
+	outVS.binormalV = mul(binormalL, g_WorldView);
 
 	outVS.posP = outVS.posWVP;
 	outVS.posV = mul(posL, g_WorldView);
@@ -93,38 +91,34 @@ OutputVS VShader(float4 posL		: POSITION,
 }
 
 OutputPS PShader(float3 NormalV		: NORMAL,
-				float4 TangentL		: TANGENT,
-				float3 BinormalL	: BINORMAL,
-				float3 NormalL		: TEXCOORD3,
-				float2 TexCoord		: TEXCOORD0,
-				float4 posP			: TEXCOORD1,
-				float4 posV			: TEXCOORD2)
+				 float3 TangentV		: TANGENT,
+				 float3 BinormalV	: BINORMAL,
+				 float2 TexCoord		: TEXCOORD0,
+				 float4 posP			: TEXCOORD1,
+				 float4 posV			: TEXCOORD2)
 {
 	OutputPS PsOut;
 
 	NormalV = normalize(NormalV);
-	NormalL = normalize(NormalL);
-
-	BinormalL = normalize(BinormalL);
-
-	float3 TangentL3 = TangentL.xyz;
+	BinormalV = normalize(BinormalV);
+	TangentV = normalize(TangentV);
 	
 	//float tW = TangentL.w;
 	//TangentL3 = normalize(TangentL3);
 	//float3 BinormalL3 = cross(NormalL, TangentL3) *tW;
 	//BinormalL3 = normalize(BinormalL3);
 
-	float3x3 TBN = float3x3(TangentL3, BinormalL, NormalL);
-	float3x3 toTangentSpace = transpose(TBN);
+	//TBN的逆矩阵作用为把三个分量所在空间的向量转到切线空间
+	//所以TBN自然就是将切线空间的向量转回三个分量的空间
+	//这里使用观察空间的三个分量，所以切空间的法线乘以TBN就是观察空间的法线了
+	float3x3 TBN = float3x3(TangentV, BinormalV, NormalV);
 
 	float3 sampledNormalT = tex2D(g_sampleNormalMap, TexCoord).rgb;
 	sampledNormalT = 2.0f * sampledNormalT - 1.0f;
 	sampledNormalT = normalize(sampledNormalT);
 
-	float3 sampledNormalV = sampledNormalT.x * TBN[0] + sampledNormalT.y * TBN[1] + sampledNormalT.z * TBN[2];
-
-	sampledNormalV = mul(sampledNormalV, g_WorldView);
-	sampledNormalV = normalize(sampledNormalV);
+	//两种是等价的
+	float3 sampledNormalV = /*mul(sampledNormalT, TBN);/*/ sampledNormalT.x * TBN[0] + sampledNormalT.y * TBN[1] + sampledNormalT.z * TBN[2];
 	sampledNormalV = (sampledNormalV + 1.0f) / 2.0f;
 
 	//纹理采样

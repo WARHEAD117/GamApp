@@ -59,7 +59,7 @@ void TestScene::OnLoad()
 	shevaEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\kris_sheva\\sheva.X");
 	//testEntity.SetMeshFileName("Res\\Mesh\\car\\car25.X");
 	//testEntity.SetMeshFileName("Res\\Mesh\\tree3\\tree3.X");
-	horseEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\Disc.X");
+	horseEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\horse\\horse.X");
 
 	Entity* roomEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\room\\room.x");
 	roomEntity->SetTexture("Res\\Mesh\\room\\wallpaper.dds",0);

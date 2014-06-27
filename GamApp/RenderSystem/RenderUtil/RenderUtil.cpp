@@ -55,8 +55,9 @@ void RenderUtil::Render()
 	BuildEffectInfo();
 	
 
-	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, mVertexBuffer, 0, D3DXGetFVFVertexSize(mFVF));
-	RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(mFVF);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, mVertexBuffer, 0, mVertexByteSize);
+	//RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(mFVF);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetVertexDeclaration(mVertexDecl);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetIndices(mIndexBuffer);
 	for (DWORD i = 0; i < mSubMeshList.size(); i++)
 	{
@@ -114,8 +115,9 @@ void RenderUtil::RenderNormal()
 
 	RENDERDEVICE::Instance().GetNormalEffect()->CommitChanges();
 
-	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, mVertexBuffer, 0, D3DXGetFVFVertexSize(mFVF));
-	RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(mFVF);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, mVertexBuffer, 0, mVertexByteSize);
+	//RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(mFVF);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetVertexDeclaration(mVertexDecl);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetIndices(mIndexBuffer);
 	for (DWORD i = 0; i < mSubMeshList.size(); i++)
 	{
@@ -133,8 +135,9 @@ void RenderUtil::RenderDiffuse()
 	BuildEffectInfo();
 
 
-	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, mVertexBuffer, 0, D3DXGetFVFVertexSize(mFVF));
-	RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(mFVF);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, mVertexBuffer, 0, mVertexByteSize);
+	//RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(mFVF);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetVertexDeclaration(mVertexDecl);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetIndices(mIndexBuffer);
 	for (DWORD i = 0; i < mSubMeshList.size(); i++)
 	{
@@ -169,8 +172,9 @@ void RenderUtil::RenderPosition()
 {
 	BuildEffectInfo();
 
-	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, mVertexBuffer, 0, D3DXGetFVFVertexSize(mFVF));
-	RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(mFVF);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, mVertexBuffer, 0, mVertexByteSize);
+	//RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(mFVF);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetVertexDeclaration(mVertexDecl);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetIndices(mIndexBuffer);
 	for (DWORD i = 0; i < mSubMeshList.size(); i++)
 	{
@@ -195,8 +199,9 @@ void RenderUtil::RenderShadow(D3DXMATRIX lightViewMat, D3DXMATRIX lightProjMat, 
 {
 	BuildShadowEffectInfo(lightViewMat, lightProjMat);
 
-	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, mVertexBuffer, 0, D3DXGetFVFVertexSize(mFVF));
-	RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(mFVF);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, mVertexBuffer, 0, mVertexByteSize);
+	//RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(mFVF);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetVertexDeclaration(mVertexDecl);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetIndices(mIndexBuffer);
 	for (DWORD i = 0; i < mSubMeshList.size(); i++)
 	{
@@ -220,17 +225,22 @@ void RenderUtil::RenderShadow(D3DXMATRIX lightViewMat, D3DXMATRIX lightProjMat, 
 	}
 }
 
+
+
 void RenderUtil::RenderDeferredGeometry(ID3DXEffect* pEffect)
 {
 	BuildEffectInfo();
 
-	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, mVertexBuffer, 0, D3DXGetFVFVertexSize(mFVF));
-	RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(mFVF);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, mVertexBuffer, 0, mVertexByteSize);
+	//RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(mFVF);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetVertexDeclaration(mVertexDecl);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetIndices(mIndexBuffer);
 	for (DWORD i = 0; i < mSubMeshList.size(); i++)
 	{
 		pEffect->SetMatrix(WORLDVIEWPROJMATRIX, &mWorldViewProj);
 		pEffect->SetMatrix(WORLDVIEWMATRIX, &mWorldView);
+		pEffect->SetMatrix(WORLDMATRIX, &mWorldMat);
+		pEffect->SetMatrix(VIEWMATRIX, &mViewMat);
 
 		if (mSubMeshList[i].pTexture)
 		{
@@ -243,7 +253,7 @@ void RenderUtil::RenderDeferredGeometry(ID3DXEffect* pEffect)
 
 		if (mSubMeshList[i].pNormalMap)
 		{
-			pEffect->SetTexture(NORMALMAP, mSubMeshList[i].pTexture);
+			pEffect->SetTexture(NORMALMAP, mSubMeshList[i].pNormalMap);
 		}
 		else
 		{
@@ -252,7 +262,7 @@ void RenderUtil::RenderDeferredGeometry(ID3DXEffect* pEffect)
 
 		if (mSubMeshList[i].pSpecularMap)
 		{
-			pEffect->SetTexture(SPECULARMAP, mSubMeshList[i].pTexture);
+			pEffect->SetTexture(SPECULARMAP, mSubMeshList[i].pSpecularMap);
 		}
 		else
 		{

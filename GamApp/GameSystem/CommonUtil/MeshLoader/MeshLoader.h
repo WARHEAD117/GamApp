@@ -44,6 +44,8 @@ public:
 	void						GetIndexBuffer(LPDIRECT3DINDEXBUFFER9& indexBuffer);
 	const std::vector<SubMesh>& GetSubMeshList();
 	DWORD						GetVertexFVF();
+	LPDIRECT3DVERTEXDECLARATION9 GetVertexDecl();
+	int							GetVertexByteSize();
 
 	int							GetSubMeshCount();
 
@@ -54,6 +56,8 @@ public:
 	BoundingBoxInfo		GetBoundingBoxInfo();
 
 private:
+	LPDIRECT3DVERTEXDECLARATION9	mVertexDecl;
+	int								mVertexByteSize;
 	LPD3DXMESH						m_pMesh;
 	std::vector<LPDIRECT3DTEXTURE9>	m_pTextures;
 	std::vector<LPDIRECT3DTEXTURE9>	m_pNormalMaps;
@@ -108,4 +112,14 @@ inline DWORD MeshLoader::GetVertexFVF()
 		return m_pMesh->GetFVF();
 	else
 		return NULL;
+}
+
+inline LPDIRECT3DVERTEXDECLARATION9 MeshLoader::GetVertexDecl()
+{
+	return mVertexDecl;
+}
+
+inline int MeshLoader::GetVertexByteSize()
+{
+	return mVertexByteSize;
 }

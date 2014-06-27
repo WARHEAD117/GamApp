@@ -40,6 +40,8 @@ public:
 	void	SetIndexBuffer(const LPDIRECT3DINDEXBUFFER9& indexBuffer);
 	void	SetSubMeshList(const std::vector<SubMesh>& subMeshList);
 	void	SetFVF(DWORD fvf);
+	void	SetVertexDecl(LPDIRECT3DVERTEXDECLARATION9 vertexDecl);
+	void	SetVertexByteSize(int vbs);
 
 	void	SetMaterialList(const std::vector<Material*>& materialList);
 	void	SetEffect(int subMeshIndex, LPD3DXEFFECT effect);
@@ -54,6 +56,8 @@ private:
 	LPDIRECT3DINDEXBUFFER9		mIndexBuffer;
 	std::vector<SubMesh>		mSubMeshList;
 	DWORD						mFVF;
+	LPDIRECT3DVERTEXDECLARATION9 mVertexDecl;
+	int							mVertexByteSize;
 
 	std::vector<Material*>		mMaterialList;
 
@@ -73,4 +77,14 @@ private:
 inline void RenderUtil::SetFVF(DWORD fvf)
 {
 	mFVF = fvf;
+}
+
+inline void RenderUtil::SetVertexDecl(LPDIRECT3DVERTEXDECLARATION9 vertexDecl)
+{
+	mVertexDecl = vertexDecl;
+}
+
+inline void RenderUtil::SetVertexByteSize(int vbs)
+{
+	mVertexByteSize = vbs;
 }

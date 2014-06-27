@@ -44,6 +44,8 @@ void Entity::BuildRenderUtil()
 	mRenderUtil.SetIndexBuffer(testIB);
 	mRenderUtil.SetSubMeshList(mMeshLoader.GetSubMeshList());
 	mRenderUtil.SetFVF(mMeshLoader.GetVertexFVF());
+	mRenderUtil.SetVertexDecl(mMeshLoader.GetVertexDecl());
+	mRenderUtil.SetVertexByteSize(mMeshLoader.GetVertexByteSize());
 
 	for (int i = 0; i < mMeshLoader.GetSubMeshList().size(); i++)
 	{

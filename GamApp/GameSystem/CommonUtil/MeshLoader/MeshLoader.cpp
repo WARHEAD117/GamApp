@@ -1,6 +1,16 @@
 #include "MeshLoader.h"
 #include "D3D9Device.h"
 
+const D3DVERTEXELEMENT9 VERTEXDECL[] =
+{
+	{ 0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0 },
+	{ 0, 12, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0 },
+	{ 0, 20, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL, 0 },
+	{ 0, 32, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TANGENT, 0 },
+	{ 0, 44, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_BINORMAL, 0 },
+	D3DDECL_END()
+};
+
 MeshLoader::MeshLoader()
 {
 }
@@ -24,9 +34,32 @@ HRESULT MeshLoader::LoadXMesh(std::string filePath)
 {
 	ID3DXBuffer* adjBuffer = 0;
 	LPD3DXBUFFER pXBuffer;
-	if (FAILED(D3DXLoadMeshFromX(filePath.c_str(), D3DXMESH_SYSTEMMEM, RENDERDEVICE::Instance().g_pD3DDevice,
+	if (FAILED(D3DXLoadMeshFromX(filePath.c_str(), D3DXMESH_MANAGED, RENDERDEVICE::Instance().g_pD3DDevice,
 		&adjBuffer, &pXBuffer, NULL, &m_dwMtrlNum, &m_pMesh)))
 		return E_FAIL;
+
+	//Use Global decl
+	// Create a new vertex declaration to hold all the required data
+// 	const D3DVERTEXELEMENT9 vertexDecl[] =
+// 	{
+// 		{ 0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0 },
+// 		{ 0, 12, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0 },
+// 		{ 0, 20, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL, 0 },
+// 		{ 0, 32, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TANGENT, 0 },
+// 		{ 0, 44, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_BINORMAL, 0 },
+// 		D3DDECL_END()
+// 	};
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateVertexDeclaration(VERTEXDECL, &mVertexDecl);
+	mVertexByteSize = D3DXGetDeclVertexSize(VERTEXDECL, 0);
+
+	LPD3DXMESH pTempMesh = NULL;
+
+	// Clone mesh to match the specified declaration: 
+	if (FAILED(m_pMesh->CloneMesh(m_pMesh->GetOptions(), VERTEXDECL, RENDERDEVICE::Instance().g_pD3DDevice, &pTempMesh)))
+	{
+		SafeRelease(pTempMesh);
+		return E_FAIL;
+	}
 	
 	//Check normals
 	D3DVERTEXELEMENT9 elems[MAX_FVF_DECL_SIZE];
@@ -79,8 +112,9 @@ HRESULT MeshLoader::LoadXMesh(std::string filePath)
 			hasBinormals |= true;
 		}
 	}
-
-	/*
+	SafeRelease(m_pMesh);
+	m_pMesh = pTempMesh;
+	
 	DWORD* rgdwAdjacency = NULL;
 	rgdwAdjacency = new DWORD[m_pMesh->GetNumFaces() * 3];
 
@@ -114,7 +148,7 @@ HRESULT MeshLoader::LoadXMesh(std::string filePath)
 	}
 
 	SafeDeleteArray(rgdwAdjacency);
-	*/
+	
 
 	//Optimize the mesh
 	m_pMesh->Optimize(D3DXMESH_MANAGED |
@@ -147,7 +181,7 @@ HRESULT MeshLoader::LoadXMesh(std::string filePath)
 			}
 			
 		}
-		m_pNormalMaps[i] = RENDERDEVICE::Instance().GetDefaultTexture();
+		m_pNormalMaps[i] = RENDERDEVICE::Instance().GetDefaultNormalMap();
 		m_pSpecularMap[i] = RENDERDEVICE::Instance().GetDefaultTexture();
 	}
 	

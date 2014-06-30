@@ -46,6 +46,7 @@ public:
 	void	SetMaterialList(const std::vector<Material*>& materialList);
 	void	SetEffect(int subMeshIndex, LPD3DXEFFECT effect);
 	void	SetMaterial(int subMeshIndex, Material* material);
+	const Material*	GetMaterial(int subMeshIndex);
 
 	void	SetOwner(Entity* owner);
 
@@ -59,7 +60,7 @@ private:
 	LPDIRECT3DVERTEXDECLARATION9 mVertexDecl;
 	int							mVertexByteSize;
 
-	std::vector<Material*>		mMaterialList;
+	//std::vector<Material*>		mMaterialList;
 
 	D3DXMATRIX					mWorldMat;
 	D3DXMATRIX					mViewMat;

@@ -49,7 +49,7 @@ void Entity::BuildRenderUtil()
 
 	for (int i = 0; i < mMeshLoader.GetSubMeshList().size(); i++)
 	{
-		mRenderUtil.SetMaterial(i, RENDERDEVICE::Instance().GetDefaultMaterial());
+		mRenderUtil.SetEffect(i, RENDERDEVICE::Instance().GetDefaultEffect());
 	}
 
 	AssignRenderUtil();

@@ -118,7 +118,7 @@ OutputPS PShader(float3 NormalV		: NORMAL,
 	sampledNormalT = normalize(sampledNormalT);
 
 	//两种是等价的
-	float3 sampledNormalV = /*mul(sampledNormalT, TBN);/*/ sampledNormalT.x * TBN[0] + sampledNormalT.y * TBN[1] + sampledNormalT.z * TBN[2];
+	float3 sampledNormalV = mul(sampledNormalT, TBN);/* sampledNormalT.x * TBN[0] + sampledNormalT.y * TBN[1] + sampledNormalT.z * TBN[2];*/
 	sampledNormalV = (sampledNormalV + 1.0f) / 2.0f;
 
 	//纹理采样

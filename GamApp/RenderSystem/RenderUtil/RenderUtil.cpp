@@ -61,41 +61,41 @@ void RenderUtil::Render()
 	RENDERDEVICE::Instance().g_pD3DDevice->SetIndices(mIndexBuffer);
 	for (DWORD i = 0; i < mSubMeshList.size(); i++)
 	{
-		mMaterialList[i]->effect->SetMatrix(WORLDVIEWPROJMATRIX, &mWorldViewProj);
-		mMaterialList[i]->effect->SetMatrix(VIEWPROJMATRIX, &mViewProj);
-		mMaterialList[i]->effect->SetMatrix(WORLDMATRIX, &mWorldMat);
-		mMaterialList[i]->effect->SetMatrix(VIEWMATRIX, &mViewMat);
+		mSubMeshList[i].pMaterial.effect->SetMatrix(WORLDVIEWPROJMATRIX, &mWorldViewProj);
+		mSubMeshList[i].pMaterial.effect->SetMatrix(VIEWPROJMATRIX, &mViewProj);
+		mSubMeshList[i].pMaterial.effect->SetMatrix(WORLDMATRIX, &mWorldMat);
+		mSubMeshList[i].pMaterial.effect->SetMatrix(VIEWMATRIX, &mViewMat);
 
 		UINT nPasses = 0;
-		HRESULT r1 = mMaterialList[i]->effect->Begin(&nPasses, 0);
-		HRESULT r2 = mMaterialList[i]->effect->BeginPass(0);
+		HRESULT r1 = mSubMeshList[i].pMaterial.effect->Begin(&nPasses, 0);
+		HRESULT r2 = mSubMeshList[i].pMaterial.effect->BeginPass(0);
 
 		{
-			mMaterialList[i]->effect->SetVector(AMBIENTMATERIAL, &mSubMeshList[i].pMaterial.Ambient);
-			mMaterialList[i]->effect->SetVector(DIFFUSEMATERIAL, &mSubMeshList[i].pMaterial.Diffuse);
-			mMaterialList[i]->effect->SetVector(SPECULARMATERIAL, &mSubMeshList[i].pMaterial.Specular);
-			mMaterialList[i]->effect->SetFloat(SPECULARPOWER, (float)mSubMeshList[i].pMaterial.Power);
+			mSubMeshList[i].pMaterial.effect->SetVector(AMBIENTMATERIAL, &mSubMeshList[i].pMaterial.Ambient);
+			mSubMeshList[i].pMaterial.effect->SetVector(DIFFUSEMATERIAL, &mSubMeshList[i].pMaterial.Diffuse);
+			mSubMeshList[i].pMaterial.effect->SetVector(SPECULARMATERIAL, &mSubMeshList[i].pMaterial.Specular);
+			mSubMeshList[i].pMaterial.effect->SetFloat(SPECULARPOWER, (float)mSubMeshList[i].pMaterial.Power);
 		}
 
 		if (mSubMeshList[i].pTexture)
 		{
-			mMaterialList[i]->effect->SetTexture(DIFFUSETEXTURE, mSubMeshList[i].pTexture);
+			mSubMeshList[i].pMaterial.effect->SetTexture(DIFFUSETEXTURE, mSubMeshList[i].pTexture);
 			
 		}
 		else
 		{
-			mMaterialList[i]->effect->SetTexture(DIFFUSETEXTURE, RENDERDEVICE::Instance().GetDefaultTexture());
+			mSubMeshList[i].pMaterial.effect->SetTexture(DIFFUSETEXTURE, RENDERDEVICE::Instance().GetDefaultTexture());
 		}
 
-		SetlightInfo(mMaterialList[i]->effect);
+		SetlightInfo(mSubMeshList[i].pMaterial.effect);
 
-		mMaterialList[i]->effect->CommitChanges();
+		mSubMeshList[i].pMaterial.effect->CommitChanges();
 
 		RENDERDEVICE::Instance().g_pD3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0,
 			mSubMeshList[i].vertexCount, mSubMeshList[i].indexStart, mSubMeshList[i].faceCount);
 
-		mMaterialList[i]->effect->EndPass();
-		mMaterialList[i]->effect->End();
+		mSubMeshList[i].pMaterial.effect->EndPass();
+		mSubMeshList[i].pMaterial.effect->End();
 	}
 	RENDERDEVICE::Instance().g_pD3DDevice->SetTexture(0, NULL);
 }
@@ -290,20 +290,31 @@ void RenderUtil::SetSubMeshList(const std::vector<SubMesh>& subMeshList)
 {
 	mSubMeshList = subMeshList;
 
-	mMaterialList.resize(mSubMeshList.size());
+	//mMaterialList.resize(mSubMeshList.size());
 }
 
 void RenderUtil::SetMaterialList(const std::vector<Material*>& materialList)
 {
-	mMaterialList = materialList;
+	if (materialList.size() != mSubMeshList.size())
+		return;
+	for (int i = 0; i < mSubMeshList.size(); i++)
+	{
+		mSubMeshList[i].pMaterial = *materialList[i];
+	}
+	//mMaterialList = materialList;
 }
 
 void RenderUtil::SetEffect(int subMeshIndex, LPD3DXEFFECT effect)
 {
-	if (subMeshIndex >= mMaterialList.size())
+	if (subMeshIndex >= mSubMeshList.size())
 		return;
 
-	mMaterialList[subMeshIndex]->effect = effect;
+	mSubMeshList[subMeshIndex].pMaterial.effect = effect;
+
+	//if (subMeshIndex >= mMaterialList.size())
+	//	return;
+
+	//mMaterialList[subMeshIndex]->effect = effect;
 }
 
 void RenderUtil::SetOwner(Entity* owner)
@@ -313,8 +324,23 @@ void RenderUtil::SetOwner(Entity* owner)
 
 void RenderUtil::SetMaterial(int subMeshIndex, Material* material)
 {
-	if (subMeshIndex >= mMaterialList.size())
+	if (subMeshIndex >= mSubMeshList.size())
 		return;
 
-	mMaterialList[subMeshIndex] = material;
+	mSubMeshList[subMeshIndex].pMaterial = *material;
+
+	//if (subMeshIndex >= mMaterialList.size())
+	//	return;
+
+	//mMaterialList[subMeshIndex] = material;
+}
+
+const Material* RenderUtil::GetMaterial(int subMeshIndex)
+{
+	if (subMeshIndex >= mSubMeshList.size())
+	{
+		return NULL;
+	}
+
+	return &mSubMeshList[subMeshIndex].pMaterial;
 }

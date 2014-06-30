@@ -44,19 +44,19 @@ void SSAO::RenderPost()
 
 	m_postEffect->SetTexture("g_RandomNormal", m_pRandomNormal);
 
-	if (GAMEINPUT::Instance().KeyDown(DIK_T))
+	if (GAMEINPUT::Instance().KeyDown(DIK_T) && !GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
 		m_intensity += 0.0001;
 	}
-	if (GAMEINPUT::Instance().KeyDown(DIK_Y))
+	if (GAMEINPUT::Instance().KeyDown(DIK_Y) && !GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
 		m_scale += 0.0001;
 	}
-	if (GAMEINPUT::Instance().KeyDown(DIK_U))
+	if (GAMEINPUT::Instance().KeyDown(DIK_U) && !GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
 		m_sample_rad += 0.0001;
 	}
-	if (GAMEINPUT::Instance().KeyDown(DIK_I))
+	if (GAMEINPUT::Instance().KeyDown(DIK_I) && !GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
 		m_bias += 0.0001;
 	}

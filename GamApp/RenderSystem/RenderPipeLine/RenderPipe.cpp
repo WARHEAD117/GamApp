@@ -307,7 +307,7 @@ void RenderPipe::RenderShadow()
 D3DXVECTOR4	AmbientColor = D3DXVECTOR4(0.2f, 0.2f, 0.2f, 0);
 
 float g_minVariance = 0.2f;
-float g_Amount = 0.8f;
+float g_Amount = 0.7f;
 
 void RenderPipe::DeferredRender_MultiPass()
 {
@@ -340,15 +340,15 @@ void RenderPipe::DeferredRender_MultiPass()
 	deferredMultiPassEffect->SetInt("g_ShadowMapSize", SHADOWMAPSIZE);
 	deferredMultiPassEffect->SetFloat("g_ShadowBias", 0.2f);
 	
-	if (GAMEINPUT::Instance().KeyDown(DIK_G))
+	if (GAMEINPUT::Instance().KeyDown(DIK_G) && !GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
 		g_minVariance += 0.001;
 	}
-	if (GAMEINPUT::Instance().KeyDown(DIK_G))
+	if (GAMEINPUT::Instance().KeyDown(DIK_G) && GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
 		g_minVariance -= 0.001;
 	}
-	if (GAMEINPUT::Instance().KeyDown(DIK_H) && GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
+	if (GAMEINPUT::Instance().KeyDown(DIK_H) && !GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
 		g_Amount += 0.001;
 	}
@@ -359,7 +359,7 @@ void RenderPipe::DeferredRender_MultiPass()
 	if (GAMEINPUT::Instance().KeyDown(DIK_R))
 	{
 		g_minVariance = 0.2f;
-		g_Amount = 0.8f;
+		g_Amount = 0.7f;
 	}
 	deferredMultiPassEffect->SetFloat("g_MinVariance", g_minVariance);
 	deferredMultiPassEffect->SetFloat("g_Amount", g_Amount);

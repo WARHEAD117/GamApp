@@ -419,7 +419,8 @@ float4 PointLightPass(float4 posWVP : TEXCOORD0) : COLOR
 
 	float shadowFinal = 1.0f;
 	//shadowFinal = PointShadowFunc(g_bUseShadow, pos);
-	shadowFinal = tex2D(g_sampleShadowResult, TexCoord);
+	//shadowFinal = tex2D(g_sampleShadowResult, TexCoord);
+	shadowFinal = GaussianBlur(g_ScreenWidth, g_ScreenHeight, g_sampleShadowResult, TexCoord);
 
 	//混合光照和纹理
 	float4 finalColor = DiffuseLight + SpecularLight;

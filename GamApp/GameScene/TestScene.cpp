@@ -206,7 +206,7 @@ void BuildRot(D3DXMATRIX& world)
 	D3DXVECTOR3 up;
 	up.x = world(1, 0);
 	up.y = world(1, 1);
-	up.z = world(1, 3);
+	up.z = world(1, 2);
 
 	D3DXVECTOR3 front;
 	front.x = world(2, 0);

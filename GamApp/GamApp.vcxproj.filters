@@ -169,6 +169,9 @@
     <ClInclude Include="RenderSystem\RenderPipeLine\PostEffect\HDRLighting.h">
       <Filter>RenderSystem\PostEffect</Filter>
     </ClInclude>
+    <ClInclude Include="RenderSystem\RenderPipeLine\PostEffect\DOF.h">
+      <Filter>RenderSystem\PostEffect</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DrawSkyBox.cpp" />
@@ -262,6 +265,9 @@
     <ClCompile Include="RenderSystem\RenderPipeLine\PostEffect\HDRLighting.cpp">
       <Filter>RenderSystem\PostEffect</Filter>
     </ClCompile>
+    <ClCompile Include="RenderSystem\RenderPipeLine\PostEffect\DOF.cpp">
+      <Filter>RenderSystem\PostEffect</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="System\commonDiffuse.fx">
@@ -298,6 +304,9 @@
       <Filter>System</Filter>
     </FxCompile>
     <FxCompile Include="System\FinalColor.fx">
+      <Filter>System</Filter>
+    </FxCompile>
+    <FxCompile Include="System\DOF.fx">
       <Filter>System</Filter>
     </FxCompile>
   </ItemGroup>

@@ -10,6 +10,7 @@
 
 #include "RenderPipeLine/PostEffect/SSAO.h"
 #include "RenderPipeLine/PostEffect/HDRLighting.h"
+#include "RenderPipeLine/PostEffect/DOF.h"
 
 struct VERTEX
 {
@@ -36,6 +37,7 @@ int SHADOWMAPSIZE = 1024;
 
 SSAO ssao;
 HDRLighting hdrLighting;
+DOF dof;
 
 RenderPipe::RenderPipe()
 {
@@ -125,7 +127,7 @@ RenderPipe::RenderPipe()
 	D3DXMatrixOrthoLH(&shadowOrthoProj, 20, 20, 0.01f, 50.0f);
 	D3DXMatrixInverse(&invShadowOrthoProj, NULL, &shadowOrthoProj);
 
-	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth/2, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight/2,
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
 		1, D3DUSAGE_RENDERTARGET,
 		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
 		&m_pShadowTarget, NULL);
@@ -165,6 +167,7 @@ RenderPipe::RenderPipe()
 
 	ssao.CreatePostEffect();
 	hdrLighting.CreatePostEffect();
+	dof.CreatePostEffect();
 }
 
 
@@ -570,6 +573,9 @@ void RenderPipe::RenderAll()
 
 	hdrLighting.RenderPost(m_pMainColorTarget);
 	m_pPostTarget = hdrLighting.GetPostTarget();
+
+	dof.RenderPost(m_pPostTarget);
+	m_pPostTarget = dof.GetPostTarget();
 
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pOriSurface);
 

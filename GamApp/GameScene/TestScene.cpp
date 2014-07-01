@@ -92,7 +92,7 @@ void TestScene::OnLoad()
 	D3DXMATRIX lightRot1Mat;
 	D3DXMATRIX lightRot2Mat;
 	dirLight1 = LIGHTMANAGER::Instance().CreateLight(eDirectionLight);
-	dirLight1->SetLightColor(D3DXCOLOR(0.3, 0.3, 0.3, 1.0f));
+	dirLight1->SetLightColor(D3DXCOLOR(1.3, 1.3, 1.3, 1.0f));
 	dirLight1->SetUseShadow(true);
 
 	D3DXMatrixTranslation(&lightMoveMat, 0, 10, 0);
@@ -108,7 +108,7 @@ void TestScene::OnLoad()
 	dirLight2->SetWorldTransform(lightRot1Mat*lightMoveMat);
 	//--------------------------------------------------------------------------
 	pointLight1 = LIGHTMANAGER::Instance().CreateLight(ePointLight);
-	pointLight1->SetLightColor(D3DXCOLOR(5.7,5.7,5.7, 1.0f));
+	pointLight1->SetLightColor(D3DXCOLOR(0.7,0.7,0.7, 1.0f));
 	pointLight1->SetUseShadow(true);
 	pointLight1->SetLightRange(20);
 	

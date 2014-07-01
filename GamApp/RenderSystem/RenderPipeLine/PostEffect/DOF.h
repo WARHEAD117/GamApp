@@ -12,5 +12,6 @@ public:
 
 private:
 	LPDIRECT3DTEXTURE9	m_CoCBuffer;
+	LPDIRECT3DTEXTURE9	m_scaledBuffer;
 };
 

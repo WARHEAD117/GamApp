@@ -23,6 +23,11 @@ void DOF::CreatePostEffect()
 		1, D3DUSAGE_RENDERTARGET,
 		D3DFMT_R16F, D3DPOOL_DEFAULT,
 		&m_CoCBuffer, NULL);
+
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth/2, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight/2,
+		1, D3DUSAGE_RENDERTARGET,
+		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
+		&m_scaledBuffer, NULL);
 }
 
 
@@ -37,6 +42,8 @@ float g_scale = 1000;
 
 void DOF::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 {
+	
+
 	D3DXVECTOR2 avSampleOffsets[16];
 	D3DXVECTOR4 avSampleWeights[16];
 
@@ -101,7 +108,7 @@ void DOF::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		g_aperture = 0.135;
 		g_focallength = 135;
 		g_planeinfocus = 10;
-		g_scale = 1;
+		g_scale = 1000;
 	}
 	if (g_planeinfocus < CameraParam::zNear) g_planeinfocus = CameraParam::zNear;
 	if (g_planeinfocus > CameraParam::zFar) g_planeinfocus = CameraParam::zFar;
@@ -123,11 +130,36 @@ void DOF::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	m_postEffect->SetTexture(0, NULL);
 
 	m_postEffect->EndPass();
+	//=============================================================================================================
+	GetSampleOffsets_DownScale4x4(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight, avSampleOffsets);
+	m_postEffect->SetValue("g_avSampleOffsets", avSampleOffsets, sizeof(avSampleOffsets));
 
+	// Get the new render target surface
+	PDIRECT3DSURFACE9 pSurfScaledScene = NULL;
+	hr = m_scaledBuffer->GetSurfaceLevel(0, &pSurfScaledScene);
+
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurfScaledScene);
+	m_postEffect->SetTexture(MAINCOLORBUFFER, mainBuffer);
+
+	m_postEffect->BeginPass(2);
+
+	m_postEffect->SetMatrix(WORLDVIEWPROJMATRIX, &RENDERDEVICE::Instance().OrthoWVPMatrix);
+
+	m_postEffect->CommitChanges();
+
+	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, m_pBufferVex, 0, sizeof(VERTEX));
+	RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(D3DFVF_VERTEX);
+	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+	m_postEffect->SetTexture(0, NULL);
+
+	m_postEffect->EndPass();
+
+	SafeRelease(pSurfScaledScene);
 	//=============================================================================================================
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pPostSurface);
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 0, 0, 0), 1.0f, 0);
 
+	m_postEffect->SetTexture("g_scaledBuffer", m_scaledBuffer);
 	m_postEffect->SetTexture("g_CoCBuffer", m_CoCBuffer);
 	m_postEffect->SetTexture(MAINCOLORBUFFER, mainBuffer);
 

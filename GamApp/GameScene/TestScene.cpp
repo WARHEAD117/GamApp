@@ -27,7 +27,10 @@ EffectLoader effectLoader;
 BaseLight* dirLight1;
 BaseLight* dirLight2;
 BaseLight* pointLight1;
-
+BaseLight* pointLight2;
+BaseLight* pointLight3;
+BaseLight* pointLight4;
+BaseLight* pointLight5;
 BaseLight* spotLight1;
 BaseLight* spotLight2;
 BaseLight* spotLight3;
@@ -114,6 +117,42 @@ void TestScene::OnLoad()
 	
 	D3DXMatrixTranslation(&lightMoveMat, -10, -4, 0);
 	pointLight1->SetWorldTransform(lightMoveMat);
+
+	//--------------------------------------------------------------------------
+	pointLight2 = LIGHTMANAGER::Instance().CreateLight(ePointLight);
+	pointLight2->SetLightColor(D3DXCOLOR(0.7, 0.7, 0.7, 1.0f));
+	pointLight2->SetUseShadow(false);
+	pointLight2->SetLightRange(2);
+
+	D3DXMatrixTranslation(&lightMoveMat, 20, -4, 9);
+	pointLight2->SetWorldTransform(lightMoveMat);
+
+	//--------------------------------------------------------------------------
+	pointLight3 = LIGHTMANAGER::Instance().CreateLight(ePointLight);
+	pointLight3->SetLightColor(D3DXCOLOR(0.7, 0.7, 0.7, 1.0f));
+	pointLight3->SetUseShadow(false);
+	pointLight3->SetLightRange(2);
+
+	D3DXMatrixTranslation(&lightMoveMat, 20, -4, 10);
+	pointLight3->SetWorldTransform(lightMoveMat);
+
+	//--------------------------------------------------------------------------
+	pointLight4 = LIGHTMANAGER::Instance().CreateLight(ePointLight);
+	pointLight4->SetLightColor(D3DXCOLOR(3.7, 3.7, 3.7, 1.0f));
+	pointLight4->SetUseShadow(false);
+	pointLight4->SetLightRange(0.3);
+
+	D3DXMatrixTranslation(&lightMoveMat, 19.8, -4, 14);
+	pointLight4->SetWorldTransform(lightMoveMat);
+
+	//--------------------------------------------------------------------------
+	pointLight5 = LIGHTMANAGER::Instance().CreateLight(ePointLight);
+	pointLight5->SetLightColor(D3DXCOLOR(4.7, 0.7, 4.7, 1.0f));
+	pointLight5->SetUseShadow(false);
+	pointLight5->SetLightRange(0.3);
+
+	D3DXMatrixTranslation(&lightMoveMat, 19.8, -4, 16);
+	pointLight5->SetWorldTransform(lightMoveMat);
 	//--------------------------------------------------------------------------
 	spotLight1 = LIGHTMANAGER::Instance().CreateLight(eSpotLight);
 	spotLight1->SetLightRange(20);

@@ -6,16 +6,14 @@ matrix		g_WorldViewProj;
 matrix		g_mWorldInv;
 matrix		g_InverseProj;
 
-static const int MAX_SAMPLES = 16;
-// Contains sampling offsets used by the techniques
-float2 g_avSampleOffsets[MAX_SAMPLES];
-float4 g_avSampleWeights[MAX_SAMPLES];
-
 float		g_zNear = 1.0f;
 float		g_zFar = 100.0f;
 
 int g_ScreenWidth;
 int g_ScreenHeight;
+
+static const int MAX_SAMPLES = 8;
+float g_angle;
 
 float g_aperture;
 float g_focallength;
@@ -32,26 +30,6 @@ sampler_state
 	MipFilter = Point;
 };
 
-texture		g_CoCBuffer;
-sampler2D g_sampleCoC =
-sampler_state
-{
-	Texture = <g_CoCBuffer>;
-	MinFilter = Point;
-	MagFilter = Point;
-	MipFilter = Point;
-};
-
-texture		g_scaledBuffer;
-sampler2D g_sampleScaledBuffer =
-sampler_state
-{
-	Texture = <g_scaledBuffer>;
-	MinFilter = linear;
-	MagFilter = linear;
-	MipFilter = linear;
-};
-
 texture		g_MainColorBuffer;
 sampler2D g_sampleMainColor =
 sampler_state
@@ -62,12 +40,52 @@ sampler_state
 	MipFilter = Point;
 };
 
+texture		g_ColorCoCBuffer;
+sampler2D g_sampleColorCoC =
+sampler_state
+{
+	Texture = <g_ColorCoCBuffer>;
+	MinFilter = linear;
+	MagFilter = linear;
+	MipFilter = linear;
+	AddressU = Border;
+	AddressV = Border;
+};
+
+texture		g_ColorStep1;
+sampler2D colorStep1Sampler =
+sampler_state
+{
+	Texture = <g_ColorStep1>;
+	MinFilter = linear;
+	MagFilter = linear;
+	MipFilter = linear;
+	AddressU = Border;
+	AddressV = Border;
+};
+
+texture		g_ColorStep2;
+sampler2D colorStep2Sampler =
+sampler_state
+{
+	Texture = <g_ColorStep2>;
+	MinFilter = linear;
+	MagFilter = linear;
+	MipFilter = linear;
+	AddressU = Border;
+	AddressV = Border;
+};
+
 struct OutputVS
 {
 	float4 posWVP         : POSITION0;
 	float2 TexCoord		: TEXCOORD0;
 };
 
+struct OffsetData
+{
+	half2 offsets[MAX_SAMPLES];
+};
 
 OutputVS VShader(float4 posL       : POSITION0,
 				 float2 TexCoord : TEXCOORD0)
@@ -101,128 +119,95 @@ float3 GetPosition(in float2 uv)
 	return vPositionVS3.xyz;
 }
 
+OffsetData MakeOffset(half angle)
+{
+	OffsetData offsetData;
+
+	half aspectRatio = g_ScreenWidth / g_ScreenHeight;
+
+	half radius = 0.5f;
+
+	half2 pt = half2(radius * cos(angle), radius * sin(angle));
+
+	pt.x /= aspectRatio;
+
+	for (int i = 0; i < MAX_SAMPLES; i++)
+	{
+		half2 t = i / (MAX_SAMPLES - 1.0f);
+			offsetData.offsets[i] = lerp(-pt, pt, t);
+	}
+
+	return offsetData;
+}
 
 float4 ComputeCoC(float2 TexCoord : TEXCOORD0) : COLOR
 {
 	float3 pos = GetPosition(TexCoord);
 	float CoC = abs(g_aperture * (g_focallength * (pos.z - g_planeinfocus)) / (pos.z * (g_planeinfocus - g_focallength)));
-	float maxCoC = g_aperture * (g_focallength / (g_planeinfocus - g_focallength));
-	//CoC = saturate(CoC * g_scale);
-	return float4(CoC / maxCoC, CoC / maxCoC, CoC / maxCoC, 1.0f);
+
+	const half sensorHeight = 0.024f;
+
+	//这里要压缩CoC，否则直接截取会导致残留的清晰区间过小（为什么？）
+	const half percentOfSensor = CoC / sensorHeight * g_scale;
+	
+	half MaxCoC = 1.0f;
+
+	half blurFactor = clamp(percentOfSensor, 0.0f, MaxCoC);
+
+	half4 color = tex2D(g_sampleMainColor, TexCoord);
+
+	return float4(color.xyz,blurFactor);
 }
 
-
-float4 GaussianBlur(int mapWidth, int mapHeight, sampler2D texSampler, float2 texCoords, float stepLength)
+float4 DrawDof(float2 TexCoord, OffsetData offsetData)
 {
-	float weights[6] = { 0.00078633, 0.00655965, 0.01330373, 0.05472157, 0.11098164, 0.22508352 };
+	const half bleedingBias = 0.02f;
+	const half bleedingMult = 30.0f;
 
-	float4 color;
-	float stepU = stepLength / mapWidth;
-	float stepV = stepLength / mapHeight;
+	half centerPixelCoC = tex2D(g_sampleColorCoC, TexCoord).a;
+	half centerDepth = GetPosition(TexCoord).z;
 
-	//0,1,2,1,0
-	//1,3,4,3,1
-	//2,4,5,4,2
-	//1,3,4,3,1
-	//0,1,2,1,0
-	color = tex2D(texSampler, texCoords + float2(-2 * stepU, -2 * stepV)) * (weights[0]);
-	color += tex2D(texSampler, texCoords + float2(-1 * stepU, -2 * stepV)) * (weights[1]);
-	color += tex2D(texSampler, texCoords + float2(0 * stepU, -2 * stepV)) * (weights[2]);
-	color += tex2D(texSampler, texCoords + float2(1 * stepU, -2 * stepV)) * (weights[1]);
-	color += tex2D(texSampler, texCoords + float2(2 * stepU, -2 * stepV)) * (weights[0]);
+	half4 color = 0.0f;
+		half totalWeight = 0.0f;
 
-	color += tex2D(texSampler, texCoords + float2(-2 * stepU, -1 * stepV)) * (weights[1]);
-	color += tex2D(texSampler, texCoords + float2(-1 * stepU, -1 * stepV)) * (weights[3]);
-	color += tex2D(texSampler, texCoords + float2(0 * stepU, -1 * stepV)) * (weights[4]);
-	color += tex2D(texSampler, texCoords + float2(1 * stepU, -1 * stepV)) * (weights[3]);
-	color += tex2D(texSampler, texCoords + float2(2 * stepU, -1 * stepV)) * (weights[1]);
-
-	color += tex2D(texSampler, texCoords + float2(-2 * stepU, 0 * stepV)) * (weights[2]);
-	color += tex2D(texSampler, texCoords + float2(-1 * stepU, 0 * stepV)) * (weights[4]);
-	color += tex2D(texSampler, texCoords + float2(0 * stepU, 0 * stepV)) * (weights[5]);
-	color += tex2D(texSampler, texCoords + float2(1 * stepU, 0 * stepV)) * (weights[4]);
-	color += tex2D(texSampler, texCoords + float2(2 * stepU, 0 * stepV)) * (weights[2]);
-
-	color += tex2D(texSampler, texCoords + float2(-2 * stepU, 1 * stepV)) * (weights[1]);
-	color += tex2D(texSampler, texCoords + float2(-1 * stepU, 1 * stepV)) * (weights[3]);
-	color += tex2D(texSampler, texCoords + float2(0 * stepU, 1 * stepV)) * (weights[4]);
-	color += tex2D(texSampler, texCoords + float2(1 * stepU, 1 * stepV)) * (weights[3]);
-	color += tex2D(texSampler, texCoords + float2(2 * stepU, 1 * stepV)) * (weights[1]);
-
-	color += tex2D(texSampler, texCoords + float2(-2 * stepU, 2 * stepV)) * (weights[0]);
-	color += tex2D(texSampler, texCoords + float2(-1 * stepU, 2 * stepV)) * (weights[1]);
-	color += tex2D(texSampler, texCoords + float2(0 * stepU, 2 * stepV)) * (weights[2]);
-	color += tex2D(texSampler, texCoords + float2(1 * stepU, 2 * stepV)) * (weights[1]);
-	color += tex2D(texSampler, texCoords + float2(2 * stepU, 2 * stepV)) * (weights[0]);
-
-	return color;
-}
-
-float4 GaussBlur5x5PS(sampler2D texSampler, float2 texCoords, float stepLength)
-{
-
-	float4 sample = 0.0f;
-
-	for (int i = 0; i < 12; i++)
+	for (int t = 0; t < MAX_SAMPLES; t++)
 	{
-		float w = tex2D(g_sampleCoC, texCoords + stepLength * g_avSampleOffsets[i]).x - tex2D(g_sampleCoC, texCoords).x;
-		if (abs(w)*1000 <2.0)
-			sample += g_avSampleWeights[i] * tex2D(texSampler, texCoords + stepLength * g_avSampleOffsets[i]);
-		else
-			sample += g_avSampleWeights[i] * tex2D(texSampler, texCoords);
+		half2 offset = offsetData.offsets[t];
+
+		half2 sampleCoords = TexCoord + offset * centerPixelCoC;
+
+		half4 samplePixel = tex2D(g_sampleColorCoC, sampleCoords);
+		half sampleDepth = GetPosition(sampleCoords).z;
+
+		half weight = sampleDepth < centerDepth ? samplePixel.a * bleedingMult : 1.0f;
+		weight = (centerPixelCoC > samplePixel.a + bleedingBias) ? weight : 1.0f;
+		weight = saturate(weight);
+
+		color += samplePixel * weight;
+		totalWeight += weight;
 	}
 
-	return sample;
+	return color / totalWeight;
+	//return tex2D(g_sampleColorCoC, TexCoord);
+	//return float4(centerDepth, centerDepth, centerDepth, 1.0f);
 }
 
-float4 Blur3x3(sampler2D texSampler, int mapWidth, int mapHeight, float2 texCoords)
+float4 DrawDoF_PS(float2 TexCoord : TEXCOORD0) : COLOR
 {
-	float stepU = 1.0f / mapWidth;
-	float stepV = 1.0f / mapHeight;
+	OffsetData offsetData = MakeOffset(g_angle);
 
-	float4 sample = 0.0f;
-
-	sample += tex2D(texSampler, texCoords + float2(-stepU, -stepV)) * 1.0f /16.0f;
-	sample += tex2D(texSampler, texCoords + float2(-stepU, 0)) * 2.0f / 16.0f;
-	sample += tex2D(texSampler, texCoords + float2(-stepU, stepV)) * 1.0f / 16.0f;
-	sample += tex2D(texSampler, texCoords + float2(0, -stepV)) * 2.0f / 16.0f;
-	sample += tex2D(texSampler, texCoords + float2(0, 0)) * 4.0f / 16.0f;
-	sample += tex2D(texSampler, texCoords + float2(0, stepV)) * 2.0f / 16.0f;
-	sample += tex2D(texSampler, texCoords + float2(stepU, -stepV)) * 1.0f / 16.0f;
-	sample += tex2D(texSampler, texCoords + float2(stepU, 0)) * 2.0f / 16.0f;
-	sample += tex2D(texSampler, texCoords + float2(stepU, stepV)) * 1.0f / 16.0f;
-
-
-	return sample;
+	return DrawDof(TexCoord, offsetData);
 }
 
-
-float4 DrawDoF(float2 TexCoord : TEXCOORD0) : COLOR
+float4 DrawDoF_Final(float2 TexCoord : TEXCOORD0) : COLOR
 {
-	//float CoC = tex2D(g_sampleCoC, TexCoord);
-	float CoC = Blur3x3(g_sampleCoC, g_ScreenWidth, g_ScreenHeight, TexCoord);
-	float4 mainColor = tex2D(g_sampleMainColor, TexCoord);
+	half4 colorStep1 = tex2D(colorStep1Sampler, TexCoord);
 
-	float radius = clamp(CoC, 0.0f, 5.0f);
-	//float4 bluredColor = GaussBlur5x5PS(g_sampleMainColor, TexCoord, radius);
-	float4 bluredColor = GaussianBlur(g_ScreenWidth, g_ScreenHeight, g_sampleScaledBuffer, TexCoord, radius);
+	half4 colorStep2 = tex2D(colorStep2Sampler, TexCoord);
 
-	float radius_0to1 = saturate(radius);
-	float4 finalColor = mainColor * (1 - radius_0to1) + bluredColor * radius_0to1;
-	//return float4(CoC, CoC, CoC, 1.0f);
-	return finalColor;
-}
-
-float4 DownScale4x4(float2 TexCoord : TEXCOORD0) : COLOR
-{
-	float4 sample = 0.0f;
-
-	for (int i = 0; i < 16; i++)
-	{
-		sample += tex2D(g_sampleMainColor, TexCoord + g_avSampleOffsets[i]);
-	}
-
-	return sample / 16;
+	return min(colorStep1, colorStep2);
+	//return tex2D(g_sampleColorCoC, TexCoord);
+	//return tex2D(g_sampleColorCoC, TexCoord).a * 10;
 }
 
 technique DOF
@@ -236,12 +221,12 @@ technique DOF
 	pass p1
 	{
 		vertexShader = compile vs_3_0 VShader();
-		pixelShader = compile ps_3_0 DrawDoF();
+		pixelShader = compile ps_3_0 DrawDoF_PS();
 	}
 
 	pass p2
 	{
 		vertexShader = compile vs_3_0 VShader();
-		pixelShader = compile ps_3_0 DownScale4x4();
+		pixelShader = compile ps_3_0 DrawDoF_Final();
 	}
 }

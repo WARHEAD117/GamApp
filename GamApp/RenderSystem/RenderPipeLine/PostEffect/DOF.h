@@ -11,7 +11,9 @@ public:
 	void CreatePostEffect();
 
 private:
-	LPDIRECT3DTEXTURE9	m_CoCBuffer;
-	LPDIRECT3DTEXTURE9	m_scaledBuffer;
+	LPDIRECT3DTEXTURE9	m_ColorCoCBuffer;
+	LPDIRECT3DTEXTURE9	m_ColorHorizontal;
+	LPDIRECT3DTEXTURE9	m_ColorStep1;
+	LPDIRECT3DTEXTURE9	m_ColorStep2;
 };
 

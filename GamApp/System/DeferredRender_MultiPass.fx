@@ -272,9 +272,13 @@ void LightFunc(float3 normal, float3 toLight, float3 toEye, float4 lightColor, i
 	//计算半角向量
 	float3 H = normalize(toLight + toEye);
 
+	float lh = dot(toLight, H);
+	float G = 1 / (lh*lh);
+
+	float shininess = 2.0f;
 	float SpecularRatio = max(dot(normal, H), 0);
-	float PoweredSpecular = pow(SpecularRatio, 24);
-	SpecularLight += lightColor * PoweredSpecular;
+	float PoweredSpecular = pow(SpecularRatio, shininess) * (shininess + 2.0f) / 8.0f * G;
+	SpecularLight += lightColor * PoweredSpecular * DiffuseRatio;
 }
 
 float ShadowFunc(bool useShadow, float3 objViewPos)
@@ -373,8 +377,9 @@ float4 DirectionLightPass(float2 TexCoord : TEXCOORD0) : COLOR
 	//shadowFinal = ShadowFunc(g_bUseShadow, pos);
 	shadowFinal = tex2D(g_sampleShadowResult, TexCoord);
 
+	float4 Texture = tex2D(g_sampleDiffuse, TexCoord);
 	//混合光照和纹理
-	float4 finalColor = DiffuseLight +SpecularLight;
+	float4 finalColor = DiffuseLight + SpecularLight / Texture;
 	return finalColor * shadowFinal;
 }
 
@@ -422,8 +427,9 @@ float4 PointLightPass(float4 posWVP : TEXCOORD0) : COLOR
 	//shadowFinal = tex2D(g_sampleShadowResult, TexCoord);
 	shadowFinal = GaussianBlur(g_ScreenWidth, g_ScreenHeight, g_sampleShadowResult, TexCoord);
 
-	//混合光照和纹理
-	float4 finalColor = DiffuseLight + SpecularLight;
+	float4 Texture = tex2D(g_sampleDiffuse, TexCoord);
+		//混合光照和纹理
+		float4 finalColor = DiffuseLight + SpecularLight / Texture;
 		return finalColor * shadowFinal;
 }
 
@@ -485,8 +491,9 @@ float4 SpotLightPass(float4 posWVP : TEXCOORD0) : COLOR
 	//shadowFinal = ShadowFunc(g_bUseShadow, pos);
 	shadowFinal = tex2D(g_sampleShadowResult, TexCoord);
 
-	//混合光照和纹理
-	float4 finalColor = DiffuseLight + SpecularLight;
+	float4 Texture = tex2D(g_sampleDiffuse, TexCoord);
+		//混合光照和纹理
+		float4 finalColor = DiffuseLight + SpecularLight / Texture;
 	return finalColor * shadowFinal;
 }
 

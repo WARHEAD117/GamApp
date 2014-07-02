@@ -574,8 +574,8 @@ void RenderPipe::RenderAll()
 	hdrLighting.RenderPost(m_pMainColorTarget);
 	m_pPostTarget = hdrLighting.GetPostTarget();
 
-	dof.RenderPost(m_pPostTarget);
-	m_pPostTarget = dof.GetPostTarget();
+	//dof.RenderPost(m_pPostTarget);
+	//m_pPostTarget = dof.GetPostTarget();
 
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pOriSurface);
 

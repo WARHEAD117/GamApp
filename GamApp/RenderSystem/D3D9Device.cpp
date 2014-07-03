@@ -4,7 +4,7 @@ static std::string defaultEffectName = "System\\commonDiffuse.fx";
 static std::string diffuseEffectName = "System\\DeferredDiffuse.fx";
 static std::string normalEffectName = "System\\DeferredNormal.fx";
 static std::string defaultTextureName = "System\\white.dds";
-static std::string defaultNormalMapName = "System\\defaultNormal.dds";
+static std::string defaultNormalMapName = "System\\defaultNormal.png";
 static std::string positionEffectName = "System\\DeferredPosition.fx";
 static std::string shadowEffectName = "System\\DeferredShadowVSM.fx";
 

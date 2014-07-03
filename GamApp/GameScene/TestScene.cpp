@@ -115,7 +115,7 @@ void TestScene::OnLoad()
 	pointLight1->SetUseShadow(true);
 	pointLight1->SetLightRange(20);
 	
-	D3DXMatrixTranslation(&lightMoveMat, -10, -2, 0);
+	D3DXMatrixTranslation(&lightMoveMat, -10, -4.99, 0);
 	pointLight1->SetWorldTransform(lightMoveMat);
 
 	//--------------------------------------------------------------------------
@@ -124,7 +124,7 @@ void TestScene::OnLoad()
 	pointLight2->SetUseShadow(false);
 	pointLight2->SetLightRange(2);
 
-	D3DXMatrixTranslation(&lightMoveMat, 20, -4, 9);
+	D3DXMatrixTranslation(&lightMoveMat, 20.0001, -4, 9);
 	pointLight2->SetWorldTransform(lightMoveMat);
 
 	//--------------------------------------------------------------------------
@@ -133,16 +133,16 @@ void TestScene::OnLoad()
 	pointLight3->SetUseShadow(false);
 	pointLight3->SetLightRange(2);
 
-	D3DXMatrixTranslation(&lightMoveMat, 20, -4, 10);
+	D3DXMatrixTranslation(&lightMoveMat, 19.995, -4, 10);
 	pointLight3->SetWorldTransform(lightMoveMat);
 
 	//--------------------------------------------------------------------------
 	pointLight4 = LIGHTMANAGER::Instance().CreateLight(ePointLight);
 	pointLight4->SetLightColor(D3DXCOLOR(3.7, 3.7, 3.7, 1.0f));
 	pointLight4->SetUseShadow(false);
-	pointLight4->SetLightRange(0.3);
+	pointLight4->SetLightRange(2);
 
-	D3DXMatrixTranslation(&lightMoveMat, 19.8, -4, 14);
+	D3DXMatrixTranslation(&lightMoveMat, 10, -4, 19.998);
 	pointLight4->SetWorldTransform(lightMoveMat);
 
 	//--------------------------------------------------------------------------
@@ -151,7 +151,7 @@ void TestScene::OnLoad()
 	pointLight5->SetUseShadow(false);
 	pointLight5->SetLightRange(0.3);
 
-	D3DXMatrixTranslation(&lightMoveMat, 19.8, -4, 16);
+	D3DXMatrixTranslation(&lightMoveMat, 10.0, -4, -19.998);
 	pointLight5->SetWorldTransform(lightMoveMat);
 	//--------------------------------------------------------------------------
 	spotLight1 = LIGHTMANAGER::Instance().CreateLight(eSpotLight);

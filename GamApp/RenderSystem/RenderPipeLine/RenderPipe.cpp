@@ -50,7 +50,7 @@ RenderPipe::RenderPipe()
 
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
 		1, D3DUSAGE_RENDERTARGET,
-		D3DFMT_A16B16G16R16F, D3DPOOL_DEFAULT,
+		D3DFMT_A32B32G32R32F, D3DPOOL_DEFAULT,
 		&m_pNormalTarget, NULL);
 	hr = m_pNormalTarget->GetSurfaceLevel(0, &m_pNormalSurface);
 
@@ -59,6 +59,12 @@ RenderPipe::RenderPipe()
 		D3DFMT_A32B32G32R32F, D3DPOOL_DEFAULT,
 		&m_pPositionTarget, NULL);
 	hr = m_pPositionTarget->GetSurfaceLevel(0, &m_pPositionSurface);
+
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
+		1, D3DUSAGE_RENDERTARGET,
+		D3DFMT_A16B16G16R16F, D3DPOOL_DEFAULT,
+		&m_pLightTarget, NULL);
+	hr = m_pLightTarget->GetSurfaceLevel(0, &m_pLightSurface);
 
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
 		1, D3DUSAGE_RENDERTARGET,
@@ -412,24 +418,24 @@ void RenderPipe::DeferredRender_MultiPass()
 		if (lt == eDirectionLight)
 		{
 			pass = 0;
-			shadowPass = 6;
+			shadowPass = 3;
 		}
 		else if (lt == ePointLight)
 		{
 			deferredMultiPassEffect->SetMatrix("g_LightVolumeWVP", &lightVolumeMatrix);
-			pass = 4;
-			shadowPass = 7;
+			pass = 1;
+			shadowPass = 4;
 		}
 		else if (lt == eSpotLight)
 		{
 			deferredMultiPassEffect->SetMatrix("g_LightVolumeWVP", &lightVolumeMatrix);
-			pass = 5;
-			shadowPass = 6;
+			pass = 2;
+			shadowPass = 3;
 		}
 		else
 		{
 			pass = 0;
-			shadowPass = 6;
+			shadowPass = 3;
 		}
 
 		HRESULT  ret = RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pShadowSurface);
@@ -497,7 +503,7 @@ void RenderPipe::DeferredRender_MultiPass()
 
 	
 	//环境光Pass
-	deferredMultiPassEffect->BeginPass(1);
+	deferredMultiPassEffect->BeginPass(5);
 
 	deferredMultiPassEffect->SetVector("g_AmbientColor", &AmbientColor);
 	deferredMultiPassEffect->CommitChanges();
@@ -507,12 +513,12 @@ void RenderPipe::DeferredRender_MultiPass()
 	
 
 	//纹理及AO的Pass
-	deferredMultiPassEffect->BeginPass(2);
+	deferredMultiPassEffect->BeginPass(6);
 	RENDERDEVICE::Instance().g_pD3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 4, 0, 2);
 	deferredMultiPassEffect->EndPass();
 
 	//DebugPass
-	deferredMultiPassEffect->BeginPass(3);
+	deferredMultiPassEffect->BeginPass(7);
 	//RENDERDEVICE::Instance().g_pD3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 4, 0, 2);
 	deferredMultiPassEffect->EndPass();
 
@@ -571,8 +577,8 @@ void RenderPipe::RenderAll()
 
 	DeferredRender_MultiPass();
 
-	hdrLighting.RenderPost(m_pMainColorTarget);
-	m_pPostTarget = hdrLighting.GetPostTarget();
+	//hdrLighting.RenderPost(m_pMainColorTarget);
+	//m_pPostTarget = hdrLighting.GetPostTarget();
 
 	//dof.RenderPost(m_pPostTarget);
 	//m_pPostTarget = dof.GetPostTarget();

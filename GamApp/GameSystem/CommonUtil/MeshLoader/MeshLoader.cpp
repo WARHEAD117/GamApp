@@ -287,7 +287,7 @@ HRESULT MeshLoader::LoadNormal(std::string filePath, int subMeshIndex)
 		return S_FALSE;
 	if (FAILED(D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, filePath.c_str(), &m_pNormalMaps[subMeshIndex])))
 	{
-		m_pNormalMaps[subMeshIndex] = RENDERDEVICE::Instance().GetDefaultTexture();
+		m_pNormalMaps[subMeshIndex] = RENDERDEVICE::Instance().GetDefaultNormalMap();
 	}
 	mSubMeshList[subMeshIndex].pNormalMap = m_pNormalMaps[subMeshIndex];
 	return S_OK;

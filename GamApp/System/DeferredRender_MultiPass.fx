@@ -115,6 +115,18 @@ sampler_state
 	AddressV = Clamp;
 }; 
 
+texture g_LightResultBuffer;
+sampler2D g_sampleLightResult =
+sampler_state
+{
+	Texture = <g_LightResultBuffer>;
+	MinFilter = Point;
+	MagFilter = Point;
+	MipFilter = Point;
+	AddressU = Clamp;
+	AddressV = Clamp;
+};
+
 matrix g_ShadowView;
 matrix g_ShadowProj;
 matrix g_invView;
@@ -179,17 +191,6 @@ float3 GetPosition(in float2 uv)
 	float3 vPositionVS3 = vPositionVS.xyz / vPositionVS.w;
 	return vPositionVS3.xyz;
 }
-
-
-
-float4 AmbientPass(float2 TexCoord : TEXCOORD0) : COLOR
-{
-	//计算环境光
-	float4 Ambient = g_AmbientColor;
-
-	return Ambient;
-}
-
 
 float linstep(float min, float max, float v)
 {
@@ -265,7 +266,7 @@ float4 GaussianBlur(int mapWidth, int mapHeight, sampler2D texSampler, float2 te
 void LightFunc(float3 normal, float3 toLight, float3 toEye, float4 lightColor, inout float4 DiffuseLight, inout float4 SpecularLight)
 {
 	//计算漫反射
-	float DiffuseRatio = max(dot(toLight, normal), 0);
+	float DiffuseRatio = max(dot(toLight, normal), 0.001);
 	DiffuseLight += lightColor * DiffuseRatio;
 
 	//Blinn-Phong光照
@@ -275,8 +276,8 @@ void LightFunc(float3 normal, float3 toLight, float3 toEye, float4 lightColor, i
 	float lh = dot(toLight, H);
 	float G = 1 / (lh*lh);
 
-	float shininess = 2.0f;
-	float SpecularRatio = max(dot(normal, H), 0);
+	float shininess = 0.05f;
+	float SpecularRatio = max(dot(normal, H), 0.00);
 	float PoweredSpecular = pow(SpecularRatio, shininess) * (shininess + 2.0f) / 8.0f * G;
 	SpecularLight += lightColor * PoweredSpecular * DiffuseRatio;
 }
@@ -378,8 +379,8 @@ float4 DirectionLightPass(float2 TexCoord : TEXCOORD0) : COLOR
 	shadowFinal = tex2D(g_sampleShadowResult, TexCoord);
 
 	float4 Texture = tex2D(g_sampleDiffuse, TexCoord);
-	//混合光照和纹理
-	float4 finalColor = DiffuseLight + SpecularLight / Texture;
+		//混合光照和纹理
+		float4 finalColor = DiffuseLight + SpecularLight;// / Texture;
 	return finalColor * shadowFinal;
 }
 
@@ -408,8 +409,8 @@ float4 PointLightPass(float4 posWVP : TEXCOORD0) : COLOR
 	float toLightDistance = length(toLight);
 	
 	//加入灯光体之后就可以省略掉这个判断了
-	//if (toLightDistance > g_LightRange)
-	//	return float4(0.0f, 0.0f, 0.0f, 1.0f);
+	if (toLightDistance > g_LightRange)
+		return float4(0.0f, 0.0f, 0.0f, 1.0f);
 
 	float disRange = clamp(toLightDistance / g_LightRange, 0.0f, 1.0f);
 
@@ -428,9 +429,9 @@ float4 PointLightPass(float4 posWVP : TEXCOORD0) : COLOR
 	shadowFinal = GaussianBlur(g_ScreenWidth, g_ScreenHeight, g_sampleShadowResult, TexCoord);
 
 	float4 Texture = tex2D(g_sampleDiffuse, TexCoord);
-		//混合光照和纹理
-		float4 finalColor = DiffuseLight + SpecularLight / Texture;
-		return finalColor * shadowFinal;
+	//混合光照和纹理
+	float4 finalColor = DiffuseLight + SpecularLight;// / Texture;
+	return finalColor * shadowFinal;
 }
 
 float4 SpotLightPass(float4 posWVP : TEXCOORD0) : COLOR
@@ -471,7 +472,7 @@ float4 SpotLightPass(float4 posWVP : TEXCOORD0) : COLOR
 	float cosPhi = g_LightCosAngle.x;
 
 	//聚光灯外角以外和范围以外都没有光照(加入灯光体之后就可以省略掉这个判断了)
-	if (/*toLightDistance > g_LightRange || */cosAlpha < cosPhi)
+	if (toLightDistance > g_LightRange || cosAlpha < cosPhi)
 		return float4(0.0f, 0.0f, 0.0f, 1.0f);
 	
 	float falloff = 1.0f;
@@ -493,7 +494,7 @@ float4 SpotLightPass(float4 posWVP : TEXCOORD0) : COLOR
 
 	float4 Texture = tex2D(g_sampleDiffuse, TexCoord);
 		//混合光照和纹理
-		float4 finalColor = DiffuseLight + SpecularLight / Texture;
+		float4 finalColor = DiffuseLight + SpecularLight;// / Texture;
 	return finalColor * shadowFinal;
 }
 
@@ -530,6 +531,14 @@ float4 PointShadowPass(float4 posWVP : TEXCOORD0) : COLOR
 	return finalColor;
 }
 
+float4 AmbientPass(float2 TexCoord : TEXCOORD0) : COLOR
+{
+	//计算环境光
+	float4 Ambient = g_AmbientColor;
+
+	return Ambient;
+}
+
 float4 DiffusePass(float2 TexCoord : TEXCOORD0) : COLOR
 {
 	//纹理采样
@@ -538,7 +547,7 @@ float4 DiffusePass(float2 TexCoord : TEXCOORD0) : COLOR
 	//AO
 	float4 AO = tex2D(g_sampleAO, TexCoord);
 
-	return Texture * AO;
+	return Texture;
 }
 
 float4 DebugPass(float2 TexCoord : TEXCOORD0) : COLOR
@@ -554,7 +563,8 @@ float4 DebugPass(float2 TexCoord : TEXCOORD0) : COLOR
 
 	//return Texture;
 	//return AO;
-	return float4(Shadow.x / 100, Shadow.x / 100, Shadow.x / 100, 1.0f);
+	//return float4(Shadow.x / 100, Shadow.x / 100, Shadow.x / 100, 1.0f);
+	//return float4(GetNormal(TexCoord),1.0f);
 	return Normal;
 }
 
@@ -568,7 +578,40 @@ technique DeferredRender
 		SrcBlend = ONE;
 		DestBlend = ONE;
 	}
-	pass p1 //添加环境光
+
+	pass p1 //PointLight
+	{
+		vertexShader = compile vs_3_0 VShaderLightVolume();
+		pixelShader = compile ps_3_0 PointLightPass();
+		AlphaBlendEnable = true;                        //设置渲染状态        
+		SrcBlend = ONE;
+		DestBlend = ONE;
+	}
+
+	pass p2 //SpotLight
+	{
+		vertexShader = compile vs_3_0 VShaderLightVolume();
+		pixelShader = compile ps_3_0 SpotLightPass();
+		AlphaBlendEnable = true;                        //设置渲染状态        
+		SrcBlend = ONE;
+		DestBlend = ONE;
+	}
+
+	pass p3 //DirShadow
+	{
+		vertexShader = compile vs_3_0 VShader();
+		pixelShader = compile ps_3_0 ShadowPass();
+		AlphaBlendEnable = false;
+	}
+
+	pass p4 //PointShadow
+	{
+		vertexShader = compile vs_3_0 VShaderLightVolume();
+		pixelShader = compile ps_3_0 PointShadowPass();
+		AlphaBlendEnable = false;
+	}
+
+	pass p5 //添加环境光
 	{
 		vertexShader = compile vs_3_0 VShader();
 		pixelShader = compile ps_3_0 AmbientPass();
@@ -576,7 +619,7 @@ technique DeferredRender
 		SrcBlend = ONE;
 		DestBlend = ONE;
 	}
-	pass p2 //纹理及AO
+	pass p6 //纹理及AO
 	{
 		vertexShader = compile vs_3_0 VShader();
 		pixelShader = compile ps_3_0 DiffusePass();
@@ -584,7 +627,7 @@ technique DeferredRender
 		SrcBlend = ZERO;
 		DestBlend = SrcColor;
 	}
-	pass p3 //DEBUG PASS
+	pass p7 //DEBUG PASS
 	{
 		vertexShader = compile vs_3_0 VShader();
 		pixelShader = compile ps_3_0 DebugPass();
@@ -594,34 +637,5 @@ technique DeferredRender
 		SrcBlend = ONE;
 		DestBlend = ZERO;
 	}
-	pass p4 //PointLight
-	{
-		vertexShader = compile vs_3_0 VShaderLightVolume();
-		pixelShader = compile ps_3_0 PointLightPass();
-		AlphaBlendEnable = true;                        //设置渲染状态        
-		SrcBlend = ONE;
-		DestBlend = ONE;
-	}
-	pass p5 //SpotLight
-	{
-		vertexShader = compile vs_3_0 VShaderLightVolume();
-		pixelShader = compile ps_3_0 SpotLightPass();
-		AlphaBlendEnable = true;                        //设置渲染状态        
-		SrcBlend = ONE;
-		DestBlend = ONE;
-	}
 	
-	pass p6 //DirShadow
-	{
-		vertexShader = compile vs_3_0 VShader();
-		pixelShader = compile ps_3_0 ShadowPass();
-		AlphaBlendEnable = false;
-	}
-
-	pass p7 //PointShadow
-	{
-		vertexShader = compile vs_3_0 VShaderLightVolume();
-		pixelShader = compile ps_3_0 PointShadowPass();
-		AlphaBlendEnable = false;
-	}
 }

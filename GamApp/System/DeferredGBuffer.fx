@@ -46,7 +46,7 @@ struct OutputVS
 {
 	float4 posWVP			: POSITION;
 	float3 normalV			: NORMAL;
-	float4 tangentV			: TANGENT;
+	float3 tangentV			: TANGENT;
 	float3 binormalV		: BINORMAL;
 
 	float2 TexCoord			: TEXCOORD0;
@@ -112,6 +112,7 @@ OutputPS PShader(float3 NormalV		: NORMAL,
 	//所以TBN自然就是将切线空间的向量转回三个分量的空间
 	//这里使用观察空间的三个分量，所以切空间的法线乘以TBN就是观察空间的法线了
 	float3x3 TBN = float3x3(TangentV, BinormalV, NormalV);
+	//TBN = transpose(TBN);
 
 	float3 sampledNormalT = tex2D(g_sampleNormalMap, TexCoord).rgb;
 	sampledNormalT = 2.0f * sampledNormalT - 1.0f;
@@ -119,6 +120,12 @@ OutputPS PShader(float3 NormalV		: NORMAL,
 
 	//两种是等价的
 	float3 sampledNormalV = mul(sampledNormalT, TBN);/* sampledNormalT.x * TBN[0] + sampledNormalT.y * TBN[1] + sampledNormalT.z * TBN[2];*/
+	sampledNormalV = normalize(sampledNormalV);
+	
+
+	//if (abs(sampledNormalT.x - 0) < 0.02 && abs(sampledNormalT.y - 0) < 0.02 && abs(sampledNormalT.z - 1) < 0.02)
+	//	sampledNormalV = float3(1, 1, 1);
+
 	sampledNormalV = (sampledNormalV + 1.0f) / 2.0f;
 
 	//纹理采样

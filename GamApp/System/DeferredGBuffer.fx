@@ -115,7 +115,7 @@ OutputPS PShader(float3 NormalV		: NORMAL,
 	//TBN = transpose(TBN);
 
 	float3 sampledNormalT = tex2D(g_sampleNormalMap, TexCoord).rgb;
-	sampledNormalT = 2.0f * sampledNormalT - 1.0f;
+	sampledNormalT = 2.0f * sampledNormalT - 1.0f - 0.00392f;
 	sampledNormalT = normalize(sampledNormalT);
 
 	//两种是等价的

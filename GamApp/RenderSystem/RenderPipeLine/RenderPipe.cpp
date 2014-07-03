@@ -50,7 +50,7 @@ RenderPipe::RenderPipe()
 
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
 		1, D3DUSAGE_RENDERTARGET,
-		D3DFMT_A32B32G32R32F, D3DPOOL_DEFAULT,
+		D3DFMT_A16B16G16R16, D3DPOOL_DEFAULT,
 		&m_pNormalTarget, NULL);
 	hr = m_pNormalTarget->GetSurfaceLevel(0, &m_pNormalSurface);
 
@@ -577,11 +577,11 @@ void RenderPipe::RenderAll()
 
 	DeferredRender_MultiPass();
 
-	//hdrLighting.RenderPost(m_pMainColorTarget);
-	//m_pPostTarget = hdrLighting.GetPostTarget();
+	hdrLighting.RenderPost(m_pMainColorTarget);
+	m_pPostTarget = hdrLighting.GetPostTarget();
 
-	//dof.RenderPost(m_pPostTarget);
-	//m_pPostTarget = dof.GetPostTarget();
+	dof.RenderPost(m_pPostTarget);
+	m_pPostTarget = dof.GetPostTarget();
 
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pOriSurface);
 

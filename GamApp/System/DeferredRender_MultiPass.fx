@@ -266,7 +266,7 @@ float4 GaussianBlur(int mapWidth, int mapHeight, sampler2D texSampler, float2 te
 void LightFunc(float3 normal, float3 toLight, float3 toEye, float4 lightColor, inout float4 DiffuseLight, inout float4 SpecularLight)
 {
 	//º∆À„¬˛∑¥…‰
-	float DiffuseRatio = max(dot(toLight, normal), 0.001);
+	float DiffuseRatio = max(dot(toLight, normal), 0.0);
 	DiffuseLight += lightColor * DiffuseRatio;
 
 	//Blinn-Phongπ‚’’
@@ -277,7 +277,7 @@ void LightFunc(float3 normal, float3 toLight, float3 toEye, float4 lightColor, i
 	float G = 1 / (lh*lh);
 
 	float shininess = 0.05f;
-	float SpecularRatio = max(dot(normal, H), 0.00);
+	float SpecularRatio = max(dot(normal, H), 0.0);
 	float PoweredSpecular = pow(SpecularRatio, shininess) * (shininess + 2.0f) / 8.0f * G;
 	SpecularLight += lightColor * PoweredSpecular * DiffuseRatio;
 }

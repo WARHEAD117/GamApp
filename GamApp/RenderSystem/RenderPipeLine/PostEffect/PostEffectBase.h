@@ -19,9 +19,8 @@ public:
 	PostEffectBase();
 	~PostEffectBase();
 
-	virtual void RenderPost();
-	virtual void RenderPost(LPDIRECT3DTEXTURE9 lastBuffer);
-	void CreatePostEffect(std::string effectName);
+	virtual void RenderPost(LPDIRECT3DTEXTURE9 lastBuffer = NULL);
+	void CreatePostEffect(std::string effectName, D3DFORMAT postTargetFMT = D3DFMT_X8R8G8B8);
 	LPDIRECT3DTEXTURE9 GetPostTarget();
 private:
 	

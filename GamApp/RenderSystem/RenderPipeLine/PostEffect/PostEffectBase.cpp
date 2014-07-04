@@ -12,12 +12,12 @@ PostEffectBase::~PostEffectBase()
 {
 }
 
-void PostEffectBase::CreatePostEffect(std::string effectName)
+void PostEffectBase::CreatePostEffect(std::string effectName, D3DFORMAT postTargetFMT/* = D3DFMT_X8R8G8B8*/)
 {
 	//create renderTarget
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
 		1, D3DUSAGE_RENDERTARGET,
-		D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT,
+		postTargetFMT, D3DPOOL_DEFAULT,
 		&m_pPostTarget, NULL);
 	HRESULT hr = m_pPostTarget->GetSurfaceLevel(0, &m_pPostSurface);
 
@@ -70,7 +70,7 @@ void PostEffectBase::CreatePostEffect(std::string effectName)
 	m_pBufferVex->Unlock();
 }
 
-void PostEffectBase::RenderPost()
+void PostEffectBase::RenderPost(LPDIRECT3DTEXTURE9 lastBuffer/* = NULL*/)
 {
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pPostSurface);
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 0, 0, 0), 1.0f, 0);
@@ -80,32 +80,10 @@ void PostEffectBase::RenderPost()
 	m_postEffect->BeginPass(0);
 
 	m_postEffect->SetMatrix(WORLDVIEWPROJMATRIX, &RENDERDEVICE::Instance().OrthoWVPMatrix);
-
-	m_postEffect->SetTexture(MAINCOLORBUFFER, RENDERPIPE::Instance().m_pMainColorTarget);
-	
-	m_postEffect->CommitChanges();
-
-	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, m_pBufferVex, 0, sizeof(VERTEX));
-	RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(D3DFVF_VERTEX);
-	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
-	m_postEffect->SetTexture(0, NULL);
-
-	m_postEffect->EndPass();
-	m_postEffect->End();
-}
-
-void PostEffectBase::RenderPost(LPDIRECT3DTEXTURE9 lastBuffer)
-{
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pPostSurface);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 0, 0, 0), 1.0f, 0);
-
-	UINT numPasses = 0;
-	m_postEffect->Begin(&numPasses, 0);
-	m_postEffect->BeginPass(0);
-
-	m_postEffect->SetMatrix(WORLDVIEWPROJMATRIX, &RENDERDEVICE::Instance().OrthoWVPMatrix);
-
-	m_postEffect->SetTexture(MAINCOLORBUFFER, lastBuffer);
+	if (lastBuffer != NULL)
+		m_postEffect->SetTexture(MAINCOLORBUFFER, lastBuffer);
+	else
+		m_postEffect->SetTexture(MAINCOLORBUFFER, RENDERPIPE::Instance().m_pMainColorTarget);
 
 	m_postEffect->CommitChanges();
 

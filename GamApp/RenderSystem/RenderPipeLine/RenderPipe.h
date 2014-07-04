@@ -19,7 +19,6 @@ public:
 
 	void	RenderGBuffer();
 
-	void	RenderAO();
 	void	DeferredRender_MultiPass();
 	void	RenderFinalColor();
 
@@ -33,7 +32,6 @@ public:
 	LPDIRECT3DTEXTURE9	m_pNormalTarget;
 	LPDIRECT3DTEXTURE9	m_pPositionTarget;
 
-	LPDIRECT3DTEXTURE9	m_pAOTarget;
 	LPDIRECT3DTEXTURE9	m_pLightTarget;
 	LPDIRECT3DTEXTURE9	m_pShadowTarget;
 
@@ -46,7 +44,6 @@ private:
 	LPDIRECT3DSURFACE9	m_pDiffuseSurface;
 	LPDIRECT3DSURFACE9	m_pNormalSurface;
 	LPDIRECT3DSURFACE9	m_pPositionSurface;
-	LPDIRECT3DSURFACE9	m_pAOSurface;
 
 	LPDIRECT3DSURFACE9	m_pLightSurface;
 	LPDIRECT3DSURFACE9	m_pShadowSurface;

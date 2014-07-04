@@ -7,8 +7,9 @@ public:
 	SSAO();
 	~SSAO();
 
-	void RenderPost();
+	void RenderPost(LPDIRECT3DTEXTURE9 mainBuffer);
 	void CreatePostEffect();
+	void ComputeAOConfig();
 
 private:
 	float		m_intensity;
@@ -17,6 +18,8 @@ private:
 	float		m_sample_rad;
 	bool		m_AOEnable;
 
-	LPDIRECT3DTEXTURE9         m_pRandomNormal;
+	LPDIRECT3DTEXTURE9			m_pRandomNormal;
+	LPDIRECT3DTEXTURE9			m_pAoTarget;
+	LPDIRECT3DSURFACE9			m_pAoSurface;
 };
 

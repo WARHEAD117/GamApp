@@ -337,8 +337,6 @@ void RenderPipe::DeferredRender_MultiPass()
 	deferredMultiPassEffect->SetInt(SCREENHEIGHT, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight);
 	deferredMultiPassEffect->SetFloat("g_zNear", CameraParam::zNear);
 	deferredMultiPassEffect->SetFloat("g_zFar", CameraParam::zFar);
-
-	deferredMultiPassEffect->SetTexture("g_AOBuffer", ssao.GetPostTarget());
 	
 	deferredMultiPassEffect->CommitChanges();
 
@@ -512,7 +510,7 @@ void RenderPipe::DeferredRender_MultiPass()
 	deferredMultiPassEffect->EndPass();
 	
 
-	//纹理及AO的Pass
+	//纹理Pass
 	deferredMultiPassEffect->BeginPass(6);
 	RENDERDEVICE::Instance().g_pD3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 4, 0, 2);
 	deferredMultiPassEffect->EndPass();
@@ -573,15 +571,18 @@ void RenderPipe::RenderAll()
 	
 	//ForwardRender();
 
-	ssao.RenderPost();
+	
 
 	DeferredRender_MultiPass();
 
-	hdrLighting.RenderPost(m_pMainColorTarget);
+	ssao.RenderPost(m_pMainColorTarget);
+	m_pPostTarget = ssao.GetPostTarget();
+
+	hdrLighting.RenderPost(m_pPostTarget);
 	m_pPostTarget = hdrLighting.GetPostTarget();
 
-	dof.RenderPost(m_pPostTarget);
-	m_pPostTarget = dof.GetPostTarget();
+	//dof.RenderPost(m_pPostTarget);
+	//m_pPostTarget = dof.GetPostTarget();
 
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pOriSurface);
 

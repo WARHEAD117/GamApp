@@ -45,6 +45,26 @@ sampler_state
 	MipFilter = Point;
 };
 
+texture		g_MainColorBuffer;
+sampler2D g_sampleMainColor =
+sampler_state
+{
+	Texture = <g_MainColorBuffer>;
+	MinFilter = Point;
+	MagFilter = Point;
+	MipFilter = Point;
+};
+
+texture		g_AoBuffer;
+sampler2D g_sampleAo =
+sampler_state
+{
+	Texture = <g_AoBuffer>;
+	MinFilter = linear;
+	MagFilter = linear;
+	MipFilter = linear;
+};
+
 struct OutputVS
 {
 	float4 posWVP         : POSITION0;
@@ -144,11 +164,24 @@ float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
 	return float4(1 - ao, 1 - ao, 1 - ao, 1.0f);
 }
 
+float4 DrawMain(float2 TexCoord : TEXCOORD0) : COLOR
+{
+	float4 AO = tex2D(g_sampleAo, TexCoord);
+	float4 fianlColor = AO * tex2D(g_sampleMainColor, TexCoord);
+	return fianlColor;
+}
+
 technique SSAO
 {
 	pass p0
 	{
 		vertexShader = compile vs_3_0 VShader();
 		pixelShader = compile ps_3_0 PShader();
+	}
+
+	pass p1
+	{
+		vertexShader = compile vs_3_0 VShader();
+		pixelShader = compile ps_3_0 DrawMain();
 	}
 }

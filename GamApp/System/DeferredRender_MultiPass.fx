@@ -10,8 +10,6 @@ texture		g_DiffuseBuffer;
 texture		g_NormalBuffer;
 texture		g_PositionBuffer;
 
-texture		g_AOBuffer;
-
 texture		g_ShadowBuffer;
 texture		g_PointShadowBuffer;
 
@@ -59,16 +57,6 @@ sampler_state
 	MagFilter = Point;
 	MipFilter = Point;
 };
-
-sampler2D g_sampleAO =
-sampler_state
-{
-	Texture = <g_AOBuffer>;
-	MinFilter = Point;
-	MagFilter = Point;
-	MipFilter = Point;
-};
-
 
 sampler2D g_samplePosition =
 sampler_state
@@ -544,25 +532,19 @@ float4 DiffusePass(float2 TexCoord : TEXCOORD0) : COLOR
 	//纹理采样
 	float4 Texture = tex2D(g_sampleDiffuse, TexCoord);
 
-	//AO
-	float4 AO = tex2D(g_sampleAO, TexCoord);
-
-	return Texture;
+	return Texture;;
 }
 
 float4 DebugPass(float2 TexCoord : TEXCOORD0) : COLOR
 {
 	//DIffuse
 	float4 Texture = tex2D(g_sampleDiffuse, TexCoord);
-	//AO
-	float4 AO = tex2D(g_sampleAO, TexCoord);
 	//ShadowMap
 	float4 Shadow = tex2D(g_sampleShadow, TexCoord);
 	//Normal
 	float4 Normal = tex2D(g_sampleNormal, TexCoord);
 
 	//return Texture;
-	//return AO;
 	//return float4(Shadow.x / 100, Shadow.x / 100, Shadow.x / 100, 1.0f);
 	//return float4(GetNormal(TexCoord),1.0f);
 	return Normal;
@@ -619,7 +601,7 @@ technique DeferredRender
 		SrcBlend = ONE;
 		DestBlend = ONE;
 	}
-	pass p6 //纹理及AO
+	pass p6 //纹理
 	{
 		vertexShader = compile vs_3_0 VShader();
 		pixelShader = compile ps_3_0 DiffusePass();

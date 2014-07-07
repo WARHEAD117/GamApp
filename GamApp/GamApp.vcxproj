@@ -109,6 +109,7 @@
     <ClInclude Include="RenderSystem\RenderPipeLine\RenderPipe.h" />
     <ClInclude Include="RenderSystem\RenderUtil\EffectParam.h" />
     <ClInclude Include="RenderSystem\RenderUtil\RenderUtil.h" />
+    <ClInclude Include="RenderSystem\Sky\SkyBox.h" />
     <ClInclude Include="Takarazuka\NoteEntity.h" />
     <ClInclude Include="Takarazuka\NoteManager.h" />
     <ClInclude Include="Takarazuka\TakarazukaScene.h" />
@@ -143,6 +144,7 @@
     <ClCompile Include="RenderSystem\RenderPipeLine\PostEffect\SSAO.cpp" />
     <ClCompile Include="RenderSystem\RenderPipeLine\RenderPipe.cpp" />
     <ClCompile Include="RenderSystem\RenderUtil\RenderUtil.cpp" />
+    <ClCompile Include="RenderSystem\Sky\SkyBox.cpp" />
     <ClCompile Include="Takarazuka\NoteEntity.cpp" />
     <ClCompile Include="Takarazuka\NoteManager.cpp" />
     <ClCompile Include="Takarazuka\TakarazukaScene.cpp" />

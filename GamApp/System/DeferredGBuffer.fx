@@ -6,6 +6,8 @@ matrix		g_WorldView;
 matrix		g_WorldViewProj;
 matrix		g_mWorldInv;
 
+bool		g_IsSky;
+
 texture		g_Texture;
 sampler2D g_sampleTexture =
 sampler_state
@@ -127,12 +129,21 @@ OutputPS PShader(float3 NormalV		: NORMAL,
 	//	sampledNormalV = float3(1, 1, 1);
 
 	sampledNormalV = (sampledNormalV + 1.0f) / 2.0f;
+	
+	//天空盒
+	sampledNormalV = g_IsSky ? float3(0, 0, 0) : sampledNormalV;
 
 	//纹理采样
 	float4 Texture = tex2D(g_sampleTexture, TexCoord);
 
+	//天空盒
+	posV = g_IsSky ? float4(1.0e6, 1.0e6, 1.0e6, 1.0e6) : posV;
+
 	//投影后的非线性深度
-	float DepthP = posP.z / posP.w;
+	//float DepthP = posP.z / posP.w;
+
+	//判断是否是天空盒
+	float DepthP = g_IsSky ? 1.0e6 : posP.z / posP.w;
 
 	PsOut.diffuse = Texture;
 	PsOut.normal = float4(sampledNormalV, 1.0f);

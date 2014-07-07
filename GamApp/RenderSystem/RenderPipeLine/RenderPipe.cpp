@@ -12,6 +12,8 @@
 #include "RenderPipeLine/PostEffect/HDRLighting.h"
 #include "RenderPipeLine/PostEffect/DOF.h"
 
+#include "Sky/SkyBox.h"
+
 struct VERTEX
 {
 	D3DXVECTOR3		position;
@@ -38,6 +40,8 @@ int SHADOWMAPSIZE = 1024;
 SSAO ssao;
 HDRLighting hdrLighting;
 DOF dof;
+
+SkyBox skyBox;
 
 RenderPipe::RenderPipe()
 {
@@ -174,6 +178,16 @@ RenderPipe::RenderPipe()
 	ssao.CreatePostEffect();
 	hdrLighting.CreatePostEffect();
 	dof.CreatePostEffect();
+
+	//==========================================================
+	skyBox.BuildSkyBox();
+	skyBox.SetSkyTexture("Res\\SkyBox\\bottom.jpg", 0);
+	skyBox.SetSkyTexture("Res\\SkyBox\\left.jpg", 1);
+	skyBox.SetSkyTexture("Res\\SkyBox\\right.jpg", 2);
+	skyBox.SetSkyTexture("Res\\SkyBox\\top.jpg", 3);
+	skyBox.SetSkyTexture("Res\\SkyBox\\back.jpg", 4);
+	skyBox.SetSkyTexture("Res\\SkyBox\\front.jpg", 5);
+	
 }
 
 
@@ -194,6 +208,8 @@ void RenderPipe::RenderGBuffer()
 	UINT nPasses = 0;
 	HRESULT r1 = GBufferEffect->Begin(&nPasses, 0);
 	HRESULT r2 = GBufferEffect->BeginPass(0);
+
+	skyBox.RenderInGBuffer(GBufferEffect);
 
 	for (int i = 0; i < mRenderUtilList.size(); ++i)
 	{

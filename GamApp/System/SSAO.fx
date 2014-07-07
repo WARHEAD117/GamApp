@@ -131,7 +131,7 @@ float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
 	float3 p = GetPosition(TexCoord);
 
 	//深度重建的位置会有误差，最远处的误差会导致背景变灰，所以要消除影响
-	if (p.z > g_zFar - 0.1)
+	if (p.z > g_zFar)
 		return float4(1, 1, 1, 1);
 
 	//观察空间法线
@@ -168,6 +168,7 @@ float4 DrawMain(float2 TexCoord : TEXCOORD0) : COLOR
 {
 	float4 AO = tex2D(g_sampleAo, TexCoord);
 	float4 fianlColor = AO * tex2D(g_sampleMainColor, TexCoord);
+
 	return fianlColor;
 }
 

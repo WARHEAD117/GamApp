@@ -350,7 +350,7 @@ float4 DirectionLightPass(float2 TexCoord : TEXCOORD0) : COLOR
 
 	float3 pos = GetPosition(TexCoord);
 
-	if (pos.z > g_zFar - 0.1)
+	if (pos.z > g_zFar)
 		return float4(0, 0, 0, 1);
 
 	float3 ToEyeDirV = normalize(pos * -1.0f);
@@ -385,8 +385,8 @@ float4 PointLightPass(float4 posWVP : TEXCOORD0) : COLOR
 	float3 pos = GetPosition(TexCoord);
 	
 	//加入灯光体之后就可以省略掉这个判断了
-	//if (pos.z > g_zFar - 0.1)
-	//	return float4(0, 0, 0, 1);
+	if (pos.z > g_zFar)
+		return float4(0, 0, 0, 1);
 
 	float3 ToEyeDirV = normalize(pos * -1.0f);
 
@@ -434,8 +434,8 @@ float4 SpotLightPass(float4 posWVP : TEXCOORD0) : COLOR
 
 	float3 pos = GetPosition(TexCoord);
 	
-	//if (pos.z > g_zFar - 0.1)
-	//	return float4(0, 0, 0, 1);
+	if (pos.z > g_zFar)
+		return float4(0, 0, 0, 1);
 
 	float3 ToEyeDirV = normalize(pos * -1.0f);
 
@@ -524,6 +524,8 @@ float4 AmbientPass(float2 TexCoord : TEXCOORD0) : COLOR
 	//计算环境光
 	float4 Ambient = g_AmbientColor;
 
+	Ambient = GetPosition(TexCoord).z > g_zFar ? float4(100,100,100,1): Ambient;
+
 	return Ambient;
 }
 
@@ -544,7 +546,7 @@ float4 DebugPass(float2 TexCoord : TEXCOORD0) : COLOR
 	//Normal
 	float4 Normal = tex2D(g_sampleNormal, TexCoord);
 
-	//return Texture;
+	return Texture;
 	//return float4(Shadow.x / 100, Shadow.x / 100, Shadow.x / 100, 1.0f);
 	//return float4(GetNormal(TexCoord),1.0f);
 	return Normal;

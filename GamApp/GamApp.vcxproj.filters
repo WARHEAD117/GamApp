@@ -64,6 +64,9 @@
     <Filter Include="RenderSystem\PostEffect">
       <UniqueIdentifier>{41f4e774-c786-4e9b-a847-01f31c8c9698}</UniqueIdentifier>
     </Filter>
+    <Filter Include="RenderSystem\Sky">
+      <UniqueIdentifier>{e85ddd06-e436-40a9-866b-8d8f22fad97e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DrawSkyBox.h" />
@@ -172,6 +175,9 @@
     <ClInclude Include="RenderSystem\RenderPipeLine\PostEffect\DOF.h">
       <Filter>RenderSystem\PostEffect</Filter>
     </ClInclude>
+    <ClInclude Include="RenderSystem\Sky\SkyBox.h">
+      <Filter>RenderSystem\Sky</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DrawSkyBox.cpp" />
@@ -267,6 +273,9 @@
     </ClCompile>
     <ClCompile Include="RenderSystem\RenderPipeLine\PostEffect\DOF.cpp">
       <Filter>RenderSystem\PostEffect</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderSystem\Sky\SkyBox.cpp">
+      <Filter>RenderSystem\Sky</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -359,7 +359,7 @@ void HDRLighting::MeasureLuminance()
 	RENDERDEVICE::Instance().g_pD3DDevice->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_WRAP);
-	RENDERDEVICE::Instance().g_pD3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_WRAP);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_WRAP);
 
 	UINT numPasses = 0;
 	m_postEffect->Begin(&numPasses, 0);
@@ -397,7 +397,7 @@ void HDRLighting::MeasureLuminance()
 		RENDERDEVICE::Instance().g_pD3DDevice->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_POINT);
 		RENDERDEVICE::Instance().g_pD3DDevice->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
 		RENDERDEVICE::Instance().g_pD3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_WRAP);
-		RENDERDEVICE::Instance().g_pD3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_WRAP);
+		RENDERDEVICE::Instance().g_pD3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_WRAP);
 
 		UINT numPasses = 0;
 		m_postEffect->Begin(&numPasses, 0);
@@ -436,7 +436,7 @@ void HDRLighting::MeasureLuminance()
 	RENDERDEVICE::Instance().g_pD3DDevice->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_POINT);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_WRAP);
-	RENDERDEVICE::Instance().g_pD3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_WRAP);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_WRAP);
 
 	m_postEffect->Begin(&numPasses, 0);
 	m_postEffect->BeginPass(0);

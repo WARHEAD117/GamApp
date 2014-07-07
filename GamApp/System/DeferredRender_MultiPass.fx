@@ -524,7 +524,7 @@ float4 AmbientPass(float2 TexCoord : TEXCOORD0) : COLOR
 	//计算环境光
 	float4 Ambient = g_AmbientColor;
 
-	Ambient = GetPosition(TexCoord).z > g_zFar ? float4(100,100,100,1): Ambient;
+	Ambient = GetPosition(TexCoord).z > g_zFar ? float4(10,10,10,1): Ambient;
 
 	return Ambient;
 }

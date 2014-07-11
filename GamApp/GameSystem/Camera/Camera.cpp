@@ -32,8 +32,7 @@ void Camera::OnFrame()
 	D3DXMatrixInverse(&mView, NULL, &mWorldTransform);
 	RENDERDEVICE::Instance().ViewMatrix = mView;
 
-	D3DXMATRIX tempWorld;
-	D3DXMatrixInverse(&tempWorld, NULL, &mView);
+	RENDERDEVICE::Instance().InvViewMatrix = mWorldTransform;
 
 	RENDERDEVICE::Instance().ViewPosition = D3DXVECTOR3(mWorldTransform._41, mWorldTransform._42, mWorldTransform._43);
 }

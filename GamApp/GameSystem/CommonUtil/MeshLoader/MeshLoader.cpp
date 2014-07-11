@@ -1,16 +1,6 @@
 #include "MeshLoader.h"
 #include "D3D9Device.h"
 
-const D3DVERTEXELEMENT9 VERTEXDECL[] =
-{
-	{ 0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0 },
-	{ 0, 12, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0 },
-	{ 0, 20, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL, 0 },
-	{ 0, 32, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TANGENT, 0 },
-	{ 0, 44, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_BINORMAL, 0 },
-	D3DDECL_END()
-};
-
 MeshLoader::MeshLoader()
 {
 }
@@ -38,24 +28,13 @@ HRESULT MeshLoader::LoadXMesh(std::string filePath)
 		&adjBuffer, &pXBuffer, NULL, &m_dwMtrlNum, &m_pMesh)))
 		return E_FAIL;
 
-	//Use Global decl
-	// Create a new vertex declaration to hold all the required data
-// 	const D3DVERTEXELEMENT9 vertexDecl[] =
-// 	{
-// 		{ 0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0 },
-// 		{ 0, 12, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0 },
-// 		{ 0, 20, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL, 0 },
-// 		{ 0, 32, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TANGENT, 0 },
-// 		{ 0, 44, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_BINORMAL, 0 },
-// 		D3DDECL_END()
-// 	};
-	RENDERDEVICE::Instance().g_pD3DDevice->CreateVertexDeclaration(VERTEXDECL, &mVertexDecl);
-	mVertexByteSize = D3DXGetDeclVertexSize(VERTEXDECL, 0);
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateVertexDeclaration(COMMONVERTEXDECL, &mVertexDecl);
+	mVertexByteSize = D3DXGetDeclVertexSize(COMMONVERTEXDECL, 0);
 
 	LPD3DXMESH pTempMesh = NULL;
 
 	// Clone mesh to match the specified declaration: 
-	if (FAILED(m_pMesh->CloneMesh(m_pMesh->GetOptions(), VERTEXDECL, RENDERDEVICE::Instance().g_pD3DDevice, &pTempMesh)))
+	if (FAILED(m_pMesh->CloneMesh(m_pMesh->GetOptions(), COMMONVERTEXDECL, RENDERDEVICE::Instance().g_pD3DDevice, &pTempMesh)))
 	{
 		SafeRelease(pTempMesh);
 		return E_FAIL;

@@ -31,6 +31,46 @@ void BaseLight::BuildLightVolume()
 	
 	if (m_LightType == eDirectionLight)
 	{
+		//=======================================================================
+		RENDERDEVICE::Instance().g_pD3DDevice->CreateVertexBuffer(4 * sizeof(VERTEX)
+			, 0
+			, D3DFVF_VERTEX
+			//,D3DPOOL_DEFAULT
+			, D3DPOOL_MANAGED
+			, &m_pBufferVex
+			, NULL);
+		RENDERDEVICE::Instance().g_pD3DDevice->CreateIndexBuffer(2 * 3 * sizeof(DWORD),
+			D3DUSAGE_WRITEONLY, D3DFMT_INDEX32, D3DPOOL_MANAGED, &m_pBufferIndex, 0);
+		DWORD* indices = 0;
+		m_pBufferIndex->Lock(0, 0, (void**)&indices, 0);
+		//全部逆时针绘制，在延迟渲染时剔除正面，就可以保证灯光和渲染面的剔除是统一的
+		indices[0] = 0;
+		indices[1] = 2;
+		indices[2] = 1;
+
+		indices[3] = 1;
+		indices[4] = 2;
+		indices[5] = 3;
+		m_pBufferIndex->Unlock();
+
+		VERTEX* pVertices1;
+		m_pBufferVex->Lock(0, 4 * sizeof(VERTEX), (void**)&pVertices1, 0);
+
+		//初始化顶点缓冲区
+		//==========================
+		pVertices1->position = D3DXVECTOR3(1.0f, -1.0f, 0.0f);
+		pVertices1++;
+
+		pVertices1->position = D3DXVECTOR3(-1.0f, -1.0f, 0.0f);
+		pVertices1++;
+
+		pVertices1->position = D3DXVECTOR3(1.0f, 1.0f, 0.0f);
+		pVertices1++;
+
+		pVertices1->position = D3DXVECTOR3(-1.0f, 1.0f, 0.0f);
+		pVertices1++;
+
+		m_pBufferVex->Unlock();
 	}
 	else if (m_LightType == ePointLight)
 	{
@@ -44,7 +84,7 @@ void BaseLight::BuildLightVolume()
 	{
 	}
 	
-
+	/*
 	//Create post vertex
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateVertexBuffer(24 * sizeof(VERTEX)
 		, 0
@@ -144,11 +184,31 @@ void BaseLight::BuildLightVolume()
 
 
 	m_pBufferVex->Unlock();
+	*/
 }
 
 void BaseLight::RenderLightVolume()
 {
-	m_lightVolume->DrawSubset(0);
+	switch (m_LightType)
+	{
+	case eDirectionLight:
+		RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, m_pBufferVex, 0, sizeof(VERTEX));
+		RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(D3DFVF_VERTEX);
+		RENDERDEVICE::Instance().g_pD3DDevice->SetIndices(m_pBufferIndex);
+
+		RENDERDEVICE::Instance().g_pD3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 4, 0, 2);
+		break;
+	case ePointLight:
+		m_lightVolume->DrawSubset(0);
+		break;
+	case eSpotLight:
+		m_lightVolume->DrawSubset(0);
+		break;
+	default:
+		m_lightVolume->DrawSubset(0);
+		break;
+	}
+	
 }
 
 void BaseLight::SetLightType(LightType lightType)
@@ -299,6 +359,32 @@ D3DXMATRIX BaseLight::GetLightProjMatrix()
 }
 
 
+D3DXMATRIX BaseLight::GetLightVolumeTransform()
+{
+	D3DXMATRIX lightVolumeMatrix;
+	D3DXMATRIX scaleMatrix;
+	D3DXMatrixScaling(&scaleMatrix, m_LightRange, m_LightRange, m_LightRange);
+	lightVolumeMatrix = scaleMatrix  * mWorldTransform;
+	lightVolumeMatrix = lightVolumeMatrix * RENDERDEVICE::Instance().ViewMatrix * RENDERDEVICE::Instance().ProjMatrix;
+
+	switch (m_LightType)
+	{
+	case eDirectionLight:
+		return RENDERDEVICE::Instance().OrthoWVPMatrix;
+		break;
+	case ePointLight:
+		return lightVolumeMatrix;
+		break;
+	case eSpotLight:
+		return lightVolumeMatrix;
+		break;
+	default:
+		return RENDERDEVICE::Instance().OrthoWVPMatrix;
+		break;
+	}
+}
+
+
 void BaseLight::SetUseShadow(bool useShadow)
 {
 	m_bUseShadow = false;
@@ -348,9 +434,23 @@ void BaseLight::SetShadowTarget()
 
 }
 
-LPDIRECT3DTEXTURE9 BaseLight::GetShadowTarget()
+LPDIRECT3DBASETEXTURE9 BaseLight::GetShadowTarget()
 {
-	return m_pShadowTarget;
+	switch (m_LightType)
+	{
+	case eDirectionLight:
+		return m_pShadowTarget;
+		break;
+	case ePointLight:
+		return m_pPointShadowTarget;
+		break;
+	case eSpotLight:
+		return m_pShadowTarget;
+		break;
+	default:
+		return m_pShadowTarget;
+		break;
+	}
 }
 
 void BaseLight::SetPointShadowTarget(int index)
@@ -361,11 +461,6 @@ void BaseLight::SetPointShadowTarget(int index)
 	m_pPointShadowTarget->GetCubeMapSurface((D3DCUBEMAP_FACES)index, 0, &pSurf);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf);
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(255, 255, 255, 255), 1.0f, 0);
-}
-
-LPDIRECT3DCUBETEXTURE9 BaseLight::GetPointShadowTarget()
-{
-	return m_pPointShadowTarget;
 }
 
 float BaseLight::GetLightRange()

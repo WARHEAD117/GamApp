@@ -70,21 +70,10 @@ sampler_state
 
 //----------------------------
 
-sampler2D g_sampleShadow =
+sampler g_sampleShadow =
 sampler_state
 {
 	Texture = <g_ShadowBuffer>;
-	MinFilter = ANISOTROPIC;
-	MagFilter = ANISOTROPIC;
-	MipFilter = ANISOTROPIC;// ANISOTROPIC;
-	AddressU = Clamp;
-	AddressV = Clamp;
-};
-
-sampler g_samplePointShadow =
-sampler_state
-{
-	Texture = <g_PointShadowBuffer>;
 	MinFilter = ANISOTROPIC;
 	MagFilter = ANISOTROPIC;
 	MipFilter = ANISOTROPIC;// ANISOTROPIC;
@@ -305,7 +294,7 @@ float PointShadowFunc(bool useShadow, float3 objViewPos)
 		//float2 Moments = tex2D(g_sampleShadow, ShadowTexCoord);
 		//float2 Moments = GaussianBlur(g_ShadowMapSize, g_ShadowMapSize, g_sampleShadow, ShadowTexCoord);
 			
-		float2 Moments = texCUBE(g_samplePointShadow, normalize(worldToObj.xyz));
+		float2 Moments = texCUBE(g_sampleShadow, normalize(worldToObj.xyz));
 
 			
 		shadowContribute = ChebyshevUpperBound(Moments, length(worldToObj.xyz));
@@ -344,8 +333,13 @@ float PCFShadow(bool useShadow, float3 objViewPos)
 	return shadowContribute;
 }
 
-float4 DirectionLightPass(float2 TexCoord : TEXCOORD0) : COLOR
+float4 DirectionLightPass(float4 posWVP : TEXCOORD0) : COLOR
 {
+	//return float4(0.5, 0.0f, 0.0f, 1.0f);
+
+	float lightU = (posWVP.x / posWVP.w + 1.0f) / 2.0f + 0.5f / g_ScreenWidth;
+	float lightV = (1.0f - posWVP.y / posWVP.w) / 2.0f + 0.5f / g_ScreenHeight;
+	float2 TexCoord = float2(lightU, lightV);
 	float3 Normal = GetNormal(TexCoord);
 
 	float3 pos = GetPosition(TexCoord);
@@ -486,9 +480,13 @@ float4 SpotLightPass(float4 posWVP : TEXCOORD0) : COLOR
 	return finalColor * shadowFinal;
 }
 
-float4 ShadowPass(float2 TexCoord : TEXCOORD0) : COLOR
+float4 ShadowPass(float4 posWVP : TEXCOORD0) : COLOR
 {
 	//return float4(0.5, 0.0f, 0.0f, 1.0f);
+
+	float lightU = (posWVP.x / posWVP.w + 1.0f) / 2.0f + 0.5f / g_ScreenWidth;
+	float lightV = (1.0f - posWVP.y / posWVP.w) / 2.0f + 0.5f / g_ScreenHeight;
+	float2 TexCoord = float2(lightU, lightV);
 	float3 pos = GetPosition(TexCoord);
 
 
@@ -556,7 +554,7 @@ technique DeferredRender
 {
 	pass p0 //‰÷»æµ∆π‚
 	{
-		vertexShader = compile vs_3_0 VShader();
+		vertexShader = compile vs_3_0 VShaderLightVolume();
 		pixelShader = compile ps_3_0 DirectionLightPass();
 		AlphaBlendEnable = true;                        //…Ë÷√‰÷»æ◊¥Ã¨        
 		SrcBlend = ONE;
@@ -583,7 +581,7 @@ technique DeferredRender
 
 	pass p3 //DirShadow
 	{
-		vertexShader = compile vs_3_0 VShader();
+		vertexShader = compile vs_3_0 VShaderLightVolume();
 		pixelShader = compile ps_3_0 ShadowPass();
 		AlphaBlendEnable = false;
 	}

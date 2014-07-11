@@ -34,6 +34,7 @@ public:
 
 	D3DXMATRIX								ViewMatrix;
 	D3DXMATRIX								ProjMatrix;
+	D3DXMATRIX								InvViewMatrix;
 	D3DXMATRIX								InvProjMatrix;
 
 	D3DXMATRIX								OrthoWVPMatrix;

@@ -4,18 +4,6 @@
 
 class SkyBox
 {
-
-protected:
-	struct VERTEX
-	{
-		D3DXVECTOR3		position;
-		D3DXVECTOR2		uv;
-		D3DXVECTOR3		normal;
-		D3DXVECTOR3		tangent;
-		D3DXVECTOR3		binormal;
-		
-	};
-
 public:
 	SkyBox();
 	~SkyBox();

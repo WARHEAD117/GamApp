@@ -14,16 +14,23 @@
 
 #include "Sky/SkyBox.h"
 
-struct VERTEX
+struct SCREENQUADVERTEX
 {
 	D3DXVECTOR3		position;
 	FLOAT			tu, tv;
 };
 
-#define D3DFVF_VERTEX (D3DFVF_XYZ|D3DFVF_TEX1)
-VERTEX vertices[4];
-LPDIRECT3DVERTEXBUFFER9		pBufferVex;
-LPDIRECT3DINDEXBUFFER9		pBufferIndex;
+LPDIRECT3DVERTEXDECLARATION9	mScreenQuadDecl;
+int								mScreenQuadByteSize;
+const D3DVERTEXELEMENT9 SCREENQUADDECL[] =
+{
+	{ 0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0 },
+	{ 0, 12, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0 },
+	D3DDECL_END()
+};
+
+LPDIRECT3DVERTEXBUFFER9		pScreenQuadVertex;
+LPDIRECT3DINDEXBUFFER9		pScreenQuadIndex;
 
 LPD3DXEFFECT GBufferEffect;
 
@@ -77,17 +84,21 @@ RenderPipe::RenderPipe()
 	hr = m_pMainColorTarget->GetSurfaceLevel(0, &m_pMainColorSurface);
 
 	//=======================================================================
-	RENDERDEVICE::Instance().g_pD3DDevice->CreateVertexBuffer(4 * sizeof(VERTEX)
+
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateVertexDeclaration(SCREENQUADDECL, &mScreenQuadDecl);
+	mScreenQuadByteSize = D3DXGetDeclVertexSize(SCREENQUADDECL, 0);
+
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateVertexBuffer(4 * mScreenQuadByteSize
 		, 0
-		, D3DFVF_VERTEX
+		, 0
 		//,D3DPOOL_DEFAULT
 		, D3DPOOL_MANAGED
-		, &pBufferVex
+		, &pScreenQuadVertex
 		, NULL);
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateIndexBuffer(2 * 3 * sizeof(DWORD),
-		D3DUSAGE_WRITEONLY, D3DFMT_INDEX32, D3DPOOL_MANAGED, &pBufferIndex, 0);
+		D3DUSAGE_WRITEONLY, D3DFMT_INDEX32, D3DPOOL_MANAGED, &pScreenQuadIndex, 0);
 	DWORD* indices = 0;
-	pBufferIndex->Lock(0, 0, (void**)&indices, 0);
+	pScreenQuadIndex->Lock(0, 0, (void**)&indices, 0);
 	//全部逆时针绘制，在延迟渲染时剔除正面，就可以保证灯光和渲染面的剔除是统一的
 	indices[0] = 0;
 	indices[1] = 2;
@@ -96,10 +107,10 @@ RenderPipe::RenderPipe()
 	indices[3] = 1;
 	indices[4] = 2;
 	indices[5] = 3;
-	pBufferIndex->Unlock();
+	pScreenQuadIndex->Unlock();
 
-	VERTEX* pVertices1;
-	pBufferVex->Lock(0, 4 * sizeof(VERTEX), (void**)&pVertices1, 0);
+	SCREENQUADVERTEX* pVertices1;
+	pScreenQuadVertex->Lock(0, 4 * sizeof(SCREENQUADVERTEX), (void**)&pVertices1, 0);
 
 	//初始化顶点缓冲区
 
@@ -126,7 +137,7 @@ RenderPipe::RenderPipe()
 	pVertices1->tv = 0.0f + 0.5f / RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight;
 	pVertices1++;
 
-	pBufferVex->Unlock();
+	pScreenQuadVertex->Unlock();
 
 	//=============================================================================
 	//ShadowMap
@@ -415,40 +426,31 @@ void RenderPipe::DeferredRender_MultiPass()
 
 		deferredMultiPassEffect->SetBool("g_bUseShadow", useShadow);
 
-		RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, pBufferVex, 0, sizeof(VERTEX));
-		RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(D3DFVF_VERTEX);
-		RENDERDEVICE::Instance().g_pD3DDevice->SetIndices(pBufferIndex);
+		D3DXMATRIX lightVolumeMatrix = pLight->GetLightVolumeTransform();
+		deferredMultiPassEffect->SetMatrix("g_LightVolumeWVP", &lightVolumeMatrix);
 
-		D3DXMATRIX lightVolumeMatrix = pLight->GetWorldTransform();
-		D3DXMATRIX scaleMatrix;
-		D3DXMatrixScaling(&scaleMatrix, lightRange, lightRange, lightRange);
-		lightVolumeMatrix = scaleMatrix  * lightVolumeMatrix;
-		lightVolumeMatrix = lightVolumeMatrix * RENDERDEVICE::Instance().ViewMatrix * RENDERDEVICE::Instance().ProjMatrix;
-
-		UINT pass = 0;
+		UINT lightpass = 0;
 		UINT shadowPass = 0;
 		LightType lt = pLight->GetLightType();
 
 		if (lt == eDirectionLight)
 		{
-			pass = 0;
+			lightpass = 0;
 			shadowPass = 3;
 		}
 		else if (lt == ePointLight)
 		{
-			deferredMultiPassEffect->SetMatrix("g_LightVolumeWVP", &lightVolumeMatrix);
-			pass = 1;
+			lightpass = 1;
 			shadowPass = 4;
 		}
 		else if (lt == eSpotLight)
 		{
-			deferredMultiPassEffect->SetMatrix("g_LightVolumeWVP", &lightVolumeMatrix);
-			pass = 2;
+			lightpass = 2;
 			shadowPass = 3;
 		}
 		else
 		{
-			pass = 0;
+			lightpass = 0;
 			shadowPass = 3;
 		}
 
@@ -456,34 +458,17 @@ void RenderPipe::DeferredRender_MultiPass()
 		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(255, 255, 255, 255), 1.0f, 0);
 		if (useShadow)
 		{
-			D3DXMATRIX invView;
-			D3DXMatrixInverse(&invView, NULL, &RENDERDEVICE::Instance().ViewMatrix);
-			deferredMultiPassEffect->SetMatrix("g_invView", &invView);
+			deferredMultiPassEffect->SetMatrix("g_invView", &RENDERDEVICE::Instance().InvViewMatrix);
 			deferredMultiPassEffect->SetMatrix("g_ShadowView", &pLight->GetLightViewMatrix());
 			deferredMultiPassEffect->SetMatrix("g_ShadowProj", &pLight->GetLightProjMatrix());
 
-			if (pLight->GetLightType() == eDirectionLight || pLight->GetLightType() == eSpotLight)
-			{
-				deferredMultiPassEffect->SetTexture("g_ShadowBuffer", pLight->GetShadowTarget());
-			}
-			else if (pLight->GetLightType() == ePointLight)
-			{
-				deferredMultiPassEffect->SetTexture("g_PointShadowBuffer", pLight->GetPointShadowTarget());
-			}
+			deferredMultiPassEffect->SetTexture("g_ShadowBuffer", pLight->GetShadowTarget());
 			
 			deferredMultiPassEffect->CommitChanges();
 
-			
 			deferredMultiPassEffect->BeginPass(shadowPass);
-			if (lt == eDirectionLight || pLight->GetLightType() == eSpotLight)
-			{
-
-				RENDERDEVICE::Instance().g_pD3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 4, 0, 2);
-			}
-			else
-			{
-				pLight->RenderLightVolume();
-			}
+			
+			pLight->RenderLightVolume();
 
 			deferredMultiPassEffect->EndPass();
 
@@ -493,28 +478,20 @@ void RenderPipe::DeferredRender_MultiPass()
 		deferredMultiPassEffect->SetTexture("g_ShadowResult", m_pShadowTarget);
 		deferredMultiPassEffect->CommitChanges();
 
-		deferredMultiPassEffect->BeginPass(pass);
+		deferredMultiPassEffect->BeginPass(lightpass);
 
-		if (lt == eDirectionLight)
-		{
-			RENDERDEVICE::Instance().g_pD3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 4, 0, 2);
-		}
-		else
-		{
-			pLight->RenderLightVolume();
-		}
-		
+		pLight->RenderLightVolume();
+
 		deferredMultiPassEffect->EndPass();
 
 	}
 
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZENABLE, TRUE);
 	
-	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, pBufferVex, 0, sizeof(VERTEX));
-	RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(D3DFVF_VERTEX);
-	RENDERDEVICE::Instance().g_pD3DDevice->SetIndices(pBufferIndex);
-	
-
+	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, pScreenQuadVertex, 0, mScreenQuadByteSize);
+	//RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(mFVF);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetVertexDeclaration(mScreenQuadDecl);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetIndices(pScreenQuadIndex);
 	
 	//环境光Pass
 	deferredMultiPassEffect->BeginPass(5);
@@ -559,9 +536,10 @@ void RenderPipe::RenderFinalColor()
 
 	finalColorEffect->CommitChanges();
 
-	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, pBufferVex, 0, sizeof(VERTEX));
-	RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(D3DFVF_VERTEX);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, pScreenQuadVertex, 0, mScreenQuadByteSize);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetVertexDeclaration(mScreenQuadDecl);
 	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+
 	finalColorEffect->SetTexture(0, NULL);
 
 	finalColorEffect->EndPass();

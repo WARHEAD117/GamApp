@@ -3,20 +3,9 @@
 #include "RenderUtil/EffectParam.h"
 #include "RenderSystem/RenderPipeLine/RenderPipe.h"
 
-const D3DVERTEXELEMENT9 VERTEXDECL[] =
-{
-	{ 0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0 },
-	{ 0, 12, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0 },
-	{ 0, 20, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL, 0 },
-	{ 0, 32, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TANGENT, 0 },
-	{ 0, 44, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_BINORMAL, 0 },
-	D3DDECL_END()
-};
-
 SkyBox::SkyBox()
 {
 }
-
 
 SkyBox::~SkyBox()
 {
@@ -34,10 +23,10 @@ SkyBox::~SkyBox()
 
 void SkyBox::BuildSkyBox()
 {
-	RENDERDEVICE::Instance().g_pD3DDevice->CreateVertexDeclaration(VERTEXDECL, &mVertexDecl);
-	mVertexByteSize = D3DXGetDeclVertexSize(VERTEXDECL, 0);
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateVertexDeclaration(COMMONVERTEXDECL, &mVertexDecl);
+	mVertexByteSize = D3DXGetDeclVertexSize(COMMONVERTEXDECL, 0);
 
-	if (FAILED(RENDERDEVICE::Instance().g_pD3DDevice->CreateVertexBuffer(32 * sizeof(VERTEX)
+	if (FAILED(RENDERDEVICE::Instance().g_pD3DDevice->CreateVertexBuffer(32 * sizeof(COMMONVERTEX)
 		, 0
 		, D3DFVF_VERTEX
 		//,D3DPOOL_DEFAULT
@@ -47,8 +36,8 @@ void SkyBox::BuildSkyBox()
 	{
 		return;
 	}
-	VERTEX* pVertices;
-	if (FAILED(m_pBufferVex->Lock(0, 32 * sizeof(VERTEX), (void**)&pVertices,
+	COMMONVERTEX* pVertices;
+	if (FAILED(m_pBufferVex->Lock(0, 32 * sizeof(COMMONVERTEX), (void**)&pVertices,
 		0)))
 	{
 		return;

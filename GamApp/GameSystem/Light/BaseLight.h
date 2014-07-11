@@ -20,6 +20,7 @@ protected:
 		D3DXVECTOR3		position;
 	};
 	LPDIRECT3DVERTEXBUFFER9		m_pBufferVex;
+	LPDIRECT3DINDEXBUFFER9		m_pBufferIndex;
 
 public:
 	BaseLight();
@@ -52,16 +53,18 @@ public:
 	D3DXMATRIX GetLightProjMatrix();
 	D3DXMATRIX GetLightInvProjMatrix();
 
+	D3DXMATRIX GetLightVolumeTransform();
+
 	void SetUseShadow(bool useShadow);
 	bool GetUseShadow();
 
 	void	BuildShadowMap();
 	void	SetShadowTarget();
-	LPDIRECT3DTEXTURE9	GetShadowTarget();
 
 	void	BuildPointShadowMap();
-	void SetPointShadowTarget(int index);
-	LPDIRECT3DCUBETEXTURE9 GetPointShadowTarget();
+	void	SetPointShadowTarget(int index);
+
+	LPDIRECT3DBASETEXTURE9	GetShadowTarget();
 
 	float GetLightRange();
 	void SetLightRange(float range);

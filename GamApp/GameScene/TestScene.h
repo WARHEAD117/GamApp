@@ -1,8 +1,6 @@
 #pragma once
 #include "BaseScene\BaseScene.h"
 
-
-#include "DrawSkyBox.h"
 #include "Camera\Camera.h"
 
 class TestScene :
@@ -17,8 +15,6 @@ public:
 	virtual void OnFrame();
 	virtual void OnEndFrame();
 
-
-	CDrawSkyBox*	g_DrawSkyBox;
 	Camera			mainCamera;
 };
 

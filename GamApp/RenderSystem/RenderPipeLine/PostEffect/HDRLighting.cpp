@@ -228,7 +228,7 @@ void HDRLighting::CreatePostEffect()
 	}
 
 	// Set effect file variables
-	m_postEffect->SetFloat("g_fBloomScale", 1.0f);
+	m_postEffect->SetFloat("g_fBloomScale", 0.5f);
 	m_postEffect->SetFloat("g_fStarScale", 0.5f);
 
 }

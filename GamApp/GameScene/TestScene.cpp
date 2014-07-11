@@ -14,8 +14,6 @@ TestScene::TestScene()
 
 TestScene::~TestScene()
 {
-	if (g_DrawSkyBox)
-		Delete(g_DrawSkyBox);
 }
 
 
@@ -37,20 +35,6 @@ BaseLight* spotLight3;
 BaseLight* spotLight4;
 void TestScene::OnLoad()
 {
-	//
-	//Just for test---------------------------------------------------------------------------------
-	//--初始化天空盒及其贴图
-	g_DrawSkyBox = new CDrawSkyBox(RENDERDEVICE::Instance().g_pD3DDevice);
-
-	g_DrawSkyBox->InitVB();
-	g_DrawSkyBox->SetTexture("Res\\SkyBox\\bottom.jpg", 0);
-	g_DrawSkyBox->SetTexture("Res\\SkyBox\\left.jpg", 1);
-	g_DrawSkyBox->SetTexture("Res\\SkyBox\\right.jpg", 2);
-	g_DrawSkyBox->SetTexture("Res\\SkyBox\\top.jpg", 3);
-	g_DrawSkyBox->SetTexture("Res\\SkyBox\\front.jpg", 5);
-	g_DrawSkyBox->SetTexture("Res\\SkyBox\\back.jpg", 4);
-
-
 	//===================================================================================================
 	//BuildCamera
 	mainCamera.Init();
@@ -111,7 +95,7 @@ void TestScene::OnLoad()
 	dirLight2->SetWorldTransform(lightRot1Mat*lightMoveMat);
 	//--------------------------------------------------------------------------
 	pointLight1 = LIGHTMANAGER::Instance().CreateLight(ePointLight);
-	pointLight1->SetLightColor(D3DXCOLOR(5.7, 5.7, 5.7, 1.0f));
+	pointLight1->SetLightColor(D3DXCOLOR(0.7, 0.7, 0.7, 1.0f));
 	pointLight1->SetUseShadow(true);
 	pointLight1->SetLightRange(20);
 	
@@ -163,26 +147,26 @@ void TestScene::OnLoad()
 	spotLight2 = LIGHTMANAGER::Instance().CreateLight(eSpotLight);
 	spotLight2->SetLightRange(45);
 	spotLight2->SetUseShadow(false);
-	spotLight2->SetLightColor(D3DXCOLOR(0.0, 1.0, 0.0, 1.0f));
-	D3DXMatrixTranslation(&lightMoveMat, 5, 10, -5);
-	D3DXMatrixRotationX(&lightRot1Mat, 0.2f * D3DX_PI);
-	spotLight2->SetWorldTransform(lightMoveMat*lightRot1Mat);
+	spotLight2->SetLightColor(D3DXCOLOR(0.0, 0.1, 0.0, 1.0f));
+	D3DXMatrixTranslation(&lightMoveMat, 2, 10, -5);
+	D3DXMatrixRotationX(&lightRot1Mat, -0.4f * D3DX_PI);
+	spotLight2->SetWorldTransform(lightRot1Mat * lightMoveMat);
 	//--------------------------------------------------------------------------
 	spotLight3 = LIGHTMANAGER::Instance().CreateLight(eSpotLight);
 	spotLight3->SetLightRange(2);
 	spotLight3->SetLightColor(D3DXCOLOR(0.0, 0.5, 0.0, 1.0f));
 	spotLight3->SetUseShadow(false);
 	spotLight3->SetLightRange(20);
-	D3DXMatrixTranslation(&lightMoveMat, -10, 10, 10);
+	D3DXMatrixTranslation(&lightMoveMat, -10, 1, 15);
 	D3DXMatrixRotationX(&lightRot1Mat, 0.25f * D3DX_PI);
-	spotLight3->SetWorldTransform(lightMoveMat*lightRot1Mat);
+	spotLight3->SetWorldTransform(lightRot1Mat * lightMoveMat);
 	//--------------------------------------------------------------------------
 	spotLight4 = LIGHTMANAGER::Instance().CreateLight(eSpotLight);
 	spotLight4->SetLightRange(20);
 	spotLight4->SetLightColor(D3DXCOLOR(0.0, 0.5, 0.0, 1.0f));
-	D3DXMatrixTranslation(&lightMoveMat, -10, 10, -10);
+	D3DXMatrixTranslation(&lightMoveMat, -10, 1, -15);
 	D3DXMatrixRotationX(&lightRot1Mat, -0.25f * D3DX_PI);
-	spotLight4->SetWorldTransform(lightMoveMat*lightRot1Mat);
+	spotLight4->SetWorldTransform(lightRot1Mat * lightMoveMat);
 	
 }
 

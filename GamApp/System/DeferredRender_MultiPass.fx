@@ -257,21 +257,25 @@ void LightFunc(float3 normal, float3 toLight, float3 toEye, float4 lightColor, i
 	//裁减掉背光的像素
 	float NL = dot(toLight, normal);
 	clip(NL);
-	//计算漫反射
+	//计算漫反射光照
 	float DiffuseRatio = max(NL, 0.0);
 	DiffuseLight += lightColor * DiffuseRatio;
 
-	//Blinn-Phong光照
+	//Blinn-Phong光照，已经是基于物理的了
 	//计算半角向量
 	float3 H = normalize(toLight + toEye);
 
+	//遮挡项
 	float lh = dot(toLight, H);
 	float G = 1 / (lh*lh);
 
+	//基于物理的Blinn-Phong
 	float shininess = 50.05f;
 	float SpecularRatio = max(dot(normal, H), 0.0);
-	float PoweredSpecular = pow(SpecularRatio, shininess) * (shininess + 2.0f) / 8.0f * G;
-	SpecularLight += lightColor * PoweredSpecular * DiffuseRatio;
+	//对Blinn-Phong的高光归一化，保证反射的能量守恒
+	float PoweredSpecular = pow(SpecularRatio, shininess) * (shininess + 2.0f) / 8.0f;
+
+	SpecularLight += lightColor * PoweredSpecular * DiffuseRatio * G;
 }
 
 float ShadowFunc(bool useShadow, float3 objViewPos)

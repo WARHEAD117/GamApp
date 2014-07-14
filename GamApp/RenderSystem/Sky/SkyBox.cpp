@@ -28,7 +28,7 @@ void SkyBox::BuildSkyBox()
 
 	if (FAILED(RENDERDEVICE::Instance().g_pD3DDevice->CreateVertexBuffer(32 * sizeof(COMMONVERTEX)
 		, 0
-		, D3DFVF_VERTEX
+		, 0
 		//,D3DPOOL_DEFAULT
 		, D3DPOOL_MANAGED
 		, &m_pBufferVex

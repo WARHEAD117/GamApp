@@ -242,8 +242,11 @@ float4 GaussianBlur(int mapWidth, int mapHeight, sampler2D texSampler, float2 te
 
 void LightFunc(float3 normal, float3 toLight, float3 toEye, float4 lightColor, inout float4 DiffuseLight, inout float4 SpecularLight)
 {
+	//²Ã¼õµô±³¹âµÄÏñËØ
+	float NL = dot(toLight, normal);
+	clip(NL);
 	//¼ÆËãÂþ·´Éä
-	float DiffuseRatio = max(dot(toLight, normal), 0.0);
+	float DiffuseRatio = max(NL, 0.0);
 	DiffuseLight += lightColor * DiffuseRatio;
 
 	//Blinn-Phong¹âÕÕ
@@ -335,7 +338,7 @@ float PCFShadow(bool useShadow, float3 objViewPos)
 
 float4 DirectionLightPass(float4 posWVP : TEXCOORD0) : COLOR
 {
-	//return float4(0.5, 0.0f, 0.0f, 1.0f);
+	//return g_LightColor;
 
 	float lightU = (posWVP.x / posWVP.w + 1.0f) / 2.0f + 0.5f / g_ScreenWidth;
 	float lightV = (1.0f - posWVP.y / posWVP.w) / 2.0f + 0.5f / g_ScreenHeight;
@@ -349,7 +352,6 @@ float4 DirectionLightPass(float4 posWVP : TEXCOORD0) : COLOR
 
 	float3 ToEyeDirV = normalize(pos * -1.0f);
 	float3 toLight = normalize(-g_LightDir.xyz);
-
 
 	float4 DiffuseLight = float4(0.0f, 0.0f, 0.0f, 1.0f);
 	float4 SpecularLight = float4(0.0f, 0.0f, 0.0f, 1.0f);
@@ -368,8 +370,8 @@ float4 DirectionLightPass(float4 posWVP : TEXCOORD0) : COLOR
 
 float4 PointLightPass(float4 posWVP : TEXCOORD0) : COLOR
 {
-	//return float4(0.0, 0.5f, 0.0f, 1.0f);
-
+	//return g_LightColor;
+	
 	float lightU = (posWVP.x / posWVP.w + 1.0f) / 2.0f + 0.5f / g_ScreenWidth;
 	float lightV = (1.0f - posWVP.y / posWVP.w) / 2.0f + 0.5f / g_ScreenHeight;
 	float2 TexCoord = float2(lightU, lightV);
@@ -397,7 +399,7 @@ float4 PointLightPass(float4 posWVP : TEXCOORD0) : COLOR
 	float disRange = clamp(toLightDistance / g_LightRange, 0.0f, 1.0f);
 
 
-	float attenuation = (1.0f - disRange) / (g_LightAttenuation.x + g_LightAttenuation.y * disRange + g_LightAttenuation.z * disRange * disRange);
+	float attenuation = (1.0f - disRange) / (g_LightAttenuation.x + g_LightAttenuation.y * disRange + g_LightAttenuation.z * disRange * disRange + 0.000001f);
 	//attenuation = 1 - dot(toLight / g_LightRange, toLight / g_LightRange);
 
 	float4 lightColor = attenuation * g_LightColor;
@@ -418,7 +420,7 @@ float4 PointLightPass(float4 posWVP : TEXCOORD0) : COLOR
 
 float4 SpotLightPass(float4 posWVP : TEXCOORD0) : COLOR
 {
-	//return float4(0.5, 0.0f, 0.0f, 1.0f);
+	//return g_LightColor;
 
 	float lightU = (posWVP.x / posWVP.w + 1.0f) / 2.0f + 0.5f / g_ScreenWidth;
 	float lightV = (1.0f - posWVP.y / posWVP.w) / 2.0f + 0.5f / g_ScreenHeight;
@@ -437,11 +439,12 @@ float4 SpotLightPass(float4 posWVP : TEXCOORD0) : COLOR
 	float4 SpecularLight = float4(0.0f, 0.0f, 0.0f, 1.0f);
 
 	float3 toLight = g_LightPos.xyz - pos;
+
 	float toLightDistance = length(toLight);
 	
 	float disRange = clamp(toLightDistance / g_LightRange, 0.0f, 1.0f);
 
-	float attenuation = (1.0f - disRange) / (g_LightAttenuation.x + g_LightAttenuation.y * disRange + g_LightAttenuation.z * disRange * disRange);
+	float attenuation = (1.0f - disRange) / (g_LightAttenuation.x + g_LightAttenuation.y * disRange + g_LightAttenuation.z * disRange * disRange + 0.000001f);
 	//attenuation = 1 - dot(toLight / g_LightRange, toLight / g_LightRange);
 	
 	toLight = normalize(toLight);

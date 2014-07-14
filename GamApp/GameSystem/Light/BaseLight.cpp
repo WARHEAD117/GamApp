@@ -17,7 +17,8 @@ m_LightRange(5.0f),
 m_LightAngle(D3DXVECTOR2(45.0f, 20.0f)),
 m_LightDir(ZEROVECTOR3),
 m_LightColor(D3DXCOLOR(0.3,0.3f,0.3f,1.0f)),
-m_LightAttenuation(D3DXVECTOR4(0.0, 1.0f, 0.0f, 1.0f))
+m_LightAttenuation(D3DXVECTOR4(0.0, 1.0f, 0.0f, 1.0f)),
+m_SegmentCount(16)
 {
 	BuildLightVolume();
 	Init();
@@ -25,16 +26,17 @@ m_LightAttenuation(D3DXVECTOR4(0.0, 1.0f, 0.0f, 1.0f))
 
 void BaseLight::BuildLightVolume()
 {
-	//灯光实际范围应该是灯光体的内切球，根据1/cos(PI/(经线数量+1))来计算半径放大的比例，加0.2来防止误差（这里有疑问）
-	int sphereSlices = 16;
-	float factor = 1.0f / cos(D3DX_PI / (sphereSlices)) + 0.2;
+	SafeRelease(m_pBufferVex);
+	SafeRelease(m_pBufferIndex);
+
+	
 	
 	if (m_LightType == eDirectionLight)
 	{
 		//=======================================================================
-		RENDERDEVICE::Instance().g_pD3DDevice->CreateVertexBuffer(4 * sizeof(VERTEX)
+		RENDERDEVICE::Instance().g_pD3DDevice->CreateVertexBuffer(4 * sizeof(LIGHTVOLUMEVERTEX)
 			, 0
-			, D3DFVF_VERTEX
+			, LIGHTVOLUME_FVF
 			//,D3DPOOL_DEFAULT
 			, D3DPOOL_MANAGED
 			, &m_pBufferVex
@@ -53,138 +55,103 @@ void BaseLight::BuildLightVolume()
 		indices[5] = 3;
 		m_pBufferIndex->Unlock();
 
-		VERTEX* pVertices1;
-		m_pBufferVex->Lock(0, 4 * sizeof(VERTEX), (void**)&pVertices1, 0);
+		LIGHTVOLUMEVERTEX* pVertices;
+		m_pBufferVex->Lock(0, 4 * sizeof(LIGHTVOLUMEVERTEX), (void**)&pVertices, 0);
 
 		//初始化顶点缓冲区
 		//==========================
-		pVertices1->position = D3DXVECTOR3(1.0f, -1.0f, 0.0f);
-		pVertices1++;
+		pVertices->position = D3DXVECTOR3(1.0f, -1.0f, 0.0f);
+		pVertices++;
 
-		pVertices1->position = D3DXVECTOR3(-1.0f, -1.0f, 0.0f);
-		pVertices1++;
+		pVertices->position = D3DXVECTOR3(-1.0f, -1.0f, 0.0f);
+		pVertices++;
 
-		pVertices1->position = D3DXVECTOR3(1.0f, 1.0f, 0.0f);
-		pVertices1++;
+		pVertices->position = D3DXVECTOR3(1.0f, 1.0f, 0.0f);
+		pVertices++;
 
-		pVertices1->position = D3DXVECTOR3(-1.0f, 1.0f, 0.0f);
-		pVertices1++;
+		pVertices->position = D3DXVECTOR3(-1.0f, 1.0f, 0.0f);
+		pVertices++;
 
 		m_pBufferVex->Unlock();
 	}
 	else if (m_LightType == ePointLight)
 	{
+		//灯光实际范围应该是灯光体的内切球，根据1/cos(PI/(经线数量+1))来计算半径放大的比例，加0.2来防止误差（这里有疑问）
+		int sphereSlices = 16;
+		float factor = 1.0f / cos(D3DX_PI / (sphereSlices)) + 0.2;
 		D3DXCreateSphere(RENDERDEVICE::Instance().g_pD3DDevice, 1 * factor, sphereSlices, sphereSlices, &m_lightVolume, NULL);
 	}
 	else if (m_LightType == eSpotLight)
 	{
-		D3DXCreateSphere(RENDERDEVICE::Instance().g_pD3DDevice, 1 * factor, sphereSlices, sphereSlices, &m_lightVolume, NULL);
+		//灯光实际范围应该是灯光体的内切球，根据1/cos(PI/(经线数量+1))来计算半径放大的比例，加0.2来防止误差（这里有疑问）
+		int sphereSlices = m_SegmentCount;
+		float factor = 1.0f / cos(D3DX_PI / (sphereSlices)) + 0.2;
+		//D3DXCreateSphere(RENDERDEVICE::Instance().g_pD3DDevice, 1 * factor, sphereSlices, sphereSlices, &m_lightVolume, NULL);
+
+		int segmentCount = m_SegmentCount;
+		float coneHeight = 1.0f;
+		float coneRadius = 1.0 * factor;
+
+		float deltaAngle = 2.0f * D3DX_PI / segmentCount;
+
+		//=======================================================================
+		RENDERDEVICE::Instance().g_pD3DDevice->CreateVertexBuffer((segmentCount + 2 + 1) * sizeof(LIGHTVOLUMEVERTEX)
+			, 0
+			, LIGHTVOLUME_FVF
+			//,D3DPOOL_DEFAULT
+			, D3DPOOL_MANAGED
+			, &m_pBufferVex
+			, NULL);
+		RENDERDEVICE::Instance().g_pD3DDevice->CreateIndexBuffer((2 * 3 * segmentCount) * sizeof(DWORD),
+			D3DUSAGE_WRITEONLY, D3DFMT_INDEX32, D3DPOOL_MANAGED, &m_pBufferIndex, 0);
+		DWORD* indices = 0;
+		m_pBufferIndex->Lock(0, 0, (void**)&indices, 0);
+		//全部逆时针绘制，在延迟渲染时剔除正面，就可以保证灯光和渲染面的剔除是统一的
+
+		LIGHTVOLUMEVERTEX* pVertices;
+		m_pBufferVex->Lock(0, 4 * sizeof(LIGHTVOLUMEVERTEX), (void**)&pVertices, 0);
+
+		pVertices->position = D3DXVECTOR3(0, 0, 0);
+		pVertices++;
+		//初始化顶点缓冲区
+		//==========================
+		for (int i = 0; i < segmentCount; i++)
+		{
+			float x = coneRadius * sin(i * deltaAngle);
+			float z = coneRadius * cos(i * deltaAngle);
+
+			pVertices->position = D3DXVECTOR3(x, -coneHeight, z);
+			pVertices++;
+		}
+
+		pVertices->position = D3DXVECTOR3(0, -coneHeight, 0);
+		pVertices++;
+
+		m_pBufferVex->Unlock();
+
+		for (int i = 0; i < segmentCount; i++)
+		{
+			int first = i + 1;
+			int second = i + 2;
+			if (i == segmentCount - 1)
+			{
+				second = 1;
+			}
+
+			indices[2 * 3 * i]		= 0;
+			indices[2 * 3 * i + 1] = first;
+			indices[2 * 3 * i + 2] = second;
+
+			indices[2 * 3 * i + 3] = second;
+			indices[2 * 3 * i + 4] = first;
+			indices[2 * 3 * i + 5] = segmentCount + 1;
+		}
+
+		m_pBufferIndex->Unlock();
 	}
 	else
 	{
 	}
-	
-	/*
-	//Create post vertex
-	RENDERDEVICE::Instance().g_pD3DDevice->CreateVertexBuffer(24 * sizeof(VERTEX)
-		, 0
-		, D3DFVF_VERTEX
-		//,D3DPOOL_DEFAULT
-		, D3DPOOL_MANAGED
-		, &m_pBufferVex
-		, NULL);
-
-	VERTEX* pVertices;
-	m_pBufferVex->Lock(0, 24 * sizeof(VERTEX), (void**)&pVertices, 0);
-
-	//初始化顶点缓冲区
-
-	//==========================
-	//=============================================================下表面
-	pVertices->position = D3DXVECTOR3(1.0f, -1.0f, 1.0f);
-	pVertices++;
-
-	pVertices->position = D3DXVECTOR3(-1.0f, -1.0f, 1.0f);
-	pVertices++;
-
-	pVertices->position = D3DXVECTOR3(1.0f, -1.0f, -1.0f);
-	pVertices++;
-
-	pVertices->position = D3DXVECTOR3(-1.0f, -1.0f, -1.0f);
-	pVertices++;
-
-
-	//==========================================================================左表面 
-	pVertices->position = D3DXVECTOR3(-1.0f, 1.0f, 1.0f);
-	pVertices++;
-
-	pVertices->position = D3DXVECTOR3(-1.0f, 1.0f, -1.0f);
-	pVertices++;
-
-	pVertices->position = D3DXVECTOR3(-1.0f, -1.0f, 1.0f);
-	pVertices++;
-
-	pVertices->position = D3DXVECTOR3(-1.0f, -1.0f, -1.0f);
-	pVertices++;
-
-	//==========================================================================右表面
-	pVertices->position = D3DXVECTOR3(1.0f, 1.0f, -1.0f);
-	pVertices++;
-
-	pVertices->position = D3DXVECTOR3(1.0f, 1.0f, 1.0f);
-	pVertices++;
-
-	pVertices->position = D3DXVECTOR3(1.0f, -1.0f, -1.0f);
-	pVertices++;
-
-	pVertices->position = D3DXVECTOR3(1.0f, -1.0f, 1.0f);
-	pVertices++;
-
-	// 	//==========================================================================上表面
-	pVertices->position = D3DXVECTOR3(-1.0f, 1.0f, 1.0f);
-	pVertices++;
-
-	pVertices->position = D3DXVECTOR3(1.0f, 1.0f, 1.0f);
-	pVertices++;
-
-	pVertices->position = D3DXVECTOR3(-1.0f, 1.0f, -1.0f);
-	pVertices++;
-
-
-
-	pVertices->position = D3DXVECTOR3(1.0f, 1.0f, -1.0f);
-	pVertices++;
-
-	// 
-	// 	//==========================================================================后表面
-	pVertices->position = D3DXVECTOR3(-1.0f, -1.0f, 1.0f);
-	pVertices++;
-
-	pVertices->position = D3DXVECTOR3(1.0f, -1.0f, 1.0f);
-	pVertices++;
-
-	pVertices->position = D3DXVECTOR3(-1.0f, 1.0f, 1.0f);
-	pVertices++;
-
-	pVertices->position = D3DXVECTOR3(1.0f, 1.0f, 1.0f);
-	pVertices++;
-	// 
-	// 	//==========================================================================前表面
-	pVertices->position = D3DXVECTOR3(1.0f, -1.0f, -1.0f);
-	pVertices++;
-
-	pVertices->position = D3DXVECTOR3(-1.0f, -1.0f, -1.0f);
-	pVertices++;
-
-	pVertices->position = D3DXVECTOR3(1.0f, 1.0f, -1.0f);
-	pVertices++;
-
-	pVertices->position = D3DXVECTOR3(-1.0f, 1.0f, -1.0f);
-	pVertices++;
-
-
-	m_pBufferVex->Unlock();
-	*/
 }
 
 void BaseLight::RenderLightVolume()
@@ -192,8 +159,8 @@ void BaseLight::RenderLightVolume()
 	switch (m_LightType)
 	{
 	case eDirectionLight:
-		RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, m_pBufferVex, 0, sizeof(VERTEX));
-		RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(D3DFVF_VERTEX);
+		RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, m_pBufferVex, 0, sizeof(LIGHTVOLUMEVERTEX));
+		RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(LIGHTVOLUME_FVF);
 		RENDERDEVICE::Instance().g_pD3DDevice->SetIndices(m_pBufferIndex);
 
 		RENDERDEVICE::Instance().g_pD3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 4, 0, 2);
@@ -202,7 +169,12 @@ void BaseLight::RenderLightVolume()
 		m_lightVolume->DrawSubset(0);
 		break;
 	case eSpotLight:
-		m_lightVolume->DrawSubset(0);
+		RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, m_pBufferVex, 0, sizeof(LIGHTVOLUMEVERTEX));
+		RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(LIGHTVOLUME_FVF);
+		RENDERDEVICE::Instance().g_pD3DDevice->SetIndices(m_pBufferIndex);
+
+		RENDERDEVICE::Instance().g_pD3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, m_SegmentCount + 2, 0, m_SegmentCount * 2);
+		//m_lightVolume->DrawSubset(0);
 		break;
 	default:
 		m_lightVolume->DrawSubset(0);
@@ -376,6 +348,11 @@ D3DXMATRIX BaseLight::GetLightVolumeTransform()
 		return lightVolumeMatrix;
 		break;
 	case eSpotLight:
+
+		D3DXMatrixScaling(&scaleMatrix, m_LightRange * tanf(m_LightAngle.x / 360.0f * D3DX_PI), m_LightRange, m_LightRange * tanf(m_LightAngle.x / 360.0f * D3DX_PI));
+		lightVolumeMatrix = scaleMatrix  * mWorldTransform;
+		lightVolumeMatrix = lightVolumeMatrix * RENDERDEVICE::Instance().ViewMatrix * RENDERDEVICE::Instance().ProjMatrix;
+
 		return lightVolumeMatrix;
 		break;
 	default:
@@ -482,8 +459,8 @@ D3DXVECTOR2 BaseLight::GetLightAngle()
 
 D3DXVECTOR2 BaseLight::GetLightCosHalfAngle()
 {
-	float half_outer = cos(m_LightAngle.x / 360.0f * D3DX_PI);
-	float half_inner = cos(m_LightAngle.y / 360.0f * D3DX_PI);
+	float half_outer = cos(m_LightAngle.x / 360.0F * D3DX_PI);
+	float half_inner = cos(m_LightAngle.y / 360.0F * D3DX_PI);
 
 	return D3DXVECTOR2(half_outer, half_inner);
 }

@@ -145,6 +145,7 @@ void TestScene::OnLoad()
 	spotLight1->SetWorldTransform(lightMoveMat);
 	//--------------------------------------------------------------------------
 	spotLight2 = LIGHTMANAGER::Instance().CreateLight(eSpotLight);
+	spotLight2->SetLightAngle(D3DXVECTOR2(60, 30));
 	spotLight2->SetLightRange(45);
 	spotLight2->SetUseShadow(false);
 	spotLight2->SetLightColor(D3DXCOLOR(0.0, 0.1, 0.0, 1.0f));

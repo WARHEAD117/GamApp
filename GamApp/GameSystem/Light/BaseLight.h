@@ -13,14 +13,16 @@ enum LightType
 class BaseLight :
 	public Transform
 {
-#define D3DFVF_VERTEX (D3DFVF_XYZ)
+#define LIGHTVOLUME_FVF (D3DFVF_XYZ)
 protected:
-	struct VERTEX
+	struct LIGHTVOLUMEVERTEX
 	{
 		D3DXVECTOR3		position;
 	};
 	LPDIRECT3DVERTEXBUFFER9		m_pBufferVex;
 	LPDIRECT3DINDEXBUFFER9		m_pBufferIndex;
+
+	int m_SegmentCount;
 
 public:
 	BaseLight();
@@ -71,6 +73,7 @@ public:
 
 	D3DXVECTOR2 GetLightCosHalfAngle();
 	D3DXVECTOR2 GetLightAngle(); //外角、内角
+	//两个分量分别是用角度表示的外角和内角
 	void SetLightAngle(D3DXVECTOR2 angle);
 
 	D3DXVECTOR4 GetLightAttenuation();

@@ -78,14 +78,14 @@ void BaseLight::BuildLightVolume()
 	{
 		//灯光实际范围应该是灯光体的内切球，根据1/cos(PI/(经线数量+1))来计算半径放大的比例，加0.2来防止误差（这里有疑问）
 		int sphereSlices = 16;
-		float factor = 1.0f / cos(D3DX_PI / (sphereSlices)) + 0.2;
+		float factor = 1.0f / cos(D3DX_PI / (sphereSlices));
 		D3DXCreateSphere(RENDERDEVICE::Instance().g_pD3DDevice, 1 * factor, sphereSlices, sphereSlices, &m_lightVolume, NULL);
 	}
 	else if (m_LightType == eSpotLight)
 	{
 		//灯光实际范围应该是灯光体的内切球，根据1/cos(PI/(经线数量+1))来计算半径放大的比例，加0.2来防止误差（这里有疑问）
 		int sphereSlices = m_SegmentCount;
-		float factor = 1.0f / cos(D3DX_PI / (sphereSlices)) + 0.2;
+		float factor = 1.0f / cos(D3DX_PI / (sphereSlices));
 		//D3DXCreateSphere(RENDERDEVICE::Instance().g_pD3DDevice, 1 * factor, sphereSlices, sphereSlices, &m_lightVolume, NULL);
 
 		int segmentCount = m_SegmentCount;

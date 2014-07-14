@@ -92,11 +92,23 @@ sampler_state
 	AddressV = Clamp;
 }; 
 
-texture g_LightResultBuffer;
-sampler2D g_sampleLightResult =
+texture g_LightBuffer;
+sampler2D g_sampleLight =
 sampler_state
 {
-	Texture = <g_LightResultBuffer>;
+	Texture = <g_LightBuffer>;
+	MinFilter = Point;
+	MagFilter = Point;
+	MipFilter = Point;
+	AddressU = Clamp;
+	AddressV = Clamp;
+};
+
+texture g_SpecularLightBuffer;
+sampler2D g_sampleSpecularLight =
+sampler_state
+{
+	Texture = <g_SpecularLightBuffer>;
 	MinFilter = Point;
 	MagFilter = Point;
 	MipFilter = Point;
@@ -256,7 +268,7 @@ void LightFunc(float3 normal, float3 toLight, float3 toEye, float4 lightColor, i
 	float lh = dot(toLight, H);
 	float G = 1 / (lh*lh);
 
-	float shininess = 0.05f;
+	float shininess = 50.05f;
 	float SpecularRatio = max(dot(normal, H), 0.0);
 	float PoweredSpecular = pow(SpecularRatio, shininess) * (shininess + 2.0f) / 8.0f * G;
 	SpecularLight += lightColor * PoweredSpecular * DiffuseRatio;
@@ -336,9 +348,18 @@ float PCFShadow(bool useShadow, float3 objViewPos)
 	return shadowContribute;
 }
 
-float4 DirectionLightPass(float4 posWVP : TEXCOORD0) : COLOR
+//光照结果的MRT输出
+struct OutputPS
 {
-	//return g_LightColor;
+	float4 diffuseLight		: COLOR0;
+	float4 specularLight	: COLOR1;
+};
+
+OutputPS DirectionLightPass(float4 posWVP : TEXCOORD0)
+{
+	OutputPS outPs;
+	outPs.diffuseLight = 0;
+	outPs.specularLight = 0;
 
 	float lightU = (posWVP.x / posWVP.w + 1.0f) / 2.0f + 0.5f / g_ScreenWidth;
 	float lightV = (1.0f - posWVP.y / posWVP.w) / 2.0f + 0.5f / g_ScreenHeight;
@@ -347,31 +368,36 @@ float4 DirectionLightPass(float4 posWVP : TEXCOORD0) : COLOR
 
 	float3 pos = GetPosition(TexCoord);
 
+	//加入灯光体和stencil剔除后之后就可以省略掉这个判断了
 	if (pos.z > g_zFar)
-		return float4(0, 0, 0, 1);
+		return outPs;
 
 	float3 ToEyeDirV = normalize(pos * -1.0f);
 	float3 toLight = normalize(-g_LightDir.xyz);
 
-	float4 DiffuseLight = float4(0.0f, 0.0f, 0.0f, 1.0f);
-	float4 SpecularLight = float4(0.0f, 0.0f, 0.0f, 1.0f);
+	float4 DiffuseLight = float4(0.0f, 0.0f, 0.0f, 0.0f);
+	float4 SpecularLight = float4(0.0f, 0.0f, 0.0f, 0.0f);
 
 	LightFunc(Normal, toLight, ToEyeDirV, g_LightColor, DiffuseLight, SpecularLight);
 
 	float shadowFinal = 1.0f;
 	//shadowFinal = ShadowFunc(g_bUseShadow, pos);
+
+	//阴影图采样
 	shadowFinal = tex2D(g_sampleShadowResult, TexCoord);
 
-	float4 Texture = tex2D(g_sampleDiffuse, TexCoord);
-		//混合光照和纹理
-		float4 finalColor = DiffuseLight + SpecularLight;// / Texture;
-	return finalColor * shadowFinal;
+	//MRT输出光照结果
+	outPs.diffuseLight = DiffuseLight * shadowFinal.x;
+	outPs.specularLight = SpecularLight * shadowFinal.x;
+	return outPs;
 }
 
-float4 PointLightPass(float4 posWVP : TEXCOORD0) : COLOR
+OutputPS PointLightPass(float4 posWVP : TEXCOORD0)
 {
-	//return g_LightColor;
-	
+	OutputPS outPs;
+	outPs.diffuseLight = 0;
+	outPs.specularLight = 0;
+
 	float lightU = (posWVP.x / posWVP.w + 1.0f) / 2.0f + 0.5f / g_ScreenWidth;
 	float lightV = (1.0f - posWVP.y / posWVP.w) / 2.0f + 0.5f / g_ScreenHeight;
 	float2 TexCoord = float2(lightU, lightV);
@@ -380,21 +406,21 @@ float4 PointLightPass(float4 posWVP : TEXCOORD0) : COLOR
 
 	float3 pos = GetPosition(TexCoord);
 	
-	//加入灯光体之后就可以省略掉这个判断了
+	//加入灯光体和stencil剔除后之后就可以省略掉这个判断了
 	if (pos.z > g_zFar)
-		return float4(0, 0, 0, 1);
+		return outPs;
 
 	float3 ToEyeDirV = normalize(pos * -1.0f);
 
-	float4 DiffuseLight = float4(0.0f, 0.0f, 0.0f, 1.0f);
-	float4 SpecularLight = float4(0.0f, 0.0f, 0.0f, 1.0f);
+	float4 DiffuseLight = float4(0.0f, 0.0f, 0.0f, 0.0f);
+	float4 SpecularLight = float4(0.0f, 0.0f, 0.0f, 0.0f);
 
 	float3 toLight = g_LightPos.xyz - pos;
 	float toLightDistance = length(toLight);
 	
-	//加入灯光体之后就可以省略掉这个判断了
+	//加入灯光体和stencil剔除后之后就可以省略掉这个判断了
 	if (toLightDistance > g_LightRange)
-		return float4(0.0f, 0.0f, 0.0f, 1.0f);
+		return outPs;
 
 	float disRange = clamp(toLightDistance / g_LightRange, 0.0f, 1.0f);
 
@@ -409,18 +435,22 @@ float4 PointLightPass(float4 posWVP : TEXCOORD0) : COLOR
 
 	float shadowFinal = 1.0f;
 	//shadowFinal = PointShadowFunc(g_bUseShadow, pos);
+
+	//阴影图采样，因为点光源分辨率小，所以模糊一次
 	//shadowFinal = tex2D(g_sampleShadowResult, TexCoord);
 	shadowFinal = GaussianBlur(g_ScreenWidth, g_ScreenHeight, g_sampleShadowResult, TexCoord);
 
-	float4 Texture = tex2D(g_sampleDiffuse, TexCoord);
-	//混合光照和纹理
-	float4 finalColor = DiffuseLight + SpecularLight;// / Texture;
-	return finalColor * shadowFinal;
+	//MRT输出光照结果
+	outPs.diffuseLight = DiffuseLight * shadowFinal.x;
+	outPs.specularLight = SpecularLight * shadowFinal.x;
+	return outPs;
 }
 
-float4 SpotLightPass(float4 posWVP : TEXCOORD0) : COLOR
+OutputPS SpotLightPass(float4 posWVP : TEXCOORD0)
 {
-	//return g_LightColor;
+	OutputPS outPs;
+	outPs.diffuseLight = 0;
+	outPs.specularLight = 0;
 
 	float lightU = (posWVP.x / posWVP.w + 1.0f) / 2.0f + 0.5f / g_ScreenWidth;
 	float lightV = (1.0f - posWVP.y / posWVP.w) / 2.0f + 0.5f / g_ScreenHeight;
@@ -430,13 +460,14 @@ float4 SpotLightPass(float4 posWVP : TEXCOORD0) : COLOR
 
 	float3 pos = GetPosition(TexCoord);
 	
+	//加入灯光体和stencil剔除后之后就可以省略掉这个判断了
 	if (pos.z > g_zFar)
-		return float4(0, 0, 0, 1);
+		return outPs;
 
 	float3 ToEyeDirV = normalize(pos * -1.0f);
 
-	float4 DiffuseLight = float4(0.0f, 0.0f, 0.0f, 1.0f);
-	float4 SpecularLight = float4(0.0f, 0.0f, 0.0f, 1.0f);
+	float4 DiffuseLight = float4(0.0f, 0.0f, 0.0f, 0.0f);
+	float4 SpecularLight = float4(0.0f, 0.0f, 0.0f, 0.0f);
 
 	float3 toLight = g_LightPos.xyz - pos;
 
@@ -445,6 +476,7 @@ float4 SpotLightPass(float4 posWVP : TEXCOORD0) : COLOR
 	float disRange = clamp(toLightDistance / g_LightRange, 0.0f, 1.0f);
 
 	float attenuation = (1.0f - disRange) / (g_LightAttenuation.x + g_LightAttenuation.y * disRange + g_LightAttenuation.z * disRange * disRange + 0.000001f);
+	//不使用衰减参数，直接衰减到边缘
 	//attenuation = 1 - dot(toLight / g_LightRange, toLight / g_LightRange);
 	
 	toLight = normalize(toLight);
@@ -458,7 +490,7 @@ float4 SpotLightPass(float4 posWVP : TEXCOORD0) : COLOR
 
 	//聚光灯外角以外和范围以外都没有光照(加入灯光体之后就可以省略掉这个判断了)
 	if (toLightDistance > g_LightRange || cosAlpha < cosPhi)
-		return float4(0.0f, 0.0f, 0.0f, 1.0f);
+		return outPs;
 	
 	float falloff = 1.0f;
 	if (cosAlpha < cosTheta)
@@ -468,19 +500,22 @@ float4 SpotLightPass(float4 posWVP : TEXCOORD0) : COLOR
 	//下面的公式可以简化掉if，但是看起来没有效率提升
 	//falloff = 1 - (cosAlpha < cosTheta)* (1 - (cosAlpha - cosPhi) / (cosTheta - cosPhi));
 	
-	
+	//灯光falloff的指数衰减
+	//TODO：
+
 	float4 lightColor = attenuation * g_LightColor * falloff;
 
 	LightFunc(Normal, toLight, ToEyeDirV, lightColor, DiffuseLight, SpecularLight);
 
 	float shadowFinal = 1.0f;
 	//shadowFinal = ShadowFunc(g_bUseShadow, pos);
+	//阴影图采样
 	shadowFinal = tex2D(g_sampleShadowResult, TexCoord);
 
-	float4 Texture = tex2D(g_sampleDiffuse, TexCoord);
-		//混合光照和纹理
-		float4 finalColor = DiffuseLight + SpecularLight;// / Texture;
-	return finalColor * shadowFinal;
+	//MRT输出光照结果
+	outPs.diffuseLight = DiffuseLight * shadowFinal.x;
+	outPs.specularLight = SpecularLight * shadowFinal.x;
+	return outPs;
 }
 
 float4 ShadowPass(float4 posWVP : TEXCOORD0) : COLOR
@@ -496,8 +531,8 @@ float4 ShadowPass(float4 posWVP : TEXCOORD0) : COLOR
 	float shadowFinal = 1.0f;
 	shadowFinal = ShadowFunc(g_bUseShadow, pos);
 
-	//混合光照和纹理
-	float4 finalColor = float4(shadowFinal, shadowFinal, shadowFinal, 1.0f);
+	//输出阴影结果
+	float4 finalColor = float4(shadowFinal, shadowFinal, shadowFinal, shadowFinal);
 	return finalColor;
 }
 
@@ -515,8 +550,8 @@ float4 PointShadowPass(float4 posWVP : TEXCOORD0) : COLOR
 	float shadowFinal = 1.0f;
 	shadowFinal = PointShadowFunc(g_bUseShadow, pos);
 
-	//混合光照和纹理
-	float4 finalColor = float4(shadowFinal, shadowFinal, shadowFinal, 1.0f);
+	//输出阴影结果
+	float4 finalColor = float4(shadowFinal, shadowFinal, shadowFinal, shadowFinal);
 	return finalColor;
 }
 
@@ -525,17 +560,26 @@ float4 AmbientPass(float2 TexCoord : TEXCOORD0) : COLOR
 	//计算环境光
 	float4 Ambient = g_AmbientColor;
 
+	//高亮天空盒（实际上应该用HDR天空盒）
 	Ambient = GetPosition(TexCoord).z > g_zFar ? float4(10,10,10,1): Ambient;
 
 	return Ambient;
 }
 
-float4 DiffusePass(float2 TexCoord : TEXCOORD0) : COLOR
+float4 ShadingPass(float2 TexCoord : TEXCOORD0) : COLOR
 {
-	//纹理采样
-	float4 Texture = tex2D(g_sampleDiffuse, TexCoord);
+	//采样光照结果
+	float4 DiffuseLightResult = tex2D(g_sampleLight, TexCoord);
+	float4 SpecularLightResult = tex2D(g_sampleSpecularLight, TexCoord);
 
-	return Texture;;
+	float4 diffuseLight = float4(DiffuseLightResult.xyz, 1.0f);
+	float4 specularLight = float4(SpecularLightResult.xyz, 1.0f);
+
+	//纹理采样
+	float4 Texture = tex2D(g_sampleDiffuse, TexCoord); 
+
+	//计算最终光照
+	return Texture * diffuseLight +specularLight;
 }
 
 float4 DebugPass(float2 TexCoord : TEXCOORD0) : COLOR
@@ -604,13 +648,13 @@ technique DeferredRender
 		SrcBlend = ONE;
 		DestBlend = ONE;
 	}
-	pass p6 //纹理
+	pass p6 //着色
 	{
 		vertexShader = compile vs_3_0 VShader();
-		pixelShader = compile ps_3_0 DiffusePass();
-		AlphaBlendEnable = true;                        //设置渲染状态        
-		SrcBlend = ZERO;
-		DestBlend = SrcColor;
+		pixelShader = compile ps_3_0 ShadingPass();
+		AlphaBlendEnable = false;                        //设置渲染状态        
+		//SrcBlend = ZERO;
+		//DestBlend = SrcColor;
 	}
 	pass p7 //DEBUG PASS
 	{

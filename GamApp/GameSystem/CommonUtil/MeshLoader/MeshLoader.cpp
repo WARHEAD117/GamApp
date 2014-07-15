@@ -112,7 +112,7 @@ HRESULT MeshLoader::LoadXMesh(std::string filePath)
 	if (!hasTangents || !hasBinormals)
 	{
 		ID3DXMesh* pNewMesh;
-
+		
 		// Compute tangents, which are required for normal mapping
 		if (S_OK != D3DXComputeTangentFrameEx(m_pMesh, D3DDECLUSAGE_TEXCOORD, 0, D3DDECLUSAGE_TANGENT, 0,
 			D3DDECLUSAGE_BINORMAL, 0,

@@ -1,3 +1,6 @@
+//#define DEBUG_PS
+//#define DEBUG_VS
+
 #include "D3D9Device.h"
 
 static std::string defaultEffectName = "System\\commonDiffuse.fx";

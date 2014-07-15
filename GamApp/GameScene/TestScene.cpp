@@ -284,7 +284,7 @@ void TestScene::OnBeginFrame()
 	rotMat *= moveMat;
 	krisEntity->SetWorldTransform(rotMat);
 
-	move = D3DXVECTOR3(0, -5, 5);
+	move = D3DXVECTOR3(0, -4.5, 7);
 	D3DXMatrixTranslation(&moveMat, move.x, move.y, move.z);
 	rotMat;
 	D3DXMatrixIdentity(&rotMat);

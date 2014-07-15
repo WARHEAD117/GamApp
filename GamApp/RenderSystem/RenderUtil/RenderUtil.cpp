@@ -210,6 +210,8 @@ void RenderUtil::RenderShadow(D3DXMATRIX lightViewMat, D3DXMATRIX lightProjMat, 
 
 		if (lightType == ePointLight || lightType == eSpotLight)
 			RENDERDEVICE::Instance().GetShadowEffect()->SetBool("g_IsDisLight", true);
+		else
+			RENDERDEVICE::Instance().GetShadowEffect()->SetBool("g_IsDisLight", false);
 
 		UINT nPasses = 0;
 		HRESULT r1 = RENDERDEVICE::Instance().GetShadowEffect()->Begin(&nPasses, 0);

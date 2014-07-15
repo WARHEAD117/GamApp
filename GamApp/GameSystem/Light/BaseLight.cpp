@@ -232,7 +232,7 @@ void BaseLight::RebuildProjMatrix()
 {
 	if (m_LightType == eDirectionLight)
 	{
-		D3DXMatrixOrthoLH(&m_lightProjMat, 20, 20, 0.01f, 50.0f);
+		D3DXMatrixOrthoLH(&m_lightProjMat, 40, 40, 0.01f, 50.0f);
 	}
 	else if (m_LightType == ePointLight)
 	{

@@ -51,7 +51,6 @@ private:
 	LPDIRECT3DSURFACE9	m_pSpecularLightSurface;
 
 	LPDIRECT3DSURFACE9	m_pShadowSurface;
-	LPDIRECT3DSURFACE9	m_pDepthStencilShadowSurface;
 
 	LPDIRECT3DSURFACE9	m_pMainColorSurface;
 

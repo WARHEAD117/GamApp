@@ -85,6 +85,12 @@ RenderPipe::RenderPipe()
 
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
 		1, D3DUSAGE_RENDERTARGET,
+		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
+		&m_pShadowTarget, NULL);
+	hr = m_pShadowTarget->GetSurfaceLevel(0, &m_pShadowSurface);
+
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
+		1, D3DUSAGE_RENDERTARGET,
 		D3DFMT_A16B16G16R16F, D3DPOOL_DEFAULT,
 		&m_pMainColorTarget, NULL);
 	hr = m_pMainColorTarget->GetSurfaceLevel(0, &m_pMainColorSurface);
@@ -144,25 +150,6 @@ RenderPipe::RenderPipe()
 	pVertices1++;
 
 	pScreenQuadVertex->Unlock();
-
-	//=============================================================================
-	//ShadowMap
-	D3DXMatrixLookAtLH(&shadowOrthoView, &D3DXVECTOR3(0, 10, -10),
-		&D3DXVECTOR3(0, -1, 1),
-		&D3DXVECTOR3(0, 1, 1));
-	D3DXMatrixInverse(&shadowOrthoWorld, NULL, &shadowOrthoView);
-	D3DXMatrixOrthoLH(&shadowOrthoProj, 20, 20, 0.01f, 50.0f);
-	D3DXMatrixInverse(&invShadowOrthoProj, NULL, &shadowOrthoProj);
-
-	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
-		1, D3DUSAGE_RENDERTARGET,
-		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
-		&m_pShadowTarget, NULL);
-	hr = m_pShadowTarget->GetSurfaceLevel(0, &m_pShadowSurface);
-
-	RENDERDEVICE::Instance().g_pD3DDevice->CreateDepthStencilSurface(SHADOWMAPSIZE, SHADOWMAPSIZE, 
-		D3DFMT_D24X8, D3DMULTISAMPLE_NONE, 0, TRUE,
-		&m_pDepthStencilShadowSurface, NULL);
 	//=================================================
 	ID3DXBuffer* error = 0;
 

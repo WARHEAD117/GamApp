@@ -135,6 +135,8 @@ OutputPS PShader(float3 NormalV		: NORMAL,
 
 	//纹理采样
 	float4 Texture = tex2D(g_sampleTexture, TexCoord);
+	//高光图采样
+	float4 Specular = tex2D(g_sampleSpecularMap, TexCoord);
 
 	//天空盒
 	posV = g_IsSky ? float4(1.0e6, 1.0e6, 1.0e6, 1.0e6) : posV;
@@ -145,7 +147,10 @@ OutputPS PShader(float3 NormalV		: NORMAL,
 	//判断是否是天空盒
 	float DepthP = g_IsSky ? 1.0e6 : posP.z / posP.w;
 
-	PsOut.diffuse = Texture;
+	//RGB通道储存纹理颜色
+	PsOut.diffuse.rgb = Texture.xyz;
+	//A通道储存高光强度
+	PsOut.diffuse.a = Specular.x;
 	PsOut.normal = float4(sampledNormalV, 1.0f);
 	PsOut.position = float4(posV.xyz, DepthP);
 	return PsOut;

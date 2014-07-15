@@ -579,10 +579,14 @@ float4 ShadingPass(float2 TexCoord : TEXCOORD0) : COLOR
 	float4 specularLight = float4(SpecularLightResult.xyz, 1.0f);
 
 	//纹理采样
-	float4 Texture = tex2D(g_sampleDiffuse, TexCoord); 
+	float4 DiffuseBuffer = tex2D(g_sampleDiffuse, TexCoord);
+	//纹理颜色
+	float4 Texture = float4(DiffuseBuffer.rgb, 1.0f);
+	//高光强度
+	float  Specularintensity = DiffuseBuffer.a;
 
 	//计算最终光照
-	return Texture * diffuseLight +specularLight;
+	return Texture * diffuseLight + specularLight * Specularintensity;
 }
 
 float4 DebugPass(float2 TexCoord : TEXCOORD0) : COLOR

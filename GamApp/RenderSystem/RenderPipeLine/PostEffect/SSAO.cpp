@@ -62,6 +62,9 @@ void SSAO::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	m_postEffect->SetFloat("g_zNear", CameraParam::zNear);
 	m_postEffect->SetFloat("g_zFar", CameraParam::zFar);
 
+	m_postEffect->SetInt(SCREENWIDTH, RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth);
+	m_postEffect->SetInt(SCREENHEIGHT, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight);
+
 	m_postEffect->SetTexture(NORMALBUFFER, RENDERPIPE::Instance().m_pNormalTarget);
 	m_postEffect->SetTexture(POSITIONBUFFER, RENDERPIPE::Instance().m_pPositionTarget);
 	m_postEffect->SetTexture("g_RandomNormal", m_pRandomNormal);

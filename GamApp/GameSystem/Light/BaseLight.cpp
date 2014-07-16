@@ -361,6 +361,35 @@ D3DXMATRIX BaseLight::GetLightVolumeTransform()
 	}
 }
 
+D3DXMATRIX BaseLight::GetToViewDirMatrix()
+{
+	D3DXMATRIX lightVolumeMatrix;
+	D3DXMATRIX scaleMatrix;
+	D3DXMatrixScaling(&scaleMatrix, m_LightRange, m_LightRange, m_LightRange);
+	lightVolumeMatrix = scaleMatrix  * mWorldTransform;
+	lightVolumeMatrix = lightVolumeMatrix * RENDERDEVICE::Instance().ViewMatrix;
+
+	switch (m_LightType)
+	{
+	case eDirectionLight:
+		return RENDERDEVICE::Instance().InvProjMatrix;
+		break;
+	case ePointLight:
+		return lightVolumeMatrix;
+		break;
+	case eSpotLight:
+
+		D3DXMatrixScaling(&scaleMatrix, m_LightRange * tanf(m_LightAngle.x / 360.0f * D3DX_PI), m_LightRange, m_LightRange * tanf(m_LightAngle.x / 360.0f * D3DX_PI));
+		lightVolumeMatrix = scaleMatrix  * mWorldTransform;
+		lightVolumeMatrix = lightVolumeMatrix * RENDERDEVICE::Instance().ViewMatrix;
+
+		return lightVolumeMatrix;
+		break;
+	default:
+		return RENDERDEVICE::Instance().InvProjMatrix;
+		break;
+	}
+}
 
 void BaseLight::SetUseShadow(bool useShadow)
 {

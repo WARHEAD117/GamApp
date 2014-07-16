@@ -423,6 +423,8 @@ void RenderPipe::DeferredRender_MultiPass()
 
 		D3DXMATRIX lightVolumeMatrix = pLight->GetLightVolumeTransform();
 		deferredMultiPassEffect->SetMatrix("g_LightVolumeWVP", &lightVolumeMatrix);
+		D3DXMATRIX toViewDirMatrix = pLight->GetToViewDirMatrix();
+		deferredMultiPassEffect->SetMatrix("g_ToViewDirMatrix", &toViewDirMatrix);
 
 		UINT lightpass = 0;
 		UINT shadowPass = 0;

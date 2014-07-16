@@ -56,7 +56,8 @@ public:
 	D3DXMATRIX GetLightInvProjMatrix();
 
 	D3DXMATRIX GetLightVolumeTransform();
-
+	//获取用来计算相机到灯光体顶点的向量的矩阵
+	D3DXMATRIX GetToViewDirMatrix();
 	void SetUseShadow(bool useShadow);
 	bool GetUseShadow();
 

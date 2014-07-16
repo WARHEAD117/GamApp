@@ -34,6 +34,7 @@ int g_ScreenWidth;
 int g_ScreenHeight;
 //lightVolume================
 matrix g_LightVolumeWVP;
+matrix g_ToViewDirMatrix;
 //===========================
 
 bool		g_bUseShadow;
@@ -130,6 +131,7 @@ struct OutputVS2
 {
 	float4 posWVP         : POSITION0;
 	float4 TexCoord		: TEXCOORD0;
+	float4 viewDir		: TEXCOORD1;
 };
 
 OutputVS VShader(float4 posL       : POSITION0,
@@ -154,6 +156,7 @@ OutputVS2 VShaderLightVolume(float4 posL       : POSITION0)
 
 	outVS.TexCoord = outVS.posWVP;
 
+	outVS.viewDir = mul(posL, g_ToViewDirMatrix);
 	return outVS;
 }
 
@@ -161,24 +164,43 @@ float3 GetNormal(in float2 uv)
 {
 	return normalize(tex2D(g_sampleNormal, uv).xyz * 2.0f - 1.0f);
 }
-
+/*
 float3 GetPosition(in float2 uv)
 {
-	//使用positionBuffer来获取位置，精度较高，但是要占用三个通道
+	//使用positionBuffer来获取位置，精度较高，但是要占用三个通道，必须使用128位纹理，太大太慢
 	return tex2D(g_samplePosition, uv).xyz;
 
-	//使用投影深度重建位置信息，精度较低，误差在小数点后第二位出现，但是速度很好。但是为了能精确还原，必须使用128位纹理，太大太慢
+	//使用投影深度重建位置信息，精度较低，误差在小数点后第二位出现，但是速度很好。
 	float DepthP = tex2D(g_samplePosition, uv).w;
 
 	// 从视口坐标中获取 x/w 和 y/w  
-	float x = uv.x * 2.0f - 1;
-	float y = (1 - uv.y) * 2.0f - 1.0f;
+	float x = uv.x * 2.0f - 1.0f;
+	float y = 1.0f - uv.y * 2.0f;
 	//这里的z值是投影后的非线性深度
 	float4 vProjectedPos = float4(x, y, DepthP, 1.0f);
 	// 通过转置的投影矩阵进行转换到视图空间  
 	float4 vPositionVS = mul(vProjectedPos, g_InverseProj);
 	float3 vPositionVS3 = vPositionVS.xyz / vPositionVS.w;
+	float q = g_zFar / (g_zFar - g_zNear);
+	vPositionVS3.z = (g_zNear * q) / (q - DepthP);
+	vPositionVS3.z = tex2D(g_samplePosition, uv).z;
 	return vPositionVS3.xyz;
+}
+*/
+float3 GetPosition(in float2 uv, in float4 viewDir)
+{
+	float DepthV = tex2D(g_samplePosition, uv).z;
+
+	float3 pos = viewDir * ((DepthV) / viewDir.z);
+
+	return pos;
+}
+
+float GetDepth(in float2 uv)
+{
+	float DepthV = tex2D(g_samplePosition, uv).z;
+
+	return DepthV;
 }
 
 float linstep(float min, float max, float v)
@@ -358,7 +380,7 @@ struct OutputPS
 	float4 specularLight	: COLOR1;
 };
 
-OutputPS DirectionLightPass(float4 posWVP : TEXCOORD0)
+OutputPS DirectionLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1)
 {
 	OutputPS outPs;
 	outPs.diffuseLight = 0;
@@ -369,7 +391,7 @@ OutputPS DirectionLightPass(float4 posWVP : TEXCOORD0)
 	float2 TexCoord = float2(lightU, lightV);
 	float3 Normal = GetNormal(TexCoord);
 
-	float3 pos = GetPosition(TexCoord);
+	float3 pos = GetPosition(TexCoord, viewDir);
 
 	//加入灯光体和stencil剔除后之后就可以省略掉这个判断了
 	if (pos.z > g_zFar)
@@ -395,7 +417,7 @@ OutputPS DirectionLightPass(float4 posWVP : TEXCOORD0)
 	return outPs;
 }
 
-OutputPS PointLightPass(float4 posWVP : TEXCOORD0)
+OutputPS PointLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1)
 {
 	OutputPS outPs;
 	outPs.diffuseLight = 0;
@@ -407,7 +429,7 @@ OutputPS PointLightPass(float4 posWVP : TEXCOORD0)
 
 	float3 Normal = GetNormal(TexCoord);
 
-	float3 pos = GetPosition(TexCoord);
+	float3 pos = GetPosition(TexCoord, viewDir);
 	
 	//加入灯光体和stencil剔除后之后就可以省略掉这个判断了
 	if (pos.z > g_zFar)
@@ -449,7 +471,7 @@ OutputPS PointLightPass(float4 posWVP : TEXCOORD0)
 	return outPs;
 }
 
-OutputPS SpotLightPass(float4 posWVP : TEXCOORD0)
+OutputPS SpotLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1)
 {
 	OutputPS outPs;
 	outPs.diffuseLight = 0;
@@ -461,7 +483,7 @@ OutputPS SpotLightPass(float4 posWVP : TEXCOORD0)
 
 	float3 Normal = GetNormal(TexCoord);
 
-	float3 pos = GetPosition(TexCoord);
+	float3 pos = GetPosition(TexCoord, viewDir);
 	
 	//加入灯光体和stencil剔除后之后就可以省略掉这个判断了
 	if (pos.z > g_zFar)
@@ -521,14 +543,14 @@ OutputPS SpotLightPass(float4 posWVP : TEXCOORD0)
 	return outPs;
 }
 
-float4 ShadowPass(float4 posWVP : TEXCOORD0) : COLOR
+float4 ShadowPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1) : COLOR
 {
 	//return float4(0.5, 0.0f, 0.0f, 1.0f);
 
 	float lightU = (posWVP.x / posWVP.w + 1.0f) / 2.0f + 0.5f / g_ScreenWidth;
 	float lightV = (1.0f - posWVP.y / posWVP.w) / 2.0f + 0.5f / g_ScreenHeight;
 	float2 TexCoord = float2(lightU, lightV);
-	float3 pos = GetPosition(TexCoord);
+	float3 pos = GetPosition(TexCoord, viewDir);
 
 
 	float shadowFinal = 1.0f;
@@ -539,7 +561,7 @@ float4 ShadowPass(float4 posWVP : TEXCOORD0) : COLOR
 	return finalColor;
 }
 
-float4 PointShadowPass(float4 posWVP : TEXCOORD0) : COLOR
+float4 PointShadowPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1) : COLOR
 {
 	//return float4(0.5, 0.0f, 0.0f, 1.0f);
 
@@ -547,7 +569,7 @@ float4 PointShadowPass(float4 posWVP : TEXCOORD0) : COLOR
 	float lightV = (1.0f - posWVP.y / posWVP.w) / 2.0f + 0.5f / g_ScreenHeight;
 	float2 TexCoord = float2(lightU, lightV);
 
-	float3 pos = GetPosition(TexCoord);
+	float3 pos = GetPosition(TexCoord, viewDir);
 
 
 	float shadowFinal = 1.0f;
@@ -564,7 +586,7 @@ float4 AmbientPass(float2 TexCoord : TEXCOORD0) : COLOR
 	float4 Ambient = g_AmbientColor;
 
 	//高亮天空盒（实际上应该用HDR天空盒）
-	Ambient = GetPosition(TexCoord).z > g_zFar ? float4(10,10,10,1): Ambient;
+	Ambient = GetDepth(TexCoord) > g_zFar ? float4(1,1,1,1): Ambient;
 
 	return Ambient;
 }

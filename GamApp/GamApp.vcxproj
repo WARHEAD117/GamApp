@@ -62,7 +62,7 @@
       <AdditionalLibraryDirectories>D:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>copy /y E:\WorkSpace\GamApp\Debug\GamApp.exe E:\WorkSpace\GamApp\GamApp</Command>
+      <Command>copy /y  "$(TargetDir)GamApp.exe" ..\GamApp\GamApp.exe</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

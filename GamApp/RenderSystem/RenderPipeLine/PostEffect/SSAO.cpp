@@ -23,7 +23,7 @@ void SSAO::CreatePostEffect()
 {
 	PostEffectBase::CreatePostEffect("System\\SSAO.fx", D3DFMT_A16B16G16R16F);
 
-	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth/2, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight/2,
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
 		1, D3DUSAGE_RENDERTARGET,
 		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
 		&m_pAoTarget, NULL);
@@ -58,6 +58,7 @@ void SSAO::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	
 	m_postEffect->SetMatrix(WORLDVIEWPROJMATRIX, &RENDERDEVICE::Instance().OrthoWVPMatrix);
 	m_postEffect->SetMatrix(INVPROJMATRIX, &RENDERDEVICE::Instance().InvProjMatrix);
+	m_postEffect->SetMatrix(PROJECTIONMATRIX, &RENDERDEVICE::Instance().ProjMatrix);
 
 	m_postEffect->SetFloat("g_zNear", CameraParam::zNear);
 	m_postEffect->SetFloat("g_zFar", CameraParam::zFar);

@@ -213,6 +213,9 @@ void ComputeMove(D3DXVECTOR3& move)
 
 void BuildRot(D3DXMATRIX& world)
 {
+	if (!GAMEINPUT::Instance().m_CurMState.right)
+		return;
+
 	D3DXVECTOR3 pos;
 	pos.x = world(3, 0);
 	pos.y = world(3, 1);

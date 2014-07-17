@@ -8,6 +8,10 @@ public:
 	RenderPipe();
 	~RenderPipe();
 
+	void	BuildScreenQuad();
+	void	BuildBuffers();
+	void	BuildEffects();
+
 	void	ClearRenderUtil();
 	void	PushRenderUtil(RenderUtil* const renderUtil);
 

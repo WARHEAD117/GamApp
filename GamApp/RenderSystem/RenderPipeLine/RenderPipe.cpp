@@ -52,51 +52,31 @@ SkyBox skyBox;
 
 RenderPipe::RenderPipe()
 {
+	BuildScreenQuad();
+	BuildBuffers();
+	BuildEffects();
 
-	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
-		1, D3DUSAGE_RENDERTARGET,
-		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
-		&m_pDiffuseTarget, NULL);
-	HRESULT hr = m_pDiffuseTarget->GetSurfaceLevel(0, &m_pDiffuseSurface);
+	//Build Post Effect
+	ssao.CreatePostEffect();
+	hdrLighting.CreatePostEffect();
+	dof.CreatePostEffect();
 
-	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
-		1, D3DUSAGE_RENDERTARGET,
-		D3DFMT_A16B16G16R16, D3DPOOL_DEFAULT,
-		&m_pNormalTarget, NULL);
-	hr = m_pNormalTarget->GetSurfaceLevel(0, &m_pNormalSurface);
+	//==========================================================
+	//Build SkyBox
+	skyBox.BuildSkyBox();
+	skyBox.SetSkyTexture("Res\\SkyBox\\bottom.jpg", 0);
+	skyBox.SetSkyTexture("Res\\SkyBox\\left.jpg", 1);
+	skyBox.SetSkyTexture("Res\\SkyBox\\right.jpg", 2);
+	skyBox.SetSkyTexture("Res\\SkyBox\\top.jpg", 3);
+	skyBox.SetSkyTexture("Res\\SkyBox\\back.jpg", 4);
+	skyBox.SetSkyTexture("Res\\SkyBox\\front.jpg", 5);
+	
+}
 
-	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
-		1, D3DUSAGE_RENDERTARGET,
-		D3DFMT_R32F, D3DPOOL_DEFAULT,
-		&m_pPositionTarget, NULL);
-	hr = m_pPositionTarget->GetSurfaceLevel(0, &m_pPositionSurface);
 
-	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
-		1, D3DUSAGE_RENDERTARGET,
-		D3DFMT_A16B16G16R16F, D3DPOOL_DEFAULT,
-		&m_pLightTarget, NULL);
-	hr = m_pLightTarget->GetSurfaceLevel(0, &m_pLightSurface);
 
-	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
-		1, D3DUSAGE_RENDERTARGET,
-		D3DFMT_A16B16G16R16F, D3DPOOL_DEFAULT,
-		&m_pSpecularLightTarget, NULL);
-	hr = m_pSpecularLightTarget->GetSurfaceLevel(0, &m_pSpecularLightSurface);
-
-	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
-		1, D3DUSAGE_RENDERTARGET,
-		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
-		&m_pShadowTarget, NULL);
-	hr = m_pShadowTarget->GetSurfaceLevel(0, &m_pShadowSurface);
-
-	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
-		1, D3DUSAGE_RENDERTARGET,
-		D3DFMT_A16B16G16R16F, D3DPOOL_DEFAULT,
-		&m_pMainColorTarget, NULL);
-	hr = m_pMainColorTarget->GetSurfaceLevel(0, &m_pMainColorSurface);
-
-	//=======================================================================
-
+void RenderPipe::BuildScreenQuad()
+{
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateVertexDeclaration(SCREENQUADDECL, &mScreenQuadDecl);
 	mScreenQuadByteSize = D3DXGetDeclVertexSize(SCREENQUADDECL, 0);
 
@@ -128,8 +108,8 @@ RenderPipe::RenderPipe()
 
 	//==========================
 	pVertices1->position = D3DXVECTOR3(1.0f, -1.0f, 0.0f);
-	pVertices1->tu = 1.0f +0.5f / RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth;
-	pVertices1->tv = 1.0f +0.5f / RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight;
+	pVertices1->tu = 1.0f + 0.5f / RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth;
+	pVertices1->tv = 1.0f + 0.5f / RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight;
 	pVertices1++;
 
 	pVertices1->position = D3DXVECTOR3(-1.0f, -1.0f, 0.0f);
@@ -150,7 +130,59 @@ RenderPipe::RenderPipe()
 	pVertices1++;
 
 	pScreenQuadVertex->Unlock();
-	//=================================================
+}
+
+void RenderPipe::BuildBuffers()
+{
+	//G-Buffer
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
+		1, D3DUSAGE_RENDERTARGET,
+		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
+		&m_pDiffuseTarget, NULL);
+	HRESULT hr = m_pDiffuseTarget->GetSurfaceLevel(0, &m_pDiffuseSurface);
+
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
+		1, D3DUSAGE_RENDERTARGET,
+		D3DFMT_A16B16G16R16, D3DPOOL_DEFAULT,
+		&m_pNormalTarget, NULL);
+	hr = m_pNormalTarget->GetSurfaceLevel(0, &m_pNormalSurface);
+
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
+		1, D3DUSAGE_RENDERTARGET,
+		D3DFMT_R32F, D3DPOOL_DEFAULT,
+		&m_pPositionTarget, NULL);
+	hr = m_pPositionTarget->GetSurfaceLevel(0, &m_pPositionSurface);
+
+	//L-Buffer
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
+		1, D3DUSAGE_RENDERTARGET,
+		D3DFMT_A16B16G16R16F, D3DPOOL_DEFAULT,
+		&m_pLightTarget, NULL);
+	hr = m_pLightTarget->GetSurfaceLevel(0, &m_pLightSurface);
+
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
+		1, D3DUSAGE_RENDERTARGET,
+		D3DFMT_A16B16G16R16F, D3DPOOL_DEFAULT,
+		&m_pSpecularLightTarget, NULL);
+	hr = m_pSpecularLightTarget->GetSurfaceLevel(0, &m_pSpecularLightSurface);
+
+	//Shadow-Buffer
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
+		1, D3DUSAGE_RENDERTARGET,
+		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
+		&m_pShadowTarget, NULL);
+	hr = m_pShadowTarget->GetSurfaceLevel(0, &m_pShadowSurface);
+
+	//Main-Buffer
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
+		1, D3DUSAGE_RENDERTARGET,
+		D3DFMT_A16B16G16R16F, D3DPOOL_DEFAULT,
+		&m_pMainColorTarget, NULL);
+	hr = m_pMainColorTarget->GetSurfaceLevel(0, &m_pMainColorSurface);
+}
+
+void RenderPipe::BuildEffects()
+{
 	ID3DXBuffer* error = 0;
 
 	error = 0;
@@ -176,25 +208,7 @@ RenderPipe::RenderPipe()
 		MessageBox(GetForegroundWindow(), (char*)error->GetBufferPointer(), "Shader", MB_OK);
 		abort();
 	}
-	//=================================================
-
-
-	ssao.CreatePostEffect();
-	hdrLighting.CreatePostEffect();
-	dof.CreatePostEffect();
-
-	//==========================================================
-	skyBox.BuildSkyBox();
-	skyBox.SetSkyTexture("Res\\SkyBox\\bottom.jpg", 0);
-	skyBox.SetSkyTexture("Res\\SkyBox\\left.jpg", 1);
-	skyBox.SetSkyTexture("Res\\SkyBox\\right.jpg", 2);
-	skyBox.SetSkyTexture("Res\\SkyBox\\top.jpg", 3);
-	skyBox.SetSkyTexture("Res\\SkyBox\\back.jpg", 4);
-	skyBox.SetSkyTexture("Res\\SkyBox\\front.jpg", 5);
-	
 }
-
-
 
 
 RenderPipe::~RenderPipe()

@@ -21,8 +21,5 @@ private:
 	LPDIRECT3DTEXTURE9			m_pRandomNormal;
 	LPDIRECT3DTEXTURE9			m_pAoTarget;
 	LPDIRECT3DSURFACE9			m_pAoSurface;
-
-	LPDIRECT3DTEXTURE9			m_pViewDirTarget;
-	LPDIRECT3DSURFACE9			m_pViewDirSurface;
 };
 

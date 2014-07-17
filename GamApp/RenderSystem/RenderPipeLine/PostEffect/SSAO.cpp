@@ -8,9 +8,9 @@
 SSAO::SSAO()
 {
 	m_intensity = 2;
-	m_scale = 1;
-	m_bias = 0.1;
-	m_sample_rad = 0.1;
+	m_scale = 0.5;
+	m_bias = 0.2;
+	m_sample_rad = 0.03;
 	m_AOEnable = true;
 }
 
@@ -23,17 +23,11 @@ void SSAO::CreatePostEffect()
 {
 	PostEffectBase::CreatePostEffect("System\\SSAO.fx", D3DFMT_A16B16G16R16F);
 
-	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth/2, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight/2,
 		1, D3DUSAGE_RENDERTARGET,
 		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
 		&m_pAoTarget, NULL);
 	HRESULT hr = m_pAoTarget->GetSurfaceLevel(0, &m_pAoSurface);
-
-	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(16, 12,
-		1, D3DUSAGE_RENDERTARGET,
-		D3DFMT_A16B16G16R16F, D3DPOOL_DEFAULT,
-		&m_pViewDirTarget, NULL);
- 	hr = m_pViewDirTarget->GetSurfaceLevel(0, &m_pViewDirSurface);
 
 	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "System\\randomNormal.dds", &m_pRandomNormal))
 	{
@@ -68,6 +62,8 @@ void SSAO::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 	float angle = tan(CameraParam::FOV/2);
 	m_postEffect->SetFloat("g_angle", angle);
+	float aspect = RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth / RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight;
+	m_postEffect->SetFloat("g_aspect", aspect);
 
 	m_postEffect->SetInt(SCREENWIDTH, RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth);
 	m_postEffect->SetInt(SCREENHEIGHT, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight);
@@ -84,20 +80,10 @@ void SSAO::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 	m_postEffect->CommitChanges();
 
-	{
-		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pViewDirSurface);
-		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 0, 0, 0), 1.0f, 0);
-		m_postEffect->BeginPass(2);
-		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
-		m_postEffect->EndPass();
-	}
-	
-
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pAoSurface);
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(255, 255, 255, 255), 1.0f, 0);
 	if (m_AOEnable)
 	{
-		m_postEffect->SetTexture("g_ViewDirBuffer", m_pViewDirTarget);
 		m_postEffect->CommitChanges();
 
 		m_postEffect->BeginPass(0);
@@ -158,8 +144,8 @@ void SSAO::ComputeAOConfig()
 	if (GAMEINPUT::Instance().KeyDown(DIK_R))
 	{
 		m_intensity = 2;
-		m_scale = 1;
-		m_bias = 0.1;
-		m_sample_rad = 0.1;
+		m_scale = 0.5;
+		m_bias = 0.2;
+		m_sample_rad = 0.03;
 	}
 }

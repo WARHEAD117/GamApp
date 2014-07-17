@@ -164,32 +164,10 @@ float3 GetNormal(in float2 uv)
 {
 	return normalize(tex2D(g_sampleNormal, uv).xyz * 2.0f - 1.0f);
 }
-/*
-float3 GetPosition(in float2 uv)
-{
-	//使用positionBuffer来获取位置，精度较高，但是要占用三个通道，必须使用128位纹理，太大太慢
-	return tex2D(g_samplePosition, uv).xyz;
 
-	//使用投影深度重建位置信息，精度较低，误差在小数点后第二位出现，但是速度很好。
-	float DepthP = tex2D(g_samplePosition, uv).w;
-
-	// 从视口坐标中获取 x/w 和 y/w  
-	float x = uv.x * 2.0f - 1.0f;
-	float y = 1.0f - uv.y * 2.0f;
-	//这里的z值是投影后的非线性深度
-	float4 vProjectedPos = float4(x, y, DepthP, 1.0f);
-	// 通过转置的投影矩阵进行转换到视图空间  
-	float4 vPositionVS = mul(vProjectedPos, g_InverseProj);
-	float3 vPositionVS3 = vPositionVS.xyz / vPositionVS.w;
-	float q = g_zFar / (g_zFar - g_zNear);
-	vPositionVS3.z = (g_zNear * q) / (q - DepthP);
-	vPositionVS3.z = tex2D(g_samplePosition, uv).z;
-	return vPositionVS3.xyz;
-}
-*/
 float3 GetPosition(in float2 uv, in float4 viewDir)
 {
-	float DepthV = tex2D(g_samplePosition, uv).z;
+	float DepthV = tex2D(g_samplePosition, uv).r;
 
 	float3 pos = viewDir * ((DepthV) / viewDir.z);
 

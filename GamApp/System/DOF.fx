@@ -12,8 +12,11 @@ float		g_zFar = 100.0f;
 int g_ScreenWidth;
 int g_ScreenHeight;
 
+float		g_angle;
+float		g_aspect;
+
 static const int MAX_SAMPLES = 8;
-float g_angle;
+float g_bokehAngle;
 
 float g_aperture;
 float g_focallength;
@@ -102,21 +105,14 @@ OutputVS VShader(float4 posL       : POSITION0,
 
 float3 GetPosition(in float2 uv)
 {
-	//使用positionBuffer来获取位置，精度较高，但是要占用三个通道
-	return tex2D(g_samplePosition, uv).xyz;
+	float z = tex2D(g_samplePosition, uv).r;
 
-	//使用投影深度重建位置信息，精度较低，误差在小数点后第二位出现，但是速度很好。但是为了能精确还原，必须使用128位纹理，太大太慢
-	float DepthP = tex2D(g_samplePosition, uv).w;
+	float u = uv.x * 2.0f - 1;
+	float v = (1 - uv.y) * 2.0f - 1.0f;
 
-	// 从视口坐标中获取 x/w 和 y/w  
-	float x = uv.x * 2.0f - 1;
-	float y = (1 - uv.y) * 2.0f - 1.0f;
-	//这里的z值是投影后的非线性深度
-	float4 vProjectedPos = float4(x, y, DepthP, 1.0f);
-	// 通过转置的投影矩阵进行转换到视图空间  
-	float4 vPositionVS = mul(vProjectedPos, g_InverseProj);
-	float3 vPositionVS3 = vPositionVS.xyz / vPositionVS.w;
-	return vPositionVS3.xyz;
+	float y = g_angle * v * z;
+	float x = g_angle * u * z * g_aspect;
+	return float3(x, y, z);
 }
 
 OffsetData MakeOffset(half angle)
@@ -194,7 +190,7 @@ float4 DrawDof(float2 TexCoord, OffsetData offsetData)
 
 float4 DrawDoF_PS(float2 TexCoord : TEXCOORD0) : COLOR
 {
-	OffsetData offsetData = MakeOffset(g_angle);
+	OffsetData offsetData = MakeOffset(g_bokehAngle);
 
 	return DrawDof(TexCoord, offsetData);
 }

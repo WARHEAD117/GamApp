@@ -103,6 +103,11 @@ void DOF::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	m_postEffect->SetFloat("g_zNear", CameraParam::zNear);
 	m_postEffect->SetFloat("g_zFar", CameraParam::zFar);
 
+	float angle = tan(CameraParam::FOV / 2);
+	m_postEffect->SetFloat("g_angle", angle);
+	float aspect = RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth / RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight;
+	m_postEffect->SetFloat("g_aspect", aspect);
+
 	m_postEffect->SetInt(SCREENWIDTH, RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth);
 	m_postEffect->SetInt(SCREENHEIGHT, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight);
 
@@ -141,7 +146,7 @@ void DOF::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurfColorHorizontal);
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 0, 0, 0), 1.0f, 0);
 	m_postEffect->SetTexture("g_ColorCoCBuffer", m_ColorCoCBuffer);
-	m_postEffect->SetFloat("g_angle", 0);
+	m_postEffect->SetFloat("g_bokehAngle", 0);
 
 	m_postEffect->CommitChanges();
 
@@ -158,7 +163,7 @@ void DOF::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurfColorStep1);
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 0, 0, 0), 1.0f, 0);
 	m_postEffect->SetTexture("g_ColorCoCBuffer", m_ColorHorizontal);
-	m_postEffect->SetFloat("g_angle", D3DX_PI / 3.0f);
+	m_postEffect->SetFloat("g_bokehAngle", D3DX_PI / 3.0f);
 
 	m_postEffect->CommitChanges();
 
@@ -175,7 +180,7 @@ void DOF::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurfColorStep2);
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 0, 0, 0), 1.0f, 0);
 	m_postEffect->SetTexture("g_ColorCoCBuffer", m_ColorHorizontal);
-	m_postEffect->SetFloat("g_angle", -D3DX_PI / 3.0f);
+	m_postEffect->SetFloat("g_bokehAngle", -D3DX_PI / 3.0f);
 
 	m_postEffect->CommitChanges();
 
@@ -189,7 +194,7 @@ void DOF::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pPostSurface);
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 0, 0, 0), 1.0f, 0);
 
-	m_postEffect->SetFloat("g_angle", D3DX_PI / 3.0f);
+	m_postEffect->SetFloat("g_bokehAngle", D3DX_PI / 3.0f);
 
 	m_postEffect->SetTexture("g_ColorStep1", m_ColorStep1);
 	m_postEffect->SetTexture("g_ColorStep2", m_ColorStep2);

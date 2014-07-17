@@ -94,7 +94,7 @@ OutputVS VShader(float4 posL       : POSITION0,
 
 float3 GetPosition(in float2 uv)
 {
-	float z = tex2D(g_samplePosition, uv).z;
+	float z = tex2D(g_samplePosition, uv).r;
 
 	float u = uv.x * 2.0f - 1;
 	float v = (1 - uv.y) * 2.0f - 1.0f;

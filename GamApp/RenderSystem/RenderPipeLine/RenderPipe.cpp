@@ -67,7 +67,7 @@ RenderPipe::RenderPipe()
 
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
 		1, D3DUSAGE_RENDERTARGET,
-		D3DFMT_A32B32G32R32F, D3DPOOL_DEFAULT,
+		D3DFMT_R32F, D3DPOOL_DEFAULT,
 		&m_pPositionTarget, NULL);
 	hr = m_pPositionTarget->GetSurfaceLevel(0, &m_pPositionSurface);
 

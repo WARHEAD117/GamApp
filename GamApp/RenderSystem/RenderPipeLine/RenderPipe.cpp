@@ -213,6 +213,9 @@ void RenderPipe::RenderGBuffer()
 	HRESULT r1 = GBufferEffect->Begin(&nPasses, 0);
 	HRESULT r2 = GBufferEffect->BeginPass(0);
 
+	deferredMultiPassEffect->SetFloat("g_zNear", CameraParam::zNear);
+	deferredMultiPassEffect->SetFloat("g_zFar", CameraParam::zFar);
+
 	skyBox.RenderInGBuffer(GBufferEffect);
 
 	for (int i = 0; i < mRenderUtilList.size(); ++i)

@@ -8,6 +8,9 @@ matrix		g_mWorldInv;
 
 bool		g_IsSky;
 
+float		g_zNear = 1.0f;
+float		g_zFar = 1000.0f;
+
 texture		g_Texture;
 sampler2D g_sampleTexture =
 sampler_state

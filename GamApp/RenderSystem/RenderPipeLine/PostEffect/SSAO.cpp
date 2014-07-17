@@ -29,6 +29,12 @@ void SSAO::CreatePostEffect()
 		&m_pAoTarget, NULL);
 	HRESULT hr = m_pAoTarget->GetSurfaceLevel(0, &m_pAoSurface);
 
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(16, 12,
+		1, D3DUSAGE_RENDERTARGET,
+		D3DFMT_A16B16G16R16F, D3DPOOL_DEFAULT,
+		&m_pViewDirTarget, NULL);
+ 	hr = m_pViewDirTarget->GetSurfaceLevel(0, &m_pViewDirSurface);
+
 	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "System\\randomNormal.dds", &m_pRandomNormal))
 	{
 		MessageBox(GetForegroundWindow(), "TextureError", "randomNormal", MB_OK);
@@ -46,9 +52,6 @@ void SSAO::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 	ComputeAOConfig();
 
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pAoSurface);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(255, 255, 255, 255), 1.0f, 0);
-
 	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, m_pBufferVex, 0, sizeof(VERTEX));
 	RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(D3DFVF_VERTEX);
 
@@ -62,6 +65,9 @@ void SSAO::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 	m_postEffect->SetFloat("g_zNear", CameraParam::zNear);
 	m_postEffect->SetFloat("g_zFar", CameraParam::zFar);
+
+	float angle = tan(CameraParam::FOV/2);
+	m_postEffect->SetFloat("g_angle", angle);
 
 	m_postEffect->SetInt(SCREENWIDTH, RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth);
 	m_postEffect->SetInt(SCREENHEIGHT, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight);
@@ -78,8 +84,22 @@ void SSAO::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 	m_postEffect->CommitChanges();
 
+	{
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pViewDirSurface);
+		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 0, 0, 0), 1.0f, 0);
+		m_postEffect->BeginPass(2);
+		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+		m_postEffect->EndPass();
+	}
+	
+
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pAoSurface);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(255, 255, 255, 255), 1.0f, 0);
 	if (m_AOEnable)
 	{
+		m_postEffect->SetTexture("g_ViewDirBuffer", m_pViewDirTarget);
+		m_postEffect->CommitChanges();
+
 		m_postEffect->BeginPass(0);
 		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 		m_postEffect->EndPass();

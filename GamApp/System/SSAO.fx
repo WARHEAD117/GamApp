@@ -20,7 +20,7 @@ float		g_scale = 1;
 float		g_bias = 0;
 float		g_sample_rad = 0.03;
 
-float		g_rad_scale = 3;
+float		g_rad_scale = 0.3;
 
 texture		g_NormalBuffer;
 texture		g_RandomNormal; 
@@ -144,7 +144,7 @@ float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
 	float2 rand = getRandom(TexCoord);
 	float ao = 0.0f;
 	float invDepth = 1 - p.z / g_zFar;
-	float rad = g_sample_rad / (invDepth * invDepth * g_rad_scale);
+	float rad = g_sample_rad * (invDepth * invDepth) * g_rad_scale;
 
 	//**SSAO Calculation**// 
 	int iterations = 4;

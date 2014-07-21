@@ -11,7 +11,7 @@ SSAO::SSAO()
 	m_scale = 0.5;
 	m_bias = 0.2;
 	m_sample_rad = 0.03;
-	m_rad_scale = 3;
+	m_rad_scale = 0.3;
 	m_AOEnable = true;
 }
 
@@ -126,7 +126,7 @@ void SSAO::ComputeAOConfig()
 	}
 	if (GAMEINPUT::Instance().KeyDown(DIK_O) && !GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
-		m_rad_scale += 0.001;
+		m_rad_scale += 0.0001;
 	}
 
 	if (GAMEINPUT::Instance().KeyDown(DIK_T) && GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
@@ -147,7 +147,7 @@ void SSAO::ComputeAOConfig()
 	}
 	if (GAMEINPUT::Instance().KeyDown(DIK_O) && GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
-		m_rad_scale -= 0.001;
+		m_rad_scale -= 0.0001;
 	}
 
 	if (GAMEINPUT::Instance().KeyDown(DIK_R))
@@ -156,6 +156,6 @@ void SSAO::ComputeAOConfig()
 		m_scale = 0.5;
 		m_bias = 0.2;
 		m_sample_rad = 0.03;
-		m_rad_scale = 3;
+		m_rad_scale = 0.3;
 	}
 }

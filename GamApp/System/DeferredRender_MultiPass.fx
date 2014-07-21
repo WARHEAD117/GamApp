@@ -165,6 +165,11 @@ float3 GetNormal(in float2 uv)
 	return normalize(tex2D(g_sampleNormal, uv).xyz * 2.0f - 1.0f);
 }
 
+float GetShininess(in float2 uv)
+{
+	return tex2D(g_sampleNormal, uv).a;
+}
+
 float3 GetPosition(in float2 uv, in float4 viewDir)
 {
 	float DepthV = tex2D(g_samplePosition, uv).r;
@@ -252,7 +257,7 @@ float4 GaussianBlur(int mapWidth, int mapHeight, sampler2D texSampler, float2 te
 	return color;
 }
 
-void LightFunc(float3 normal, float3 toLight, float3 toEye, float4 lightColor, inout float4 DiffuseLight, inout float4 SpecularLight)
+void LightFunc(float3 normal, float3 toLight, float3 toEye, float4 lightColor, inout float4 DiffuseLight, inout float4 SpecularLight, in float Shininess)
 {
 	//裁减掉背光的像素
 	float NL = dot(toLight, normal);
@@ -269,7 +274,7 @@ void LightFunc(float3 normal, float3 toLight, float3 toEye, float4 lightColor, i
 	float lh = dot(toLight, H);
 	float G = 1 / (lh*lh);
 
-	float shininess = 50.05f;
+	float shininess = Shininess;
 	float SpecularRatio = max(dot(normal, H), 0.0);
 	//对Blinn-Phong的高光归一化，保证反射的能量守恒
 	float PoweredSpecular = pow(SpecularRatio, shininess) * (shininess + 2.0f) / 8.0f;
@@ -368,6 +373,7 @@ OutputPS DirectionLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD
 	float lightV = (1.0f - posWVP.y / posWVP.w) / 2.0f + 0.5f / g_ScreenHeight;
 	float2 TexCoord = float2(lightU, lightV);
 	float3 Normal = GetNormal(TexCoord);
+	float Shininess = GetShininess(TexCoord);
 
 	float3 pos = GetPosition(TexCoord, viewDir);
 
@@ -381,7 +387,7 @@ OutputPS DirectionLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD
 	float4 DiffuseLight = float4(0.0f, 0.0f, 0.0f, 0.0f);
 	float4 SpecularLight = float4(0.0f, 0.0f, 0.0f, 0.0f);
 
-	LightFunc(Normal, toLight, ToEyeDirV, g_LightColor, DiffuseLight, SpecularLight);
+	LightFunc(Normal, toLight, ToEyeDirV, g_LightColor, DiffuseLight, SpecularLight, Shininess);
 
 	float shadowFinal = 1.0f;
 	//shadowFinal = ShadowFunc(g_bUseShadow, pos);
@@ -406,6 +412,7 @@ OutputPS PointLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1)
 	float2 TexCoord = float2(lightU, lightV);
 
 	float3 Normal = GetNormal(TexCoord);
+	float Shininess = GetShininess(TexCoord);
 
 	float3 pos = GetPosition(TexCoord, viewDir);
 	
@@ -434,7 +441,7 @@ OutputPS PointLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1)
 	float4 lightColor = attenuation * g_LightColor;
 
 	toLight = normalize(toLight);
-	LightFunc(Normal, toLight, ToEyeDirV, lightColor, DiffuseLight, SpecularLight);
+	LightFunc(Normal, toLight, ToEyeDirV, lightColor, DiffuseLight, SpecularLight, Shininess);
 
 	float shadowFinal = 1.0f;
 	//shadowFinal = PointShadowFunc(g_bUseShadow, pos);
@@ -460,6 +467,7 @@ OutputPS SpotLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1)
 	float2 TexCoord = float2(lightU, lightV);
 
 	float3 Normal = GetNormal(TexCoord);
+	float Shininess = GetShininess(TexCoord);
 
 	float3 pos = GetPosition(TexCoord, viewDir);
 	
@@ -508,7 +516,7 @@ OutputPS SpotLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1)
 
 	float4 lightColor = attenuation * g_LightColor * falloff;
 
-	LightFunc(Normal, toLight, ToEyeDirV, lightColor, DiffuseLight, SpecularLight);
+	LightFunc(Normal, toLight, ToEyeDirV, lightColor, DiffuseLight, SpecularLight, Shininess);
 
 	float shadowFinal = 1.0f;
 	//shadowFinal = ShadowFunc(g_bUseShadow, pos);

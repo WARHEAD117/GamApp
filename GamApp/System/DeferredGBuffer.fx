@@ -11,6 +11,8 @@ bool		g_IsSky;
 float		g_zNear = 1.0f;
 float		g_zFar = 1000.0f;
 
+float		g_shininess = 1.0f;
+
 texture		g_Texture;
 sampler2D g_sampleTexture =
 sampler_state
@@ -150,11 +152,16 @@ OutputPS PShader(float3 NormalV		: NORMAL,
 	//判断是否是天空盒
 	float DepthP = g_IsSky ? 1.0e6 : posP.z / posP.w;
 
+	//设置高光幂
+	float Shininess = g_shininess;
+	Shininess = 50.05f;
+
 	//RGB通道储存纹理颜色
 	PsOut.diffuse.rgb = Texture.xyz;
 	//A通道储存高光强度
 	PsOut.diffuse.a = Specular.x;
 	PsOut.normal = float4(sampledNormalV, 1.0f);
+	PsOut.normal.a = Shininess;
 	PsOut.position = posV.zzzz;
 	return PsOut;
 }

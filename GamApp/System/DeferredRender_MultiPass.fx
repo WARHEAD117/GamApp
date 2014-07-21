@@ -170,7 +170,7 @@ float GetShininess(in float2 uv)
 	return tex2D(g_sampleNormal, uv).a;
 }
 
-void GetNormal_and_Shininess(in float2 uv, inout float3 normal, inout float shininess)
+void GetNormalandShininess(in float2 uv, inout float3 normal, inout float shininess)
 {
 	float4 normal_shininess = tex2D(g_sampleNormal, uv);
 	
@@ -180,7 +180,10 @@ void GetNormal_and_Shininess(in float2 uv, inout float3 normal, inout float shin
 
 float3 GetPosition(in float2 uv, in float4 viewDir)
 {
-	float DepthV = tex2D(g_samplePosition, uv).r;
+	float q = g_zFar / (g_zFar - g_zNear);
+	float DepthV = g_zNear * q / (q - tex2D(g_samplePosition, uv).r);
+
+	//DepthV = tex2D(g_samplePosition, uv).r;
 
 	float3 pos = viewDir * ((DepthV) / viewDir.z);
 
@@ -395,7 +398,7 @@ OutputPS DirectionLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD
 
 	float3 Normal;// = GetNormal(TexCoord);
 	float Shininess;// = GetShininess(TexCoord);
-	GetNormal_and_Shininess(TexCoord, Normal, Shininess);
+	GetNormalandShininess(TexCoord, Normal, Shininess);
 
 	LightFunc(Normal, toLight, ToEyeDirV, g_LightColor, DiffuseLight, SpecularLight, Shininess);
 
@@ -451,7 +454,7 @@ OutputPS PointLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1)
 
 	float3 Normal;// = GetNormal(TexCoord);
 	float Shininess;// = GetShininess(TexCoord);
-	GetNormal_and_Shininess(TexCoord, Normal, Shininess);
+	GetNormalandShininess(TexCoord, Normal, Shininess);
 
 	LightFunc(Normal, toLight, ToEyeDirV, lightColor, DiffuseLight, SpecularLight, Shininess);
 
@@ -527,7 +530,7 @@ OutputPS SpotLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1)
 	
 	float3 Normal;// = GetNormal(TexCoord);
 	float Shininess;// = GetShininess(TexCoord);
-	GetNormal_and_Shininess(TexCoord, Normal, Shininess);
+	GetNormalandShininess(TexCoord, Normal, Shininess);
 
 	LightFunc(Normal, toLight, ToEyeDirV, lightColor, DiffuseLight, SpecularLight, Shininess);
 

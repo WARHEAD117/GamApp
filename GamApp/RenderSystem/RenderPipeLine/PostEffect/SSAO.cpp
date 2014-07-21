@@ -11,6 +11,7 @@ SSAO::SSAO()
 	m_scale = 0.5;
 	m_bias = 0.2;
 	m_sample_rad = 0.03;
+	m_rad_scale = 3;
 	m_AOEnable = true;
 }
 
@@ -77,7 +78,7 @@ void SSAO::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	m_postEffect->SetFloat("g_scale", m_scale);
 	m_postEffect->SetFloat("g_bias", m_bias);
 	m_postEffect->SetFloat("g_sample_rad", m_sample_rad);
-
+	m_postEffect->SetFloat("g_rad_scale", m_rad_scale);
 	m_postEffect->CommitChanges();
 
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pAoSurface);
@@ -123,6 +124,10 @@ void SSAO::ComputeAOConfig()
 	{
 		m_bias += 0.0001;
 	}
+	if (GAMEINPUT::Instance().KeyDown(DIK_O) && !GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
+	{
+		m_rad_scale += 0.001;
+	}
 
 	if (GAMEINPUT::Instance().KeyDown(DIK_T) && GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
@@ -140,6 +145,10 @@ void SSAO::ComputeAOConfig()
 	{
 		m_bias -= 0.0001;
 	}
+	if (GAMEINPUT::Instance().KeyDown(DIK_O) && GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
+	{
+		m_rad_scale -= 0.001;
+	}
 
 	if (GAMEINPUT::Instance().KeyDown(DIK_R))
 	{
@@ -147,5 +156,6 @@ void SSAO::ComputeAOConfig()
 		m_scale = 0.5;
 		m_bias = 0.2;
 		m_sample_rad = 0.03;
+		m_rad_scale = 3;
 	}
 }

@@ -171,9 +171,18 @@ float3 decode(float2 enc)
 	return n;
 }
 
+float2 float3ToFloat2(float3 input)
+{
+	float nz = floor(input.z * 255) / 16;
+	float2 output = input.xy + float2(floor(nz) / 16, frac(nz)) / 255;
+	return output;
+}
+
 float3 GetNormal(in float2 uv)
 {
 	float4 normal_shininess = tex2D(g_sampleNormal, uv);
+
+	normal_shininess.xy = float3ToFloat2(normal_shininess.xyz);
 
 	float3 normal = decode(normal_shininess.xy);
 
@@ -182,15 +191,17 @@ float3 GetNormal(in float2 uv)
 
 float GetShininess(in float2 uv)
 {
-	return tex2D(g_sampleNormal, uv).a;
+	return tex2D(g_sampleNormal, uv).a * 1000;
 }
 
 void GetNormalandShininess(in float2 uv, inout float3 normal, inout float shininess)
 {
 	float4 normal_shininess = tex2D(g_sampleNormal, uv);
 	
+	normal_shininess.xy = float3ToFloat2(normal_shininess.xyz);
+
 	normal = decode(normal_shininess.xy);
-	shininess = normal_shininess.w;
+	shininess = normal_shininess.a * 1000;
 }
 
 float3 GetPosition(in float2 uv, in float4 viewDir)

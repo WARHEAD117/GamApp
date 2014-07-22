@@ -117,10 +117,18 @@ float3 decode(float2 enc)
 	return n;
 }
 
+float2 float3ToFloat2(float3 input)
+{
+	float nz = floor(input.z * 255) / 16;
+	float2 output = input.xy + float2(floor(nz) / 16, frac(nz)) / 255;
+	return output;
+}
 
 float3 getNormal(in float2 uv)
 {
 	float4 normal_shininess = tex2D(g_sampleNormal, uv);
+
+	normal_shininess.xy = float3ToFloat2(normal_shininess.xyz);
 
 	float3 normal = decode(normal_shininess.xy);
 

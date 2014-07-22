@@ -148,7 +148,7 @@ void RenderPipe::BuildBuffers()
 
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
 		1, D3DUSAGE_RENDERTARGET,
-		D3DFMT_A16B16G16R16F, D3DPOOL_DEFAULT,
+		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
 		&m_pNormalTarget, NULL);
 	hr = m_pNormalTarget->GetSurfaceLevel(0, &m_pNormalSurface);
 

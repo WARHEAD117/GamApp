@@ -103,6 +103,14 @@ float2 encode(float3 n)
 	return float2(n.xy / p + 0.5);
 }
 
+float3 float2ToFloat3(float2 input)
+{
+	float2 enc255 = input * 255;
+	float2 residual = floor(frac(enc255) * 16);
+	float3 output = float3(floor(enc255), residual.x * 16 + residual.y) / 255;
+	return output;
+}
+
 OutputPS PShader(float3 NormalV		: NORMAL,
 				 float3 TangentV		: TANGENT,
 				 float3 BinormalV	: BINORMAL,
@@ -141,6 +149,8 @@ OutputPS PShader(float3 NormalV		: NORMAL,
 
 	//sampledNormalV = (sampledNormalV + 1.0f) / 2.0f;
 	sampledNormalV.xy = encode(sampledNormalV);
+	sampledNormalV.xyz = float2ToFloat3(sampledNormalV.xy);
+
 	//天空盒
 	sampledNormalV = g_IsSky ? float3(0, 0, 0) : sampledNormalV;
 
@@ -167,7 +177,7 @@ OutputPS PShader(float3 NormalV		: NORMAL,
 	//A通道储存高光强度
 	PsOut.diffuse.a = Specular.x;
 	PsOut.normal = float4(sampledNormalV.xyz, 1.0f);
-	PsOut.normal.a = Shininess;
+	PsOut.normal.a = Shininess / 1000;
 	PsOut.position = posV.zzzz;
 	return PsOut;
 }

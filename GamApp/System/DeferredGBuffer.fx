@@ -97,6 +97,12 @@ OutputVS VShader(float4 posL		: POSITION,
 	return outVS;
 }
 
+float2 encode(float3 n)
+{
+	float p = sqrt(-n.z * 8 + 8);
+	return float2(n.xy / p + 0.5);
+}
+
 OutputPS PShader(float3 NormalV		: NORMAL,
 				 float3 TangentV		: TANGENT,
 				 float3 BinormalV	: BINORMAL,
@@ -133,8 +139,8 @@ OutputPS PShader(float3 NormalV		: NORMAL,
 	//if (abs(sampledNormalT.x - 0) < 0.02 && abs(sampledNormalT.y - 0) < 0.02 && abs(sampledNormalT.z - 1) < 0.02)
 	//	sampledNormalV = float3(1, 1, 1);
 
-	sampledNormalV = (sampledNormalV + 1.0f) / 2.0f;
-	
+	//sampledNormalV = (sampledNormalV + 1.0f) / 2.0f;
+	sampledNormalV.xy = encode(sampledNormalV);
 	//天空盒
 	sampledNormalV = g_IsSky ? float3(0, 0, 0) : sampledNormalV;
 
@@ -160,7 +166,7 @@ OutputPS PShader(float3 NormalV		: NORMAL,
 	PsOut.diffuse.rgb = Texture.xyz;
 	//A通道储存高光强度
 	PsOut.diffuse.a = Specular.x;
-	PsOut.normal = float4(sampledNormalV, 1.0f);
+	PsOut.normal = float4(sampledNormalV.xyz, 1.0f);
 	PsOut.normal.a = Shininess;
 	PsOut.position = posV.zzzz;
 	return PsOut;

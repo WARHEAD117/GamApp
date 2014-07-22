@@ -106,10 +106,25 @@ float3 GetPosition(in float2 uv)
 	return float3(x,y,z);
 }
 
+float3 decode(float2 enc)
+{
+	float2 fenc = enc * 4 - 2;
+	float f = dot(fenc, fenc);
+	float g = sqrt(1 - f / 4);
+	float3 n;
+	n.xy = fenc*g;
+	n.z = -1 + f / 2;
+	return n;
+}
+
 
 float3 getNormal(in float2 uv)
 {
-	return normalize(tex2D(g_sampleNormal, uv).xyz * 2.0f - 1.0f);
+	float4 normal_shininess = tex2D(g_sampleNormal, uv);
+
+	float3 normal = decode(normal_shininess.xy);
+
+	return normal;
 }
 
 float2 getRandom(in float2 uv)

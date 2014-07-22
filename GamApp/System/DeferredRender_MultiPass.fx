@@ -160,9 +160,24 @@ OutputVS2 VShaderLightVolume(float4 posL       : POSITION0)
 	return outVS;
 }
 
+float3 decode(float2 enc)
+{
+	float2 fenc = enc * 4 - 2;
+		float f = dot(fenc, fenc);
+	float g = sqrt(1 - f / 4);
+	float3 n;
+	n.xy = fenc*g;
+	n.z = -1 + f / 2;
+	return n;
+}
+
 float3 GetNormal(in float2 uv)
 {
-	return normalize(tex2D(g_sampleNormal, uv).xyz * 2.0f - 1.0f);
+	float4 normal_shininess = tex2D(g_sampleNormal, uv);
+
+	float3 normal = decode(normal_shininess.xy);
+
+	return normal;
 }
 
 float GetShininess(in float2 uv)
@@ -174,7 +189,7 @@ void GetNormalandShininess(in float2 uv, inout float3 normal, inout float shinin
 {
 	float4 normal_shininess = tex2D(g_sampleNormal, uv);
 	
-	normal = normalize(normal_shininess.xyz * 2.0f - 1.0f);
+	normal = decode(normal_shininess.xy);
 	shininess = normal_shininess.w;
 }
 

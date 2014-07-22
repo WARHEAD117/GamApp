@@ -132,9 +132,6 @@ void RenderPipe::BuildScreenQuad()
 	pScreenQuadVertex->Unlock();
 }
 
-LPDIRECT3DTEXTURE9	m_pDepthStencilTarget;
-LPDIRECT3DSURFACE9	m_pDepthStencilSurface;
-
 void RenderPipe::BuildBuffers()
 {
 	//G-Buffer
@@ -160,12 +157,6 @@ void RenderPipe::BuildBuffers()
 		D3DFMT_R32F, D3DPOOL_DEFAULT,
 		&m_pPositionTarget, NULL);
 	hr = m_pPositionTarget->GetSurfaceLevel(0, &m_pPositionSurface);
-
-	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
-		1, D3DUSAGE_DEPTHSTENCIL,
-		D3DFMT_D24S8, D3DPOOL_DEFAULT,
-		&m_pDepthStencilTarget, NULL);
-	hr = m_pDepthStencilTarget->GetSurfaceLevel(0, &m_pDepthStencilSurface);
 
 	//L-Buffer
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
@@ -232,11 +223,6 @@ RenderPipe::~RenderPipe()
 
 void RenderPipe::RenderGBuffer()
 {
-	LPDIRECT3DSURFACE9 pOldDS = NULL;
-	RENDERDEVICE::Instance().g_pD3DDevice->GetDepthStencilSurface(&pOldDS);
-
-	//RENDERDEVICE::Instance().g_pD3DDevice->SetDepthStencilSurface(m_pDepthStencilSurface);
-
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pDiffuseSurface);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(1, m_pNormalSurface);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(2, m_pPositionSurface);
@@ -261,12 +247,6 @@ void RenderPipe::RenderGBuffer()
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, NULL);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(1, NULL);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(2, NULL);
-
-	if (NULL != pOldDS)
-	{
-		RENDERDEVICE::Instance().g_pD3DDevice->SetDepthStencilSurface(pOldDS);
-		SafeRelease(pOldDS);
-	}
 }
 
 void RenderPipe::RenderDiffuse()
@@ -395,7 +375,7 @@ void RenderPipe::DeferredRender_MultiPass()
 
 	deferredMultiPassEffect->SetTexture(DIFFUSEBUFFER, m_pDiffuseTarget);
 	deferredMultiPassEffect->SetTexture(NORMALBUFFER, m_pNormalTarget);
-	deferredMultiPassEffect->SetTexture(POSITIONBUFFER, m_pDepthStencilTarget);
+	deferredMultiPassEffect->SetTexture(POSITIONBUFFER, m_pPositionTarget);
 
 	deferredMultiPassEffect->SetInt(SCREENWIDTH, RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth);
 	deferredMultiPassEffect->SetInt(SCREENHEIGHT, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight);

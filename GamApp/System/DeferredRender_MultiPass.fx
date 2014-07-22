@@ -180,10 +180,7 @@ void GetNormalandShininess(in float2 uv, inout float3 normal, inout float shinin
 
 float3 GetPosition(in float2 uv, in float4 viewDir)
 {
-	float q = g_zFar / (g_zFar - g_zNear);
-	float DepthV = g_zNear * q / (q - tex2D(g_samplePosition, uv).r);
-
-	//DepthV = tex2D(g_samplePosition, uv).r;
+	float DepthV = tex2D(g_samplePosition, uv).r;
 
 	float3 pos = viewDir * ((DepthV) / viewDir.z);
 

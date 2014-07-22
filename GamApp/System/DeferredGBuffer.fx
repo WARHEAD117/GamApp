@@ -1,3 +1,5 @@
+#define		epsilon 0.0000001f
+
 matrix		g_World;
 matrix		g_View;
 matrix		g_Proj;
@@ -142,10 +144,6 @@ OutputPS PShader(float3 NormalV		: NORMAL,
 	//两种是等价的
 	float3 sampledNormalV = mul(sampledNormalT, TBN);/* sampledNormalT.x * TBN[0] + sampledNormalT.y * TBN[1] + sampledNormalT.z * TBN[2];*/
 	sampledNormalV = normalize(sampledNormalV);
-	
-
-	//if (abs(sampledNormalT.x - 0) < 0.02 && abs(sampledNormalT.y - 0) < 0.02 && abs(sampledNormalT.z - 1) < 0.02)
-	//	sampledNormalV = float3(1, 1, 1);
 
 	//sampledNormalV = (sampledNormalV + 1.0f) / 2.0f;
 	sampledNormalV.xy = encode(sampledNormalV);
@@ -177,7 +175,7 @@ OutputPS PShader(float3 NormalV		: NORMAL,
 	//A通道储存高光强度
 	PsOut.diffuse.a = Specular.x;
 	PsOut.normal = float4(sampledNormalV.xyz, 1.0f);
-	PsOut.normal.a = Shininess / 1000;
+	PsOut.normal.a = 1.0f / (Shininess + epsilon);
 	PsOut.position = posV.zzzz;
 	return PsOut;
 }

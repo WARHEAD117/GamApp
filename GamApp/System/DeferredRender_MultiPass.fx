@@ -1,3 +1,5 @@
+#define		epsilon 0.0000001f
+
 matrix		g_World;
 matrix		g_View;
 matrix		g_Proj;
@@ -191,7 +193,7 @@ float3 GetNormal(in float2 uv)
 
 float GetShininess(in float2 uv)
 {
-	return tex2D(g_sampleNormal, uv).a * 1000;
+	return 1.0f / (tex2D(g_sampleNormal, uv).a + epsilon);
 }
 
 void GetNormalandShininess(in float2 uv, inout float3 normal, inout float shininess)
@@ -201,7 +203,7 @@ void GetNormalandShininess(in float2 uv, inout float3 normal, inout float shinin
 	normal_shininess.xy = float3ToFloat2(normal_shininess.xyz);
 
 	normal = decode(normal_shininess.xy);
-	shininess = normal_shininess.a * 1000;
+	shininess = 1.0f / (normal_shininess.a + epsilon);
 }
 
 float3 GetPosition(in float2 uv, in float4 viewDir)

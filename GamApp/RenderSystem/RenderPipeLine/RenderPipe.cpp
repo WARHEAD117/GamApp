@@ -136,10 +136,10 @@ void RenderPipe::BuildBuffers()
 {
 	//G-Buffer
 	//B-Buffer·ÖÅä
-	//					R8			  G8		  B8			 A8
-	//DiffuseBuffer  diffuseR      diffuseG   diffuseG    specularIntensity
-	//NormalBuffer	 normalX		normalY    normalZ	  1.0(Ô¤¼Æ´æ·Åshininess)
-	//PositionBuffer					viewSpaceDepth
+	//					   R8			 G8		      B8			  A8
+	//DiffuseBuffer  |  diffuseR  |   diffuseG  |  diffuseG  |  specularIntensity |
+	//NormalBuffer	 |		normalX		 |	 normalY	     |	  shininess       |
+	//PositionBuffer |					  viewSpaceDepth						  |
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
 		1, D3DUSAGE_RENDERTARGET,
 		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,

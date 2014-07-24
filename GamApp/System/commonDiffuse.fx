@@ -26,6 +26,8 @@ sampler_state
 	MinFilter = Linear;
 	MagFilter = Linear;
 	MipFilter = Linear;
+	AddressU = Wrap;
+	AddressV = Wrap;
 };
 
 struct OutputVS
@@ -67,7 +69,7 @@ float4 PShader( float2 TexCoord : TEXCOORD0,
 	NormalW = normalize(NormalW);
 	ToEyeDirW = normalize(ToEyeDirW);
 	//计算漫反射
-	float DiffuseRatio = dot(-g_LightDir.xyz, NormalW);
+	float DiffuseRatio = max(dot(-g_LightDir.xyz, NormalW),0);
 	float4 Diffuse = lightDiffuse * (g_DiffuseMaterial * DiffuseRatio);
 
 	//计算镜面反射
@@ -86,7 +88,7 @@ float4 PShader( float2 TexCoord : TEXCOORD0,
 		//Specular = lightSpecular* (g_SpecularMaterial * Specular);
 
 	//混合光照和纹理
-	float4 finalColor = Texture * Diffuse + Specular + Ambient*0.1f;
+	float4 finalColor = Texture * (Diffuse + Ambient*0.1f) + Specular;
 	//输出颜色
 	return finalColor;// float4(1.0f, 0.0f, 0.0f, 1.0f);
 }

@@ -42,8 +42,7 @@ void RenderUtil::SetlightInfo(LPD3DXEFFECT effect)
 {
 // 	LIGHTMANAGER::Instance().
 	BaseLight* pLight = LIGHTMANAGER::Instance().GetLight(0);
-	DirectionLight* pDirLight = dynamic_cast<DirectionLight*>(pLight);
-	D3DXVECTOR3 lightDir = pDirLight->GetLightWorldDir();
+	D3DXVECTOR3 lightDir = pLight->GetLightWorldDir();
 
 	D3DXVECTOR3 viewPos = RENDERDEVICE::Instance().ViewPosition;
 	effect->SetVector(LIGHTDIRECTION, &D3DXVECTOR4(lightDir.x, lightDir.y, lightDir.z, 1.0));
@@ -61,41 +60,46 @@ void RenderUtil::Render()
 	RENDERDEVICE::Instance().g_pD3DDevice->SetIndices(mIndexBuffer);
 	for (DWORD i = 0; i < mSubMeshList.size(); i++)
 	{
-		mSubMeshList[i].pMaterial.effect->SetMatrix(WORLDVIEWPROJMATRIX, &mWorldViewProj);
-		mSubMeshList[i].pMaterial.effect->SetMatrix(VIEWPROJMATRIX, &mViewProj);
-		mSubMeshList[i].pMaterial.effect->SetMatrix(WORLDMATRIX, &mWorldMat);
-		mSubMeshList[i].pMaterial.effect->SetMatrix(VIEWMATRIX, &mViewMat);
+		LPD3DXEFFECT effect= mSubMeshList[i].pMaterial.effect;
+		if (!effect)
+		{
+			effect = RENDERDEVICE::Instance().defaultEffect;
+		}
+		effect->SetMatrix(WORLDVIEWPROJMATRIX, &mWorldViewProj);
+		effect->SetMatrix(VIEWPROJMATRIX, &mViewProj);
+		effect->SetMatrix(WORLDMATRIX, &mWorldMat);
+		effect->SetMatrix(VIEWMATRIX, &mViewMat);
 
 		UINT nPasses = 0;
-		HRESULT r1 = mSubMeshList[i].pMaterial.effect->Begin(&nPasses, 0);
-		HRESULT r2 = mSubMeshList[i].pMaterial.effect->BeginPass(0);
+		HRESULT r1 = effect->Begin(&nPasses, 0);
+		HRESULT r2 = effect->BeginPass(0);
 
 		{
-			mSubMeshList[i].pMaterial.effect->SetVector(AMBIENTMATERIAL, &mSubMeshList[i].pMaterial.Ambient);
-			mSubMeshList[i].pMaterial.effect->SetVector(DIFFUSEMATERIAL, &mSubMeshList[i].pMaterial.Diffuse);
-			mSubMeshList[i].pMaterial.effect->SetVector(SPECULARMATERIAL, &mSubMeshList[i].pMaterial.Specular);
-			mSubMeshList[i].pMaterial.effect->SetFloat(SPECULARPOWER, (float)mSubMeshList[i].pMaterial.Power);
+			effect->SetVector(AMBIENTMATERIAL, &mSubMeshList[i].pMaterial.Ambient);
+			effect->SetVector(DIFFUSEMATERIAL, &mSubMeshList[i].pMaterial.Diffuse);
+			effect->SetVector(SPECULARMATERIAL, &mSubMeshList[i].pMaterial.Specular);
+			effect->SetFloat(SPECULARPOWER, (float)mSubMeshList[i].pMaterial.Power);
 		}
 
 		if (mSubMeshList[i].pTexture)
 		{
-			mSubMeshList[i].pMaterial.effect->SetTexture(DIFFUSETEXTURE, mSubMeshList[i].pTexture);
+			effect->SetTexture(DIFFUSETEXTURE, mSubMeshList[i].pTexture);
 			
 		}
 		else
 		{
-			mSubMeshList[i].pMaterial.effect->SetTexture(DIFFUSETEXTURE, RENDERDEVICE::Instance().GetDefaultTexture());
+			effect->SetTexture(DIFFUSETEXTURE, RENDERDEVICE::Instance().GetDefaultTexture());
 		}
 
-		SetlightInfo(mSubMeshList[i].pMaterial.effect);
+		SetlightInfo(effect);
 
-		mSubMeshList[i].pMaterial.effect->CommitChanges();
+		effect->CommitChanges();
 
 		RENDERDEVICE::Instance().g_pD3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0,
 			mSubMeshList[i].vertexCount, mSubMeshList[i].indexStart, mSubMeshList[i].faceCount);
 
-		mSubMeshList[i].pMaterial.effect->EndPass();
-		mSubMeshList[i].pMaterial.effect->End();
+		effect->EndPass();
+		effect->End();
 	}
 	RENDERDEVICE::Instance().g_pD3DDevice->SetTexture(0, NULL);
 }

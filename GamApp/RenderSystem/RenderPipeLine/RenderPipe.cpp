@@ -593,8 +593,6 @@ void RenderPipe::RenderAll()
 	
 	//ForwardRender();
 
-	
-
 	DeferredRender_MultiPass();
 
 	ssao.RenderPost(m_pMainColorTarget);
@@ -616,6 +614,8 @@ void RenderPipe::RenderAll()
 
 void RenderPipe::ForwardRender()
 {
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pMainColorSurface);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 0, 0), 1.0f, 0);
 	for (int i = 0; i < mRenderUtilList.size(); ++i)
 	{
 		mRenderUtilList[i]->Render();

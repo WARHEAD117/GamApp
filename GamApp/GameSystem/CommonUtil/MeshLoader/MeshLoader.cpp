@@ -195,6 +195,7 @@ HRESULT MeshLoader::LoadXMesh(std::string filePath)
 		mSubMeshList[i].pNormalMap = m_pNormalMaps[i];
 		mSubMeshList[i].pSpecularMap = m_pSpecularMap[i];
 		mSubMeshList[i].pMaterial = m_Materials[i];
+		mSubMeshList[i].pMaterial.effect = RENDERDEVICE::Instance().GetDefaultEffect();
 	}
 
 

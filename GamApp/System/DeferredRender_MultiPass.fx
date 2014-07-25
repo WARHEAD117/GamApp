@@ -607,6 +607,11 @@ float4 PointShadowPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1) : 
 	return finalColor;
 }
 
+float4 StencilPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1) : COLOR
+{
+	return 0;
+}
+
 float4 AmbientPass(float2 TexCoord : TEXCOORD0) : COLOR
 {
 	//º∆À„ª∑æ≥π‚
@@ -662,6 +667,7 @@ technique DeferredRender
 		AlphaBlendEnable = true;                        //…Ë÷√‰÷»æ◊¥Ã¨        
 		SrcBlend = ONE;
 		DestBlend = ONE;
+		ColorWriteEnable = 0xFFFFFFFF;
 	}
 
 	pass p1 //PointLight
@@ -671,6 +677,7 @@ technique DeferredRender
 		AlphaBlendEnable = true;                        //…Ë÷√‰÷»æ◊¥Ã¨        
 		SrcBlend = ONE;
 		DestBlend = ONE;
+		ColorWriteEnable = 0xFFFFFFFF;
 	}
 
 	pass p2 //SpotLight
@@ -680,6 +687,7 @@ technique DeferredRender
 		AlphaBlendEnable = true;                        //…Ë÷√‰÷»æ◊¥Ã¨        
 		SrcBlend = ONE;
 		DestBlend = ONE;
+		ColorWriteEnable = 0xFFFFFFFF;
 	}
 
 	pass p3 //DirShadow
@@ -687,6 +695,7 @@ technique DeferredRender
 		vertexShader = compile vs_3_0 VShaderLightVolume();
 		pixelShader = compile ps_3_0 ShadowPass();
 		AlphaBlendEnable = false;
+		ColorWriteEnable = 0xFFFFFFFF;
 	}
 
 	pass p4 //PointShadow
@@ -694,6 +703,7 @@ technique DeferredRender
 		vertexShader = compile vs_3_0 VShaderLightVolume();
 		pixelShader = compile ps_3_0 PointShadowPass();
 		AlphaBlendEnable = false;
+		ColorWriteEnable = 0xFFFFFFFF;
 	}
 
 	pass p5 //ÃÌº”ª∑æ≥π‚
@@ -703,6 +713,7 @@ technique DeferredRender
 		AlphaBlendEnable = true;                        //…Ë÷√‰÷»æ◊¥Ã¨        
 		SrcBlend = ONE;
 		DestBlend = ONE;
+		ColorWriteEnable = 0xFFFFFFFF;
 	}
 	pass p6 //◊≈…´
 	{
@@ -711,6 +722,7 @@ technique DeferredRender
 		AlphaBlendEnable = false;                        //…Ë÷√‰÷»æ◊¥Ã¨        
 		//SrcBlend = ZERO;
 		//DestBlend = SrcColor;
+		ColorWriteEnable = 0xFFFFFFFF;
 	}
 	pass p7 //DEBUG PASS
 	{
@@ -721,6 +733,15 @@ technique DeferredRender
 		AlphaBlendEnable = true;                        //…Ë÷√‰÷»æ◊¥Ã¨        
 		SrcBlend = ONE;
 		DestBlend = ZERO;
+		ColorWriteEnable = 0xFFFFFFFF;
 	}
-	
+	pass p8 //Stencil Pass
+	{
+		vertexShader = compile vs_3_0 VShaderLightVolume();
+		pixelShader = compile ps_3_0 StencilPass();
+		AlphaBlendEnable = true;                        //…Ë÷√‰÷»æ◊¥Ã¨        
+		SrcBlend = ZERO;
+		DestBlend = ONE;
+		ColorWriteEnable = 0;
+	}
 }

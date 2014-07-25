@@ -226,7 +226,7 @@ void RenderPipe::RenderGBuffer()
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pDiffuseSurface);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(1, m_pNormalSurface);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(2, m_pPositionSurface);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 0, 0, 0), 1.0f, 0);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER | D3DCLEAR_STENCIL, D3DCOLOR_XRGB(0, 0, 0, 0), 1.0f, 0);
 
 	UINT nPasses = 0;
 	HRESULT r1 = GBufferEffect->Begin(&nPasses, 0);
@@ -360,14 +360,18 @@ D3DXVECTOR4	AmbientColor = D3DXVECTOR4(0.2f, 0.2f, 0.2f, 0);
 float g_minVariance = 0.2f;
 float g_Amount = 0.7f;
 
+bool enableStencilLight = true;
+
 void RenderPipe::DeferredRender_MultiPass()
 {
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CW);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZENABLE, FALSE);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZWRITEENABLE, FALSE);
 
 	//Lighting Pass
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pLightSurface);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(1, m_pSpecularLightSurface);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 0, 0, 0), 1.0f, 0);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_STENCIL, D3DCOLOR_XRGB(0, 0, 0, 0), 1.0f, 0);
 
 	deferredMultiPassEffect->SetMatrix(VIEWMATRIX, &RENDERDEVICE::Instance().ViewMatrix);
 	deferredMultiPassEffect->SetMatrix(WORLDVIEWPROJMATRIX, &RENDERDEVICE::Instance().OrthoWVPMatrix);
@@ -417,7 +421,7 @@ void RenderPipe::DeferredRender_MultiPass()
 
 	deferredMultiPassEffect->CommitChanges();
 
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZENABLE, FALSE);
+	
 
 	int lightCount = LIGHTMANAGER::Instance().GetLightCount();
 	for (int i = 0; i < lightCount; i++)
@@ -476,7 +480,7 @@ void RenderPipe::DeferredRender_MultiPass()
 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pShadowSurface);
 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(1, NULL);
 
-		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(255, 255, 255, 255), 1.0f, 0);
+		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET, D3DCOLOR_XRGB(255, 255, 255, 255), 1.0f, 0);
 		if (useShadow)
 		{
 			deferredMultiPassEffect->SetMatrix("g_invView", &RENDERDEVICE::Instance().InvViewMatrix);
@@ -497,6 +501,97 @@ void RenderPipe::DeferredRender_MultiPass()
 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pLightSurface);
 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(1, m_pSpecularLightSurface);
 
+		
+		if (GAMEINPUT::Instance().KeyPressed(DIK_RETURN))
+		{
+			enableStencilLight = !enableStencilLight;
+		}
+
+		//====================================================================================
+		//灯光的模板剔除
+		//通过模板剔除掉灯光没有实际照到的像素
+		//====================================================================================
+		//方向光不使用模板剔除
+		if (lt != eDirectionLight && enableStencilLight)
+		{
+			//清空模板缓冲，使Stencil值均为0
+			RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_STENCIL, 0x0, 1.0f, 0);
+
+			//开启深度
+			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZENABLE, TRUE);
+			//启用模板
+			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_STENCILENABLE, true);
+
+			//===============================================
+			//Step.1 渲染灯光体的背面
+			//第一步需要标记出在灯光照射后表面前方的所有像素，即Z-Buffer深度小于灯光体后表面深度的像素
+			//所以将深度测试方式设置为GREATER，使灯光体后表面深度大于Z-Buffer深度的部分标记为1
+			//================================================
+			
+			//设置模板值时，使用“1”作为要设置的值
+			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_STENCILREF, 0x1);
+
+			//深度大于Z-Buffer时Z-Test结果为Pass
+			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZFUNC, D3DCMP_GREATER);
+			//Stencil-Test的结果永远为Pass，即不做Stencil测试
+			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_STENCILFUNC, D3DCMP_ALWAYS);
+			//STENCILPASS代表着深度和模板均通过，而模板测试永远通过，所以代表着深度测试通过，即将深度大于Z-Buffer的像素的模板设置为上面设置的“1”
+			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_STENCILPASS, D3DSTENCILOP_REPLACE);
+
+			//设置剔除方式为剔除正面，渲染灯光体的背面
+			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CW);
+			deferredMultiPassEffect->BeginPass(8);
+			pLight->RenderLightVolume();
+			deferredMultiPassEffect->EndPass();
+			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CW);
+
+
+			//===============================================
+			//Step.2 渲染灯光体的正面
+			//第二步需要标记出在灯光照射前表面前方的所有像素，即Z-Buffer深度小于灯光体前表面深度的像素
+			//然后将这些像素从第一步的结果中去掉，就可以得到同时满足(1)位于灯光后表面前方(2)位于灯光前表面后方 的所有像素
+			//将深度测试方式设置为GREATER，使灯光体前表面深度大于Z-Buffer深度的部分标记为0
+			//
+			//说明：当相机位于灯光范围之内的时候，灯光的前表面深度均为负值，没有像素会通过深度测试
+			//================================================
+
+			//设置模板值时，使用“0”作为要设置的值
+			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_STENCILREF, 0x0);
+
+			//深度大于Z-Buffer时Z-Test结果为Pass
+			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZFUNC, D3DCMP_GREATER);
+			//Stencil-Test的结果永远为Pass，即不做Stencil测试
+			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_STENCILFUNC, D3DCMP_ALWAYS);
+			//将深度大于Z-Buffer的像素的模板设置为上面设置的“0”
+			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_STENCILPASS, D3DSTENCILOP_REPLACE);
+
+			//设置剔除方式为剔除背面，渲染灯光体的正面
+			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
+			deferredMultiPassEffect->BeginPass(8);
+			pLight->RenderLightVolume();
+			deferredMultiPassEffect->EndPass();
+			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CW);
+
+			
+			//===============================================
+			//Step.3 渲染实际的灯光
+			//将Z-Test方式设置为ALWAYS，即相当于不做深度测试
+			//剔除所有模板值等于0的像素，剩余的像素就是灯光实际能够照亮的像素了
+			//================================================
+
+			//Z-Test结果永远为Pass
+			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZFUNC, D3DCMP_ALWAYS);
+
+			//设置模板值时，使用“0”作为要设置的值
+			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_STENCILREF, 0x0);
+
+			//使用模板测试，模板值不等于上面设置的值，即“0”时，模板测试通过
+			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_STENCILFUNC, D3DCMP_NOTEQUAL); 
+			//模板测试及深度测试通过时，保持模板的值
+			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_STENCILPASS, D3DSTENCILOP_KEEP);
+		}
+		
+
 		deferredMultiPassEffect->SetTexture("g_ShadowResult", m_pShadowTarget);
 		deferredMultiPassEffect->CommitChanges();
 
@@ -506,10 +601,17 @@ void RenderPipe::DeferredRender_MultiPass()
 
 		deferredMultiPassEffect->EndPass();
 
+		//方向光不使用模板剔除
+		if (lt != eDirectionLight && enableStencilLight)
+		{
+			//关闭模板
+			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_STENCILENABLE, FALSE);
+			//关闭深度
+			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZENABLE, FALSE);
+		}
 	}
 
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZENABLE, TRUE);
-	
+	//设置全屏矩形
 	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, pScreenQuadVertex, 0, mScreenQuadByteSize);
 	//RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(mFVF);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetVertexDeclaration(mScreenQuadDecl);
@@ -526,6 +628,7 @@ void RenderPipe::DeferredRender_MultiPass()
 	
 	//Shading Pass
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pMainColorSurface);
+
 	deferredMultiPassEffect->SetTexture("g_LightBuffer", m_pLightTarget);
 	deferredMultiPassEffect->SetTexture("g_SpecularLightBuffer", m_pSpecularLightTarget);
 	deferredMultiPassEffect->CommitChanges();
@@ -541,8 +644,12 @@ void RenderPipe::DeferredRender_MultiPass()
 
 	deferredMultiPassEffect->End();
 
+	//恢复渲染状态
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZWRITEENABLE, TRUE);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZENABLE, TRUE);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZFUNC, D3DCMP_LESSEQUAL);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
-	deferredMultiPassEffect->SetTexture(0, NULL);
+
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, NULL);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(1, NULL);
 }

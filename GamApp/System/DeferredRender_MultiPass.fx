@@ -321,7 +321,7 @@ void LightFunc(float3 normal, float3 toLight, float3 toEye, float4 lightColor, i
 float ShadowFunc(bool useShadow, float3 objViewPos)
 {
 	float shadowContribute = 1.0f;
-	if (useShadow)
+	//if (useShadow)
 	{
 		//Shadow
 		float4 worldPos = mul(float4(objViewPos, 1.0f), g_invView);
@@ -343,7 +343,7 @@ float ShadowFunc(bool useShadow, float3 objViewPos)
 float PointShadowFunc(bool useShadow, float3 objViewPos)
 {
 	float shadowContribute = 1.0f;
-	if (useShadow)
+	//if (useShadow)
 	{
 		//Shadow
 		float3 toObj = objViewPos - g_LightPos.xyz;
@@ -364,7 +364,7 @@ float PointShadowFunc(bool useShadow, float3 objViewPos)
 float PCFShadow(bool useShadow, float3 objViewPos)
 {
 	float shadowContribute = 1.0f;
-	if (useShadow)
+	//if (useShadow)
 	{
 		//Shadow
 		float4 worldPos = mul(float4(objViewPos, 1.0f), g_invView);
@@ -501,6 +501,10 @@ OutputPS SpotLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1)
 	OutputPS outPs;
 	outPs.diffuseLight = 0;
 	outPs.specularLight = 0;
+
+	//outPs.diffuseLight = g_LightColor;
+	//outPs.specularLight = g_LightColor;
+	//return outPs;
 
 	float lightU = (posWVP.x / posWVP.w + 1.0f) / 2.0f + 0.5f / g_ScreenWidth;
 	float lightV = (1.0f - posWVP.y / posWVP.w) / 2.0f + 0.5f / g_ScreenHeight;

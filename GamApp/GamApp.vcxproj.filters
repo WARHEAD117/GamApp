@@ -318,5 +318,8 @@
     <FxCompile Include="System\DOF.fx">
       <Filter>System</Filter>
     </FxCompile>
+    <FxCompile Include="System\ShadingPass.fx">
+      <Filter>System</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

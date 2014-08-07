@@ -8,18 +8,18 @@ public:
 	DirectionLight();
 	~DirectionLight();
 
-	void OnFrame();
+	//virtual void OnFrame();
 
-	D3DXVECTOR3 GetLightWorldDir();
-	D3DXVECTOR3 GetLightWorldPos();
-	D3DXCOLOR GetLightColor();
+	virtual void RenderLightVolume();
+	virtual void BuildLightVolume();
 
-	void SetLightDir(D3DXVECTOR3 dir);
-	void SetLightColor(D3DXCOLOR color);
+	virtual void RebuildProjMatrix();
+	virtual void RebuildViewMatrix();
 
-	D3DXVECTOR3 mPosition;
-	D3DXVECTOR3 m_LightDir;
+	virtual D3DXMATRIX GetLightVolumeTransform();
+	//获取用来计算相机到灯光体顶点的向量的矩阵
+	virtual D3DXMATRIX GetToViewDirMatrix();
 
-	float		mLightIntensity;
-	D3DXCOLOR	m_LightColor;
+	virtual void SetUseShadow(bool useShadow);
+
 };

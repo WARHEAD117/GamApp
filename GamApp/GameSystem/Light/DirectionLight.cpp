@@ -1,9 +1,12 @@
 #include "DirectionLight.h"
+#include "D3D9Device.h"
 
 const D3DXVECTOR3 defaultDir(0.0f, -1.0f, 1.0f);
 DirectionLight::DirectionLight()
 {
-	m_LightDir = ZEROVECTOR3;
+	BuildLightVolume();
+	RebuildViewMatrix();
+	RebuildProjMatrix();
 }
 
 
@@ -11,36 +14,92 @@ DirectionLight::~DirectionLight()
 {
 }
 
-void DirectionLight::OnFrame()
+void DirectionLight::BuildLightVolume()
 {
-	mPosition = D3DXVECTOR3(mWorldTransform._41, mWorldTransform._42, mWorldTransform._43 );
-	D3DXVECTOR4 tempVec4;
-	D3DXVec3Transform(&tempVec4, &defaultDir, &mWorldTransform);
-	m_LightDir = D3DXVECTOR3(tempVec4.x, tempVec4.y, tempVec4.z);
-	D3DXVec3Normalize(&m_LightDir, &m_LightDir);
+	SafeRelease(m_pBufferVex);
+	SafeRelease(m_pBufferIndex);
+
+	//=======================================================================
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateVertexBuffer(4 * sizeof(LIGHTVOLUMEVERTEX)
+		, 0
+		, LIGHTVOLUME_FVF
+		//,D3DPOOL_DEFAULT
+		, D3DPOOL_MANAGED
+		, &m_pBufferVex
+		, NULL);
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateIndexBuffer(2 * 3 * sizeof(DWORD),
+		D3DUSAGE_WRITEONLY, D3DFMT_INDEX32, D3DPOOL_MANAGED, &m_pBufferIndex, 0);
+	DWORD* indices = 0;
+	m_pBufferIndex->Lock(0, 0, (void**)&indices, 0);
+	//全部逆时针绘制，在延迟渲染时剔除正面，就可以保证灯光和渲染面的剔除是统一的
+	indices[0] = 0;
+	indices[1] = 2;
+	indices[2] = 1;
+
+	indices[3] = 1;
+	indices[4] = 2;
+	indices[5] = 3;
+	m_pBufferIndex->Unlock();
+
+	LIGHTVOLUMEVERTEX* pVertices;
+	m_pBufferVex->Lock(0, 4 * sizeof(LIGHTVOLUMEVERTEX), (void**)&pVertices, 0);
+
+	//初始化顶点缓冲区
+	//==========================
+	pVertices->position = D3DXVECTOR3(1.0f, -1.0f, 0.0f);
+	pVertices++;
+
+	pVertices->position = D3DXVECTOR3(-1.0f, -1.0f, 0.0f);
+	pVertices++;
+
+	pVertices->position = D3DXVECTOR3(1.0f, 1.0f, 0.0f);
+	pVertices++;
+
+	pVertices->position = D3DXVECTOR3(-1.0f, 1.0f, 0.0f);
+	pVertices++;
+
+	m_pBufferVex->Unlock();
 }
 
-D3DXVECTOR3 DirectionLight::GetLightWorldDir()
+void DirectionLight::RenderLightVolume()
 {
-	return m_LightDir;
+	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, m_pBufferVex, 0, sizeof(LIGHTVOLUMEVERTEX));
+	RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(LIGHTVOLUME_FVF);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetIndices(m_pBufferIndex);
+
+	RENDERDEVICE::Instance().g_pD3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 4, 0, 2);
 }
 
-D3DXCOLOR DirectionLight::GetLightColor()
+
+void DirectionLight::RebuildViewMatrix()
 {
-	return m_LightColor;
+	D3DXMatrixLookAtLH(&m_lightViewMat, &m_LightPos, &(m_LightPos + m_LightDir), &m_LightUp);
 }
 
-void DirectionLight::SetLightDir(D3DXVECTOR3 dir)
+void DirectionLight::RebuildProjMatrix()
 {
-	m_LightDir = dir;
+	D3DXMatrixOrthoLH(&m_lightProjMat, 40, 40, 0.01f, 50.0f);
+
+	D3DXMatrixInverse(&m_lightInvProjMat, NULL, &m_lightProjMat);
 }
 
-void DirectionLight::SetLightColor(D3DXCOLOR color)
+D3DXMATRIX DirectionLight::GetLightVolumeTransform()
 {
-	m_LightColor = color;
+	return RENDERDEVICE::Instance().OrthoWVPMatrix;
 }
 
-D3DXVECTOR3 DirectionLight::GetLightWorldPos()
+D3DXMATRIX DirectionLight::GetToViewDirMatrix()
 {
-	return mPosition;
+
+	return RENDERDEVICE::Instance().InvProjMatrix;
+}
+
+void DirectionLight::SetUseShadow(bool useShadow)
+{
+	m_bUseShadow = false;
+	if (useShadow)
+	{
+		m_bUseShadow = useShadow;
+		BuildShadowMap();
+	}
 }

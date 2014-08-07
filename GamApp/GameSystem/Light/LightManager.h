@@ -18,8 +18,18 @@ public:
 	BaseLight* GetLight(int lightIndex);
 	int GetLightCount();
 
-	BaseLight* CreateLight(LightType lightType);
+	template<typename CLASSTYPE>
+	CLASSTYPE* CreateLight(LightType lightType);
 };
 
+
+template<typename CLASSTYPE>
+inline CLASSTYPE* LightManager::CreateLight(LightType lightType)
+{
+	CLASSTYPE * newLight = new CLASSTYPE();
+	newLight->SetLightType(lightType);
+	AddLight(newLight);
+	return newLight;
+}
 
 typedef CSingleton<LightManager> LIGHTMANAGER;

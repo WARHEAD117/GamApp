@@ -23,6 +23,7 @@ public:
 
 	void	RenderGBuffer();
 
+	void	ComputeLightPassIndex(LightType type, UINT& lightPassIndex, UINT& shadowPassIndex);
 	void	DeferredRender_MultiPass();
 	void	DeferredRender_Shading();
 	void	DeferredRender_Lighting();

@@ -8,10 +8,10 @@
 SSAO::SSAO()
 {
 	m_intensity = 2;
-	m_scale = 0.5;
-	m_bias = 0.2;
-	m_sample_rad = 0.03;
-	m_rad_scale = 0.3;
+	m_scale = 0.5f;
+	m_bias = 0.2f;
+	m_sample_rad = 0.03f;
+	m_rad_scale = 0.3f;
 	m_AOEnable = true;
 }
 
@@ -63,7 +63,7 @@ void SSAO::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 	float angle = tan(CameraParam::FOV/2);
 	m_postEffect->SetFloat("g_angle", angle);
-	float aspect = RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth / RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight;
+	float aspect = (float)RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth / RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight;
 	m_postEffect->SetFloat("g_aspect", aspect);
 
 	m_postEffect->SetInt(SCREENWIDTH, RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth);
@@ -82,7 +82,7 @@ void SSAO::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	m_postEffect->CommitChanges();
 
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pAoSurface);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(255, 255, 255, 255), 1.0f, 0);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
 	if (m_AOEnable)
 	{
 		m_postEffect->CommitChanges();
@@ -93,7 +93,7 @@ void SSAO::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	}
 
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pPostSurface);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(255, 255, 255, 255), 1.0f, 0);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
 
 	m_postEffect->SetTexture("g_AoBuffer", m_pAoTarget);
 	m_postEffect->SetTexture(MAINCOLORBUFFER, mainBuffer);
@@ -110,52 +110,52 @@ void SSAO::ComputeAOConfig()
 {
 	if (GAMEINPUT::Instance().KeyDown(DIK_T) && !GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
-		m_intensity += 0.0001;
+		m_intensity += 0.0001f;
 	}
 	if (GAMEINPUT::Instance().KeyDown(DIK_Y) && !GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
-		m_scale += 0.0001;
+		m_scale += 0.0001f;
 	}
 	if (GAMEINPUT::Instance().KeyDown(DIK_U) && !GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
-		m_sample_rad += 0.0001;
+		m_sample_rad += 0.0001f;
 	}
 	if (GAMEINPUT::Instance().KeyDown(DIK_I) && !GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
-		m_bias += 0.0001;
+		m_bias += 0.0001f;
 	}
 	if (GAMEINPUT::Instance().KeyDown(DIK_O) && !GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
-		m_rad_scale += 0.0001;
+		m_rad_scale += 0.0001f;
 	}
 
 	if (GAMEINPUT::Instance().KeyDown(DIK_T) && GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
-		m_intensity -= 0.0001;
+		m_intensity -= 0.0001f;
 	}
 	if (GAMEINPUT::Instance().KeyDown(DIK_Y) && GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
-		m_scale -= 0.0001;
+		m_scale -= 0.0001f;
 	}
 	if (GAMEINPUT::Instance().KeyDown(DIK_U) && GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
-		m_sample_rad -= 0.0001;
+		m_sample_rad -= 0.0001f;
 	}
 	if (GAMEINPUT::Instance().KeyDown(DIK_I) && GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
-		m_bias -= 0.0001;
+		m_bias -= 0.0001f;
 	}
 	if (GAMEINPUT::Instance().KeyDown(DIK_O) && GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
-		m_rad_scale -= 0.0001;
+		m_rad_scale -= 0.0001f;
 	}
 
 	if (GAMEINPUT::Instance().KeyDown(DIK_R))
 	{
 		m_intensity = 2;
-		m_scale = 0.5;
-		m_bias = 0.2;
-		m_sample_rad = 0.03;
-		m_rad_scale = 0.3;
+		m_scale = 0.5f;
+		m_bias = 0.2f;
+		m_sample_rad = 0.03f;
+		m_rad_scale = 0.3f;
 	}
 }

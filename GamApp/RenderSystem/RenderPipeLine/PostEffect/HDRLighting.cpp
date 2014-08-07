@@ -269,7 +269,7 @@ void HDRLighting::RenderPost(LPDIRECT3DTEXTURE9 hdrBuffer)
 	m_postEffect->SetFloat("g_fMiddleGray", g_fKeyValue);
 
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pPostSurface);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(255, 255, 255, 255), 1.0f, 0);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
 
 
 	m_postEffect->SetBool("g_bEnableToneMap", g_bToneMap);

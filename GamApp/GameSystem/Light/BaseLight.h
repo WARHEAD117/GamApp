@@ -2,7 +2,11 @@
 #include "CommonUtil/GlobalHeader.h"
 #include "CommonUtil/D3D9Header.h"
 
+
+
 #include "Transform/Transform.h"
+
+class RenderUtil;
 
 enum LightType
 {
@@ -30,8 +34,32 @@ public:
 
 	LightType m_LightType;
 
-	void RenderLightVolume();
-	void BuildLightVolume();
+	virtual void RenderShadow(const std::vector<RenderUtil*>& mRenderUtilList);
+
+	virtual void RenderLightVolume();
+	virtual void BuildLightVolume();
+
+	virtual void RebuildProjMatrix();
+	virtual void RebuildViewMatrix();
+
+	virtual D3DXMATRIX GetLightVolumeTransform();
+	//获取用来计算相机到灯光体顶点的向量的矩阵
+	virtual D3DXMATRIX GetToViewDirMatrix();
+
+	virtual void SetUseShadow(bool useShadow);
+	bool GetUseShadow();
+
+	virtual void BuildShadowMap();
+	void	SetShadowTarget();
+
+	virtual LPDIRECT3DBASETEXTURE9	GetShadowTarget();
+
+	D3DXMATRIX GetLightViewMatrix();
+	
+	D3DXMATRIX GetLightProjMatrix();
+	D3DXMATRIX GetLightInvProjMatrix();
+
+	
 
 	void SetLightType(LightType lightType);
 	LightType GetLightType();
@@ -47,27 +75,6 @@ public:
 	D3DXCOLOR GetLightColor();
 	void SetLightColor(D3DXCOLOR color);
 
-	void RebuildProjMatrix();
-	void RebuildViewMatrix();
-
-	D3DXMATRIX GetLightViewMatrix();
-	D3DXMATRIX GetPointLightViewMatrix(int index);
-	D3DXMATRIX GetLightProjMatrix();
-	D3DXMATRIX GetLightInvProjMatrix();
-
-	D3DXMATRIX GetLightVolumeTransform();
-	//获取用来计算相机到灯光体顶点的向量的矩阵
-	D3DXMATRIX GetToViewDirMatrix();
-	void SetUseShadow(bool useShadow);
-	bool GetUseShadow();
-
-	void	BuildShadowMap();
-	void	SetShadowTarget();
-
-	void	BuildPointShadowMap();
-	void	SetPointShadowTarget(int index);
-
-	LPDIRECT3DBASETEXTURE9	GetShadowTarget();
 
 	float GetLightRange();
 	void SetLightRange(float range);
@@ -82,19 +89,22 @@ public:
 
 	virtual void OnFrame();
 
-private:
+protected:
+	
+	LPD3DXMESH			m_lightVolume;
+	
+
+	bool		m_bUseShadow;
+	int			m_ShadowMapSize;
+
 	LPDIRECT3DTEXTURE9 m_pShadowTarget;
 	LPDIRECT3DSURFACE9	m_pShadowSurface;
 	LPDIRECT3DSURFACE9	m_pDepthStencilShadowSurface;
-
-	LPDIRECT3DCUBETEXTURE9 m_pPointShadowTarget;
-
-	bool		m_bUseShadow;
+	
 	D3DXVECTOR3 m_LightPos;
 	D3DXVECTOR3 m_LightDir;
 	D3DXVECTOR3 m_LightUp;
-
-	D3DXMATRIX m_PointlightViewMat[6];
+	
 
 	D3DXMATRIX m_lightViewMat;
 	D3DXMATRIX m_lightProjMat;

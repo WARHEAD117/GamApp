@@ -56,9 +56,9 @@ public:
 public:
 	Input(void);
 	~Input(void);
-	BOOL       InitInput(HWND hWnd, HINSTANCE  hInstance);  //初始化
-	BOOL       ReadMouse();									//读取鼠标函数
-	BOOL       ReadKeyboard();								//读取键盘函数
+	bool       InitInput(HWND hWnd, HINSTANCE  hInstance);  //初始化
+	bool       ReadMouse();									//读取鼠标函数
+	bool       ReadKeyboard();								//读取键盘函数
 	bool		UpdateInputState();
 	
 	bool		KeyDown(int keyCode);

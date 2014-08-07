@@ -178,6 +178,12 @@
     <ClInclude Include="RenderSystem\Sky\SkyBox.h">
       <Filter>RenderSystem\Sky</Filter>
     </ClInclude>
+    <ClInclude Include="GameSystem\Light\PointLight.h">
+      <Filter>GameSystem\Light</Filter>
+    </ClInclude>
+    <ClInclude Include="GameSystem\Light\SpotLight.h">
+      <Filter>GameSystem\Light</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DrawSkyBox.cpp" />
@@ -276,6 +282,12 @@
     </ClCompile>
     <ClCompile Include="RenderSystem\Sky\SkyBox.cpp">
       <Filter>RenderSystem\Sky</Filter>
+    </ClCompile>
+    <ClCompile Include="GameSystem\Light\PointLight.cpp">
+      <Filter>GameSystem\Light</Filter>
+    </ClCompile>
+    <ClCompile Include="GameSystem\Light\SpotLight.cpp">
+      <Filter>GameSystem\Light</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

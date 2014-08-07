@@ -234,7 +234,7 @@ void RenderPipe::RenderGBuffer()
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pDiffuseSurface);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(1, m_pNormalSurface);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(2, m_pPositionSurface);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER | D3DCLEAR_STENCIL, D3DCOLOR_XRGB(0, 0, 0, 0), 1.0f, 0);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER | D3DCLEAR_STENCIL, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
 	UINT nPasses = 0;
 	HRESULT r1 = GBufferEffect->Begin(&nPasses, 0);
@@ -260,7 +260,7 @@ void RenderPipe::RenderGBuffer()
 void RenderPipe::RenderDiffuse()
 {
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pDiffuseSurface);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 0, 0, 0), 1.0f, 0);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
 	UINT nPasses = 0;
 	HRESULT r1 = RENDERDEVICE::Instance().GetDiffuseEffect()->Begin(&nPasses, 0);
@@ -278,7 +278,7 @@ void RenderPipe::RenderDiffuse()
 void RenderPipe::RenderNormal()
 {
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pNormalSurface);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 0, 0, 0), 1.0f, 0);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
 	UINT nPasses = 0;
 	HRESULT r1 = RENDERDEVICE::Instance().GetNormalEffect()->Begin(&nPasses, 0);
@@ -297,7 +297,7 @@ void RenderPipe::RenderNormal()
 void RenderPipe::RenderPosition()
 {
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pPositionSurface);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 0, 0, 0), 1.0f, 0);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
 	UINT nPasses = 0;
 	HRESULT r1 = RENDERDEVICE::Instance().GetPositionEffect()->Begin(&nPasses, 0);
@@ -322,38 +322,8 @@ void RenderPipe::RenderShadow()
 	for (int index = 0; index < lightCount; index++)
 	{
 		BaseLight* pLight = LIGHTMANAGER::Instance().GetLight(index);
-		bool useShadow = pLight->GetUseShadow();
-		if (!useShadow)
-			continue;
-		else
-		{
-			if (pLight->GetLightType() == eDirectionLight || pLight->GetLightType() == eSpotLight)
-			{
-				D3DXMATRIX lightViewMat = pLight->GetLightViewMatrix();
-				D3DXMATRIX lightProjMat = pLight->GetLightProjMatrix();
-				pLight->SetShadowTarget();
-
-				for (int i = 0; i < mRenderUtilList.size(); ++i)
-				{
-					mRenderUtilList[i]->RenderShadow(lightViewMat, lightProjMat, pLight->GetLightType());
-				}
-			}
-			else if (pLight->GetLightType() == ePointLight)
-			{
-				for (int pointDir = 0; pointDir < 6; pointDir++)
-				{
-					D3DXMATRIX lightViewMat = pLight->GetPointLightViewMatrix(pointDir);
-					D3DXMATRIX lightProjMat = pLight->GetLightProjMatrix();
-					pLight->SetPointShadowTarget(pointDir);
-
-					for (int i = 0; i < mRenderUtilList.size(); ++i)
-					{
-						mRenderUtilList[i]->RenderShadow(lightViewMat, lightProjMat, pLight->GetLightType());
-					}
-				}
-			}
-			
-		}
+		
+		pLight->RenderShadow(mRenderUtilList);
 	}
 
 	if (NULL != pOldDS)
@@ -392,13 +362,37 @@ void RenderPipe::DeferredRender_MultiPass()
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(1, NULL);
 }
 
+void RenderPipe::ComputeLightPassIndex(LightType type, UINT& lightPassIndex, UINT& shadowPassIndex)
+{
+	if (type == eDirectionLight)
+	{
+		lightPassIndex = 0;
+		shadowPassIndex = 3;
+	}
+	else if (type == ePointLight)
+	{
+		lightPassIndex = 1;
+		shadowPassIndex = 4;
+	}
+	else if (type == eSpotLight)
+	{
+		lightPassIndex = 2;
+		shadowPassIndex = 3;
+	}
+	else
+	{
+		lightPassIndex = 0;
+		shadowPassIndex = 3;
+	}
+}
+
 //
 void RenderPipe::DeferredRender_Lighting()
 {
 	//Lighting Pass
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pDiffuseLightSurface);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(1, m_pSpecularLightSurface);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_STENCIL, D3DCOLOR_XRGB(0, 0, 0, 0), 1.0f, 0);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_STENCIL, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
 	deferredMultiPassEffect->SetMatrix(VIEWMATRIX, &RENDERDEVICE::Instance().ViewMatrix);
 	deferredMultiPassEffect->SetMatrix(WORLDVIEWPROJMATRIX, &RENDERDEVICE::Instance().OrthoWVPMatrix);
@@ -424,19 +418,19 @@ void RenderPipe::DeferredRender_Lighting()
 
 	if (GAMEINPUT::Instance().KeyDown(DIK_G) && !GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
-		g_minVariance += 0.001;
+		g_minVariance += 0.001f;
 	}
 	if (GAMEINPUT::Instance().KeyDown(DIK_G) && GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
-		g_minVariance -= 0.001;
+		g_minVariance -= 0.001f;
 	}
 	if (GAMEINPUT::Instance().KeyDown(DIK_H) && !GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
-		g_Amount += 0.001;
+		g_Amount += 0.001f;
 	}
 	if (GAMEINPUT::Instance().KeyDown(DIK_H) && GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
-		g_Amount -= 0.001;
+		g_Amount -= 0.001f;
 	}
 	if (GAMEINPUT::Instance().KeyDown(DIK_R))
 	{
@@ -479,35 +473,16 @@ void RenderPipe::DeferredRender_Lighting()
 		D3DXMATRIX toViewDirMatrix = pLight->GetToViewDirMatrix();
 		deferredMultiPassEffect->SetMatrix("g_ToViewDirMatrix", &toViewDirMatrix);
 
+		LightType lt = pLight->GetLightType();
 		UINT lightpass = 0;
 		UINT shadowPass = 0;
-		LightType lt = pLight->GetLightType();
 
-		if (lt == eDirectionLight)
-		{
-			lightpass = 0;
-			shadowPass = 3;
-		}
-		else if (lt == ePointLight)
-		{
-			lightpass = 1;
-			shadowPass = 4;
-		}
-		else if (lt == eSpotLight)
-		{
-			lightpass = 2;
-			shadowPass = 3;
-		}
-		else
-		{
-			lightpass = 0;
-			shadowPass = 3;
-		}
+		ComputeLightPassIndex(lt, lightpass, shadowPass);
 
 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pShadowSurface);
 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(1, NULL);
 
-		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET, D3DCOLOR_XRGB(255, 255, 255, 255), 1.0f, 0);
+		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
 		if (useShadow)
 		{
 			deferredMultiPassEffect->SetMatrix("g_invView", &RENDERDEVICE::Instance().InvViewMatrix);
@@ -722,7 +697,7 @@ void RenderPipe::RenderFinalColor()
 void RenderPipe::RenderAll()
 {
 	RENDERDEVICE::Instance().g_pD3DDevice->BeginScene();
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 0, 0), 1.0f, 0);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
 	UpdateRenderState();
 
@@ -760,7 +735,7 @@ void RenderPipe::RenderAll()
 void RenderPipe::ForwardRender()
 {
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pMainColorSurface);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 0, 0), 1.0f, 0);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 	for (int i = 0; i < mRenderUtilList.size(); ++i)
 	{
 		mRenderUtilList[i]->Render();

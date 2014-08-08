@@ -5,6 +5,8 @@
 #include "CommonUtil/Input/Input.h"
 
 #include "Light/DirectionLight.h"
+#include "Light/PointLight.h"
+#include "Light/SpotLight.h"
 #include "Light/LightManager.h"
 
 TestScene::TestScene()
@@ -23,17 +25,17 @@ Entity* horseEntity;
 Entity* sponzaEntity;
 Material testMat1;
 EffectLoader effectLoader;
-BaseLight* dirLight1;
-BaseLight* dirLight2;
-BaseLight* pointLight1;
-BaseLight* pointLight2;
-BaseLight* pointLight3;
-BaseLight* pointLight4;
-BaseLight* pointLight5;
-BaseLight* spotLight1;
-BaseLight* spotLight2;
-BaseLight* spotLight3;
-BaseLight* spotLight4;
+DirectionLight* dirLight1;
+DirectionLight* dirLight2;
+PointLight* pointLight1;
+PointLight* pointLight2;
+PointLight* pointLight3;
+PointLight* pointLight4;
+PointLight* pointLight5;
+SpotLight* spotLight1;
+SpotLight* spotLight2;
+SpotLight* spotLight3;
+SpotLight* spotLight4;
 void TestScene::OnLoad()
 {
 	//===================================================================================================
@@ -69,7 +71,7 @@ void TestScene::OnLoad()
 	D3DXMATRIX horseM;
 	move = D3DXVECTOR3(0, -5, 0);
 	D3DXMatrixTranslation(&horseM, move.x, move.y, move.z);
-	move = D3DXVECTOR3(0.1, 0.1, 0.1);
+	move = D3DXVECTOR3(0.1f, 0.1f, 0.1f);
 	D3DXMATRIX horseS;
 	D3DXMatrixScaling(&horseS, move.x, move.y, move.z);
 	horseEntity->SetWorldTransform(horseS * horseM);
@@ -82,24 +84,24 @@ void TestScene::OnLoad()
 	D3DXMATRIX lightMoveMat;
 	D3DXMATRIX lightRot1Mat;
 	D3DXMATRIX lightRot2Mat;
-	dirLight1 = LIGHTMANAGER::Instance().CreateLight(eDirectionLight);
-	dirLight1->SetLightColor(D3DXCOLOR(0.3, 0.3, 0.3, 1.0f));
+	dirLight1 = LIGHTMANAGER::Instance().CreateLight<DirectionLight>(eDirectionLight);
+	dirLight1->SetLightColor(D3DXCOLOR(0.3f, 0.3f, 0.3f, 1.0f));
 	dirLight1->SetUseShadow(true);
 
 	D3DXMatrixTranslation(&lightMoveMat, 0, 10, 0);
 	dirLight1->SetWorldTransform(lightMoveMat);
 	//--------------------------------------------------------------------------
-	dirLight2 = LIGHTMANAGER::Instance().CreateLight(eDirectionLight);
-	dirLight2->SetLightColor(D3DXCOLOR(0.0, 0.0, 0.3, 1.0f));
+	dirLight2 = LIGHTMANAGER::Instance().CreateLight<DirectionLight>(eDirectionLight);
+	dirLight2->SetLightColor(D3DXCOLOR(0.0f, 0.0f, 0.3f, 1.0f));
 	dirLight2->SetUseShadow(false);
 	
 	D3DXMatrixTranslation(&lightMoveMat, 0, 10, 10);
-	D3DXMatrixRotationX(&lightRot1Mat, 0.25 * D3DX_PI);
+	D3DXMatrixRotationX(&lightRot1Mat, 0.25f * D3DX_PI);
 
 	dirLight2->SetWorldTransform(lightRot1Mat*lightMoveMat);
 	//--------------------------------------------------------------------------
-	pointLight1 = LIGHTMANAGER::Instance().CreateLight(ePointLight);
-	pointLight1->SetLightColor(D3DXCOLOR(0.7, 0.7, 0.7, 1.0f));
+	pointLight1 = LIGHTMANAGER::Instance().CreateLight<PointLight>(ePointLight);
+	pointLight1->SetLightColor(D3DXCOLOR(0.7f, 0.7f, 0.7f, 1.0f));
 	pointLight1->SetUseShadow(true);
 	pointLight1->SetLightRange(20);
 	
@@ -107,57 +109,57 @@ void TestScene::OnLoad()
 	pointLight1->SetWorldTransform(lightMoveMat);
 
 	//--------------------------------------------------------------------------
-	pointLight2 = LIGHTMANAGER::Instance().CreateLight(ePointLight);
-	pointLight2->SetLightColor(D3DXCOLOR(0.7, 0.7, 0.7, 1.0f));
+	pointLight2 = LIGHTMANAGER::Instance().CreateLight<PointLight>(ePointLight);
+	pointLight2->SetLightColor(D3DXCOLOR(0.7f, 0.7f, 0.7f, 1.0f));
 	pointLight2->SetUseShadow(false);
 	pointLight2->SetLightRange(2);
 
-	D3DXMatrixTranslation(&lightMoveMat, 20.0001, -4, 9);
+	D3DXMatrixTranslation(&lightMoveMat, 20.0001f, -4, 9);
 	pointLight2->SetWorldTransform(lightMoveMat);
 
 	//--------------------------------------------------------------------------
-	pointLight3 = LIGHTMANAGER::Instance().CreateLight(ePointLight);
-	pointLight3->SetLightColor(D3DXCOLOR(0.7, 0.7, 0.7, 1.0f));
+	pointLight3 = LIGHTMANAGER::Instance().CreateLight<PointLight>(ePointLight);
+	pointLight3->SetLightColor(D3DXCOLOR(0.7f, 0.7f, 0.7f, 1.0f));
 	pointLight3->SetUseShadow(false);
 	pointLight3->SetLightRange(2);
 
-	D3DXMatrixTranslation(&lightMoveMat, 19.995, -4, 10);
+	D3DXMatrixTranslation(&lightMoveMat, 19.995f, -4, 10);
 	pointLight3->SetWorldTransform(lightMoveMat);
 
 	//--------------------------------------------------------------------------
-	pointLight4 = LIGHTMANAGER::Instance().CreateLight(ePointLight);
-	pointLight4->SetLightColor(D3DXCOLOR(3.7, 3.7, 3.7, 1.0f));
+	pointLight4 = LIGHTMANAGER::Instance().CreateLight<PointLight>(ePointLight);
+	pointLight4->SetLightColor(D3DXCOLOR(3.7f, 3.7f, 3.7f, 1.0f));
 	pointLight4->SetUseShadow(false);
 	pointLight4->SetLightRange(2);
 
-	D3DXMatrixTranslation(&lightMoveMat, 10, -4, 19.998);
+	D3DXMatrixTranslation(&lightMoveMat, 10, -4, 19.998f);
 	pointLight4->SetWorldTransform(lightMoveMat);
 
 	//--------------------------------------------------------------------------
-	pointLight5 = LIGHTMANAGER::Instance().CreateLight(ePointLight);
-	pointLight5->SetLightColor(D3DXCOLOR(4.7, 0.7, 4.7, 1.0f));
+	pointLight5 = LIGHTMANAGER::Instance().CreateLight<PointLight>(ePointLight);
+	pointLight5->SetLightColor(D3DXCOLOR(4.7f, 0.7f, 4.7f, 1.0f));
 	pointLight5->SetUseShadow(false);
-	pointLight5->SetLightRange(0.3);
+	pointLight5->SetLightRange(0.3f);
 
-	D3DXMatrixTranslation(&lightMoveMat, 10.0, -4, -19.998);
+	D3DXMatrixTranslation(&lightMoveMat, 10.0f, -4, -19.998f);
 	pointLight5->SetWorldTransform(lightMoveMat);
 	//--------------------------------------------------------------------------
-	spotLight1 = LIGHTMANAGER::Instance().CreateLight(eSpotLight);
+	spotLight1 = LIGHTMANAGER::Instance().CreateLight<SpotLight>(eSpotLight);
 	spotLight1->SetLightRange(20);
-	spotLight1->SetLightColor(D3DXCOLOR(1.0, 0.0, 0.0, 1.0f));
+	spotLight1->SetLightColor(D3DXCOLOR(1.0f, 0.0f, 0.0f, 1.0f));
 	D3DXMatrixTranslation(&lightMoveMat, 5, 5, 5);
 	spotLight1->SetWorldTransform(lightMoveMat);
 	//--------------------------------------------------------------------------
-	spotLight2 = LIGHTMANAGER::Instance().CreateLight(eSpotLight);
+	spotLight2 = LIGHTMANAGER::Instance().CreateLight<SpotLight>(eSpotLight);
 	spotLight2->SetLightAngle(D3DXVECTOR2(60, 30));
 	spotLight2->SetLightRange(45);
 	spotLight2->SetUseShadow(false);
-	spotLight2->SetLightColor(D3DXCOLOR(0.0, 0.1, 0.0, 1.0f));
+	spotLight2->SetLightColor(D3DXCOLOR(0.0f, 0.1f, 0.0f, 1.0f));
 	D3DXMatrixTranslation(&lightMoveMat, 2, 10, -5);
 	D3DXMatrixRotationX(&lightRot1Mat, -0.4f * D3DX_PI);
 	spotLight2->SetWorldTransform(lightRot1Mat * lightMoveMat);
 	//--------------------------------------------------------------------------
-	spotLight3 = LIGHTMANAGER::Instance().CreateLight(eSpotLight);
+	spotLight3 = LIGHTMANAGER::Instance().CreateLight<SpotLight>(eSpotLight);
 	spotLight3->SetLightRange(2);
 	spotLight3->SetLightColor(D3DXCOLOR(0.0, 0.5, 0.0, 1.0f));
 	spotLight3->SetUseShadow(false);
@@ -166,7 +168,7 @@ void TestScene::OnLoad()
 	D3DXMatrixRotationX(&lightRot1Mat, 0.25f * D3DX_PI);
 	spotLight3->SetWorldTransform(lightRot1Mat * lightMoveMat);
 	//--------------------------------------------------------------------------
-	spotLight4 = LIGHTMANAGER::Instance().CreateLight(eSpotLight);
+	spotLight4 = LIGHTMANAGER::Instance().CreateLight<SpotLight>(eSpotLight);
 	spotLight4->SetLightRange(20);
 	spotLight4->SetLightColor(D3DXCOLOR(0.0, 0.5, 0.0, 1.0f));
 	D3DXMatrixTranslation(&lightMoveMat, -10, 1, -15);
@@ -247,7 +249,7 @@ void BuildRot(D3DXMATRIX& world)
 	D3DXVec3Normalize(&right, &right);
 	double dTime = GLOBALTIMER::Instance().GetFrameTime();
 	D3DXVECTOR2 mouseMove = GAMEINPUT::Instance().GetMouseMove();
-	float speed = 0.2;
+	float speed = 0.2f;
 	if (GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
 		speed *= 5;

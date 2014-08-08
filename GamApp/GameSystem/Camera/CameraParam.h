@@ -11,6 +11,6 @@ namespace CameraParam
 
 	const float FOV = D3DX_PI*0.25f;
 
-	const float zNear = 0.1;
+	const float zNear = 0.1f;
 	const float zFar = 1000;
 };

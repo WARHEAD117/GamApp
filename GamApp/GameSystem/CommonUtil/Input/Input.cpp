@@ -27,7 +27,7 @@ Input::~Input(void)
 //Name  InitDInput
 //Desc  创建DeviceInput
 //-------------------------------------------------
-BOOL Input::InitInput( HWND  hWnd, HINSTANCE  hInstance )
+bool Input::InitInput( HWND  hWnd, HINSTANCE  hInstance )
 {
 	HRESULT           result;   
    
@@ -94,7 +94,7 @@ BOOL Input::InitInput( HWND  hWnd, HINSTANCE  hInstance )
 //--------------------------------------------------
 //鼠标
 //--------------------------------------------------
-BOOL Input::ReadMouse()
+bool Input::ReadMouse()
 {
 	HRESULT		result;		//信息返回句柄
 	DIMOUSESTATE2 dims2;
@@ -150,7 +150,7 @@ BOOL Input::ReadMouse()
 	return true;
 }
 
-BOOL Input::ReadKeyboard()
+bool Input::ReadKeyboard()
 {
 	HRESULT		result;		//信息返回句柄
 

@@ -43,14 +43,9 @@ bool		g_bUseShadow;
 float4		g_LightColor;
 float4		g_AmbientColor;
 
-sampler2D g_sampleDiffuse =
-sampler_state
-{
-	Texture = <g_DiffuseBuffer>;
-	MinFilter = Point;
-	MagFilter = Point;
-	MipFilter = Point;
-};
+matrix g_ShadowView;
+matrix g_ShadowProj;
+matrix g_invView;
 
 sampler2D g_sampleNormal =
 sampler_state
@@ -69,7 +64,6 @@ sampler_state
 	MagFilter = Point;
 	MipFilter = Point;
 };
-
 
 //----------------------------
 
@@ -95,51 +89,23 @@ sampler_state
 	AddressV = Clamp;
 }; 
 
-texture g_LightBuffer;
-sampler2D g_sampleLight =
-sampler_state
-{
-	Texture = <g_LightBuffer>;
-	MinFilter = Point;
-	MagFilter = Point;
-	MipFilter = Point;
-	AddressU = Clamp;
-	AddressV = Clamp;
-};
-
-texture g_SpecularLightBuffer;
-sampler2D g_sampleSpecularLight =
-sampler_state
-{
-	Texture = <g_SpecularLightBuffer>;
-	MinFilter = Point;
-	MagFilter = Point;
-	MipFilter = Point;
-	AddressU = Clamp;
-	AddressV = Clamp;
-};
-
-matrix g_ShadowView;
-matrix g_ShadowProj;
-matrix g_invView;
-
 //----------------------------
-struct OutputVS
+struct OutputVS_Quad
 {
 	float4 posWVP         : POSITION0;
 	float2 TexCoord		: TEXCOORD0;
 };
-struct OutputVS2
+struct OutputVS_LightVolume
 {
 	float4 posWVP         : POSITION0;
 	float4 TexCoord		: TEXCOORD0;
 	float4 viewDir		: TEXCOORD1;
 };
 
-OutputVS VShader(float4 posL       : POSITION0,
+OutputVS_Quad VShader(float4 posL       : POSITION0,
 				 float2 TexCoord : TEXCOORD0)
 {
-	OutputVS outVS = (OutputVS)0;
+	OutputVS_Quad outVS = (OutputVS_Quad)0;
 
 	//最终输出的顶点位置（经过世界、观察、投影矩阵变换）
 	outVS.posWVP = mul(posL, g_WorldViewProj);
@@ -149,9 +115,9 @@ OutputVS VShader(float4 posL       : POSITION0,
 	return outVS;
 }
 
-OutputVS2 VShaderLightVolume(float4 posL       : POSITION0)
+OutputVS_LightVolume VShaderLightVolume(float4 posL       : POSITION0)
 {
-	OutputVS2 outVS = (OutputVS2)0;
+	OutputVS_LightVolume outVS = (OutputVS_LightVolume)0;
 
 	//最终输出的顶点位置（经过世界、观察、投影矩阵变换）
 	outVS.posWVP = mul(posL, g_LightVolumeWVP);
@@ -321,7 +287,7 @@ void LightFunc(float3 normal, float3 toLight, float3 toEye, float4 lightColor, i
 float ShadowFunc(bool useShadow, float3 objViewPos)
 {
 	float shadowContribute = 1.0f;
-	if (useShadow)
+	//if (useShadow)
 	{
 		//Shadow
 		float4 worldPos = mul(float4(objViewPos, 1.0f), g_invView);
@@ -343,7 +309,7 @@ float ShadowFunc(bool useShadow, float3 objViewPos)
 float PointShadowFunc(bool useShadow, float3 objViewPos)
 {
 	float shadowContribute = 1.0f;
-	if (useShadow)
+	//if (useShadow)
 	{
 		//Shadow
 		float3 toObj = objViewPos - g_LightPos.xyz;
@@ -364,7 +330,7 @@ float PointShadowFunc(bool useShadow, float3 objViewPos)
 float PCFShadow(bool useShadow, float3 objViewPos)
 {
 	float shadowContribute = 1.0f;
-	if (useShadow)
+	//if (useShadow)
 	{
 		//Shadow
 		float4 worldPos = mul(float4(objViewPos, 1.0f), g_invView);
@@ -502,6 +468,10 @@ OutputPS SpotLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1)
 	outPs.diffuseLight = 0;
 	outPs.specularLight = 0;
 
+	//outPs.diffuseLight = g_LightColor;
+	//outPs.specularLight = g_LightColor;
+	//return outPs;
+
 	float lightU = (posWVP.x / posWVP.w + 1.0f) / 2.0f + 0.5f / g_ScreenWidth;
 	float lightV = (1.0f - posWVP.y / posWVP.w) / 2.0f + 0.5f / g_ScreenHeight;
 	float2 TexCoord = float2(lightU, lightV);
@@ -623,41 +593,6 @@ float4 AmbientPass(float2 TexCoord : TEXCOORD0) : COLOR
 	return Ambient;
 }
 
-float4 ShadingPass(float2 TexCoord : TEXCOORD0) : COLOR
-{
-	//采样光照结果
-	float4 DiffuseLightResult = tex2D(g_sampleLight, TexCoord);
-	float4 SpecularLightResult = tex2D(g_sampleSpecularLight, TexCoord);
-
-	float4 diffuseLight = float4(DiffuseLightResult.xyz, 1.0f);
-	float4 specularLight = float4(SpecularLightResult.xyz, 1.0f);
-
-	//纹理采样
-	float4 DiffuseBuffer = tex2D(g_sampleDiffuse, TexCoord);
-	//纹理颜色
-	float4 Texture = float4(DiffuseBuffer.rgb, 1.0f);
-	//高光强度
-	float  Specularintensity = DiffuseBuffer.a;
-
-	//计算最终光照
-	return Texture * diffuseLight + specularLight * Specularintensity;
-}
-
-float4 DebugPass(float2 TexCoord : TEXCOORD0) : COLOR
-{
-	//DIffuse
-	float4 Texture = tex2D(g_sampleDiffuse, TexCoord);
-	//ShadowMap
-	float4 Shadow = tex2D(g_sampleShadow, TexCoord);
-	//Normal
-	float4 Normal = tex2D(g_sampleNormal, TexCoord);
-
-	return Texture;
-	//return float4(Shadow.x / 100, Shadow.x / 100, Shadow.x / 100, 1.0f);
-	//return float4(GetNormal(TexCoord),1.0f);
-	return Normal;
-}
-
 technique DeferredRender
 {
 	pass p0 //渲染灯光
@@ -715,27 +650,7 @@ technique DeferredRender
 		DestBlend = ONE;
 		ColorWriteEnable = 0xFFFFFFFF;
 	}
-	pass p6 //着色
-	{
-		vertexShader = compile vs_3_0 VShader();
-		pixelShader = compile ps_3_0 ShadingPass();
-		AlphaBlendEnable = false;                        //设置渲染状态        
-		//SrcBlend = ZERO;
-		//DestBlend = SrcColor;
-		ColorWriteEnable = 0xFFFFFFFF;
-	}
-	pass p7 //DEBUG PASS
-	{
-		vertexShader = compile vs_3_0 VShader();
-		pixelShader = compile ps_3_0 DebugPass();
-		//pixelShader = compile ps_3_0 AmbientPass();
-		//pixelShader = compile ps_3_0 DiffusePass();
-		AlphaBlendEnable = true;                        //设置渲染状态        
-		SrcBlend = ONE;
-		DestBlend = ZERO;
-		ColorWriteEnable = 0xFFFFFFFF;
-	}
-	pass p8 //Stencil Pass
+	pass p6 //Stencil Pass
 	{
 		vertexShader = compile vs_3_0 VShaderLightVolume();
 		pixelShader = compile ps_3_0 StencilPass();

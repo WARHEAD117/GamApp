@@ -1,12 +1,12 @@
 #pragma once
 #include "Light/BaseLight.h"
 
-class DirectionLight : 
+class SpotLight : 
 	public BaseLight
 {
 public:
-	DirectionLight();
-	~DirectionLight();
+	SpotLight();
+	~SpotLight();
 
 	//virtual void OnFrame();
 
@@ -21,5 +21,4 @@ public:
 	virtual D3DXMATRIX GetToViewDirMatrix();
 
 	virtual void SetUseShadow(bool useShadow);
-
 };

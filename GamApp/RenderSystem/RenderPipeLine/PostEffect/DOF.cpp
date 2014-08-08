@@ -88,10 +88,10 @@ void DOF::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 	if (GAMEINPUT::Instance().KeyDown(DIK_R))
 	{
-		g_aperture = 0.135;
+		g_aperture = 0.135f;
 		g_focallength = 135;
 		g_planeinfocus = 1;
-		g_scale = 0.04;
+		g_scale = 0.04f;
 	}
 	if (g_planeinfocus < CameraParam::zNear) g_planeinfocus = CameraParam::zNear;
 	if (g_planeinfocus > CameraParam::zFar) g_planeinfocus = CameraParam::zFar;
@@ -105,7 +105,7 @@ void DOF::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 	float angle = tan(CameraParam::FOV / 2);
 	m_postEffect->SetFloat("g_angle", angle);
-	float aspect = RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth / RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight;
+	float aspect = (float)RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth / RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight;
 	m_postEffect->SetFloat("g_aspect", aspect);
 
 	m_postEffect->SetInt(SCREENWIDTH, RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth);
@@ -125,7 +125,7 @@ void DOF::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	m_ColorCoCBuffer->GetSurfaceLevel(0, &pSurfCoC);
 
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurfCoC);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 0, 0, 0), 1.0f, 0);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
 	m_postEffect->SetTexture(MAINCOLORBUFFER, mainBuffer);
 	m_postEffect->SetFloat("g_aperture", g_aperture);
@@ -144,7 +144,7 @@ void DOF::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	m_ColorHorizontal->GetSurfaceLevel(0, &pSurfColorHorizontal);
 
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurfColorHorizontal);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 0, 0, 0), 1.0f, 0);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 	m_postEffect->SetTexture("g_ColorCoCBuffer", m_ColorCoCBuffer);
 	m_postEffect->SetFloat("g_bokehAngle", 0);
 
@@ -161,7 +161,7 @@ void DOF::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	m_ColorStep1->GetSurfaceLevel(0, &pSurfColorStep1);
 
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurfColorStep1);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 0, 0, 0), 1.0f, 0);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 	m_postEffect->SetTexture("g_ColorCoCBuffer", m_ColorHorizontal);
 	m_postEffect->SetFloat("g_bokehAngle", D3DX_PI / 3.0f);
 
@@ -178,7 +178,7 @@ void DOF::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	m_ColorStep2->GetSurfaceLevel(0, &pSurfColorStep2);
 
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurfColorStep2);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 0, 0, 0), 1.0f, 0);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 	m_postEffect->SetTexture("g_ColorCoCBuffer", m_ColorHorizontal);
 	m_postEffect->SetFloat("g_bokehAngle", -D3DX_PI / 3.0f);
 
@@ -192,7 +192,7 @@ void DOF::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	//=============================================================================================================
 	//ºÏ²¢Ä£ºý
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pPostSurface);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 0, 0, 0), 1.0f, 0);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
 	m_postEffect->SetFloat("g_bokehAngle", D3DX_PI / 3.0f);
 

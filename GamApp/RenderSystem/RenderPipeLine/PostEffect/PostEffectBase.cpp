@@ -73,7 +73,7 @@ void PostEffectBase::CreatePostEffect(std::string effectName, D3DFORMAT postTarg
 void PostEffectBase::RenderPost(LPDIRECT3DTEXTURE9 lastBuffer/* = NULL*/)
 {
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pPostSurface);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 0, 0, 0), 1.0f, 0);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
 	UINT numPasses = 0;
 	m_postEffect->Begin(&numPasses, 0);

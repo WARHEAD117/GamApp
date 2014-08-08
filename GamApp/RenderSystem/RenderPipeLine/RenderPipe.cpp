@@ -34,8 +34,8 @@ LPDIRECT3DINDEXBUFFER9		pScreenQuadIndex;
 
 LPD3DXEFFECT GBufferEffect;
 
-LPD3DXEFFECT deferredEffect; 
 LPD3DXEFFECT deferredMultiPassEffect;
+LPD3DXEFFECT shadingPassEffect;
 LPD3DXEFFECT finalColorEffect;
 
 D3DXMATRIX shadowOrthoWorld;
@@ -162,8 +162,8 @@ void RenderPipe::BuildBuffers()
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
 		1, D3DUSAGE_RENDERTARGET,
 		D3DFMT_A16B16G16R16F, D3DPOOL_DEFAULT,
-		&m_pLightTarget, NULL);
-	hr = m_pLightTarget->GetSurfaceLevel(0, &m_pLightSurface);
+		&m_pDiffuseLightTarget, NULL);
+	hr = m_pDiffuseLightTarget->GetSurfaceLevel(0, &m_pDiffuseLightSurface);
 
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
 		1, D3DUSAGE_RENDERTARGET,
@@ -199,6 +199,14 @@ void RenderPipe::BuildEffects()
 	}
 
 	error = 0;
+	if (E_FAIL == ::D3DXCreateEffectFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "System\\ShadingPass.fx", NULL, NULL, D3DXSHADER_DEBUG,
+		NULL, &shadingPassEffect, &error))
+	{
+		MessageBox(GetForegroundWindow(), (char*)error->GetBufferPointer(), "Shader", MB_OK);
+		abort();
+	}
+
+	error = 0;
 	if (E_FAIL == ::D3DXCreateEffectFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "System\\DeferredGBuffer.fx", NULL, NULL, D3DXSHADER_DEBUG,
 		NULL, &GBufferEffect, &error))
 	{
@@ -226,7 +234,7 @@ void RenderPipe::RenderGBuffer()
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pDiffuseSurface);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(1, m_pNormalSurface);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(2, m_pPositionSurface);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER | D3DCLEAR_STENCIL, D3DCOLOR_XRGB(0, 0, 0, 0), 1.0f, 0);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER | D3DCLEAR_STENCIL, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
 	UINT nPasses = 0;
 	HRESULT r1 = GBufferEffect->Begin(&nPasses, 0);
@@ -252,7 +260,7 @@ void RenderPipe::RenderGBuffer()
 void RenderPipe::RenderDiffuse()
 {
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pDiffuseSurface);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 0, 0, 0), 1.0f, 0);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
 	UINT nPasses = 0;
 	HRESULT r1 = RENDERDEVICE::Instance().GetDiffuseEffect()->Begin(&nPasses, 0);
@@ -270,7 +278,7 @@ void RenderPipe::RenderDiffuse()
 void RenderPipe::RenderNormal()
 {
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pNormalSurface);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 0, 0, 0), 1.0f, 0);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
 	UINT nPasses = 0;
 	HRESULT r1 = RENDERDEVICE::Instance().GetNormalEffect()->Begin(&nPasses, 0);
@@ -289,7 +297,7 @@ void RenderPipe::RenderNormal()
 void RenderPipe::RenderPosition()
 {
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pPositionSurface);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 0, 0, 0), 1.0f, 0);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
 	UINT nPasses = 0;
 	HRESULT r1 = RENDERDEVICE::Instance().GetPositionEffect()->Begin(&nPasses, 0);
@@ -314,38 +322,8 @@ void RenderPipe::RenderShadow()
 	for (int index = 0; index < lightCount; index++)
 	{
 		BaseLight* pLight = LIGHTMANAGER::Instance().GetLight(index);
-		bool useShadow = pLight->GetUseShadow();
-		if (!useShadow)
-			continue;
-		else
-		{
-			if (pLight->GetLightType() == eDirectionLight || pLight->GetLightType() == eSpotLight)
-			{
-				D3DXMATRIX lightViewMat = pLight->GetLightViewMatrix();
-				D3DXMATRIX lightProjMat = pLight->GetLightProjMatrix();
-				pLight->SetShadowTarget();
-
-				for (int i = 0; i < mRenderUtilList.size(); ++i)
-				{
-					mRenderUtilList[i]->RenderShadow(lightViewMat, lightProjMat, pLight->GetLightType());
-				}
-			}
-			else if (pLight->GetLightType() == ePointLight)
-			{
-				for (int pointDir = 0; pointDir < 6; pointDir++)
-				{
-					D3DXMATRIX lightViewMat = pLight->GetPointLightViewMatrix(pointDir);
-					D3DXMATRIX lightProjMat = pLight->GetLightProjMatrix();
-					pLight->SetPointShadowTarget(pointDir);
-
-					for (int i = 0; i < mRenderUtilList.size(); ++i)
-					{
-						mRenderUtilList[i]->RenderShadow(lightViewMat, lightProjMat, pLight->GetLightType());
-					}
-				}
-			}
-			
-		}
+		
+		pLight->RenderShadow(mRenderUtilList);
 	}
 
 	if (NULL != pOldDS)
@@ -368,16 +346,59 @@ void RenderPipe::DeferredRender_MultiPass()
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZENABLE, FALSE);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZWRITEENABLE, FALSE);
 
+	//渲染灯光结果
+	DeferredRender_Lighting();
+	
+	//使用灯光结果进行着色
+	DeferredRender_Shading();
+
+	//恢复渲染状态
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZWRITEENABLE, TRUE);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZENABLE, TRUE);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZFUNC, D3DCMP_LESSEQUAL);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
+
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, NULL);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(1, NULL);
+}
+
+void RenderPipe::ComputeLightPassIndex(LightType type, UINT& lightPassIndex, UINT& shadowPassIndex)
+{
+	if (type == eDirectionLight)
+	{
+		lightPassIndex = 0;
+		shadowPassIndex = 3;
+	}
+	else if (type == ePointLight)
+	{
+		lightPassIndex = 1;
+		shadowPassIndex = 4;
+	}
+	else if (type == eSpotLight)
+	{
+		lightPassIndex = 2;
+		shadowPassIndex = 3;
+	}
+	else
+	{
+		lightPassIndex = 0;
+		shadowPassIndex = 3;
+	}
+}
+
+//
+void RenderPipe::DeferredRender_Lighting()
+{
 	//Lighting Pass
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pLightSurface);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pDiffuseLightSurface);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(1, m_pSpecularLightSurface);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_STENCIL, D3DCOLOR_XRGB(0, 0, 0, 0), 1.0f, 0);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_STENCIL, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
 	deferredMultiPassEffect->SetMatrix(VIEWMATRIX, &RENDERDEVICE::Instance().ViewMatrix);
 	deferredMultiPassEffect->SetMatrix(WORLDVIEWPROJMATRIX, &RENDERDEVICE::Instance().OrthoWVPMatrix);
 	deferredMultiPassEffect->SetMatrix(INVPROJMATRIX, &RENDERDEVICE::Instance().InvProjMatrix);
 
-	deferredMultiPassEffect->SetTexture(DIFFUSEBUFFER, m_pDiffuseTarget);
+
 	deferredMultiPassEffect->SetTexture(NORMALBUFFER, m_pNormalTarget);
 	deferredMultiPassEffect->SetTexture(POSITIONBUFFER, m_pPositionTarget);
 
@@ -385,7 +406,7 @@ void RenderPipe::DeferredRender_MultiPass()
 	deferredMultiPassEffect->SetInt(SCREENHEIGHT, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight);
 	deferredMultiPassEffect->SetFloat("g_zNear", CameraParam::zNear);
 	deferredMultiPassEffect->SetFloat("g_zFar", CameraParam::zFar);
-	
+
 	deferredMultiPassEffect->CommitChanges();
 
 	UINT numPasses = 0;
@@ -394,22 +415,22 @@ void RenderPipe::DeferredRender_MultiPass()
 
 	deferredMultiPassEffect->SetInt("g_ShadowMapSize", SHADOWMAPSIZE);
 	deferredMultiPassEffect->SetFloat("g_ShadowBias", 0.2f);
-	
+
 	if (GAMEINPUT::Instance().KeyDown(DIK_G) && !GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
-		g_minVariance += 0.001;
+		g_minVariance += 0.001f;
 	}
 	if (GAMEINPUT::Instance().KeyDown(DIK_G) && GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
-		g_minVariance -= 0.001;
+		g_minVariance -= 0.001f;
 	}
 	if (GAMEINPUT::Instance().KeyDown(DIK_H) && !GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
-		g_Amount += 0.001;
+		g_Amount += 0.001f;
 	}
 	if (GAMEINPUT::Instance().KeyDown(DIK_H) && GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
-		g_Amount -= 0.001;
+		g_Amount -= 0.001f;
 	}
 	if (GAMEINPUT::Instance().KeyDown(DIK_R))
 	{
@@ -421,7 +442,7 @@ void RenderPipe::DeferredRender_MultiPass()
 
 	deferredMultiPassEffect->CommitChanges();
 
-	
+
 
 	int lightCount = LIGHTMANAGER::Instance().GetLightCount();
 	for (int i = 0; i < lightCount; i++)
@@ -452,35 +473,16 @@ void RenderPipe::DeferredRender_MultiPass()
 		D3DXMATRIX toViewDirMatrix = pLight->GetToViewDirMatrix();
 		deferredMultiPassEffect->SetMatrix("g_ToViewDirMatrix", &toViewDirMatrix);
 
+		LightType lt = pLight->GetLightType();
 		UINT lightpass = 0;
 		UINT shadowPass = 0;
-		LightType lt = pLight->GetLightType();
 
-		if (lt == eDirectionLight)
-		{
-			lightpass = 0;
-			shadowPass = 3;
-		}
-		else if (lt == ePointLight)
-		{
-			lightpass = 1;
-			shadowPass = 4;
-		}
-		else if (lt == eSpotLight)
-		{
-			lightpass = 2;
-			shadowPass = 3;
-		}
-		else
-		{
-			lightpass = 0;
-			shadowPass = 3;
-		}
+		ComputeLightPassIndex(lt, lightpass, shadowPass);
 
 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pShadowSurface);
 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(1, NULL);
 
-		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET, D3DCOLOR_XRGB(255, 255, 255, 255), 1.0f, 0);
+		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
 		if (useShadow)
 		{
 			deferredMultiPassEffect->SetMatrix("g_invView", &RENDERDEVICE::Instance().InvViewMatrix);
@@ -488,20 +490,20 @@ void RenderPipe::DeferredRender_MultiPass()
 			deferredMultiPassEffect->SetMatrix("g_ShadowProj", &pLight->GetLightProjMatrix());
 
 			deferredMultiPassEffect->SetTexture("g_ShadowBuffer", pLight->GetShadowTarget());
-			
+
 			deferredMultiPassEffect->CommitChanges();
 
 			deferredMultiPassEffect->BeginPass(shadowPass);
-			
+
 			pLight->RenderLightVolume();
 
 			deferredMultiPassEffect->EndPass();
 
 		}
-		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pLightSurface);
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pDiffuseLightSurface);
 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(1, m_pSpecularLightSurface);
 
-		
+
 		if (GAMEINPUT::Instance().KeyPressed(DIK_RETURN))
 		{
 			enableStencilLight = !enableStencilLight;
@@ -530,7 +532,7 @@ void RenderPipe::DeferredRender_MultiPass()
 			//第一步需要标记出在灯光照射后表面前方的所有像素，即Z-Buffer深度小于灯光体后表面深度的像素
 			//所以将深度测试方式设置为GREATER，使灯光体后表面深度大于Z-Buffer深度的部分标记为1
 			//================================================
-			
+
 			//设置模板值时，使用“1”作为要设置的值
 			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_STENCILREF, 0x1);
 
@@ -543,7 +545,7 @@ void RenderPipe::DeferredRender_MultiPass()
 
 			//设置剔除方式为剔除正面，渲染灯光体的背面
 			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CW);
-			deferredMultiPassEffect->BeginPass(8);
+			deferredMultiPassEffect->BeginPass(6);
 			pLight->RenderLightVolume();
 			deferredMultiPassEffect->EndPass();
 			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CW);
@@ -570,12 +572,12 @@ void RenderPipe::DeferredRender_MultiPass()
 
 			//设置剔除方式为剔除背面，渲染灯光体的正面
 			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
-			deferredMultiPassEffect->BeginPass(8);
+			deferredMultiPassEffect->BeginPass(6);
 			pLight->RenderLightVolume();
 			deferredMultiPassEffect->EndPass();
 			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CW);
 
-			
+
 			//===============================================
 			//Step.3 渲染实际的灯光
 			//将Z-Test方式设置为ALWAYS，即相当于不做深度测试
@@ -589,11 +591,11 @@ void RenderPipe::DeferredRender_MultiPass()
 			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_STENCILREF, 0x0);
 
 			//使用模板测试，模板值不等于上面设置的值，即“0”时，模板测试通过
-			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_STENCILFUNC, D3DCMP_NOTEQUAL); 
+			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_STENCILFUNC, D3DCMP_NOTEQUAL);
 			//模板测试及深度测试通过时，保持模板的值
 			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_STENCILPASS, D3DSTENCILOP_KEEP);
 		}
-		
+
 
 		deferredMultiPassEffect->SetTexture("g_ShadowResult", m_pShadowTarget);
 		deferredMultiPassEffect->CommitChanges();
@@ -619,7 +621,7 @@ void RenderPipe::DeferredRender_MultiPass()
 	//RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(mFVF);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetVertexDeclaration(mScreenQuadDecl);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetIndices(pScreenQuadIndex);
-	
+
 	//环境光Pass
 	deferredMultiPassEffect->BeginPass(5);
 
@@ -628,33 +630,41 @@ void RenderPipe::DeferredRender_MultiPass()
 
 	RENDERDEVICE::Instance().g_pD3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 4, 0, 2);
 	deferredMultiPassEffect->EndPass();
-	
+
+	deferredMultiPassEffect->End();
+}
+
+void RenderPipe::DeferredRender_Shading()
+{
 	//Shading Pass
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pMainColorSurface);
 
-	deferredMultiPassEffect->SetTexture("g_LightBuffer", m_pLightTarget);
-	deferredMultiPassEffect->SetTexture("g_SpecularLightBuffer", m_pSpecularLightTarget);
-	deferredMultiPassEffect->CommitChanges();
-	
-	deferredMultiPassEffect->BeginPass(6);
+	//设置全屏矩形
+	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, pScreenQuadVertex, 0, mScreenQuadByteSize);
+	//RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(mFVF);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetVertexDeclaration(mScreenQuadDecl);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetIndices(pScreenQuadIndex);
+
+	UINT numPasses = 0;
+	shadingPassEffect->Begin(&numPasses, 0);
+
+	shadingPassEffect->SetInt(SCREENWIDTH, RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth);
+	shadingPassEffect->SetInt(SCREENHEIGHT, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight);
+	shadingPassEffect->SetFloat("g_zNear", CameraParam::zNear);
+	shadingPassEffect->SetFloat("g_zFar", CameraParam::zFar);
+
+	shadingPassEffect->SetMatrix(WORLDVIEWPROJMATRIX, &RENDERDEVICE::Instance().OrthoWVPMatrix);
+
+	shadingPassEffect->SetTexture(DIFFUSEBUFFER, m_pDiffuseTarget);
+	shadingPassEffect->SetTexture("g_DiffuseLightBuffer", m_pDiffuseLightTarget);
+	shadingPassEffect->SetTexture("g_SpecularLightBuffer", m_pSpecularLightTarget);
+	shadingPassEffect->CommitChanges();
+
+	shadingPassEffect->BeginPass(0);
 	RENDERDEVICE::Instance().g_pD3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 4, 0, 2);
-	deferredMultiPassEffect->EndPass();
+	shadingPassEffect->EndPass();
 
-	//DebugPass
-	deferredMultiPassEffect->BeginPass(7);
-	//RENDERDEVICE::Instance().g_pD3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 4, 0, 2);
-	deferredMultiPassEffect->EndPass();
-
-	deferredMultiPassEffect->End();
-
-	//恢复渲染状态
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZWRITEENABLE, TRUE);
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZENABLE, TRUE);
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZFUNC, D3DCMP_LESSEQUAL);
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
-
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, NULL);
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(1, NULL);
+	shadingPassEffect->End();
 }
 
 
@@ -687,7 +697,7 @@ void RenderPipe::RenderFinalColor()
 void RenderPipe::RenderAll()
 {
 	RENDERDEVICE::Instance().g_pD3DDevice->BeginScene();
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 0, 0), 1.0f, 0);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
 	UpdateRenderState();
 
@@ -725,7 +735,7 @@ void RenderPipe::RenderAll()
 void RenderPipe::ForwardRender()
 {
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pMainColorSurface);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 0, 0), 1.0f, 0);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 	for (int i = 0; i < mRenderUtilList.size(); ++i)
 	{
 		mRenderUtilList[i]->Render();
@@ -769,3 +779,4 @@ void RenderPipe::UpdateRenderState()
 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_SHADEMODE, D3DSHADE_PHONG);
 	}
 }
+

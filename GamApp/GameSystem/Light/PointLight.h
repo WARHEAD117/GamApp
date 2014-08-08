@@ -1,14 +1,15 @@
 #pragma once
 #include "Light/BaseLight.h"
 
-class DirectionLight : 
+class PointLight : 
 	public BaseLight
 {
 public:
-	DirectionLight();
-	~DirectionLight();
+	PointLight();
+	~PointLight();
 
 	//virtual void OnFrame();
+	virtual void RenderShadow(const std::vector<RenderUtil*>& mRenderUtilList);
 
 	virtual void RenderLightVolume();
 	virtual void BuildLightVolume();
@@ -22,4 +23,14 @@ public:
 
 	virtual void SetUseShadow(bool useShadow);
 
+	virtual void BuildShadowMap();
+
+	virtual LPDIRECT3DBASETEXTURE9	GetShadowTarget();
+
+	void	SetPointShadowTarget(int index);
+	D3DXMATRIX GetPointLightViewMatrix(int index);
+
+protected:
+	LPDIRECT3DCUBETEXTURE9 m_pPointShadowTarget;
+	D3DXMATRIX m_PointlightViewMat[6];
 };

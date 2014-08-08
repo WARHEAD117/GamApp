@@ -20,6 +20,7 @@ TestScene::~TestScene()
 Entity* krisEntity;
 Entity* shevaEntity;
 Entity* horseEntity;
+Entity* sponzaEntity;
 Material testMat1;
 EffectLoader effectLoader;
 BaseLight* dirLight1;
@@ -49,6 +50,9 @@ void TestScene::OnLoad()
 	horseEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\horse\\horse.X");
 
 	Entity* roomEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\room\\room.x");
+
+	sponzaEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\sponza\\sponza.X");
+
 	roomEntity->SetTexture("Res\\Mesh\\room\\wallpaper.dds",0);
 	roomEntity->SetTexture("Res\\Mesh\\room\\DoorDiff.dds", 1);
 	roomEntity->SetTexture("Res\\Mesh\\room\\oldwood.dds", 2);

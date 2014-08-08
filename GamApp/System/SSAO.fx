@@ -12,15 +12,19 @@ float		g_zFar = 100.0f;
 int			g_ScreenWidth;
 int			g_ScreenHeight;
 
+int			g_mapWidth;
+int			g_mapHeight;
+
 float		g_angle;
 float		g_aspect;
 
 float		g_intensity = 1;
 float		g_scale = 1;
 float		g_bias = 0;
-float		g_sample_rad = 0.03;
+float		g_sample_rad = 0.03f;
 
-float		g_rad_scale = 0.3;
+float		g_rad_scale = 0.3f;
+float		g_rad_threshold = 4.0f;
 
 texture		g_NormalBuffer;
 texture		g_RandomNormal; 
@@ -168,6 +172,7 @@ float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
 	float ao = 0.0f;
 	float invDepth = 1 - p.z / g_zFar;
 	float rad = g_sample_rad * (invDepth * invDepth) * g_rad_scale;
+	rad = (p.z < g_rad_threshold) ? (g_sample_rad / p.z) : rad;
 
 	//**SSAO Calculation**// 
 	int iterations = 4;
@@ -188,6 +193,22 @@ float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
 	//**END**//  
 	//Do stuff here with your occlusion value ¡°ao¡±: modulate ambient lighting,  write it to a buffer for later //use, etc. 
 	return float4(1 - ao, 1 - ao, 1 - ao, 1.0f);
+}
+
+float4 texture2DBilinear(sampler2D textureSampler, float2 uv)
+{
+	float stepU = 1.0f / g_mapWidth;
+	float stepV = 1.0f / g_mapWidth;
+
+	// in vertex shaders you should use texture2DLod instead of texture2D
+	float4 tl = tex2D(textureSampler, uv);
+	float4 tr = tex2D(textureSampler, uv + float2(stepU, 0));
+	float4 bl = tex2D(textureSampler, uv + float2(0, stepV));
+	float4 br = tex2D(textureSampler, uv + float2(stepU, stepV));
+	float2 f = frac(uv.xy * float2(g_mapWidth, g_mapWidth)); // get the decimal part
+	float4 tA = lerp(tl, tr, f.x); // will interpolate the red dot in the image
+	float4 tB = lerp(bl, br, f.x); // will interpolate the blue dot in the image
+	return lerp(tA, tB, f.y); // will interpolate the green dot in the image
 }
 
 float4 DrawMain(float2 TexCoord : TEXCOORD0) : COLOR

@@ -61,6 +61,10 @@ RenderPipe::RenderPipe()
 	hdrLighting.CreatePostEffect();
 	dof.CreatePostEffect();
 
+	m_enableAO = true;
+	m_enableDOF = false;
+	m_enableHDR = true;
+
 	//==========================================================
 	//Build SkyBox
 	skyBox.BuildSkyBox();
@@ -715,14 +719,39 @@ void RenderPipe::RenderAll()
 
 	DeferredRender_MultiPass();
 
-	ssao.RenderPost(m_pMainColorTarget);
-	m_pPostTarget = ssao.GetPostTarget();
+	m_pPostTarget = m_pMainColorTarget;
 
-	hdrLighting.RenderPost(m_pPostTarget);
-	m_pPostTarget = hdrLighting.GetPostTarget();
+	if (GAMEINPUT::Instance().KeyPressed(DIK_1))
+	{
+		m_enableAO = !m_enableAO;
+	}
+	if (m_enableAO)
+	{
+		ssao.RenderPost(m_pPostTarget);
+		m_pPostTarget = ssao.GetPostTarget();
+	}
 
-	//dof.RenderPost(m_pPostTarget);
-	//m_pPostTarget = dof.GetPostTarget();
+	if (GAMEINPUT::Instance().KeyPressed(DIK_2))
+	{
+		m_enableHDR = !m_enableHDR;
+	}
+
+	if (m_enableHDR)
+	{
+		hdrLighting.RenderPost(m_pPostTarget);
+		m_pPostTarget = hdrLighting.GetPostTarget();
+	}
+
+	if (GAMEINPUT::Instance().KeyPressed(DIK_3))
+	{
+		m_enableDOF = !m_enableDOF;
+	}
+
+	if (m_enableDOF)
+	{
+		dof.RenderPost(m_pPostTarget);
+		m_pPostTarget = dof.GetPostTarget();
+	}
 
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pOriSurface);
 

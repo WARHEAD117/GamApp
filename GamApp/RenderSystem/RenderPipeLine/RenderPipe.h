@@ -62,6 +62,11 @@ private:
 	LPDIRECT3DSURFACE9	m_pMainColorSurface;
 
 	LPDIRECT3DSURFACE9	m_pOriSurface;
+
+private:
+	bool	m_enableAO;
+	bool	m_enableDOF;
+	bool	m_enableHDR;
 };
 
 

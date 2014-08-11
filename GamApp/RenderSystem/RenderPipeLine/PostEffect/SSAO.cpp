@@ -41,10 +41,10 @@ void SSAO::CreatePostEffect()
 
 void SSAO::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 {
-	if (GAMEINPUT::Instance().KeyPressed(DIK_P))
-	{
-		m_AOEnable = !m_AOEnable;
-	}
+// 	if (GAMEINPUT::Instance().KeyPressed(DIK_1))
+// 	{
+// 		m_AOEnable = !m_AOEnable;
+// 	}
 
 	ComputeAOConfig();
 

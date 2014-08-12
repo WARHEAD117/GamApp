@@ -52,9 +52,6 @@
     <Filter Include="GaneScene\BaseScene">
       <UniqueIdentifier>{cd95ccbe-e475-4cb8-bb4e-edb0a9b6f989}</UniqueIdentifier>
     </Filter>
-    <Filter Include="GameSystem\Light">
-      <UniqueIdentifier>{5377fa5d-c848-457b-ae32-dd7c95997279}</UniqueIdentifier>
-    </Filter>
     <Filter Include="GameSystem\Transform">
       <UniqueIdentifier>{d6b0aa79-75a8-4d1d-9f07-e038141ccc31}</UniqueIdentifier>
     </Filter>
@@ -66,6 +63,9 @@
     </Filter>
     <Filter Include="RenderSystem\Sky">
       <UniqueIdentifier>{e85ddd06-e436-40a9-866b-8d8f22fad97e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="RenderSystem\Light">
+      <UniqueIdentifier>{5377fa5d-c848-457b-ae32-dd7c95997279}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -139,17 +139,8 @@
     <ClInclude Include="GameScene\TestScene.h">
       <Filter>GaneScene</Filter>
     </ClInclude>
-    <ClInclude Include="GameSystem\Light\DirectionLight.h">
-      <Filter>GameSystem\Light</Filter>
-    </ClInclude>
     <ClInclude Include="GameSystem\Transform\Transform.h">
       <Filter>GameSystem\Transform</Filter>
-    </ClInclude>
-    <ClInclude Include="GameSystem\Light\LightManager.h">
-      <Filter>GameSystem\Light</Filter>
-    </ClInclude>
-    <ClInclude Include="GameSystem\Light\BaseLight.h">
-      <Filter>GameSystem\Light</Filter>
     </ClInclude>
     <ClInclude Include="Takarazuka\VertexManager.h">
       <Filter>Takarazuka</Filter>
@@ -178,11 +169,20 @@
     <ClInclude Include="RenderSystem\Sky\SkyBox.h">
       <Filter>RenderSystem\Sky</Filter>
     </ClInclude>
-    <ClInclude Include="GameSystem\Light\PointLight.h">
-      <Filter>GameSystem\Light</Filter>
+    <ClInclude Include="RenderSystem\Light\BaseLight.h">
+      <Filter>RenderSystem\Light</Filter>
     </ClInclude>
-    <ClInclude Include="GameSystem\Light\SpotLight.h">
-      <Filter>GameSystem\Light</Filter>
+    <ClInclude Include="RenderSystem\Light\DirectionLight.h">
+      <Filter>RenderSystem\Light</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderSystem\Light\LightManager.h">
+      <Filter>RenderSystem\Light</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderSystem\Light\PointLight.h">
+      <Filter>RenderSystem\Light</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderSystem\Light\SpotLight.h">
+      <Filter>RenderSystem\Light</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -244,17 +244,8 @@
     <ClCompile Include="GameScene\TestScene.cpp">
       <Filter>GaneScene</Filter>
     </ClCompile>
-    <ClCompile Include="GameSystem\Light\DirectionLight.cpp">
-      <Filter>GameSystem\Light</Filter>
-    </ClCompile>
     <ClCompile Include="GameSystem\Transform\Transform.cpp">
       <Filter>GameSystem\Transform</Filter>
-    </ClCompile>
-    <ClCompile Include="GameSystem\Light\LightManager.cpp">
-      <Filter>GameSystem\Light</Filter>
-    </ClCompile>
-    <ClCompile Include="GameSystem\Light\BaseLight.cpp">
-      <Filter>GameSystem\Light</Filter>
     </ClCompile>
     <ClCompile Include="Takarazuka\VertexManager.cpp">
       <Filter>Takarazuka</Filter>
@@ -283,11 +274,20 @@
     <ClCompile Include="RenderSystem\Sky\SkyBox.cpp">
       <Filter>RenderSystem\Sky</Filter>
     </ClCompile>
-    <ClCompile Include="GameSystem\Light\PointLight.cpp">
-      <Filter>GameSystem\Light</Filter>
+    <ClCompile Include="RenderSystem\Light\BaseLight.cpp">
+      <Filter>RenderSystem\Light</Filter>
     </ClCompile>
-    <ClCompile Include="GameSystem\Light\SpotLight.cpp">
-      <Filter>GameSystem\Light</Filter>
+    <ClCompile Include="RenderSystem\Light\DirectionLight.cpp">
+      <Filter>RenderSystem\Light</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderSystem\Light\LightManager.cpp">
+      <Filter>RenderSystem\Light</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderSystem\Light\PointLight.cpp">
+      <Filter>RenderSystem\Light</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderSystem\Light\SpotLight.cpp">
+      <Filter>RenderSystem\Light</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

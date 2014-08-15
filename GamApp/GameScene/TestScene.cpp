@@ -171,8 +171,8 @@ void TestScene::OnLoad()
 	dirLight2 = LIGHTMANAGER::Instance().CreateLight<DirectionLight>(eDirectionLight);
 	dirLight2->SetLightColor(D3DXCOLOR(1.0f, 1.0f, 1.3f, 1.0f));
 	dirLight2->SetUseShadow(true);
-	
-	D3DXMatrixTranslation(&lightMoveMat, 0, 50, 10);
+	dirLight2->SetShadowAreaSize(150,150);
+	D3DXMatrixTranslation(&lightMoveMat, 0, 60, 10);
 	D3DXMatrixRotationX(&lightRot1Mat, 0.125f * D3DX_PI);
 	D3DXMatrixRotationY(&lightRot2Mat, 0.125f * D3DX_PI);
 	dirLight2->SetWorldTransform(lightRot1Mat*lightRot2Mat*lightMoveMat);

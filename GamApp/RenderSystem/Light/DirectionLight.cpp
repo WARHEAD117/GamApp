@@ -2,7 +2,8 @@
 #include "D3D9Device.h"
 
 const D3DXVECTOR3 defaultDir(0.0f, -1.0f, 1.0f);
-DirectionLight::DirectionLight()
+DirectionLight::DirectionLight():
+m_shadowAreaSize(D3DXVECTOR2(100,100))
 {
 	BuildLightVolume();
 	RebuildViewMatrix();
@@ -78,7 +79,7 @@ void DirectionLight::RebuildViewMatrix()
 
 void DirectionLight::RebuildProjMatrix()
 {
-	D3DXMatrixOrthoLH(&m_lightProjMat, 100, 100, 0.01f, 100.0f);
+	D3DXMatrixOrthoLH(&m_lightProjMat, m_shadowAreaSize.x, m_shadowAreaSize.y, 0.01f, 100.0f);
 
 	D3DXMatrixInverse(&m_lightInvProjMat, NULL, &m_lightProjMat);
 }
@@ -102,4 +103,11 @@ void DirectionLight::SetUseShadow(bool useShadow)
 		m_bUseShadow = useShadow;
 		BuildShadowMap();
 	}
+}
+
+void DirectionLight::SetShadowAreaSize(float width, float height)
+{
+	m_shadowAreaSize.x = width;
+	m_shadowAreaSize.y = height;
+	RebuildProjMatrix();
 }

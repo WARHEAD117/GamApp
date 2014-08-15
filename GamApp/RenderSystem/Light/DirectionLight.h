@@ -22,4 +22,9 @@ public:
 
 	virtual void SetUseShadow(bool useShadow);
 
+	void SetShadowAreaSize(float width, float height);
+
+private:
+	D3DXVECTOR2 m_shadowAreaSize;
+
 };

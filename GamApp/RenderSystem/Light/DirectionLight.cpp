@@ -78,7 +78,7 @@ void DirectionLight::RebuildViewMatrix()
 
 void DirectionLight::RebuildProjMatrix()
 {
-	D3DXMatrixOrthoLH(&m_lightProjMat, 40, 40, 0.01f, 50.0f);
+	D3DXMatrixOrthoLH(&m_lightProjMat, 100, 100, 0.01f, 100.0f);
 
 	D3DXMatrixInverse(&m_lightInvProjMat, NULL, &m_lightProjMat);
 }

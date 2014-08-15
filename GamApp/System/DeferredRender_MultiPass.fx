@@ -183,7 +183,7 @@ float3 GetPosition(in float2 uv, in float4 viewDir)
 
 float GetDepth(in float2 uv)
 {
-	float DepthV = tex2D(g_samplePosition, uv).z;
+	float DepthV = tex2D(g_samplePosition, uv).r;
 
 	return DepthV;
 }
@@ -297,6 +297,11 @@ float ShadowFunc(bool useShadow, float3 objViewPos)
 		float lightV = (1.0f - lightProjPos.y / lightProjPos.w) / 2.0f;
 
 		float2 ShadowTexCoord = float2(lightU, lightV);
+
+		//裁减掉shadowMap的uv值0-1范围之外的部分
+		//也可以使用border，但是对于FP16的值，需要先缩放才能使用border，否则设置的borderColor最大值仅为1，没法使用
+		clip(float2(1, 1) - ShadowTexCoord);
+		clip(ShadowTexCoord);
 
 		//float2 Moments = tex2D(g_sampleShadow, ShadowTexCoord);
 		float2 Moments = GaussianBlur(g_ShadowMapSize, g_ShadowMapSize, g_sampleShadow, ShadowTexCoord);

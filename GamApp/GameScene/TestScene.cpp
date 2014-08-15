@@ -27,6 +27,7 @@ Material testMat1;
 EffectLoader effectLoader;
 DirectionLight* dirLight1;
 DirectionLight* dirLight2;
+PointLight* pointLight0;
 PointLight* pointLight1;
 PointLight* pointLight2;
 PointLight* pointLight3;
@@ -164,17 +165,27 @@ void TestScene::OnLoad()
 	dirLight1->SetLightColor(D3DXCOLOR(0.3f, 0.3f, 0.3f, 1.0f));
 	dirLight1->SetUseShadow(true);
 
-	D3DXMatrixTranslation(&lightMoveMat, 0, 10, 0);
+	D3DXMatrixTranslation(&lightMoveMat, 0, 50, 0);
 	dirLight1->SetWorldTransform(lightMoveMat);
 	//--------------------------------------------------------------------------
 	dirLight2 = LIGHTMANAGER::Instance().CreateLight<DirectionLight>(eDirectionLight);
-	dirLight2->SetLightColor(D3DXCOLOR(0.0f, 0.0f, 0.3f, 1.0f));
-	dirLight2->SetUseShadow(false);
+	dirLight2->SetLightColor(D3DXCOLOR(1.0f, 1.0f, 1.3f, 1.0f));
+	dirLight2->SetUseShadow(true);
 	
-	D3DXMatrixTranslation(&lightMoveMat, 0, 10, 10);
-	D3DXMatrixRotationX(&lightRot1Mat, 0.25f * D3DX_PI);
+	D3DXMatrixTranslation(&lightMoveMat, 0, 50, 10);
+	D3DXMatrixRotationX(&lightRot1Mat, 0.125f * D3DX_PI);
+	D3DXMatrixRotationY(&lightRot2Mat, 0.125f * D3DX_PI);
+	dirLight2->SetWorldTransform(lightRot1Mat*lightRot2Mat*lightMoveMat);
+	//--------------------------------------------------------------------------
+	pointLight0 = LIGHTMANAGER::Instance().CreateLight<PointLight>(ePointLight);
+	pointLight0->SetLightColor(D3DXCOLOR(0.01f, 0.01f, 0.01f, 1.0f));
+	pointLight0->SetUseShadow(false);
+	pointLight0->SetLightRange(100);
+	//dirLight3->SetLightAttenuation(D3DXVECTOR4(0,0,0,0));
+	D3DXMatrixTranslation(&lightMoveMat, 0, 10, 0);
+	D3DXMatrixRotationX(&lightRot1Mat, 0.0f * D3DX_PI);
 
-	dirLight2->SetWorldTransform(lightRot1Mat*lightMoveMat);
+	pointLight0->SetWorldTransform(lightRot1Mat*lightMoveMat);
 	//--------------------------------------------------------------------------
 	pointLight1 = LIGHTMANAGER::Instance().CreateLight<PointLight>(ePointLight);
 	pointLight1->SetLightColor(D3DXCOLOR(0.7f, 0.7f, 0.7f, 1.0f));

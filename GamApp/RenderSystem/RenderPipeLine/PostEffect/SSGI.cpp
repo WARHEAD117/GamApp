@@ -1,35 +1,46 @@
-#include "SSAO.h"
+#include "SSGI.h"
 #include "D3D9Device.h"
 #include "CommonUtil/Input/Input.h"
 #include "RenderUtil/EffectParam.h"
 #include "RenderSystem/RenderPipeLine/RenderPipe.h"
 #include "Camera/CameraParam.h"
 
-SSAO::SSAO()
+SSGI::SSGI()
 {
 	m_intensity = 2;
 	m_scale = 0.5f;
 	m_bias = 0.2f;
-	m_sample_rad = 0.03f;
+	m_sample_rad = 1.53f;
 	m_rad_scale = 0.3f;
 	m_rad_threshold = 4.0f;
-	m_AOEnable = true;
 }
 
 
-SSAO::~SSAO()
+SSGI::~SSGI()
 {
 }
 
-void SSAO::CreatePostEffect()
+void SSGI::CreatePostEffect()
 {
-	PostEffectBase::CreatePostEffect("System\\SSAO.fx", D3DFMT_A16B16G16R16F);
+	PostEffectBase::CreatePostEffect("System\\SSGI.fx", D3DFMT_A16B16G16R16F);
 
-	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth/2, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight/2,
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth / 2, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight / 2,
 		1, D3DUSAGE_RENDERTARGET,
 		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
-		&m_pAoTarget, NULL);
-	HRESULT hr = m_pAoTarget->GetSurfaceLevel(0, &m_pAoSurface);
+		&m_pGiTarget, NULL);
+	HRESULT hr = m_pGiTarget->GetSurfaceLevel(0, &m_pGiSurface);
+
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth / 4, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight / 4,
+		1, D3DUSAGE_RENDERTARGET,
+		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
+		&m_pGiSourceTarget, NULL);
+	hr = m_pGiSourceTarget->GetSurfaceLevel(0, &m_pGiSourceSurface);
+	
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth / 4, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight / 4,
+		1, D3DUSAGE_RENDERTARGET,
+		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
+		&m_pGiSourceBlurTarget, NULL);
+	hr = m_pGiSourceBlurTarget->GetSurfaceLevel(0, &m_pGiSourceBlurSurface);
 
 	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "System\\123.png", &m_pRandomNormal))
 	{
@@ -39,14 +50,14 @@ void SSAO::CreatePostEffect()
 }
 
 
-void SSAO::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
+void SSGI::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 {
-// 	if (GAMEINPUT::Instance().KeyPressed(DIK_1))
-// 	{
-// 		m_AOEnable = !m_AOEnable;
-// 	}
+	// 	if (GAMEINPUT::Instance().KeyPressed(DIK_1))
+	// 	{
+	// 		m_AOEnable = !m_AOEnable;
+	// 	}
 
-	ComputeAOConfig();
+	ComputeGIConfig();
 
 	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, m_pBufferVex, 0, sizeof(VERTEX));
 	RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(D3DFVF_VERTEX);
@@ -54,7 +65,7 @@ void SSAO::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	UINT numPasses = 0;
 	m_postEffect->Begin(&numPasses, 0);
 
-	
+
 	m_postEffect->SetMatrix(WORLDVIEWPROJMATRIX, &RENDERDEVICE::Instance().OrthoWVPMatrix);
 	m_postEffect->SetMatrix(INVPROJMATRIX, &RENDERDEVICE::Instance().InvProjMatrix);
 	m_postEffect->SetMatrix(PROJECTIONMATRIX, &RENDERDEVICE::Instance().ProjMatrix);
@@ -62,7 +73,7 @@ void SSAO::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	m_postEffect->SetFloat("g_zNear", CameraParam::zNear);
 	m_postEffect->SetFloat("g_zFar", CameraParam::zFar);
 
-	float angle = tan(CameraParam::FOV/2);
+	float angle = tan(CameraParam::FOV / 2);
 	m_postEffect->SetFloat("g_angle", angle);
 	float aspect = (float)RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth / RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight;
 	m_postEffect->SetFloat("g_aspect", aspect);
@@ -75,6 +86,7 @@ void SSAO::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	m_postEffect->SetTexture("g_RandomNormal", m_pRandomNormal);
 
 	
+
 	m_postEffect->SetFloat("g_intensity", m_intensity);
 	m_postEffect->SetFloat("g_scale", m_scale);
 	m_postEffect->SetFloat("g_bias", m_bias);
@@ -83,22 +95,21 @@ void SSAO::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	m_postEffect->SetFloat("g_rad_threshold", m_rad_threshold);
 	m_postEffect->CommitChanges();
 
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pAoSurface);
+	//-------------------------------------------------------------------------
+	m_postEffect->SetTexture(MAINCOLORBUFFER, mainBuffer);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pGiSurface);
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
-	if (m_AOEnable)
-	{
-		m_postEffect->CommitChanges();
+	m_postEffect->CommitChanges();
 
-		m_postEffect->BeginPass(0);
-		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
-		m_postEffect->EndPass();
-	}
-
+	m_postEffect->BeginPass(0);
+	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+	m_postEffect->EndPass();
+	//-------------------------------------------------------------------------
+	m_postEffect->SetTexture(MAINCOLORBUFFER, mainBuffer);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pPostSurface);
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
 
-	m_postEffect->SetTexture("g_AoBuffer", m_pAoTarget);
-	m_postEffect->SetTexture(MAINCOLORBUFFER, mainBuffer);
+	m_postEffect->SetTexture("g_AoBuffer", m_pGiTarget);
 	m_postEffect->CommitChanges();
 
 	m_postEffect->BeginPass(1);
@@ -108,7 +119,7 @@ void SSAO::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	m_postEffect->End();
 }
 
-void SSAO::ComputeAOConfig()
+void SSGI::ComputeGIConfig()
 {
 	if (GAMEINPUT::Instance().KeyDown(DIK_T) && !GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
@@ -120,7 +131,7 @@ void SSAO::ComputeAOConfig()
 	}
 	if (GAMEINPUT::Instance().KeyDown(DIK_U) && !GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
-		m_sample_rad += 0.0001f;
+		m_sample_rad += 0.01f;
 	}
 	if (GAMEINPUT::Instance().KeyDown(DIK_I) && !GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
@@ -145,7 +156,7 @@ void SSAO::ComputeAOConfig()
 	}
 	if (GAMEINPUT::Instance().KeyDown(DIK_U) && GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
-		m_sample_rad -= 0.0001f;
+		m_sample_rad -= 0.01f;
 	}
 	if (GAMEINPUT::Instance().KeyDown(DIK_I) && GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
@@ -165,7 +176,7 @@ void SSAO::ComputeAOConfig()
 		m_intensity = 2;
 		m_scale = 0.5f;
 		m_bias = 0.2f;
-		m_sample_rad = 0.03f;
+		m_sample_rad = 1.03f;
 		m_rad_scale = 0.3f;
 		m_rad_threshold = 4.0f;
 	}

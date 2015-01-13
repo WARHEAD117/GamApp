@@ -37,6 +37,8 @@ SpotLight* spotLight1;
 SpotLight* spotLight2;
 SpotLight* spotLight3;
 SpotLight* spotLight4;
+
+SpotLight* spotLight5;
 void TestScene::OnLoad()
 {
 	//===================================================================================================
@@ -163,8 +165,8 @@ void TestScene::OnLoad()
 	D3DXMATRIX lightRot2Mat;
 	dirLight1 = LIGHTMANAGER::Instance().CreateLight<DirectionLight>(eDirectionLight);
 	dirLight1->SetLightColor(D3DXCOLOR(0.3f, 0.3f, 0.3f, 1.0f));
+	dirLight1->SetShadowAreaSize(100, 100);
 	dirLight1->SetUseShadow(true);
-
 	D3DXMatrixTranslation(&lightMoveMat, 0, 50, 0);
 	dirLight1->SetWorldTransform(lightMoveMat);
 	//--------------------------------------------------------------------------
@@ -261,6 +263,15 @@ void TestScene::OnLoad()
 	D3DXMatrixTranslation(&lightMoveMat, -10, 1, -15);
 	D3DXMatrixRotationX(&lightRot1Mat, -0.25f * D3DX_PI);
 	spotLight4->SetWorldTransform(lightRot1Mat * lightMoveMat);
+
+	spotLight5 = LIGHTMANAGER::Instance().CreateLight<SpotLight>(eSpotLight);
+	spotLight5->SetLightRange(100);
+	spotLight5->SetUseShadow(true);
+	spotLight5->SetLightColor(D3DXCOLOR(1.0, 0.2, 0.0, 1.0f));
+	D3DXMatrixTranslation(&lightMoveMat, 0, 50, 0);
+	D3DXMatrixRotationX(&lightRot1Mat, -0.0f * D3DX_PI);
+	spotLight5->SetWorldTransform(lightRot1Mat * lightMoveMat);
+
 	
 }
 

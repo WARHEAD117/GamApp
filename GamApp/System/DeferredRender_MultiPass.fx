@@ -20,7 +20,7 @@ texture		g_ShadowResult;
 float		g_zNear = 1.0f;
 float		g_zFar = 1000.0f;
 
-int			g_ShadowMapSize = 512;
+int			g_ShadowMapSize = 1024;
 float		g_ShadowBias = 0.2f;
 
 float		g_MinVariance = 0.02;
@@ -46,6 +46,8 @@ float4		g_AmbientColor;
 matrix g_ShadowView;
 matrix g_ShadowProj;
 matrix g_invView;
+matrix g_viewToLightProj;
+matrix g_viewToLight;
 
 sampler2D g_sampleNormal =
 sampler_state
@@ -66,14 +68,15 @@ sampler_state
 };
 
 //----------------------------
-
+//如果使用PCF算法，必须使用Point过滤
+//如果使用VSM，就可使用别的过滤方式，比如ANISOTROPIC
 sampler g_sampleShadow =
 sampler_state
 {
 	Texture = <g_ShadowBuffer>;
-	MinFilter = ANISOTROPIC;
-	MagFilter = ANISOTROPIC;
-	MipFilter = ANISOTROPIC;// ANISOTROPIC;
+	MinFilter = Point;
+	MagFilter = Point;
+	MipFilter = Point;// ANISOTROPIC;
 	AddressU = Clamp;
 	AddressV = Clamp;
 };
@@ -290,9 +293,8 @@ float ShadowFunc(bool useShadow, float3 objViewPos)
 	//if (useShadow)
 	{
 		//Shadow
-		float4 worldPos = mul(float4(objViewPos, 1.0f), g_invView);
-		float4 lightViewPos = mul(worldPos, g_ShadowView);
-		float4 lightProjPos = mul(lightViewPos, g_ShadowProj);
+		float4 lightViewPos = mul(float4(objViewPos, 1.0f), g_viewToLight);
+		float4 lightProjPos = mul(float4(objViewPos, 1.0f), g_viewToLightProj);
 		float lightU = (lightProjPos.x / lightProjPos.w + 1.0f) / 2.0f;
 		float lightV = (1.0f - lightProjPos.y / lightProjPos.w) / 2.0f;
 
@@ -321,9 +323,6 @@ float PointShadowFunc(bool useShadow, float3 objViewPos)
 
 		float4 worldToObj = mul(float4(toObj, 0.0f), g_invView);
 
-		//float2 Moments = tex2D(g_sampleShadow, ShadowTexCoord);
-		//float2 Moments = GaussianBlur(g_ShadowMapSize, g_ShadowMapSize, g_sampleShadow, ShadowTexCoord);
-			
 		float2 Moments = texCUBE(g_sampleShadow, normalize(worldToObj.xyz));
 
 			
@@ -332,15 +331,14 @@ float PointShadowFunc(bool useShadow, float3 objViewPos)
 	return shadowContribute;
 }
 
-float PCFShadow(bool useShadow, float3 objViewPos)
+float PCFShadowFunc(bool useShadow, float3 objViewPos)
 {
 	float shadowContribute = 1.0f;
 	//if (useShadow)
 	{
 		//Shadow
-		float4 worldPos = mul(float4(objViewPos, 1.0f), g_invView);
-		float4 lightViewPos = mul(worldPos, g_ShadowView);
-		float4 lightProjPos = mul(lightViewPos, g_ShadowProj);
+		float4 lightViewPos = mul(float4(objViewPos, 1.0f), g_viewToLight);
+		float4 lightProjPos = mul(float4(objViewPos, 1.0f), g_viewToLightProj);
 		float lightU = (lightProjPos.x / lightProjPos.w + 1.0f) / 2.0f;
 		float lightV = (1.0f - lightProjPos.y / lightProjPos.w) / 2.0f;
 
@@ -359,6 +357,22 @@ float PCFShadow(bool useShadow, float3 objViewPos)
 
 		shadowContribute = lerp(lerp(shadowVal[0], shadowVal[1], lerps.x), lerp(shadowVal[2], shadowVal[3], lerps.x), lerps.y);
 
+	}
+	return shadowContribute;
+}
+
+float PCFPointShadowFunc(bool useShadow, float3 worldViewPos)
+{
+	float shadowContribute = 1.0f;
+	//if (useShadow)
+	{
+		//Shadow
+		//g_LightPos是view空间下的灯光位置
+		float3 toObjVec = worldViewPos - g_LightPos.xyz;
+		float4 worldToObjVec = mul(float4(toObjVec, 0.0f), g_invView);
+
+		float shadowBias = g_ShadowBias;
+		shadowContribute = (texCUBE(g_sampleShadow, normalize(worldToObjVec.xyz)) + shadowBias < length(toObjVec)) ? 0.0f : 1.0f;
 	}
 	return shadowContribute;
 }
@@ -556,7 +570,8 @@ float4 ShadowPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1) : COLOR
 
 
 	float shadowFinal = 1.0f;
-	shadowFinal = ShadowFunc(g_bUseShadow, pos);
+	shadowFinal = PCFShadowFunc(g_bUseShadow, pos);
+	//shadowFinal = ShadowFunc(g_bUseShadow, pos);
 
 	//输出阴影结果
 	float4 finalColor = float4(shadowFinal, shadowFinal, shadowFinal, shadowFinal);
@@ -575,8 +590,8 @@ float4 PointShadowPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1) : 
 
 
 	float shadowFinal = 1.0f;
-	shadowFinal = PointShadowFunc(g_bUseShadow, pos);
-
+	shadowFinal = PCFPointShadowFunc(g_bUseShadow, pos);
+	//shadowFinal = PointShadowFunc(g_bUseShadow, pos);
 	//输出阴影结果
 	float4 finalColor = float4(shadowFinal, shadowFinal, shadowFinal, shadowFinal);
 	return finalColor;

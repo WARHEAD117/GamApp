@@ -11,6 +11,7 @@
 #include "RenderPipeLine/PostEffect/SSAO.h"
 #include "RenderPipeLine/PostEffect/HDRLighting.h"
 #include "RenderPipeLine/PostEffect/DOF.h"
+#include "RenderPipeLine/PostEffect/SSGI.h"
 
 #include "Sky/SkyBox.h"
 
@@ -47,6 +48,7 @@ int SHADOWMAPSIZE = 1024;
 SSAO ssao;
 HDRLighting hdrLighting;
 DOF dof;
+SSGI ssgi;
 
 SkyBox skyBox;
 
@@ -60,10 +62,12 @@ RenderPipe::RenderPipe()
 	ssao.CreatePostEffect();
 	hdrLighting.CreatePostEffect();
 	dof.CreatePostEffect();
+	ssgi.CreatePostEffect();
 
 	m_enableAO = true;
 	m_enableDOF = false;
 	m_enableHDR = true;
+	m_enableGI = true;
 
 	//==========================================================
 	//Build SkyBox
@@ -493,7 +497,14 @@ void RenderPipe::DeferredRender_Lighting()
 			deferredMultiPassEffect->SetMatrix("g_ShadowView", &pLight->GetLightViewMatrix());
 			deferredMultiPassEffect->SetMatrix("g_ShadowProj", &pLight->GetLightProjMatrix());
 
+			D3DXMATRIX viewToLightProjMat = RENDERDEVICE::Instance().InvViewMatrix * pLight->GetLightViewMatrix() * pLight->GetLightProjMatrix();
+			deferredMultiPassEffect->SetMatrix("g_viewToLightProj", &viewToLightProjMat);
+			D3DXMATRIX viewToLightMat = RENDERDEVICE::Instance().InvViewMatrix * pLight->GetLightViewMatrix();
+			deferredMultiPassEffect->SetMatrix("g_viewToLight", &viewToLightMat);
+
 			deferredMultiPassEffect->SetTexture("g_ShadowBuffer", pLight->GetShadowTarget());
+
+			deferredMultiPassEffect->SetInt("g_ShadowMapSize", pLight->GetShadowMapSize());
 
 			deferredMultiPassEffect->CommitChanges();
 
@@ -731,6 +742,17 @@ void RenderPipe::RenderAll()
 		m_pPostTarget = ssao.GetPostTarget();
 	}
 
+	if (GAMEINPUT::Instance().KeyPressed(DIK_4))
+	{
+		m_enableGI = !m_enableGI;
+	}
+
+	if (m_enableGI)
+	{
+		ssgi.RenderPost(m_pPostTarget);
+		m_pPostTarget = ssgi.GetPostTarget();
+	}
+
 	if (GAMEINPUT::Instance().KeyPressed(DIK_2))
 	{
 		m_enableHDR = !m_enableHDR;
@@ -752,6 +774,8 @@ void RenderPipe::RenderAll()
 		dof.RenderPost(m_pPostTarget);
 		m_pPostTarget = dof.GetPostTarget();
 	}
+
+	
 
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pOriSurface);
 

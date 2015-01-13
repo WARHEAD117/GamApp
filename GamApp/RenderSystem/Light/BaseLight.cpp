@@ -255,3 +255,16 @@ LPDIRECT3DBASETEXTURE9 BaseLight::GetShadowTarget()
 {
 	return m_pShadowTarget;
 }
+
+int BaseLight::GetShadowMapSize()
+{
+	return m_ShadowMapSize;
+}
+
+void BaseLight::SetShadowMapSize(int size)
+{
+	if (size <= 0)
+		return;
+
+	m_ShadowMapSize = size;
+}

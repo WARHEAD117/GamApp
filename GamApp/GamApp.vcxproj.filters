@@ -184,6 +184,9 @@
     <ClInclude Include="RenderSystem\Light\SpotLight.h">
       <Filter>RenderSystem\Light</Filter>
     </ClInclude>
+    <ClInclude Include="RenderSystem\RenderPipeLine\PostEffect\SSGI.h">
+      <Filter>RenderSystem\PostEffect</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DrawSkyBox.cpp" />
@@ -289,6 +292,9 @@
     <ClCompile Include="RenderSystem\Light\SpotLight.cpp">
       <Filter>RenderSystem\Light</Filter>
     </ClCompile>
+    <ClCompile Include="RenderSystem\RenderPipeLine\PostEffect\SSGI.cpp">
+      <Filter>RenderSystem\PostEffect</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="System\commonDiffuse.fx">
@@ -331,6 +337,9 @@
       <Filter>System</Filter>
     </FxCompile>
     <FxCompile Include="System\ShadingPass.fx">
+      <Filter>System</Filter>
+    </FxCompile>
+    <FxCompile Include="System\SSGI.fx">
       <Filter>System</Filter>
     </FxCompile>
   </ItemGroup>

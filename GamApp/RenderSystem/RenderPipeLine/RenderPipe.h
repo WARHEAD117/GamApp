@@ -67,6 +67,7 @@ private:
 	bool	m_enableAO;
 	bool	m_enableDOF;
 	bool	m_enableHDR;
+	bool	m_enableGI;
 };
 
 

@@ -87,6 +87,9 @@ public:
 	D3DXVECTOR4 GetLightAttenuation();
 	void SetLightAttenuation(D3DXVECTOR4 lightAttenuation);
 
+	int GetShadowMapSize();
+	void SetShadowMapSize(int size);
+
 	virtual void OnFrame();
 
 protected:

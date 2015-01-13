@@ -212,10 +212,10 @@ void RenderUtil::RenderShadow(D3DXMATRIX lightViewMat, D3DXMATRIX lightProjMat, 
 		RENDERDEVICE::Instance().GetShadowEffect()->SetMatrix(WORLDVIEWPROJMATRIX, &mWorldViewProj);
 		RENDERDEVICE::Instance().GetShadowEffect()->SetMatrix(WORLDVIEWMATRIX, &mWorldView);
 
-		if (lightType == ePointLight || lightType == eSpotLight)
-			RENDERDEVICE::Instance().GetShadowEffect()->SetBool("g_IsDisLight", true);
+		if (lightType == ePointLight)
+			RENDERDEVICE::Instance().GetShadowEffect()->SetBool("g_IsPointLight", true);
 		else
-			RENDERDEVICE::Instance().GetShadowEffect()->SetBool("g_IsDisLight", false);
+			RENDERDEVICE::Instance().GetShadowEffect()->SetBool("g_IsPointLight", false);
 
 		UINT nPasses = 0;
 		HRESULT r1 = RENDERDEVICE::Instance().GetShadowEffect()->Begin(&nPasses, 0);

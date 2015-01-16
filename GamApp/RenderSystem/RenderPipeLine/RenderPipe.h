@@ -68,6 +68,7 @@ private:
 	bool	m_enableDOF;
 	bool	m_enableHDR;
 	bool	m_enableGI;
+	bool	m_enableFXAA;
 };
 
 

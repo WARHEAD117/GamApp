@@ -22,7 +22,7 @@ SSGI::~SSGI()
 
 void SSGI::CreatePostEffect()
 {
-	PostEffectBase::CreatePostEffect("System\\SSGI.fx", D3DFMT_A16B16G16R16F);
+	PostEffectBase::CreatePostEffect("System\\SSGI.fx");
 
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth / 2, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight / 2,
 		1, D3DUSAGE_RENDERTARGET,

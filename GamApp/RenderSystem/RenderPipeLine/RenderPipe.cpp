@@ -43,12 +43,12 @@ D3DXMATRIX shadowOrthoWorld;
 D3DXMATRIX shadowOrthoView;
 D3DXMATRIX shadowOrthoProj;
 D3DXMATRIX invShadowOrthoProj;
-int SHADOWMAPSIZE = 1024;
 
 SSAO ssao;
 HDRLighting hdrLighting;
 DOF dof;
 SSGI ssgi;
+PostEffectBase fxaa;
 
 SkyBox skyBox;
 
@@ -64,10 +64,13 @@ RenderPipe::RenderPipe()
 	dof.CreatePostEffect();
 	ssgi.CreatePostEffect();
 
+	fxaa.CreatePostEffect("System\\FXAA.fx");
+
 	m_enableAO = true;
 	m_enableDOF = false;
 	m_enableHDR = true;
-	m_enableGI = true;
+	m_enableGI = false;
+	m_enableFXAA = true;
 
 	//==========================================================
 	//Build SkyBox
@@ -420,10 +423,6 @@ void RenderPipe::DeferredRender_Lighting()
 	UINT numPasses = 0;
 	deferredMultiPassEffect->Begin(&numPasses, 0);
 
-
-	deferredMultiPassEffect->SetInt("g_ShadowMapSize", SHADOWMAPSIZE);
-	deferredMultiPassEffect->SetFloat("g_ShadowBias", 0.2f);
-
 	if (GAMEINPUT::Instance().KeyDown(DIK_G) && !GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
 		g_minVariance += 0.001f;
@@ -505,6 +504,7 @@ void RenderPipe::DeferredRender_Lighting()
 			deferredMultiPassEffect->SetTexture("g_ShadowBuffer", pLight->GetShadowTarget());
 
 			deferredMultiPassEffect->SetInt("g_ShadowMapSize", pLight->GetShadowMapSize());
+			deferredMultiPassEffect->SetFloat("g_ShadowBias", 0.4f);
 
 			deferredMultiPassEffect->CommitChanges();
 
@@ -775,7 +775,16 @@ void RenderPipe::RenderAll()
 		m_pPostTarget = dof.GetPostTarget();
 	}
 
-	
+	if (GAMEINPUT::Instance().KeyPressed(DIK_5))
+	{
+		m_enableFXAA = !m_enableFXAA;
+	}
+
+	if (m_enableFXAA)
+	{
+		fxaa.RenderPost(m_pPostTarget);
+		m_pPostTarget = fxaa.GetPostTarget();
+	}
 
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pOriSurface);
 

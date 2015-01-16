@@ -85,6 +85,9 @@ void PostEffectBase::RenderPost(LPDIRECT3DTEXTURE9 lastBuffer/* = NULL*/)
 	else
 		m_postEffect->SetTexture(MAINCOLORBUFFER, RENDERPIPE::Instance().m_pMainColorTarget);
 
+	m_postEffect->SetInt(SCREENWIDTH, RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth);
+	m_postEffect->SetInt(SCREENHEIGHT, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight);
+
 	m_postEffect->CommitChanges();
 
 	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, m_pBufferVex, 0, sizeof(VERTEX));

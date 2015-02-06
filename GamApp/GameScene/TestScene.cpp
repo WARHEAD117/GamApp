@@ -190,11 +190,11 @@ void TestScene::OnLoad()
 	pointLight0->SetWorldTransform(lightRot1Mat*lightMoveMat);
 	//--------------------------------------------------------------------------
 	pointLight1 = LIGHTMANAGER::Instance().CreateLight<PointLight>(ePointLight);
-	pointLight1->SetLightColor(D3DXCOLOR(0.7f, 0.7f, 0.7f, 1.0f));
+	pointLight1->SetLightColor(D3DXCOLOR(01.7f, 01.7f, 01.7f, 1.0f));
 	pointLight1->SetUseShadow(true);
-	pointLight1->SetLightRange(20);
+	pointLight1->SetLightRange(40);
 	
-	D3DXMatrixTranslation(&lightMoveMat, -10, 0, 0);
+	D3DXMatrixTranslation(&lightMoveMat, -5, 3, 0);
 	pointLight1->SetWorldTransform(lightMoveMat);
 
 	//--------------------------------------------------------------------------

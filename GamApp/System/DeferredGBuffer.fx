@@ -170,8 +170,12 @@ OutputPS PShader(float3 NormalV		: NORMAL,
 	float Shininess = g_shininess;
 	Shininess = 50.05f;
 
+	//
+	clip(Texture.a < 0.1f ? -1 : 1);
+
 	//RGB通道储存纹理颜色
 	PsOut.diffuse.rgb = Texture.xyz;
+
 	//A通道储存高光强度
 	PsOut.diffuse.a = Specular.x;
 	PsOut.normal = float4(sampledNormalV.xyz, 1.0f);

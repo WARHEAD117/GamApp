@@ -74,9 +74,9 @@ sampler g_sampleShadow =
 sampler_state
 {
 	Texture = <g_ShadowBuffer>;
-	MinFilter = Point;
-	MagFilter = Point;
-	MipFilter = Point;// ANISOTROPIC;
+	MinFilter = ANISOTROPIC;
+	MagFilter = ANISOTROPIC;
+	MipFilter = ANISOTROPIC;// ANISOTROPIC;Point;
 	AddressU = Clamp;
 	AddressV = Clamp;
 };
@@ -570,8 +570,8 @@ float4 ShadowPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1) : COLOR
 
 
 	float shadowFinal = 1.0f;
-	shadowFinal = PCFShadowFunc(g_bUseShadow, pos);
-	//shadowFinal = ShadowFunc(g_bUseShadow, pos);
+	//shadowFinal = PCFShadowFunc(g_bUseShadow, pos);
+	shadowFinal = ShadowFunc(g_bUseShadow, pos);
 
 	//输出阴影结果
 	float4 finalColor = float4(shadowFinal, shadowFinal, shadowFinal, shadowFinal);
@@ -590,8 +590,8 @@ float4 PointShadowPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1) : 
 
 
 	float shadowFinal = 1.0f;
-	shadowFinal = PCFPointShadowFunc(g_bUseShadow, pos);
-	//shadowFinal = PointShadowFunc(g_bUseShadow, pos);
+	//shadowFinal = PCFPointShadowFunc(g_bUseShadow, pos);
+	shadowFinal = PointShadowFunc(g_bUseShadow, pos);
 	//输出阴影结果
 	float4 finalColor = float4(shadowFinal, shadowFinal, shadowFinal, shadowFinal);
 	return finalColor;

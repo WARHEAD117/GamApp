@@ -1,12 +1,6 @@
 #define		epsilon 0.0000001f
 
-matrix		g_World;
-matrix		g_View;
-matrix		g_Proj;
-matrix		g_ViewProj;
-matrix		g_WorldViewProj;
-matrix		g_mWorldInv;
-matrix		g_InverseProj;
+#include "common.fx"
 
 texture		g_DiffuseBuffer;
 texture		g_NormalBuffer;
@@ -16,12 +10,6 @@ texture		g_ShadowBuffer;
 texture		g_PointShadowBuffer;
 
 texture		g_ShadowResult;
-
-float		g_zNear = 1.0f;
-float		g_zFar = 1000.0f;
-
-int g_ScreenWidth;
-int g_ScreenHeight;
 
 sampler2D g_sampleDiffuse =
 sampler_state
@@ -74,52 +62,6 @@ OutputVS VShader(float4 posL       : POSITION0,
 	outVS.TexCoord = TexCoord;
 
 	return outVS;
-}
-
-float4 GaussianBlur(int mapWidth, int mapHeight, sampler2D texSampler, float2 texCoords)
-{
-	float weights[6] = { 0.00078633, 0.00655965, 0.01330373, 0.05472157, 0.11098164, 0.22508352 };
-
-	float4 color;
-	float stepU = 1.0f / mapWidth;
-	float stepV = 1.0f / mapHeight;
-
-	//0,1,2,1,0
-	//1,3,4,3,1
-	//2,4,5,4,2
-	//1,3,4,3,1
-	//0,1,2,1,0
-	color = tex2D(texSampler, texCoords + float2(-2 * stepU, -2 * stepV)) * (weights[0]);
-	color += tex2D(texSampler, texCoords + float2(-1 * stepU, -2 * stepV)) * (weights[1]);
-	color += tex2D(texSampler, texCoords + float2(0 * stepU, -2 * stepV)) * (weights[2]);
-	color += tex2D(texSampler, texCoords + float2(1 * stepU, -2 * stepV)) * (weights[1]);
-	color += tex2D(texSampler, texCoords + float2(2 * stepU, -2 * stepV)) * (weights[0]);
-
-	color += tex2D(texSampler, texCoords + float2(-2 * stepU, -1 * stepV)) * (weights[1]);
-	color += tex2D(texSampler, texCoords + float2(-1 * stepU, -1 * stepV)) * (weights[3]);
-	color += tex2D(texSampler, texCoords + float2(0 * stepU, -1 * stepV)) * (weights[4]);
-	color += tex2D(texSampler, texCoords + float2(1 * stepU, -1 * stepV)) * (weights[3]);
-	color += tex2D(texSampler, texCoords + float2(2 * stepU, -1 * stepV)) * (weights[1]);
-
-	color += tex2D(texSampler, texCoords + float2(-2 * stepU, 0 * stepV)) * (weights[2]);
-	color += tex2D(texSampler, texCoords + float2(-1 * stepU, 0 * stepV)) * (weights[4]);
-	color += tex2D(texSampler, texCoords + float2(0 * stepU, 0 * stepV)) * (weights[5]);
-	color += tex2D(texSampler, texCoords + float2(1 * stepU, 0 * stepV)) * (weights[4]);
-	color += tex2D(texSampler, texCoords + float2(2 * stepU, 0 * stepV)) * (weights[2]);
-
-	color += tex2D(texSampler, texCoords + float2(-2 * stepU, 1 * stepV)) * (weights[1]);
-	color += tex2D(texSampler, texCoords + float2(-1 * stepU, 1 * stepV)) * (weights[3]);
-	color += tex2D(texSampler, texCoords + float2(0 * stepU, 1 * stepV)) * (weights[4]);
-	color += tex2D(texSampler, texCoords + float2(1 * stepU, 1 * stepV)) * (weights[3]);
-	color += tex2D(texSampler, texCoords + float2(2 * stepU, 1 * stepV)) * (weights[1]);
-
-	color += tex2D(texSampler, texCoords + float2(-2 * stepU, 2 * stepV)) * (weights[0]);
-	color += tex2D(texSampler, texCoords + float2(-1 * stepU, 2 * stepV)) * (weights[1]);
-	color += tex2D(texSampler, texCoords + float2(0 * stepU, 2 * stepV)) * (weights[2]);
-	color += tex2D(texSampler, texCoords + float2(1 * stepU, 2 * stepV)) * (weights[1]);
-	color += tex2D(texSampler, texCoords + float2(2 * stepU, 2 * stepV)) * (weights[0]);
-
-	return color;
 }
 
 float4 ShadingPass(float2 TexCoord : TEXCOORD0) : COLOR

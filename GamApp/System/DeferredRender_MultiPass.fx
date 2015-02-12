@@ -1,12 +1,4 @@
-#define		epsilon 0.0000001f
-
-matrix		g_World;
-matrix		g_View;
-matrix		g_Proj;
-matrix		g_ViewProj;
-matrix		g_WorldViewProj;
-matrix		g_mWorldInv;
-matrix		g_InverseProj;
+#include "common.fx"
 
 texture		g_DiffuseBuffer;
 texture		g_NormalBuffer;
@@ -16,9 +8,6 @@ texture		g_ShadowBuffer;
 texture		g_PointShadowBuffer;
 
 texture		g_ShadowResult;
-
-float		g_zNear = 1.0f;
-float		g_zFar = 1000.0f;
 
 int			g_ShadowMapSize = 1024;
 float		g_ShadowBias = 0.2f;
@@ -32,8 +21,6 @@ float		g_LightRange;
 float4		g_LightCosAngle;
 float4		g_LightAttenuation;
 
-int g_ScreenWidth;
-int g_ScreenHeight;
 //lightVolume================
 matrix g_LightVolumeWVP;
 matrix g_ToViewDirMatrix;
@@ -45,7 +32,7 @@ float4		g_AmbientColor;
 
 matrix g_ShadowView;
 matrix g_ShadowProj;
-matrix g_invView;
+
 matrix g_viewToLightProj;
 matrix g_viewToLight;
 
@@ -131,65 +118,6 @@ OutputVS_LightVolume VShaderLightVolume(float4 posL       : POSITION0)
 	return outVS;
 }
 
-float3 decode(float2 enc)
-{
-	float2 fenc = enc * 4 - 2;
-		float f = dot(fenc, fenc);
-	float g = sqrt(1 - f / 4);
-	float3 n;
-	n.xy = fenc*g;
-	n.z = -1 + f / 2;
-	return n;
-}
-
-float2 float3ToFloat2(float3 input)
-{
-	float nz = floor(input.z * 255) / 16;
-	float2 output = input.xy + float2(floor(nz) / 16, frac(nz)) / 255;
-	return output;
-}
-
-float3 GetNormal(in float2 uv)
-{
-	float4 normal_shininess = tex2D(g_sampleNormal, uv);
-
-	normal_shininess.xy = float3ToFloat2(normal_shininess.xyz);
-
-	float3 normal = decode(normal_shininess.xy);
-
-	return normal;
-}
-
-float GetShininess(in float2 uv)
-{
-	return 1.0f / (tex2D(g_sampleNormal, uv).a + epsilon);
-}
-
-void GetNormalandShininess(in float2 uv, inout float3 normal, inout float shininess)
-{
-	float4 normal_shininess = tex2D(g_sampleNormal, uv);
-	
-	normal_shininess.xy = float3ToFloat2(normal_shininess.xyz);
-
-	normal = decode(normal_shininess.xy);
-	shininess = 1.0f / (normal_shininess.a + epsilon);
-}
-
-float3 GetPosition(in float2 uv, in float4 viewDir)
-{
-	float DepthV = tex2D(g_samplePosition, uv).r;
-
-	float3 pos = viewDir * ((DepthV) / viewDir.z);
-
-	return pos;
-}
-
-float GetDepth(in float2 uv)
-{
-	float DepthV = tex2D(g_samplePosition, uv).r;
-
-	return DepthV;
-}
 
 float linstep(float min, float max, float v)
 {
@@ -214,52 +142,6 @@ float ChebyshevUpperBound(float2 Moments, float t)
 	p_max = ReduceLightBleeding(p_max, g_Amount);
 
 	return max(p, p_max);
-}
-
-float4 GaussianBlur(int mapWidth, int mapHeight, sampler2D texSampler, float2 texCoords)
-{
-	float weights[6] = { 0.00078633, 0.00655965, 0.01330373, 0.05472157, 0.11098164, 0.22508352 };
-
-	float4 color;
-	float stepU = 1.0f / mapWidth;
-	float stepV = 1.0f / mapHeight;
-
-	//0,1,2,1,0
-	//1,3,4,3,1
-	//2,4,5,4,2
-	//1,3,4,3,1
-	//0,1,2,1,0
-	color = tex2D(texSampler, texCoords + float2(-2 * stepU, -2 * stepV)) * (weights[0]);
-	color += tex2D(texSampler, texCoords + float2(-1 * stepU, -2 * stepV)) * (weights[1]);
-	color += tex2D(texSampler, texCoords + float2(0 * stepU, -2 * stepV)) * (weights[2]);
-	color += tex2D(texSampler, texCoords + float2(1 * stepU, -2 * stepV)) * (weights[1]);
-	color += tex2D(texSampler, texCoords + float2(2 * stepU, -2 * stepV)) * (weights[0]);
-
-	color += tex2D(texSampler, texCoords + float2(-2 * stepU, -1 * stepV)) * (weights[1]);
-	color += tex2D(texSampler, texCoords + float2(-1 * stepU, -1 * stepV)) * (weights[3]);
-	color += tex2D(texSampler, texCoords + float2(0 * stepU, -1 * stepV)) * (weights[4]);
-	color += tex2D(texSampler, texCoords + float2(1 * stepU, -1 * stepV)) * (weights[3]);
-	color += tex2D(texSampler, texCoords + float2(2 * stepU, -1 * stepV)) * (weights[1]);
-
-	color += tex2D(texSampler, texCoords + float2(-2 * stepU, 0 * stepV)) * (weights[2]);
-	color += tex2D(texSampler, texCoords + float2(-1 * stepU, 0 * stepV)) * (weights[4]);
-	color += tex2D(texSampler, texCoords + float2(0 * stepU, 0 * stepV)) * (weights[5]);
-	color += tex2D(texSampler, texCoords + float2(1 * stepU, 0 * stepV)) * (weights[4]);
-	color += tex2D(texSampler, texCoords + float2(2 * stepU, 0 * stepV)) * (weights[2]);
-
-	color += tex2D(texSampler, texCoords + float2(-2 * stepU, 1 * stepV)) * (weights[1]);
-	color += tex2D(texSampler, texCoords + float2(-1 * stepU, 1 * stepV)) * (weights[3]);
-	color += tex2D(texSampler, texCoords + float2(0 * stepU, 1 * stepV)) * (weights[4]);
-	color += tex2D(texSampler, texCoords + float2(1 * stepU, 1 * stepV)) * (weights[3]);
-	color += tex2D(texSampler, texCoords + float2(2 * stepU, 1 * stepV)) * (weights[1]);
-
-	color += tex2D(texSampler, texCoords + float2(-2 * stepU, 2 * stepV)) * (weights[0]);
-	color += tex2D(texSampler, texCoords + float2(-1 * stepU, 2 * stepV)) * (weights[1]);
-	color += tex2D(texSampler, texCoords + float2(0 * stepU, 2 * stepV)) * (weights[2]);
-	color += tex2D(texSampler, texCoords + float2(1 * stepU, 2 * stepV)) * (weights[1]);
-	color += tex2D(texSampler, texCoords + float2(2 * stepU, 2 * stepV)) * (weights[0]);
-
-	return color;
 }
 
 void LightFunc(float3 normal, float3 toLight, float3 toEye, float4 lightColor, inout float4 DiffuseLight, inout float4 SpecularLight, in float Shininess)
@@ -394,7 +276,7 @@ OutputPS DirectionLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD
 	float lightV = (1.0f - posWVP.y / posWVP.w) / 2.0f + 0.5f / g_ScreenHeight;
 	float2 TexCoord = float2(lightU, lightV);
 
-	float3 pos = GetPosition(TexCoord, viewDir);
+	float3 pos = GetPosition(TexCoord, viewDir, g_samplePosition);
 
 	//加入灯光体和stencil剔除后之后就可以省略掉这个判断了
 	if (pos.z > g_zFar)
@@ -408,7 +290,7 @@ OutputPS DirectionLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD
 
 	float3 Normal;// = GetNormal(TexCoord);
 	float Shininess;// = GetShininess(TexCoord);
-	GetNormalandShininess(TexCoord, Normal, Shininess);
+	GetNormalandShininess(TexCoord, Normal, Shininess, g_sampleNormal);
 
 	LightFunc(Normal, toLight, ToEyeDirV, g_LightColor, DiffuseLight, SpecularLight, Shininess);
 
@@ -434,7 +316,7 @@ OutputPS PointLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1)
 	float lightV = (1.0f - posWVP.y / posWVP.w) / 2.0f + 0.5f / g_ScreenHeight;
 	float2 TexCoord = float2(lightU, lightV);
 
-	float3 pos = GetPosition(TexCoord, viewDir);
+	float3 pos = GetPosition(TexCoord, viewDir, g_samplePosition);
 	
 	//加入灯光体和stencil剔除后之后就可以省略掉这个判断了
 	if (pos.z > g_zFar)
@@ -464,7 +346,7 @@ OutputPS PointLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1)
 
 	float3 Normal;// = GetNormal(TexCoord);
 	float Shininess;// = GetShininess(TexCoord);
-	GetNormalandShininess(TexCoord, Normal, Shininess);
+	GetNormalandShininess(TexCoord, Normal, Shininess, g_sampleNormal);
 
 	LightFunc(Normal, toLight, ToEyeDirV, lightColor, DiffuseLight, SpecularLight, Shininess);
 
@@ -495,7 +377,7 @@ OutputPS SpotLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1)
 	float lightV = (1.0f - posWVP.y / posWVP.w) / 2.0f + 0.5f / g_ScreenHeight;
 	float2 TexCoord = float2(lightU, lightV);
 
-	float3 pos = GetPosition(TexCoord, viewDir);
+	float3 pos = GetPosition(TexCoord, viewDir, g_samplePosition);
 	
 	//加入灯光体和stencil剔除后之后就可以省略掉这个判断了
 	if (pos.z > g_zFar)
@@ -544,7 +426,7 @@ OutputPS SpotLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1)
 	
 	float3 Normal;// = GetNormal(TexCoord);
 	float Shininess;// = GetShininess(TexCoord);
-	GetNormalandShininess(TexCoord, Normal, Shininess);
+	GetNormalandShininess(TexCoord, Normal, Shininess, g_sampleNormal);
 
 	LightFunc(Normal, toLight, ToEyeDirV, lightColor, DiffuseLight, SpecularLight, Shininess);
 
@@ -566,7 +448,7 @@ float4 ShadowPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1) : COLOR
 	float lightU = (posWVP.x / posWVP.w + 1.0f) / 2.0f + 0.5f / g_ScreenWidth;
 	float lightV = (1.0f - posWVP.y / posWVP.w) / 2.0f + 0.5f / g_ScreenHeight;
 	float2 TexCoord = float2(lightU, lightV);
-	float3 pos = GetPosition(TexCoord, viewDir);
+	float3 pos = GetPosition(TexCoord, viewDir, g_samplePosition);
 
 
 	float shadowFinal = 1.0f;
@@ -586,7 +468,7 @@ float4 PointShadowPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1) : 
 	float lightV = (1.0f - posWVP.y / posWVP.w) / 2.0f + 0.5f / g_ScreenHeight;
 	float2 TexCoord = float2(lightU, lightV);
 
-	float3 pos = GetPosition(TexCoord, viewDir);
+	float3 pos = GetPosition(TexCoord, viewDir, g_samplePosition);
 
 
 	float shadowFinal = 1.0f;
@@ -608,7 +490,7 @@ float4 AmbientPass(float2 TexCoord : TEXCOORD0) : COLOR
 	float4 Ambient = g_AmbientColor;
 
 	//高亮天空盒（实际上应该用HDR天空盒）
-	Ambient = GetDepth(TexCoord) > g_zFar ? float4(1,1,1,1): Ambient;
+	Ambient = GetDepth(TexCoord, g_samplePosition) > g_zFar ? float4(1, 1, 1, 1) : Ambient;
 
 	return Ambient;
 }

@@ -22,7 +22,7 @@ SSGI::~SSGI()
 
 void SSGI::CreatePostEffect()
 {
-	PostEffectBase::CreatePostEffect("System\\SSGI.fx");
+	PostEffectBase::CreatePostEffect("System\\SSGI.fx", D3DFMT_A16B16G16R16F);
 
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth / 2, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight / 2,
 		1, D3DUSAGE_RENDERTARGET,
@@ -74,9 +74,9 @@ void SSGI::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	m_postEffect->SetFloat("g_zFar", CameraParam::zFar);
 
 	float angle = tan(CameraParam::FOV / 2);
-	m_postEffect->SetFloat("g_angle", angle);
+	m_postEffect->SetFloat("g_ViewAngle_half_tan", angle);
 	float aspect = (float)RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth / RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight;
-	m_postEffect->SetFloat("g_aspect", aspect);
+	m_postEffect->SetFloat("g_ViewAspect", aspect);
 
 	m_postEffect->SetInt(SCREENWIDTH, RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth);
 	m_postEffect->SetInt(SCREENHEIGHT, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight);

@@ -109,7 +109,8 @@ HRESULT MeshLoader::LoadXMesh(std::string filePath)
 	// on those vertices so it will improve perf.     
 	m_pMesh->OptimizeInplace(D3DXMESHOPT_VERTEXCACHE, rgdwAdjacency, NULL, NULL, NULL);
 
-	if (!hasTangents || !hasBinormals)
+	//如果不重新计算的话，会出现切线方向有问题导致的渲染错误
+	//if (!hasTangents || !hasBinormals)
 	{
 		ID3DXMesh* pNewMesh;
 		

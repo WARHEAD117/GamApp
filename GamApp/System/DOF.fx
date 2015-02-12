@@ -1,19 +1,4 @@
-matrix		g_World;
-matrix		g_View;
-matrix		g_Proj;
-matrix		g_ViewProj;
-matrix		g_WorldViewProj;
-matrix		g_mWorldInv;
-matrix		g_InverseProj;
-
-float		g_zNear = 1.0f;
-float		g_zFar = 100.0f;
-
-int g_ScreenWidth;
-int g_ScreenHeight;
-
-float		g_angle;
-float		g_aspect;
+#include "common.fx"
 
 static const int MAX_SAMPLES = 8;
 float g_bokehAngle;
@@ -103,18 +88,6 @@ OutputVS VShader(float4 posL       : POSITION0,
 	return outVS;
 }
 
-float3 GetPosition(in float2 uv)
-{
-	float z = tex2D(g_samplePosition, uv).r;
-
-	float u = uv.x * 2.0f - 1;
-	float v = (1 - uv.y) * 2.0f - 1.0f;
-
-	float y = g_angle * v * z;
-	float x = g_angle * u * z * g_aspect;
-	return float3(x, y, z);
-}
-
 OffsetData MakeOffset(half angle)
 {
 	OffsetData offsetData;
@@ -138,7 +111,7 @@ OffsetData MakeOffset(half angle)
 
 float4 ComputeCoC(float2 TexCoord : TEXCOORD0) : COLOR
 {
-	float3 pos = GetPosition(TexCoord);
+	float3 pos = GetPosition(TexCoord, g_samplePosition);
 	float CoC = abs(g_aperture * (g_focallength * (pos.z - g_planeinfocus)) / (pos.z * (g_planeinfocus - g_focallength)));
 
 	const half sensorHeight = 0.024f;
@@ -161,7 +134,7 @@ float4 DrawDof(float2 TexCoord, OffsetData offsetData)
 	const half bleedingMult = 30.0f;
 
 	half centerPixelCoC = tex2D(g_sampleColorCoC, TexCoord).a;
-	half centerDepth = GetPosition(TexCoord).z;
+	half centerDepth = GetPosition(TexCoord, g_samplePosition).z;
 
 	half4 color = 0.0f;
 		half totalWeight = 0.0f;
@@ -173,7 +146,7 @@ float4 DrawDof(float2 TexCoord, OffsetData offsetData)
 		half2 sampleCoords = TexCoord + offset * centerPixelCoC;
 
 		half4 samplePixel = tex2D(g_sampleColorCoC, sampleCoords);
-		half sampleDepth = GetPosition(sampleCoords).z;
+		half sampleDepth = GetPosition(sampleCoords, g_samplePosition).z;
 
 		half weight = sampleDepth < centerDepth ? samplePixel.a * bleedingMult : 1.0f;
 		weight = (centerPixelCoC > samplePixel.a + bleedingBias) ? weight : 1.0f;

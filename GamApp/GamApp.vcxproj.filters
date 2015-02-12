@@ -187,6 +187,9 @@
     <ClInclude Include="RenderSystem\RenderPipeLine\PostEffect\SSGI.h">
       <Filter>RenderSystem\PostEffect</Filter>
     </ClInclude>
+    <ClInclude Include="System\common.fx">
+      <Filter>System</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DrawSkyBox.cpp" />

@@ -1,17 +1,8 @@
+#include "common.fx"
+
 #define		epsilon 0.0000001f
 
-matrix		g_World;
-matrix		g_View;
-matrix		g_Proj;
-matrix		g_ViewProj;
-matrix		g_WorldView;
-matrix		g_WorldViewProj;
-matrix		g_mWorldInv;
-
 bool		g_IsSky;
-
-float		g_zNear = 1.0f;
-float		g_zFar = 1000.0f;
 
 float		g_shininess = 1.0f;
 
@@ -99,19 +90,6 @@ OutputVS VShader(float4 posL		: POSITION,
 	return outVS;
 }
 
-float2 encode(float3 n)
-{
-	float p = sqrt(-n.z * 8 + 8);
-	return float2(n.xy / p + 0.5);
-}
-
-float3 float2ToFloat3(float2 input)
-{
-	float2 enc255 = input * 255;
-	float2 residual = floor(frac(enc255) * 16);
-	float3 output = float3(floor(enc255), residual.x * 16 + residual.y) / 255;
-	return output;
-}
 
 OutputPS PShader(float3 NormalV		: NORMAL,
 				 float3 TangentV		: TANGENT,

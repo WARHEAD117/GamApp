@@ -1,13 +1,4 @@
-matrix		g_World;
-matrix		g_View;
-matrix		g_Proj;
-matrix		g_WorldView;
-matrix		g_ViewProj;
-matrix		g_WorldViewProj;
-matrix		g_mWorldInv;
-
-float		g_zNear = 1.0f;
-float		g_zFar = 1000.0f;
+#include "common.fx"
 
 float4		g_ViewPos;
 

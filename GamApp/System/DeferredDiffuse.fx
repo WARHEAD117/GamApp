@@ -1,9 +1,4 @@
-matrix		g_World;
-matrix		g_View;
-matrix		g_Proj;
-matrix		g_ViewProj;
-matrix		g_WorldViewProj;
-matrix		g_mWorldInv;
+#include "common.fx"
 
 texture		g_Texture;
 

@@ -1,10 +1,4 @@
-matrix		g_World;
-matrix		g_View;
-matrix		g_Proj;
-matrix		g_ViewProj;
-matrix		g_WorldViewProj;
-matrix		g_mWorldInv;
-matrix		g_InverseProj;
+#include "common.fx"
 
 texture	g_FinalColorBuffer;
 sampler2D g_sampleFinalColor =

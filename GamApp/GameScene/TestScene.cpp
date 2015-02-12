@@ -250,17 +250,17 @@ void TestScene::OnLoad()
 	//--------------------------------------------------------------------------
 	spotLight3 = LIGHTMANAGER::Instance().CreateLight<SpotLight>(eSpotLight);
 	spotLight3->SetLightRange(2);
-	spotLight3->SetLightColor(D3DXCOLOR(0.0, 0.5, 0.0, 1.0f));
+	spotLight3->SetLightColor(D3DXCOLOR(1.5, 1.5, 0.0, 1.0f));
 	spotLight3->SetUseShadow(false);
 	spotLight3->SetLightRange(20);
-	D3DXMatrixTranslation(&lightMoveMat, -10, 1, 15);
+	D3DXMatrixTranslation(&lightMoveMat, -10, 4, 5);
 	D3DXMatrixRotationX(&lightRot1Mat, 0.25f * D3DX_PI);
 	spotLight3->SetWorldTransform(lightRot1Mat * lightMoveMat);
 	//--------------------------------------------------------------------------
 	spotLight4 = LIGHTMANAGER::Instance().CreateLight<SpotLight>(eSpotLight);
 	spotLight4->SetLightRange(20);
-	spotLight4->SetLightColor(D3DXCOLOR(0.0, 0.5, 0.0, 1.0f));
-	D3DXMatrixTranslation(&lightMoveMat, -10, 1, -15);
+	spotLight4->SetLightColor(D3DXCOLOR(0.0, 1.5, 1.5, 1.0f));
+	D3DXMatrixTranslation(&lightMoveMat, -10, 4, -5);
 	D3DXMatrixRotationX(&lightRot1Mat, -0.25f * D3DX_PI);
 	spotLight4->SetWorldTransform(lightRot1Mat * lightMoveMat);
 

@@ -12,13 +12,7 @@ static const float3 LUMINANCE_VECTOR = float3(0.2125f, 0.7154f, 0.0721f);
 // The per-color weighting to be used for blue shift under low light.
 static const float3 BLUE_SHIFT_VECTOR = float3(1.05f, 0.97f, 1.27f);
 
-matrix		g_World;
-matrix		g_View;
-matrix		g_Proj;
-matrix		g_ViewProj;
-matrix		g_WorldViewProj;
-matrix		g_mWorldInv;
-matrix		g_InverseProj;
+#include "common.fx"
 
 
 // Contains sampling offsets used by the techniques

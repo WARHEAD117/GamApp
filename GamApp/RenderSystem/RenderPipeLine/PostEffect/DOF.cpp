@@ -104,9 +104,9 @@ void DOF::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	m_postEffect->SetFloat("g_zFar", CameraParam::zFar);
 
 	float angle = tan(CameraParam::FOV / 2);
-	m_postEffect->SetFloat("g_angle", angle);
+	m_postEffect->SetFloat("g_ViewAngle_half_tan", angle);
 	float aspect = (float)RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth / RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight;
-	m_postEffect->SetFloat("g_aspect", aspect);
+	m_postEffect->SetFloat("g_ViewAspect", aspect);
 
 	m_postEffect->SetInt(SCREENWIDTH, RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth);
 	m_postEffect->SetInt(SCREENHEIGHT, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight);

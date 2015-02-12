@@ -1,15 +1,6 @@
-matrix		g_World;
-matrix		g_View;
-matrix		g_Proj;
-matrix		g_ViewProj;
-matrix		g_WorldViewProj;
-matrix		g_mWorldInv;
-matrix		g_InverseProj;
+#include "common.fx"
 
 static const float3 LUMINANCE_VECTOR = float3(0.2125f, 0.7154f, 0.0721f);
-
-int			g_ScreenWidth;
-int			g_ScreenHeight;
 
 texture		g_MainColorBuffer;
 sampler2D g_sampleMainColor =
@@ -39,11 +30,6 @@ OutputVS VShader(float4 posL       : POSITION0,
 	outVS.TexCoord = TexCoord;
 
 	return outVS;
-}
-
-float4 getColor(in float2 uv)
-{
-	return tex2D(g_sampleMainColor, uv);
 }
 
 float getLum(float3 color)

@@ -22,9 +22,9 @@ private:
 	LPDIRECT3DTEXTURE9			m_pRandomNormal;
 	LPDIRECT3DTEXTURE9			m_pGiTarget;
 	LPDIRECT3DSURFACE9			m_pGiSurface;
-	LPDIRECT3DTEXTURE9			m_pGiSourceTarget;
-	LPDIRECT3DSURFACE9			m_pGiSourceSurface;
-	LPDIRECT3DTEXTURE9			m_pGiSourceBlurTarget;
-	LPDIRECT3DSURFACE9			m_pGiSourceBlurSurface;
+	LPDIRECT3DTEXTURE9			m_pScaledMainColorTarget;
+	LPDIRECT3DSURFACE9			m_pScaledMainColorSurface;
+	LPDIRECT3DTEXTURE9			m_pScaledMainColorTarget2;
+	LPDIRECT3DSURFACE9			m_pScaledMainColorSurface2;
 };
 

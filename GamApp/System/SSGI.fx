@@ -57,11 +57,11 @@ sampler_state
 	MipFilter = Point;
 };
 
-texture		g_AoBuffer;
-sampler2D g_sampleAo =
+texture		g_GiBuffer;
+sampler2D g_sampleGi =
 sampler_state
 {
-	Texture = <g_AoBuffer>;
+	Texture = <g_GiBuffer>;
 	MinFilter = linear;
 	MagFilter = linear;
 	MipFilter = linear;
@@ -120,7 +120,8 @@ float4 doGI(in float2 tcoord, in float2 uv, in float3 p, in float3 cnorm)
 
 float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
 {
-	const float2 vec[4] = { float2(1, 0), float2(-1, 0),float2(0, 1), float2(0, -1) };
+	const float2 vec[8] = { float2(1, 0), float2(-1, 0),float2(0, 1), float2(0, -1),
+							float2(2, 0), float2(-2, 0), float2(0, 2), float2(0, -2) };
 	
 	//π€≤Ïø’º‰Œª÷√
 	float3 p = GetPosition(TexCoord, g_samplePosition);
@@ -163,28 +164,33 @@ float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
 	//return float4(1 - ao, 1 - ao, 1 - ao, 1.0f);
 }
 
-float4 texture2DBilinear(sampler2D textureSampler, float2 uv)
-{
-	float stepU = 1.0f / g_mapWidth;
-	float stepV = 1.0f / g_mapWidth;
-
-	// in vertex shaders you should use texture2DLod instead of texture2D
-	float4 tl = tex2D(textureSampler, uv);
-	float4 tr = tex2D(textureSampler, uv + float2(stepU, 0));
-	float4 bl = tex2D(textureSampler, uv + float2(0, stepV));
-	float4 br = tex2D(textureSampler, uv + float2(stepU, stepV));
-	float2 f = frac(uv.xy * float2(g_mapWidth, g_mapWidth)); // get the decimal part
-	float4 tA = lerp(tl, tr, f.x); // will interpolate the red dot in the image
-	float4 tB = lerp(bl, br, f.x); // will interpolate the blue dot in the image
-	return lerp(tA, tB, f.y); // will interpolate the green dot in the image
-}
-
 float4 DrawMain(float2 TexCoord : TEXCOORD0) : COLOR
 {
-	float4 AO = /*tex2D(g_sampleAo, TexCoord);*/ GaussianBlur(300, 200, g_sampleAo, TexCoord);
-	float4 fianlColor = AO + tex2D(g_sampleMainColor, TexCoord);
+	float4 GI = /*tex2D(g_sampleAo, TexCoord);*/ GaussianBlur(300, 200, g_sampleGi, TexCoord);
+	float4 fianlColor = GI + tex2D(g_sampleMainColor, TexCoord);
 
 	return fianlColor;
+}
+
+//-----------------------------------------------------------------------------
+// Name: DownScale4x4PS
+// Type: Pixel shader                                      
+// Desc: Scale the source texture down to 1/16 scale
+//-----------------------------------------------------------------------------
+float4 DownScale4x4PS
+(
+in float2 vScreenPosition : TEXCOORD0
+) : COLOR
+{
+
+	float4 sample = 0.0f;
+
+	for (int i = 0; i < 16; i++)
+	{
+		sample += tex2D(g_sampleMainColor, vScreenPosition + g_avSampleOffsets[i]);
+	}
+
+	return sample / 16;
 }
 
 technique SSGI
@@ -199,6 +205,12 @@ technique SSGI
 	{
 		vertexShader = compile vs_3_0 VShader();
 		pixelShader = compile ps_3_0 DrawMain();
+	}
+
+	pass bufferScale
+	{
+		vertexShader = compile vs_3_0 VShader();
+		pixelShader = compile ps_3_0 DownScale4x4PS();
 	}
 
 }

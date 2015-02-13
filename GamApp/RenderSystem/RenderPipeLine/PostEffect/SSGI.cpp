@@ -33,14 +33,14 @@ void SSGI::CreatePostEffect()
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth / 4, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight / 4,
 		1, D3DUSAGE_RENDERTARGET,
 		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
-		&m_pGiSourceTarget, NULL);
-	hr = m_pGiSourceTarget->GetSurfaceLevel(0, &m_pGiSourceSurface);
+		&m_pScaledMainColorTarget, NULL);
+	hr = m_pScaledMainColorTarget->GetSurfaceLevel(0, &m_pScaledMainColorSurface);
 	
-	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth / 4, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight / 4,
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth / 16, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight / 16,
 		1, D3DUSAGE_RENDERTARGET,
 		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
-		&m_pGiSourceBlurTarget, NULL);
-	hr = m_pGiSourceBlurTarget->GetSurfaceLevel(0, &m_pGiSourceBlurSurface);
+		&m_pScaledMainColorTarget2, NULL);
+	hr = m_pScaledMainColorTarget2->GetSurfaceLevel(0, &m_pScaledMainColorSurface2);
 
 	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "System\\123.png", &m_pRandomNormal))
 	{
@@ -96,7 +96,38 @@ void SSGI::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	m_postEffect->CommitChanges();
 
 	//-------------------------------------------------------------------------
+	
+
+	D3DXVECTOR2 avSampleOffsets[16];
+	D3DSURFACE_DESC desc;
+	mainBuffer->GetLevelDesc(0, &desc);
+	GetSampleOffsets_DownScale4x4(desc.Width, desc.Height, avSampleOffsets);
+
 	m_postEffect->SetTexture(MAINCOLORBUFFER, mainBuffer);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pScaledMainColorSurface);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
+	m_postEffect->CommitChanges();
+
+	m_postEffect->BeginPass(2);
+	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+	m_postEffect->EndPass();
+
+	//---------------------------------------------------------------------------------------------
+	m_pScaledMainColorTarget->GetLevelDesc(0, &desc);
+	GetSampleOffsets_DownScale4x4(desc.Width, desc.Height, avSampleOffsets);
+
+	m_postEffect->SetTexture(MAINCOLORBUFFER, m_pScaledMainColorTarget);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pScaledMainColorSurface2);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
+	m_postEffect->CommitChanges();
+
+	m_postEffect->BeginPass(2);
+	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+	m_postEffect->EndPass();
+
+	//---------------------------------------------------------------------------------------------
+
+	m_postEffect->SetTexture(MAINCOLORBUFFER, m_pScaledMainColorTarget2);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pGiSurface);
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
 	m_postEffect->CommitChanges();
@@ -104,12 +135,14 @@ void SSGI::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	m_postEffect->BeginPass(0);
 	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 	m_postEffect->EndPass();
-	//-------------------------------------------------------------------------
+
+	//-------------------------------------------------------------------------------------------------
+
 	m_postEffect->SetTexture(MAINCOLORBUFFER, mainBuffer);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pPostSurface);
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
 
-	m_postEffect->SetTexture("g_AoBuffer", m_pGiTarget);
+	m_postEffect->SetTexture("g_GiBuffer", m_pGiTarget);
 	m_postEffect->CommitChanges();
 
 	m_postEffect->BeginPass(1);

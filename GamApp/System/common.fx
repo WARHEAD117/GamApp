@@ -156,3 +156,19 @@ float4 GaussianBlur(int mapWidth, int mapHeight, sampler2D texSampler, float2 te
 
 	return color;
 }
+
+float4 texture2DBilinear(sampler2D textureSampler, float2 uv, int mapWidth, float mapHeight)
+{
+	float stepU = 1.0f / mapWidth;
+	float stepV = 1.0f / mapHeight;
+
+	// in vertex shaders you should use texture2DLod instead of texture2D
+	float4 tl = tex2D(textureSampler, uv);
+		float4 tr = tex2D(textureSampler, uv + float2(stepU, 0));
+		float4 bl = tex2D(textureSampler, uv + float2(0, stepV));
+		float4 br = tex2D(textureSampler, uv + float2(stepU, stepV));
+		float2 f = frac(uv.xy * float2(mapWidth, mapHeight)); // get the decimal part
+		float4 tA = lerp(tl, tr, f.x); // will interpolate the red dot in the image
+		float4 tB = lerp(bl, br, f.x); // will interpolate the blue dot in the image
+		return lerp(tA, tB, f.y); // will interpolate the green dot in the image
+}

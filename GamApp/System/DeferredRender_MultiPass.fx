@@ -72,9 +72,9 @@ sampler2D g_sampleShadowResult =
 sampler_state
 {
 	Texture = <g_ShadowResult>;
-	MinFilter = GAUSSIANQUAD;
-	MagFilter = GAUSSIANQUAD;
-	MipFilter = GAUSSIANQUAD;// ANISOTROPIC;
+	MinFilter = Point;
+	MagFilter = Point;
+	MipFilter = Point;// ANISOTROPIC;//GAUSSIANQUAD
 	AddressU = Clamp;
 	AddressV = Clamp;
 }; 

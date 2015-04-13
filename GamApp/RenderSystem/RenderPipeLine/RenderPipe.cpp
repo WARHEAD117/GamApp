@@ -49,6 +49,8 @@ HDRLighting hdrLighting;
 DOF dof;
 SSGI ssgi;
 PostEffectBase fxaa;
+PostEffectBase ditherHalfToning;
+PostEffectBase colorChange;
 
 SkyBox skyBox;
 
@@ -65,13 +67,25 @@ RenderPipe::RenderPipe()
 	ssgi.CreatePostEffect();
 
 	fxaa.CreatePostEffect("System\\FXAA.fx");
+	ditherHalfToning.CreatePostEffect("System\\Dither_Halftoning.fx");
+	colorChange.CreatePostEffect("System\\ColorChange.fx");
 
 	m_enableAO = true;
 	m_enableDOF = false;
 	m_enableHDR = true;
 	m_enableGI = false;
 	m_enableFXAA = true;
+	m_enableDither = false;
+	m_enableColorChange = false;
 
+	m_showNormal = false;
+	m_showPosition = false;
+	m_showDiffuse = false;
+	m_showDiffuseLight = false;
+	m_showShadowResult = false;
+	m_showShadowResult = false;
+
+	m_debugMode = NONE;
 	//==========================================================
 	//Build SkyBox
 	skyBox.BuildSkyBox();
@@ -786,6 +800,106 @@ void RenderPipe::RenderAll()
 		m_pPostTarget = fxaa.GetPostTarget();
 	}
 
+	if (GAMEINPUT::Instance().KeyPressed(DIK_6))
+	{
+		m_enableDither = !m_enableDither;
+	}
+
+	if (m_enableDither)
+	{
+		ditherHalfToning.RenderPost(m_pPostTarget);
+		m_pPostTarget = ditherHalfToning.GetPostTarget();
+	}
+
+	if (GAMEINPUT::Instance().KeyPressed(DIK_7))
+	{
+		m_enableColorChange = !m_enableColorChange;
+	}
+
+	if (m_enableColorChange)
+	{
+		colorChange.RenderPost(m_pPostTarget);
+		m_pPostTarget = colorChange.GetPostTarget();
+	}
+
+#ifdef RENDER_DEBUG
+	if (GAMEINPUT::Instance().KeyPressed(DIK_F4))
+	{
+		if (m_debugMode == ShowNormal)
+			m_debugMode = NONE;
+		else
+			m_debugMode = ShowNormal;
+	}
+
+	if (GAMEINPUT::Instance().KeyPressed(DIK_F5))
+	{
+		if (m_debugMode == ShowPosition)
+			m_debugMode = NONE;
+		else
+			m_debugMode = ShowPosition;
+	}
+
+	if (GAMEINPUT::Instance().KeyPressed(DIK_F6))
+	{
+		if (m_debugMode == ShowDiffuse)
+			m_debugMode = NONE;
+		else
+			m_debugMode = ShowDiffuse;
+	}
+
+
+	if (GAMEINPUT::Instance().KeyPressed(DIK_F7))
+	{
+		if (m_debugMode == ShowDiffuseLight)
+			m_debugMode = NONE;
+		else
+			m_debugMode = ShowDiffuseLight;
+	}
+
+
+	if (GAMEINPUT::Instance().KeyPressed(DIK_F8))
+	{
+		if (m_debugMode == ShowSpecularLight)
+			m_debugMode = NONE;
+		else
+			m_debugMode = ShowSpecularLight;
+	}
+
+
+	if (GAMEINPUT::Instance().KeyPressed(DIK_F9))
+	{
+		if (m_debugMode == ShowShadowResult)
+			m_debugMode = NONE;
+		else
+			m_debugMode = ShowShadowResult;
+	}
+
+	switch (m_debugMode)
+	{
+	case ShowNormal:
+		m_pPostTarget = m_pNormalTarget;
+		break;
+	case ShowPosition:
+		m_pPostTarget = m_pPositionTarget;
+		break;
+	case ShowDiffuse:
+		m_pPostTarget = m_pDiffuseTarget;
+		break;
+	case ShowDiffuseLight:
+		m_pPostTarget = m_pDiffuseLightTarget;
+		break;
+	case ShowSpecularLight:
+		m_pPostTarget = m_pSpecularLightTarget;
+		break;
+	case ShowShadowResult:
+		m_pPostTarget = m_pShadowTarget;
+		break;
+	default:
+		break;
+	}
+	
+#endif // RENDER_DEBUG
+
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pOriSurface);
 
 	RenderFinalColor();
@@ -828,17 +942,17 @@ void RenderPipe::UpdateRenderState()
 	{
 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
 	}
-	if (GAMEINPUT::Instance().KeyDown(DIK_F4))
-	{
-		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_SHADEMODE, D3DSHADE_GOURAUD);
-	}
-	if (GAMEINPUT::Instance().KeyDown(DIK_F5))
-	{
-		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_SHADEMODE, D3DSHADE_FLAT);
-	}
-	if (GAMEINPUT::Instance().KeyDown(DIK_F6))
-	{
-		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_SHADEMODE, D3DSHADE_PHONG);
-	}
+// 	if (GAMEINPUT::Instance().KeyDown(DIK_F4))
+// 	{
+// 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_SHADEMODE, D3DSHADE_GOURAUD);
+// 	}
+// 	if (GAMEINPUT::Instance().KeyDown(DIK_F5))
+// 	{
+// 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_SHADEMODE, D3DSHADE_FLAT);
+// 	}
+// 	if (GAMEINPUT::Instance().KeyDown(DIK_F6))
+// 	{
+// 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_SHADEMODE, D3DSHADE_PHONG);
+// 	}
 }
 

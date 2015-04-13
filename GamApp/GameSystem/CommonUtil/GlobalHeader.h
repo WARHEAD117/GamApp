@@ -32,3 +32,5 @@ void Delete(POINT t)
 #define SafeDelete(p)		{if(p) { delete (p); (p) = NULL;}}
 #define SafeDeleteArray(p)	{if(p) { delete[] (p); (p) = NULL;}}
 #define SafeRelease(p)		{if(p) { (p)->Release();(p) = NULL;}}
+
+#define RENDER_DEBUG

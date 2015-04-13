@@ -348,5 +348,8 @@
     <FxCompile Include="System\FXAA.fx">
       <Filter>System</Filter>
     </FxCompile>
+    <FxCompile Include="System\Dither_Halftoning.fx">
+      <Filter>System</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

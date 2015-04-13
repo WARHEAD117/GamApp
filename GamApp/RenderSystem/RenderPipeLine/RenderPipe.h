@@ -69,6 +69,29 @@ private:
 	bool	m_enableHDR;
 	bool	m_enableGI;
 	bool	m_enableFXAA;
+	bool	m_enableDither;
+	bool	m_enableColorChange;
+
+#ifdef RENDER_DEBUG
+	enum DEBUG_MODE
+	{
+		NONE,
+		ShowNormal,
+		ShowPosition,
+		ShowDiffuse,
+		ShowDiffuseLight,
+		ShowSpecularLight,
+		ShowShadowResult,
+	};
+
+	DEBUG_MODE m_debugMode;
+	bool	m_showNormal;
+	bool	m_showPosition;
+	bool	m_showDiffuse;
+	bool	m_showDiffuseLight;
+	bool	m_showSpecularLight;
+	bool	m_showShadowResult;
+#endif // RENDER_DEBUG
 };
 
 

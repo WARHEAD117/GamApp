@@ -69,8 +69,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 
 	//TODO
 	//Read basic game config file
-	int wndWidth = 1440;
-	int wndHeght = 900;
+	int wndWidth = 1024;
+	int wndHeght = 768;
 	std::string wndName = "New Game";
 	LPCSTR className = "New Game";
 

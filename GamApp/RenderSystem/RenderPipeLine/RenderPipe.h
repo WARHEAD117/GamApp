@@ -72,6 +72,8 @@ private:
 	bool	m_enableDither;
 	bool	m_enableColorChange;
 
+	bool	m_enableEdgeRecognize;
+
 #ifdef RENDER_DEBUG
 	enum DEBUG_MODE
 	{

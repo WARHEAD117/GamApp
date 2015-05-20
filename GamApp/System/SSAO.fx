@@ -14,7 +14,6 @@ float		g_rad_threshold = 4.0f;
 texture		g_NormalBuffer;
 texture		g_RandomNormal; 
 texture		g_PositionBuffer;
-texture		g_ViewDirBuffer;
 
 sampler2D g_sampleNormal =
 sampler_state

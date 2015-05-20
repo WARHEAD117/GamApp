@@ -108,10 +108,13 @@
     <ClInclude Include="RenderSystem\Light\PointLight.h" />
     <ClInclude Include="RenderSystem\Light\SpotLight.h" />
     <ClInclude Include="RenderSystem\RenderPipeLine\PostEffect\DOF.h" />
+    <ClInclude Include="RenderSystem\RenderPipeLine\PostEffect\EdgeRecognize.h" />
     <ClInclude Include="RenderSystem\RenderPipeLine\PostEffect\HDRLighting.h" />
+    <ClInclude Include="RenderSystem\RenderPipeLine\PostEffect\NPR.h" />
     <ClInclude Include="RenderSystem\RenderPipeLine\PostEffect\PostEffectBase.h" />
     <ClInclude Include="RenderSystem\RenderPipeLine\PostEffect\SSAO.h" />
     <ClInclude Include="RenderSystem\RenderPipeLine\PostEffect\SSGI.h" />
+    <ClInclude Include="RenderSystem\RenderPipeLine\PostEffect\sumi_e.h" />
     <ClInclude Include="RenderSystem\RenderPipeLine\RenderPipe.h" />
     <ClInclude Include="RenderSystem\RenderUtil\EffectParam.h" />
     <ClInclude Include="RenderSystem\RenderUtil\RenderUtil.h" />
@@ -147,10 +150,13 @@
     <ClCompile Include="RenderSystem\Light\PointLight.cpp" />
     <ClCompile Include="RenderSystem\Light\SpotLight.cpp" />
     <ClCompile Include="RenderSystem\RenderPipeLine\PostEffect\DOF.cpp" />
+    <ClCompile Include="RenderSystem\RenderPipeLine\PostEffect\EdgeRecognize.cpp" />
     <ClCompile Include="RenderSystem\RenderPipeLine\PostEffect\HDRLighting.cpp" />
+    <ClCompile Include="RenderSystem\RenderPipeLine\PostEffect\NPR.cpp" />
     <ClCompile Include="RenderSystem\RenderPipeLine\PostEffect\PostEffectBase.cpp" />
     <ClCompile Include="RenderSystem\RenderPipeLine\PostEffect\SSAO.cpp" />
     <ClCompile Include="RenderSystem\RenderPipeLine\PostEffect\SSGI.cpp" />
+    <ClCompile Include="RenderSystem\RenderPipeLine\PostEffect\sumi_e.cpp" />
     <ClCompile Include="RenderSystem\RenderPipeLine\RenderPipe.cpp" />
     <ClCompile Include="RenderSystem\RenderUtil\RenderUtil.cpp" />
     <ClCompile Include="RenderSystem\Sky\SkyBox.cpp" />
@@ -229,6 +235,14 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Effect</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">2.0</ShaderModel>
     </FxCompile>
+    <FxCompile Include="System\EdgeChange.fx">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Effect</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">2.0</ShaderModel>
+    </FxCompile>
+    <FxCompile Include="System\EdgeRecognize.fx">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Effect</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">2.0</ShaderModel>
+    </FxCompile>
     <FxCompile Include="System\FXAA.fx">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Effect</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">2.0</ShaderModel>
@@ -245,6 +259,10 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Effect</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">2.0</ShaderModel>
     </FxCompile>
+    <FxCompile Include="System\NPR.fx">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Effect</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">2.0</ShaderModel>
+    </FxCompile>
     <FxCompile Include="System\ShadingPass.fx">
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">2.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Effect</ShaderType>
@@ -260,6 +278,10 @@
     <FxCompile Include="System\SSGI.fx">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Effect</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">2.0</ShaderModel>
+    </FxCompile>
+    <FxCompile Include="System\Sumi_e.fx">
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">2.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Effect</ShaderType>
     </FxCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

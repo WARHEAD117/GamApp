@@ -2,6 +2,7 @@
 #include "D3D9Device.h"
 #include "RenderUtil/EffectParam.h"
 #include "RenderSystem/RenderPipeLine/RenderPipe.h"
+#include "Camera/CameraParam.h"
 
 PostEffectBase::PostEffectBase()
 {
@@ -80,6 +81,19 @@ void PostEffectBase::RenderPost(LPDIRECT3DTEXTURE9 lastBuffer/* = NULL*/)
 	m_postEffect->BeginPass(0);
 
 	m_postEffect->SetMatrix(WORLDVIEWPROJMATRIX, &RENDERDEVICE::Instance().OrthoWVPMatrix);
+	m_postEffect->SetMatrix(INVPROJMATRIX, &RENDERDEVICE::Instance().InvProjMatrix);
+	m_postEffect->SetMatrix(PROJECTIONMATRIX, &RENDERDEVICE::Instance().ProjMatrix);
+
+	m_postEffect->SetMatrix(VIEWMATRIX, &RENDERDEVICE::Instance().ViewMatrix);
+
+	m_postEffect->SetFloat("g_zNear", CameraParam::zNear);
+	m_postEffect->SetFloat("g_zFar", CameraParam::zFar);
+
+	float angle = tan(CameraParam::FOV / 2);
+	m_postEffect->SetFloat("g_ViewAngle_half_tan", angle);
+	float aspect = (float)RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth / RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight;
+	m_postEffect->SetFloat("g_ViewAspect", aspect);
+
 	if (lastBuffer != NULL)
 		m_postEffect->SetTexture(MAINCOLORBUFFER, lastBuffer);
 	else

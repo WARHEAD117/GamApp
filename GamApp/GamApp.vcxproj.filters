@@ -190,6 +190,15 @@
     <ClInclude Include="System\common.fx">
       <Filter>System</Filter>
     </ClInclude>
+    <ClInclude Include="RenderSystem\RenderPipeLine\PostEffect\EdgeRecognize.h">
+      <Filter>RenderSystem\PostEffect</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderSystem\RenderPipeLine\PostEffect\NPR.h">
+      <Filter>RenderSystem\PostEffect</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderSystem\RenderPipeLine\PostEffect\sumi_e.h">
+      <Filter>RenderSystem\PostEffect</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DrawSkyBox.cpp" />
@@ -298,6 +307,15 @@
     <ClCompile Include="RenderSystem\RenderPipeLine\PostEffect\SSGI.cpp">
       <Filter>RenderSystem\PostEffect</Filter>
     </ClCompile>
+    <ClCompile Include="RenderSystem\RenderPipeLine\PostEffect\EdgeRecognize.cpp">
+      <Filter>RenderSystem\PostEffect</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderSystem\RenderPipeLine\PostEffect\NPR.cpp">
+      <Filter>RenderSystem\PostEffect</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderSystem\RenderPipeLine\PostEffect\sumi_e.cpp">
+      <Filter>RenderSystem\PostEffect</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="System\commonDiffuse.fx">
@@ -349,6 +367,18 @@
       <Filter>System</Filter>
     </FxCompile>
     <FxCompile Include="System\Dither_Halftoning.fx">
+      <Filter>System</Filter>
+    </FxCompile>
+    <FxCompile Include="System\EdgeRecognize.fx">
+      <Filter>System</Filter>
+    </FxCompile>
+    <FxCompile Include="System\EdgeChange.fx">
+      <Filter>System</Filter>
+    </FxCompile>
+    <FxCompile Include="System\NPR.fx">
+      <Filter>System</Filter>
+    </FxCompile>
+    <FxCompile Include="System\Sumi_e.fx">
       <Filter>System</Filter>
     </FxCompile>
   </ItemGroup>

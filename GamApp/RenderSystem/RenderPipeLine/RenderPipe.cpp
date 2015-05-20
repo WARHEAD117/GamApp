@@ -12,6 +12,9 @@
 #include "RenderPipeLine/PostEffect/HDRLighting.h"
 #include "RenderPipeLine/PostEffect/DOF.h"
 #include "RenderPipeLine/PostEffect/SSGI.h"
+#include "RenderPipeLine/PostEffect/EdgeRecognize.h"
+#include "RenderPipeLine/PostEffect/NPR.h"
+#include "RenderPipeLine/PostEffect/sumi_e.h"
 
 #include "Sky/SkyBox.h"
 
@@ -52,6 +55,11 @@ PostEffectBase fxaa;
 PostEffectBase ditherHalfToning;
 PostEffectBase colorChange;
 
+EdgeRecognize edgeRecognize;
+PostEffectBase edgeChange;
+NPR npr;
+SumiE sumiE;
+
 SkyBox skyBox;
 
 RenderPipe::RenderPipe()
@@ -70,6 +78,11 @@ RenderPipe::RenderPipe()
 	ditherHalfToning.CreatePostEffect("System\\Dither_Halftoning.fx");
 	colorChange.CreatePostEffect("System\\ColorChange.fx");
 
+	edgeRecognize.CreatePostEffect("System\\EdgeRecognize.fx");
+	edgeChange.CreatePostEffect("System\\EdgeChange.fx");
+	npr.CreatePostEffect("System\\NPR.fx");
+	sumiE.CreatePostEffect();
+
 	m_enableAO = true;
 	m_enableDOF = false;
 	m_enableHDR = true;
@@ -77,6 +90,8 @@ RenderPipe::RenderPipe()
 	m_enableFXAA = true;
 	m_enableDither = false;
 	m_enableColorChange = false;
+
+	m_enableEdgeRecognize = false;
 
 	m_showNormal = false;
 	m_showPosition = false;
@@ -820,6 +835,43 @@ void RenderPipe::RenderAll()
 	{
 		colorChange.RenderPost(m_pPostTarget);
 		m_pPostTarget = colorChange.GetPostTarget();
+	}
+
+	if (GAMEINPUT::Instance().KeyPressed(DIK_8))
+	{
+		m_enableEdgeRecognize = !m_enableEdgeRecognize;
+	}
+
+	if (m_enableEdgeRecognize)
+	{
+		sumiE.RenderPost(m_pPostTarget);
+		m_pPostTarget = sumiE.GetPostTarget();
+		//edgeRecognize.RenderPost(m_pPostTarget);
+		//m_pPostTarget = edgeRecognize.GetPostTarget();
+		/*
+		edgeChange.RenderPost(m_pPostTarget);
+		m_pPostTarget = edgeChange.GetPostTarget();
+
+		fxaa.RenderPost(m_pPostTarget);
+		m_pPostTarget = fxaa.GetPostTarget();
+
+		edgeChange.RenderPost(m_pPostTarget);
+		m_pPostTarget = edgeChange.GetPostTarget();
+
+		fxaa.RenderPost(m_pPostTarget);
+		m_pPostTarget = fxaa.GetPostTarget();
+
+		edgeChange.RenderPost(m_pPostTarget);
+		m_pPostTarget = edgeChange.GetPostTarget();
+
+		fxaa.RenderPost(m_pPostTarget);
+		m_pPostTarget = fxaa.GetPostTarget();
+
+		edgeChange.RenderPost(m_pPostTarget);
+		m_pPostTarget = edgeChange.GetPostTarget();
+		*/
+		//npr.RenderPost(m_pPostTarget, m_pMainColorTarget);
+		//m_pPostTarget = npr.GetPostTarget();
 	}
 
 #ifdef RENDER_DEBUG

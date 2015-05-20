@@ -146,7 +146,7 @@ OutputPS PShader(float3 NormalV		: NORMAL,
 
 	//…Ë÷√∏ﬂπ‚√›
 	float Shininess = g_shininess;
-	Shininess = 50.05f;
+	Shininess = 5.05f;
 
 	//
 	clip(Texture.a < 0.1f ? -1 : 1);

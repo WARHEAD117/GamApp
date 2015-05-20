@@ -74,6 +74,17 @@ float3 GetNormal(in float2 uv, sampler2D sampleNormal)
 	return normal;
 }
 
+float3 GetNormal(sampler2D sampleNormal, in float2 uv)
+{
+	float4 normal_shininess = tex2D(sampleNormal, uv);
+
+		normal_shininess.xy = float3ToFloat2(normal_shininess.xyz);
+
+	float3 normal = decode(normal_shininess.xy);
+
+		return normal;
+}
+
 float4 GetColor(in float2 uv, sampler2D g_sampleColor)
 {
 	return tex2D(g_sampleColor, uv);

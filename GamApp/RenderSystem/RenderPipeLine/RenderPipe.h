@@ -46,6 +46,7 @@ public:
 
 	LPDIRECT3DTEXTURE9	m_pMainColorTarget;
 	LPDIRECT3DTEXTURE9	m_pPostTarget;
+	LPDIRECT3DTEXTURE9	m_pTempTarget;
 
 private:
 	std::vector<RenderUtil*> mRenderUtilList;

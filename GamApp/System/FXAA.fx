@@ -976,7 +976,7 @@ FxaaFloat4 FxaaPixelShader(
 
 float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
 {
-	
+	return tex2D(g_sampleMainColor, TexCoord);
 	return FxaaPixelShader(
 	TexCoord	,							// FxaaFloat2 pos,
 	FxaaFloat4(0.0f, 0.0f, 0.0f, 0.0f),		// FxaaFloat4 fxaaConsolePosPos,

@@ -9,7 +9,8 @@ public:
 
 	void RenderPost(LPDIRECT3DTEXTURE9 mainBuffer);
 	void CreatePostEffect();
-
+	
+	void SetEdgeImage(LPDIRECT3DTEXTURE9 edgeImage);
 private:
 	LPDIRECT3DVERTEXDECLARATION9	mParticleDecl;
 	LPDIRECT3DVERTEXBUFFER9			mParticleBuffer;
@@ -22,6 +23,8 @@ private:
 	LPDIRECT3DTEXTURE9	m_ColorStep2;
 
 	LPDIRECT3DTEXTURE9	m_pEdgeBlur;
+	
+	LPDIRECT3DTEXTURE9	m_pEdgeImage;
 
 	LPDIRECT3DTEXTURE9	m_pTestInk;
 	LPDIRECT3DTEXTURE9	m_pInkTex;

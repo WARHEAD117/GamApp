@@ -846,6 +846,29 @@ void RenderPipe::RenderAll()
 	{
 		edgeRecognize.RenderPost(m_pPostTarget);
 		m_pPostTarget = edgeRecognize.GetPostTarget();
+		
+		//============================================
+		edgeChange.RenderPost(m_pPostTarget);
+		m_pTempTarget = edgeChange.GetPostTarget();
+
+		fxaa.RenderPost(m_pTempTarget);
+		m_pTempTarget = fxaa.GetPostTarget();
+
+		edgeChange.RenderPost(m_pTempTarget);
+		m_pTempTarget = edgeChange.GetPostTarget();
+
+// 		fxaa.RenderPost(m_pTempTarget);
+// 		m_pTempTarget = fxaa.GetPostTarget();
+// 
+// 		edgeChange.RenderPost(m_pTempTarget);
+// 		m_pTempTarget = edgeChange.GetPostTarget();
+// 
+// 		fxaa.RenderPost(m_pTempTarget);
+// 		m_pTempTarget = fxaa.GetPostTarget();
+// 
+// 		edgeChange.RenderPost(m_pTempTarget);
+// 		m_pTempTarget = edgeChange.GetPostTarget();
+		//=================================================
 		/*
 		edgeChange.RenderPost(m_pPostTarget);
 		m_pPostTarget = edgeChange.GetPostTarget();
@@ -868,7 +891,7 @@ void RenderPipe::RenderAll()
 		edgeChange.RenderPost(m_pPostTarget);
 		m_pPostTarget = edgeChange.GetPostTarget();
 		*/
-
+		sumiE.SetEdgeImage(m_pTempTarget);
 		sumiE.RenderPost(m_pPostTarget);
 		m_pPostTarget = sumiE.GetPostTarget();
 

@@ -401,6 +401,44 @@ float4 PShaderDiffusion(float2 TexCoord : TEXCOORD0) : COLOR
 	return float4(outColor, outColor, outColor, 1.0f);
 }
 
+float4 PShaderEdgeBlur(float2 TexCoord : TEXCOORD0) : COLOR
+{
+	//return tex2D(g_sampleMainColor, TexCoord);
+	//return float4(1, 0, 0, 1);
+	float color = tex2D(g_sampleMainColor, TexCoord).r;
+	if (color >= 0.99)
+		return float4(color, color, color, 1);
+
+	float2 offset = float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight);
+	float colorL = tex2D(g_sampleMainColor, TexCoord + float2(-1, 0) * offset).r;
+	float colorR = tex2D(g_sampleMainColor, TexCoord + float2(1, 0) * offset).r;
+	float colorU = tex2D(g_sampleMainColor, TexCoord + float2(0, -1) * offset).r;
+	float colorD = tex2D(g_sampleMainColor, TexCoord + float2(0, 1) * offset).r;
+	float colorLU = tex2D(g_sampleMainColor, TexCoord + float2(-1, -1) * offset).r;
+	float colorRU = tex2D(g_sampleMainColor, TexCoord + float2(1, -1) * offset).r;
+	float colorLD = tex2D(g_sampleMainColor, TexCoord + float2(-1, 1) * offset).r;
+	float colorRD = tex2D(g_sampleMainColor, TexCoord + float2(1, 1) * offset).r;
+
+	float colorList[9] = { color, colorL, colorR, colorU, colorD, colorLU, colorRU, colorLD, colorRD };
+
+	int count = 0;
+	float sum = 0;
+	for (int i = 0; i < 9; i++)
+	{
+		if (colorList[i] < 0.99)
+		{
+			count++;
+			sum += colorList[i];
+		}
+	}
+	if (count == 0)
+		return float4(1, 1, 1, 1);
+	float finalColor = 1.0f * sum / count;
+	return float4(finalColor, finalColor, finalColor, 1.0f);
+
+	return tex2D(g_sampleMainColor, TexCoord);
+}
+
 struct P_OutVS
 {
 	float4 posWVP         : POSITION0;
@@ -450,11 +488,27 @@ float4 PShaderParticle(float2 TexCoord : TEXCOORD0,
 	TexCoord = mul(TexCoord - float2(0.5,0.5), rotationM) + float2(0.5,0.5);
 	//TexCoord = saturate(TexCoord);
 	float4 brush = tex2D(g_sampleInkTex, TexCoord);
-	brush.a = brush.r;
-	if (brush.r < 0.99f)
-		brush = float4(0, 0, 0, brush.a);
+		//brush.rgb = float3(0.5, 0.5, 0.5);
+	brush.a = 1;
+
+	if (brush.r > 0.99f)
+	{
+		brush = float4(1.0f, 1.0f, 1.0f, 0.0f);
+	}
+	else
+		brush = float4(0.0f, 0.0f, 0.0f, 0.5f);
+	//brush.a = brush.r;
+
+
+	if (TexCoord.x < 0 || TexCoord.x > 1 || TexCoord.y < 0 || TexCoord.y > 1)
+		brush = float4(1.0f, 1.0f, 1.0f, 0.0f);
+
+	if (brush.r > 0.99f)
+		brush = float4(1.0f, 1.0f, 1.0f, 0.0f);
+	
+	//brush = float4(0.1,0.1,0.1,0.5f);
 	return brush;
-	return float4(1, 0, 0, 1);
+	//return float4(1, 0, 0, 1);
 	//return tex2D(g_sampleMainColor, TexCoord);
 }
 
@@ -492,11 +546,20 @@ technique ColorChange
 
 	pass p5
 	{
+		vertexShader = compile vs_3_0 VShader();
+		pixelShader = compile ps_3_0 PShaderEdgeBlur();
+
+		AlphaBlendEnable = false;
+	}
+
+	pass p6
+	{
 		vertexShader = compile vs_3_0 VShaderParticle();
 		pixelShader = compile ps_3_0 PShaderParticle();
 
 		AlphaBlendEnable = true;
-		SrcBlend = INVSRCALPHA;
-		DestBlend = SRCALPHA;
+		SrcBlend = SRCALPHA;
+		DestBlend = INVSRCALPHA;
 	}
+
 }

@@ -44,8 +44,8 @@ void SumiE::CreatePostEffect()
 
 	//w = 100; //RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth
 	//h = 100; //RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight
-	w = RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth/1;
-	h = RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight/1;
+	w = RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth / 2;
+	h = RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight / 2;
 	// For each living particle.
 	for (UINT j = 0; j < h; ++j)
 	{
@@ -61,6 +61,11 @@ void SumiE::CreatePostEffect()
 
 
 	PostEffectBase::CreatePostEffect("System\\Sumi_e.fx");
+
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
+		1, D3DUSAGE_RENDERTARGET,
+		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
+		&m_pEdgeBlur, NULL);
 
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
 		1, D3DUSAGE_RENDERTARGET,
@@ -113,7 +118,7 @@ void SumiE::CreatePostEffect()
 		abort();
 	}
 	//==========================================================
-	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "Res\\4.bmp", &m_pInkTex))
+	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "Res\\3.bmp", &m_pInkTex))
 	{
 		MessageBox(GetForegroundWindow(), "TextureError", "InkTex", MB_OK);
 		abort();
@@ -360,12 +365,29 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	m_postEffect->EndPass();
 
 	SafeRelease(pSurf_SA5);
+
+	//=============================================================================================================
+	//模糊轮廓图
+	PDIRECT3DSURFACE9 pSurf_EdgeBlur = NULL;
+	m_pEdgeBlur->GetSurfaceLevel(0, &pSurf_EdgeBlur);
+
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_EdgeBlur);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
+
+	m_postEffect->SetTexture(MAINCOLORBUFFER, mainBuffer);
+
+	m_postEffect->CommitChanges();
+
+	m_postEffect->BeginPass(5);
+	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+	m_postEffect->EndPass();
+
 	//=============================================================================================================
 	//合并
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pPostSurface);
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
-	m_postEffect->SetTexture(MAINCOLORBUFFER, mainBuffer);
+	m_postEffect->SetTexture(MAINCOLORBUFFER, m_pEdgeBlur);
 
 	m_postEffect->SetTexture("SA1", m_StrokesArea_1);
 	m_postEffect->SetTexture("SA2", m_StrokesArea_2);
@@ -379,31 +401,34 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 	m_postEffect->EndPass();
 
-	//=============================================================================================================
-	//粒子TEST
-	//RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pPostSurface);
-	//RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
+	bool openParticle = true;
+	if (openParticle)
+	{
+		//=============================================================================================================
+		//粒子TEST
+
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_POINTSPRITEENABLE, true);
+
+		D3DXMATRIX temp = RENDERDEVICE::Instance().ViewMatrix * RENDERDEVICE::Instance().ProjMatrix;
+		m_postEffect->SetMatrix(VIEWPROJMATRIX, &temp);
+		m_postEffect->SetMatrix(WORLDVIEWPROJMATRIX, &temp);
+		m_postEffect->SetMatrix(PROJECTIONMATRIX, &RENDERDEVICE::Instance().ProjMatrix);
+
+		m_postEffect->SetTexture(MAINCOLORBUFFER, m_pEdgeBlur);
+		m_postEffect->SetTexture(NORMALBUFFER, RENDERPIPE::Instance().m_pNormalTarget);
+		m_postEffect->SetTexture("g_InkTex", m_pInkTex);
+
+		m_postEffect->CommitChanges();
+
+		m_postEffect->BeginPass(6);
+		RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, mParticleBuffer, 0, sizeof(Particle));
+		RENDERDEVICE::Instance().g_pD3DDevice->SetVertexDeclaration(mParticleDecl);
+		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_POINTLIST, 0, w*h);
+		m_postEffect->EndPass();
+
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_POINTSPRITEENABLE, false);
+	}
 	
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_POINTSPRITEENABLE, true);
-	
-	D3DXMATRIX temp = RENDERDEVICE::Instance().ViewMatrix * RENDERDEVICE::Instance().ProjMatrix;
-	m_postEffect->SetMatrix(VIEWPROJMATRIX, &temp);
-	m_postEffect->SetMatrix(WORLDVIEWPROJMATRIX, &temp);
-	m_postEffect->SetMatrix(PROJECTIONMATRIX, &RENDERDEVICE::Instance().ProjMatrix);
-
-	m_postEffect->SetTexture(MAINCOLORBUFFER, mainBuffer);
-	m_postEffect->SetTexture(NORMALBUFFER, RENDERPIPE::Instance().m_pNormalTarget);
-	m_postEffect->SetTexture("g_InkTex", m_pInkTex);
-
-	m_postEffect->CommitChanges();
-
-	m_postEffect->BeginPass(5);
-	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, mParticleBuffer, 0, sizeof(Particle));
-	RENDERDEVICE::Instance().g_pD3DDevice->SetVertexDeclaration(mParticleDecl);
-	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_POINTLIST, 0, w*h);
-	m_postEffect->EndPass();
-
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_POINTSPRITEENABLE, false);
 	
 
 	m_postEffect->End();

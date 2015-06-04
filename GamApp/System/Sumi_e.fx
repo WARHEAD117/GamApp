@@ -96,6 +96,20 @@ sampler_state
 	MagFilter = Point;
 	MipFilter = Point;
 };
+
+texture		g_InkTex;
+sampler2D g_sampleInkTex =
+sampler_state
+{
+	Texture = <g_InkTex>;
+	MinFilter = Point;
+	MagFilter = Point;
+	MipFilter = Point;
+	AddressU = Border;
+	AddressV = Border;
+	bordercolor = float4(1,1,1,1);
+};
+
 int minI = 0;
 int maxI = 70;
 
@@ -116,8 +130,10 @@ OutputVS VShader(float4 posL       : POSITION0,
 
 	outVS.TexCoord = TexCoord;
 
+	tex2D(g_sampleNormal, float2(0, 0));
 	return outVS;
 }
+
 
 float4 fliter(float3x3 _filter, sampler2D _image, float2 texCoord, float2 texSize)
 {
@@ -158,19 +174,21 @@ float4 PShaderGrayscale(float2 TexCoord : TEXCOORD0) : COLOR
 
 	normal = normalize(normal);
 
-	float3 light = float3(0, -0.3, 1);
+	float3 light = float3(0, -0.1, 1);
 	light = normalize(light);
 
 	float nl = dot(normal, -light);
 
-	//nl *= nl;
-	nl *= 0.9;
+	nl = pow(nl, 1.5);
+	//nl *= 0.9;
 
 	return float4(nl, nl, nl, 1.0f);
 }
 
 float4 PShaderBlur(float2 TexCoord : TEXCOORD0) : COLOR
 {
+	return tex2D(g_sampleGrayscale, TexCoord);
+
 	float4 color = GaussianBlur(g_ScreenWidth, g_ScreenHeight, g_sampleGrayscale, TexCoord);
 
 	return color;
@@ -227,10 +245,10 @@ float4 Normal_Gray(float2 TexCoord)
 float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
 {
 	float color = tex2D(g_sampleGrayscale, TexCoord).r;
-	if (color < 0.1f)
-		return float4(0, 0, 0, 1.0f);
-	else
-		return float4(1, 1, 1, 1.0f);
+	//if (color < 0.9f)
+	//	return float4(color, color, color, 1.0f);
+	//else
+	//	return float4(1, 1, 1, 1.0f);
 	
 	int color_int = color * 255;
 	if (color_int < maxI && color_int >= minI)
@@ -243,6 +261,10 @@ float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
 
 float GetOverlap(float dark, float light)
 {
+	float tempLight = max(dark, light);
+	float tempDark = min(dark, light);
+	dark = tempDark;
+	light = tempLight;
 	int d_stroke = (light - dark) * 255;
 	int d_overlap = (
 		40 * pow(d_stroke / 100, 3) -
@@ -253,9 +275,14 @@ float GetOverlap(float dark, float light)
 }
 
 float4 PShaderBlend(float2 TexCoord : TEXCOORD0) : COLOR
-{
+{	
+	return tex2D(g_sampleMainColor, TexCoord);
 	//return tex2D(g_sampleGrayscale, TexCoord);
-	return tex2D(g_sampleSA1, TexCoord);
+	//return tex2D(g_sampleSA1, TexCoord);
+	//return tex2D(g_sampleSA2, TexCoord);
+	//return tex2D(g_sampleSA3, TexCoord);
+	//return tex2D(g_sampleSA4, TexCoord);
+	//return tex2D(g_sampleSA5, TexCoord);
 
 	float color1 = tex2D(g_sampleSA1, TexCoord).r;
 		//color1 = GaussianBlur(g_ScreenWidth, g_ScreenHeight, g_sampleSA1, TexCoord).r;
@@ -274,9 +301,9 @@ float4 PShaderBlend(float2 TexCoord : TEXCOORD0) : COLOR
 	//	return float4(1, 0, 0, 1);
 	//else
 	//	return float4(0, 1, 0, 1);
-	float blendedColor = color5;
-	if (color4 <= 0.99)
-		blendedColor = GetOverlap(color4, color5);
+	float blendedColor = color4;
+	//if (color4 <= 0.99)
+	//	blendedColor = GetOverlap(color4, color5);
 
 	if (color3 <= 0.99)
 		blendedColor = GetOverlap(color3, blendedColor);
@@ -366,12 +393,69 @@ float4 PShaderDiffusion(float2 TexCoord : TEXCOORD0) : COLOR
 			avg = sum / count;
 			float random = frac(TexCoord.x * count + TexCoord.y * avg + 1.17 * 1.86 * avg / 255) * 0.2f;
 			random = 0;
-			avg *= (0.95f - random);
+			avg *= (0.98f - random);
 			outColor = 1 - avg / 255.0f;
 		}
 	}
 	//return float4(1, 0, 0, 1);
 	return float4(outColor, outColor, outColor, 1.0f);
+}
+
+struct P_OutVS
+{
+	float4 posWVP         : POSITION0;
+	float2 TexCoord		  : TEXCOORD0;
+	float  psize		  : PSIZE;
+	float4 color		  : COLOR0;
+};
+
+P_OutVS VShaderParticle(float4 posL       : POSITION0,
+	float2 TexCoord : TEXCOORD0)
+{
+	P_OutVS outVS = (P_OutVS)0;
+
+	//最终输出的顶点位置（经过世界、观察、投影矩阵变换）
+	//outVS.posWVP = mul(float4(0.5f, 0.5f, 0, 1), g_Proj);
+	//outVS.posWVP = float4(2*TexCoord.x-1, 1-2*TexCoord.y, 0, 1);
+	outVS.posWVP = float4( - 2, -2, -2, 1);
+	//outVS.TexCoord = TexCoord;
+	
+	outVS.psize = 0;
+	float4 color = tex2Dlod(g_sampleMainColor, float4(TexCoord.x, TexCoord.y, 0, 0));
+	if (color.r < 0.99f)
+	{
+		outVS.psize = 20 * (1 - color.r);
+		outVS.posWVP = float4(2 * TexCoord.x - 1, 1 - 2 * TexCoord.y, 0, 1);
+	}
+	
+	outVS.color = color;
+	outVS.color = float4(TexCoord, 0, 0);
+	return outVS;
+}
+
+float4 PShaderParticle(float2 TexCoord : TEXCOORD0,
+	float4 color : COLOR0) : COLOR
+{ 
+	float3 normal = normalize(GetNormal(g_sampleNormal, color.xy));
+	//return float4(normal, 0.0f);
+	//float3 normal3 = normalize(normal.xyz);
+
+	float cosA = normal.x;
+	float A = 3.141592653 - acos(cosA);
+	if (normal.y < 0)
+		A = 3.141592653 + acos(cosA);
+	//return normal;
+
+	float2x2 rotationM = float2x2(float2(cos(A), -sin(A)), float2(sin(A), cos(A)));
+	TexCoord = mul(TexCoord - float2(0.5,0.5), rotationM) + float2(0.5,0.5);
+	//TexCoord = saturate(TexCoord);
+	float4 brush = tex2D(g_sampleInkTex, TexCoord);
+	brush.a = brush.r;
+	if (brush.r < 0.99f)
+		brush = float4(0, 0, 0, brush.a);
+	return brush;
+	return float4(1, 0, 0, 1);
+	//return tex2D(g_sampleMainColor, TexCoord);
 }
 
 technique ColorChange
@@ -404,5 +488,15 @@ technique ColorChange
 	{
 		vertexShader = compile vs_3_0 VShader();
 		pixelShader = compile ps_3_0 PShaderDiffusion();
+	}
+
+	pass p5
+	{
+		vertexShader = compile vs_3_0 VShaderParticle();
+		pixelShader = compile ps_3_0 PShaderParticle();
+
+		AlphaBlendEnable = true;
+		SrcBlend = INVSRCALPHA;
+		DestBlend = SRCALPHA;
 	}
 }

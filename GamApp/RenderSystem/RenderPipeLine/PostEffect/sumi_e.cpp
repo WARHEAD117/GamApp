@@ -13,9 +13,53 @@ SumiE::SumiE()
 SumiE::~SumiE()
 {
 }
+struct Particle
+{
+	D3DXVECTOR3 particlePos;
+	D3DXVECTOR2	uv;
+	//static LPDIRECT3DVERTEXDECLARATION9 mParticleDecl;
+};
+
+const D3DVERTEXELEMENT9 PARTICLEVERTEXDECL[] =
+{
+	{ 0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0 },
+	{ 0, 12, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0 },
+	D3DDECL_END()
+};
+
+int w = 100; //RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth
+int h = 100; //RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight
 
 void SumiE::CreatePostEffect()
 {
+	///////////////////////////////////////////////////////////
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateVertexDeclaration(PARTICLEVERTEXDECL, &mParticleDecl);
+	int particleNum = RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth * RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight;
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateVertexBuffer(particleNum*sizeof(Particle),
+		D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY | D3DUSAGE_POINTS,
+		0, D3DPOOL_DEFAULT, &mParticleBuffer, 0);
+
+	Particle* p = 0;
+	mParticleBuffer->Lock(0, 0, (void**)&p, D3DLOCK_DISCARD);
+
+	//w = 100; //RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth
+	//h = 100; //RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight
+	w = RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth/1;
+	h = RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight/1;
+	// For each living particle.
+	for (UINT j = 0; j < h; ++j)
+	{
+		for (UINT i = 0; i < w; ++i)
+		{
+			// Copy particle to VB
+			p[j*w+i].uv = D3DXVECTOR2(i * 1.0f / w, j * 1.0f / h);
+		}
+	}
+	mParticleBuffer->Unlock();
+	///////////////////////////////////////////////////////////
+
+
+
 	PostEffectBase::CreatePostEffect("System\\Sumi_e.fx");
 
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
@@ -66,6 +110,12 @@ void SumiE::CreatePostEffect()
 	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "Res\\testInkImage.png", &m_pTestInk))
 	{
 		MessageBox(GetForegroundWindow(), "TextureError", "testInkImage", MB_OK);
+		abort();
+	}
+	//==========================================================
+	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "Res\\4.bmp", &m_pInkTex))
+	{
+		MessageBox(GetForegroundWindow(), "TextureError", "InkTex", MB_OK);
 		abort();
 	}
 }
@@ -188,10 +238,10 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_SA1);
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
-	m_postEffect->SetTexture("g_GrayscaleBuffer", m_pTestInk);
+	m_postEffect->SetTexture("g_GrayscaleBuffer", m_BlurredGaryscale);//m_BlurredGaryscale    m_pTestInk
 
 	m_postEffect->SetInt("minI", 0);
-	m_postEffect->SetInt("maxI", 255);
+	m_postEffect->SetInt("maxI", 70);
 
 	m_postEffect->CommitChanges();
 
@@ -199,7 +249,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 	m_postEffect->EndPass();
 
-	int d = 10;
+	int d = 0;
 	m_Diffusion2 = m_StrokesArea_1;
 	for (int i = 0; i < d; i++)
 	{
@@ -328,6 +378,33 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	m_postEffect->BeginPass(2);
 	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 	m_postEffect->EndPass();
+
+	//=============================================================================================================
+	//Á£×ÓTEST
+	//RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pPostSurface);
+	//RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
+	
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_POINTSPRITEENABLE, true);
+	
+	D3DXMATRIX temp = RENDERDEVICE::Instance().ViewMatrix * RENDERDEVICE::Instance().ProjMatrix;
+	m_postEffect->SetMatrix(VIEWPROJMATRIX, &temp);
+	m_postEffect->SetMatrix(WORLDVIEWPROJMATRIX, &temp);
+	m_postEffect->SetMatrix(PROJECTIONMATRIX, &RENDERDEVICE::Instance().ProjMatrix);
+
+	m_postEffect->SetTexture(MAINCOLORBUFFER, mainBuffer);
+	m_postEffect->SetTexture(NORMALBUFFER, RENDERPIPE::Instance().m_pNormalTarget);
+	m_postEffect->SetTexture("g_InkTex", m_pInkTex);
+
+	m_postEffect->CommitChanges();
+
+	m_postEffect->BeginPass(5);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, mParticleBuffer, 0, sizeof(Particle));
+	RENDERDEVICE::Instance().g_pD3DDevice->SetVertexDeclaration(mParticleDecl);
+	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_POINTLIST, 0, w*h);
+	m_postEffect->EndPass();
+
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_POINTSPRITEENABLE, false);
+	
 
 	m_postEffect->End();
 }

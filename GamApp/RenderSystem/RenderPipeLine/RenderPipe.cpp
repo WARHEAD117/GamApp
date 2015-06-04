@@ -844,10 +844,8 @@ void RenderPipe::RenderAll()
 
 	if (m_enableEdgeRecognize)
 	{
-		sumiE.RenderPost(m_pPostTarget);
-		m_pPostTarget = sumiE.GetPostTarget();
-		//edgeRecognize.RenderPost(m_pPostTarget);
-		//m_pPostTarget = edgeRecognize.GetPostTarget();
+		edgeRecognize.RenderPost(m_pPostTarget);
+		m_pPostTarget = edgeRecognize.GetPostTarget();
 		/*
 		edgeChange.RenderPost(m_pPostTarget);
 		m_pPostTarget = edgeChange.GetPostTarget();
@@ -870,6 +868,11 @@ void RenderPipe::RenderAll()
 		edgeChange.RenderPost(m_pPostTarget);
 		m_pPostTarget = edgeChange.GetPostTarget();
 		*/
+
+		sumiE.RenderPost(m_pPostTarget);
+		m_pPostTarget = sumiE.GetPostTarget();
+
+		
 		//npr.RenderPost(m_pPostTarget, m_pMainColorTarget);
 		//m_pPostTarget = npr.GetPostTarget();
 	}

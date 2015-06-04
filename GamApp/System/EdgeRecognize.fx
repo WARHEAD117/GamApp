@@ -199,13 +199,14 @@ float4 Normal_Edge(float2 TexCoord)
 	if (depth > 1000)
 	{
 		normal = float3(0, 0, 1);
+		return float4(1, 1, 1, 1);
 	}
-	//float3 normalLeft = normalize(GetNormal(TexCoord + float2(-1.0f / g_ScreenWidth, -0.0f / g_ScreenHeight), g_sampleNormal));
+	float3 normalLeft = normalize(GetNormal(TexCoord + float2(-1.0f / g_ScreenWidth, -0.0f / g_ScreenHeight), g_sampleNormal));
 	float3 normalRight = normalize(GetNormal(TexCoord + float2(1.0f / g_ScreenWidth, -0.0f / g_ScreenHeight), g_sampleNormal));
-		normalRight = normalize(GetUnsharpMaskedNormal(TexCoord + float2(1.0f / g_ScreenWidth, -0.0f / g_ScreenHeight), g_sampleNormal));
-	//float3 normalUp = normalize(GetNormal(TexCoord + float2(-0.0f / g_ScreenWidth, -1.0f / g_ScreenHeight), g_sampleNormal));
+		//normalRight = normalize(GetUnsharpMaskedNormal(TexCoord + float2(1.0f / g_ScreenWidth, -0.0f / g_ScreenHeight), g_sampleNormal));
+	float3 normalUp = normalize(GetNormal(TexCoord + float2(-0.0f / g_ScreenWidth, -1.0f / g_ScreenHeight), g_sampleNormal));
 	float3 normalDown = normalize(GetNormal(TexCoord + float2(-0.0f / g_ScreenWidth, 1.0f / g_ScreenHeight), g_sampleNormal));
-		normalDown = normalize(GetUnsharpMaskedNormal(TexCoord + float2(-0.0f / g_ScreenWidth, 1.0f / g_ScreenHeight), g_sampleNormal));
+		//normalDown = normalize(GetUnsharpMaskedNormal(TexCoord + float2(-0.0f / g_ScreenWidth, 1.0f / g_ScreenHeight), g_sampleNormal));
 
 	if (depthRight > 1000)
 	{
@@ -215,9 +216,21 @@ float4 Normal_Edge(float2 TexCoord)
 	{
 		normalDown = float3(0, 0, 1);
 	}
+	if (depthLeft > 1000)
+	{
+		normalLeft = float3(0, 0, 1);
+	}
+	if (depthUp > 1000)
+	{
+		normalUp = float3(0, 0, 1);
+	}
 
 	float dnx = dot(normal, normalRight);
 	float dny = dot(normal, normalDown);
+	float dnx2 = dot(normalLeft, normal);
+	float dny2 = dot(normalDown, normal);
+	dnx = min(dnx, dnx2);
+	dny = min(dny, dny2);
 
 	float N = sqrt(dnx*dnx + dny*dny);
 
@@ -326,8 +339,8 @@ float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
 
 	//return DiffEdge(g_sampleMainColor, TexCoord, float2(g_ScreenWidth, g_ScreenHeight));
 	//return SobelEdge(g_sampleMainColor, TexCoord, float2(g_ScreenWidth, g_ScreenHeight));
-	return Normal_Gray(TexCoord);
-	return Normal_Interval(TexCoord);
+	//return Normal_Gray(TexCoord);
+	//return Normal_Interval(TexCoord);
 	return Normal_Edge(TexCoord);
 	return Normal_Depth_Edge(TexCoord);
 	//============================================================================

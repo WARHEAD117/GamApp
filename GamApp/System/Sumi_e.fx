@@ -301,12 +301,12 @@ float4 PShaderBlend(float2 TexCoord : TEXCOORD0) : COLOR
 	//	return float4(1, 0, 0, 1);
 	//else
 	//	return float4(0, 1, 0, 1);
-	float blendedColor = color4;
+	float blendedColor = color3;
 	//if (color4 <= 0.99)
 	//	blendedColor = GetOverlap(color4, color5);
 
-	if (color3 <= 0.99)
-		blendedColor = GetOverlap(color3, blendedColor);
+	//if (color3 <= 0.99)
+	//	blendedColor = GetOverlap(color3, blendedColor);
 	if (color2 <= 0.99)
 		blendedColor = GetOverlap(color2, blendedColor);
 	if (color1 <= 0.99)
@@ -462,7 +462,7 @@ P_OutVS VShaderParticle(float4 posL       : POSITION0,
 	float4 color = tex2Dlod(g_sampleMainColor, float4(TexCoord.x, TexCoord.y, 0, 0));
 	if (color.r < 0.99f)
 	{
-		outVS.psize = 20 * (1 - color.r);
+		outVS.psize = 22 * (1 - color.r);
 		outVS.posWVP = float4(2 * TexCoord.x - 1, 1 - 2 * TexCoord.y, 0, 1);
 	}
 	
@@ -491,12 +491,12 @@ float4 PShaderParticle(float2 TexCoord : TEXCOORD0,
 		//brush.rgb = float3(0.5, 0.5, 0.5);
 	brush.a = 1;
 
-	if (brush.r > 0.99f)
+	if (brush.r > 0.59f)
 	{
 		brush = float4(1.0f, 1.0f, 1.0f, 0.0f);
 	}
 	else
-		brush = float4(0.0f, 0.0f, 0.0f, 0.5f);
+		brush = float4(0.3f, 0.3f, 0.3f, 0.5f);
 	//brush.a = brush.r;
 
 

@@ -113,6 +113,10 @@ sampler_state
 int minI = 0;
 int maxI = 70;
 
+int g_baseTexSize = 32;
+int g_maxTexSize = 20;
+
+
 struct OutputVS
 {
 	float4 posWVP         : POSITION0;
@@ -242,7 +246,88 @@ float4 Normal_Gray(float2 TexCoord)
 	return float4(nl, nl, nl, 1.0f);
 }
 
-float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
+float4 PShaderDiffusion(float2 TexCoord : TEXCOORD0) : COLOR
+{
+	//return float4(1, 0, 0, 1);
+	float color = tex2D(g_sampleDiffusionSource, TexCoord).r;
+	float avg = color;
+	float outColor = color;
+
+	if (color > 0.99)
+	{
+		//return float4(1, 0, 0, 1);
+		float colorL = tex2D(g_sampleDiffusionSource, TexCoord + float2(-1, 0)*float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight)).r;
+		float colorR = tex2D(g_sampleDiffusionSource, TexCoord + float2(1, 0)*float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight)).r;
+		float colorU = tex2D(g_sampleDiffusionSource, TexCoord + float2(0, -1)*float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight)).r;
+		float colorD = tex2D(g_sampleDiffusionSource, TexCoord + float2(0, 1)*float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight)).r;
+
+		float colorLU = tex2D(g_sampleDiffusionSource, TexCoord + float2(-1, -1)*float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight)).r;
+		float colorRU = tex2D(g_sampleDiffusionSource, TexCoord + float2(1, -1)*float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight)).r;
+		float colorLD = tex2D(g_sampleDiffusionSource, TexCoord + float2(-1, 1)*float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight)).r;
+		float colorRD = tex2D(g_sampleDiffusionSource, TexCoord + float2(1, 1)*float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight)).r;
+
+		int InkQ_L = 255 - colorL * 255;
+		int InkQ_R = 255 - colorR * 255;
+		int InkQ_U = 255 - colorU * 255;
+		int InkQ_D = 255 - colorD * 255;
+
+		int InkQ_LU = 255 - colorLU * 255;
+		int InkQ_RU = 255 - colorRU * 255;
+		int InkQ_LD = 255 - colorLD * 255;
+		int InkQ_RD = 255 - colorRD * 255;
+
+		int sum = 0;
+		int count = 0;
+
+		if (InkQ_L > 0)
+		{
+			sum += InkQ_L; count++;
+		}
+		if (InkQ_R > 0)
+		{
+			sum += InkQ_R; count++;
+		}
+		if (InkQ_U > 0)
+		{
+			sum += InkQ_U; count++;
+		}
+		if (InkQ_D > 0)
+		{
+			sum += InkQ_D; count++;
+		}
+		/*
+		if (InkQ_LU > 0)
+		{
+		sum += InkQ_LU; count++;
+		}
+		if (InkQ_RU > 0)
+		{
+		sum += InkQ_RU; count++;
+		}
+		if (InkQ_LD > 0)
+		{
+		sum += InkQ_LD; count++;
+		}
+		if (InkQ_RD > 0)
+		{
+		sum += InkQ_RD; count++;
+		}
+		*/
+		if (count > 0)
+		{
+			//return float4(1, 0, 0, 1);
+			avg = sum / count;
+			float random = frac(TexCoord.x * count + TexCoord.y * avg + 1.17 * 1.86 * avg / 255) * 0.2f;
+			random = 0;
+			avg *= (0.98f - random);
+			outColor = 1 - avg / 255.0f;
+		}
+	}
+	//return float4(1, 0, 0, 1);
+	return float4(outColor, outColor, outColor, 1.0f);
+}
+
+float4 PSAreaSplit(float2 TexCoord : TEXCOORD0) : COLOR
 {
 	float color = tex2D(g_sampleGrayscale, TexCoord).r;
 	//if (color < 0.9f)
@@ -257,6 +342,78 @@ float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
 		return float4(minI / 255.0f, minI / 255.0f, minI / 255.0f, 1.0f);
 	else
 		return float4(1, 1, 1, 1);
+}
+
+float4 PShaderEdgeBlur(float2 TexCoord : TEXCOORD0) : COLOR
+{
+	//return tex2D(g_sampleMainColor, TexCoord);
+	//return float4(1, 0, 0, 1);
+	
+
+	float color = tex2D(g_sampleMainColor, TexCoord).r;
+	if (color >= 0.99)
+		return float4(color, color, color, 1);
+
+	float2 offset = float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight);
+
+
+	float colorL = tex2D(g_sampleMainColor, TexCoord + float2(-1, 0) * offset).r;
+	float colorR = tex2D(g_sampleMainColor, TexCoord + float2(1, 0) * offset).r;
+	float colorU = tex2D(g_sampleMainColor, TexCoord + float2(0, -1) * offset).r;
+	float colorD = tex2D(g_sampleMainColor, TexCoord + float2(0, 1) * offset).r;
+	float colorLU = tex2D(g_sampleMainColor, TexCoord + float2(-1, -1) * offset).r;
+	float colorRU = tex2D(g_sampleMainColor, TexCoord + float2(1, -1) * offset).r;
+	float colorLD = tex2D(g_sampleMainColor, TexCoord + float2(-1, 1) * offset).r;
+	float colorRD = tex2D(g_sampleMainColor, TexCoord + float2(1, 1) * offset).r;
+
+	float colorList[9] = { color, colorL, colorR, colorU, colorD, colorLU, colorRU, colorLD, colorRD };
+
+	//--------------------------------------------------------------------
+	//因为一般是需要强调前景，所以当前像素是后景时，邻接像素如果有
+	//前景的话，当前这个像素是没有必要存在的，所以把这个像素去掉
+	//但是因为阈值无论如何设置，都是无法照顾到所有情形，所以将需要剔掉的像素
+	//的颜色设置为0.8，这样在之后的平均化的时候就可以使这一区域的边缘淡化
+	//也就可以使纹理变小，就不会出现脏兮兮的感觉了
+	//但是现在还是混在平滑化的代码里，需要单独提出来
+	float3 pos = GetPosition(TexCoord, g_samplePosition);
+	
+	float3 posUp    = GetPosition(TexCoord + float2(0, -1) * offset, g_samplePosition);
+	float3 posDown  = GetPosition(TexCoord + float2(0, 1) * offset, g_samplePosition);
+	float3 posLeft  = GetPosition(TexCoord + float2(-1, 0) * offset, g_samplePosition);
+	float3 posRight = GetPosition(TexCoord + float2(1, 0) * offset, g_samplePosition);
+	float3 neighbour[4] = {posLeft, posRight, posUp, posDown};
+	bool hasCloserPix = false;
+	int factor = 0.8;
+	for (int neigIndex = 0; neigIndex < 4; neigIndex++)
+	{
+		if (pos.z - neighbour[neigIndex].z>= factor && color < 0.5f && colorList[neigIndex + 1] < 0.5)
+		{
+			hasCloserPix = true;
+			break;
+		}
+	}
+	if (hasCloserPix)
+	{
+		return float4(0.8, 0.8, 0.8, 1);
+	}
+	//----------------------------------------------------------------------------------------
+
+	int count = 0;
+	float sum = 0;
+	for (int i = 0; i < 9; i++)
+	{
+		if (colorList[i] < 0.99)
+		{
+			count++;
+			sum += colorList[i];
+		}
+	}
+	if (count == 0)
+		return float4(1, 1, 1, 1);
+	float finalColor = 1.0f * sum / count;
+	return float4(finalColor, finalColor, finalColor, 1.0f);
+
+	return tex2D(g_sampleMainColor, TexCoord);
 }
 
 float GetOverlap(float dark, float light)
@@ -277,8 +434,10 @@ float GetOverlap(float dark, float light)
 float4 PShaderBlend(float2 TexCoord : TEXCOORD0) : COLOR
 {	
 	return float4(1, 1, 1, 1);
-	return tex2D(g_sampleMainColor, TexCoord);// *tex2D(g_sampleMainColor, TexCoord)*tex2D(g_sampleMainColor, TexCoord);
+	//return tex2D(g_sampleMainColor, TexCoord);// *tex2D(g_sampleMainColor, TexCoord)*tex2D(g_sampleMainColor, TexCoord);
+
 	//return tex2D(g_sampleGrayscale, TexCoord);
+
 	//return tex2D(g_sampleSA1, TexCoord);
 	//return tex2D(g_sampleSA2, TexCoord);
 	//return tex2D(g_sampleSA3, TexCoord);
@@ -321,124 +480,9 @@ float4 PShaderBlend(float2 TexCoord : TEXCOORD0) : COLOR
 	return outcolor;
 }
 
-float4 PShaderDiffusion(float2 TexCoord : TEXCOORD0) : COLOR
-{
-	//return float4(1, 0, 0, 1);
-	float color = tex2D(g_sampleDiffusionSource, TexCoord).r;
-	float avg = color;
-	float outColor = color;
 
-	if (color > 0.99)
-	{
-		//return float4(1, 0, 0, 1);
-		float colorL = tex2D(g_sampleDiffusionSource, TexCoord + float2(-1, 0)*float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight)).r;
-		float colorR = tex2D(g_sampleDiffusionSource, TexCoord + float2(1, 0)*float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight)).r;
-		float colorU = tex2D(g_sampleDiffusionSource, TexCoord + float2(0, -1)*float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight)).r;
-		float colorD = tex2D(g_sampleDiffusionSource, TexCoord + float2(0, 1)*float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight)).r;
 
-		float colorLU = tex2D(g_sampleDiffusionSource, TexCoord + float2(-1, -1)*float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight)).r;
-		float colorRU = tex2D(g_sampleDiffusionSource, TexCoord + float2(1, -1)*float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight)).r;
-		float colorLD = tex2D(g_sampleDiffusionSource, TexCoord + float2(-1, 1)*float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight)).r;
-		float colorRD = tex2D(g_sampleDiffusionSource, TexCoord + float2(1, 1)*float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight)).r;
 
-		int InkQ_L = 255 - colorL * 255;
-		int InkQ_R = 255 - colorR * 255;
-		int InkQ_U = 255 - colorU * 255;
-		int InkQ_D = 255 - colorD * 255;
-
-		int InkQ_LU = 255 - colorLU * 255;
-		int InkQ_RU = 255 - colorRU * 255;
-		int InkQ_LD = 255 - colorLD * 255;
-		int InkQ_RD = 255 - colorRD * 255;
-
-		int sum = 0;
-		int count = 0;
-		
-		if (InkQ_L > 0)
-		{
-			sum += InkQ_L; count++;
-		}
-		if (InkQ_R > 0)
-		{
-			sum += InkQ_R; count++;
-		}
-		if (InkQ_U > 0)
-		{
-			sum += InkQ_U; count++;
-		}
-		if (InkQ_D > 0)
-		{
-			sum += InkQ_D; count++;
-		}
-		/*
-		if (InkQ_LU > 0)
-		{
-			sum += InkQ_LU; count++;
-		}
-		if (InkQ_RU > 0)
-		{
-			sum += InkQ_RU; count++;
-		}
-		if (InkQ_LD > 0)
-		{
-			sum += InkQ_LD; count++;
-		}
-		if (InkQ_RD > 0)
-		{
-			sum += InkQ_RD; count++;
-		}
-		*/
-		if (count > 0)
-		{
-			//return float4(1, 0, 0, 1);
-			avg = sum / count;
-			float random = frac(TexCoord.x * count + TexCoord.y * avg + 1.17 * 1.86 * avg / 255) * 0.2f;
-			random = 0;
-			avg *= (0.98f - random);
-			outColor = 1 - avg / 255.0f;
-		}
-	}
-	//return float4(1, 0, 0, 1);
-	return float4(outColor, outColor, outColor, 1.0f);
-}
-
-float4 PShaderEdgeBlur(float2 TexCoord : TEXCOORD0) : COLOR
-{
-	//return tex2D(g_sampleMainColor, TexCoord);
-	//return float4(1, 0, 0, 1);
-	float color = tex2D(g_sampleMainColor, TexCoord).r;
-	if (color >= 0.99)
-		return float4(color, color, color, 1);
-
-	float2 offset = float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight);
-	float colorL = tex2D(g_sampleMainColor, TexCoord + float2(-1, 0) * offset).r;
-	float colorR = tex2D(g_sampleMainColor, TexCoord + float2(1, 0) * offset).r;
-	float colorU = tex2D(g_sampleMainColor, TexCoord + float2(0, -1) * offset).r;
-	float colorD = tex2D(g_sampleMainColor, TexCoord + float2(0, 1) * offset).r;
-	float colorLU = tex2D(g_sampleMainColor, TexCoord + float2(-1, -1) * offset).r;
-	float colorRU = tex2D(g_sampleMainColor, TexCoord + float2(1, -1) * offset).r;
-	float colorLD = tex2D(g_sampleMainColor, TexCoord + float2(-1, 1) * offset).r;
-	float colorRD = tex2D(g_sampleMainColor, TexCoord + float2(1, 1) * offset).r;
-
-	float colorList[9] = { color, colorL, colorR, colorU, colorD, colorLU, colorRU, colorLD, colorRD };
-
-	int count = 0;
-	float sum = 0;
-	for (int i = 0; i < 9; i++)
-	{
-		if (colorList[i] < 0.99)
-		{
-			count++;
-			sum += colorList[i];
-		}
-	}
-	if (count == 0)
-		return float4(1, 1, 1, 1);
-	float finalColor = 1.0f * sum / count;
-	return float4(finalColor, finalColor, finalColor, 1.0f);
-
-	return tex2D(g_sampleMainColor, TexCoord);
-}
 
 struct P_OutVS
 {
@@ -463,8 +507,8 @@ P_OutVS VShaderParticle(float4 posL       : POSITION0,
 	float4 color = tex2Dlod(g_sampleMainColor, float4(TexCoord.x, TexCoord.y, 0, 0));
 	if (color.r < 0.99f)
 	{
-		outVS.psize = 32 * (1 - color.r);
-		outVS.psize = clamp(outVS.psize, 0, 22);
+		outVS.psize = g_baseTexSize * (1 - color.r);
+		outVS.psize = clamp(outVS.psize, 0, g_maxTexSize);
 
 		outVS.posWVP = float4(2 * TexCoord.x - 1, 1 - 2 * TexCoord.y, 0, 1);
 	}
@@ -503,6 +547,7 @@ float4 PShaderParticle(float2 TexCoord : TEXCOORD0,
 	//TexCoord = mul(TexCoord - float2(0.5,0.5), rotationM) + float2(0.5,0.5);
 	TexCoord = mul(rotationM, TexCoord - float2(0.5, 0.5)) + float2(0.5, 0.5);
 	
+	//扭曲纹理，初步代码，未完成
 	float2x2 tranS = float2x2(float2(1, 0.2* sin(TexCoord.y*3.141592653) / TexCoord.y), float2(0, 1));
 	//TexCoord = mul(TexCoord, tranS);
 	//TexCoord = mul(tranS, TexCoord);
@@ -548,7 +593,7 @@ technique ColorChange
 	pass p1
 	{
 		vertexShader = compile vs_3_0 VShader();
-		pixelShader = compile ps_3_0 PShader();
+		pixelShader = compile ps_3_0 PSAreaSplit();
 	}
 
 	pass p2
@@ -586,5 +631,4 @@ technique ColorChange
 		SrcBlend = SRCALPHA;
 		DestBlend = INVSRCALPHA;
 	}
-
 }

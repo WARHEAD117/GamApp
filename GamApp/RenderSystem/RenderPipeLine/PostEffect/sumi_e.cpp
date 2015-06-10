@@ -29,6 +29,8 @@ const D3DVERTEXELEMENT9 PARTICLEVERTEXDECL[] =
 
 int w = 100; //RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth
 int h = 100; //RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight
+int baseTexSize = 32;
+int maxTexSize = 22;
 
 void SumiE::CreatePostEffect()
 {
@@ -42,6 +44,8 @@ void SumiE::CreatePostEffect()
 	Particle* p = 0;
 	mParticleBuffer->Lock(0, 0, (void**)&p, D3DLOCK_DISCARD);
 
+	baseTexSize = 32;
+	maxTexSize = 22;
 	//w = 100; //RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth
 	//h = 100; //RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight
 	w = RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth / 1;
@@ -374,6 +378,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_EdgeBlur);
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
+	m_postEffect->SetTexture(POSITIONBUFFER, RENDERPIPE::Instance().m_pPositionTarget);
 	m_postEffect->SetTexture(MAINCOLORBUFFER, mainBuffer);
 
 	m_postEffect->CommitChanges();
@@ -387,7 +392,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pPostSurface);
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
-	m_postEffect->SetTexture(MAINCOLORBUFFER, mainBuffer); //m_pEdgeImage//m_pEdgeBlur
+	m_postEffect->SetTexture(MAINCOLORBUFFER, m_pEdgeBlur); //m_pEdgeImage//m_pEdgeBlur//mainBuffer//RENDERPIPE::Instance().m_pNormalTarget
 
 	m_postEffect->SetTexture("SA1", m_StrokesArea_1);
 	m_postEffect->SetTexture("SA2", m_StrokesArea_2);
@@ -417,6 +422,9 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		m_postEffect->SetTexture(MAINCOLORBUFFER, m_pEdgeBlur);
 		m_postEffect->SetTexture(NORMALBUFFER, RENDERPIPE::Instance().m_pNormalTarget);
 		m_postEffect->SetTexture("g_InkTex", m_pInkTex);
+
+		m_postEffect->SetInt("g_baseTexSize", baseTexSize);
+		m_postEffect->SetInt("g_maxTexSize", maxTexSize);
 
 		m_postEffect->CommitChanges();
 

@@ -196,11 +196,15 @@ float4 Normal_Edge(float2 TexCoord)
 
 	float3 normal = normalize(GetNormal(TexCoord, g_sampleNormal));
 		normal = GetUnsharpMaskedNormal(TexCoord, g_sampleNormal);
+
+	//return float4(normal, 1.0f);
+
 	if (depth > 1000)
 	{
 		normal = float3(0, 0, 1);
 		return float4(1, 1, 1, 1);
 	}
+
 	float3 normalLeft = normalize(GetNormal(TexCoord + float2(-1.0f / g_ScreenWidth, -0.0f / g_ScreenHeight), g_sampleNormal));
 	float3 normalRight = normalize(GetNormal(TexCoord + float2(1.0f / g_ScreenWidth, -0.0f / g_ScreenHeight), g_sampleNormal));
 		//normalRight = normalize(GetUnsharpMaskedNormal(TexCoord + float2(1.0f / g_ScreenWidth, -0.0f / g_ScreenHeight), g_sampleNormal));
@@ -342,7 +346,7 @@ float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
 	//return Normal_Gray(TexCoord);
 	//return Normal_Interval(TexCoord);
 	return Normal_Edge(TexCoord);
-	return Normal_Depth_Edge(TexCoord);
+	//return Normal_Depth_Edge(TexCoord);
 	//============================================================================
 	float3x3 sobel = float3x3(-0.5, -1.0, 0.0,
 							  -1.0,  0.0, 1.0,

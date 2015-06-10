@@ -463,7 +463,9 @@ P_OutVS VShaderParticle(float4 posL       : POSITION0,
 	float4 color = tex2Dlod(g_sampleMainColor, float4(TexCoord.x, TexCoord.y, 0, 0));
 	if (color.r < 0.99f)
 	{
-		outVS.psize = 22 * (1 - color.r);
+		outVS.psize = 32 * (1 - color.r);
+		outVS.psize = clamp(outVS.psize, 0, 22);
+
 		outVS.posWVP = float4(2 * TexCoord.x - 1, 1 - 2 * TexCoord.y, 0, 1);
 	}
 	
@@ -475,18 +477,36 @@ P_OutVS VShaderParticle(float4 posL       : POSITION0,
 float4 PShaderParticle(float2 TexCoord : TEXCOORD0,
 	float4 color : COLOR0) : COLOR
 { 
+	
+
 	float3 normal = normalize(GetNormal(g_sampleNormal, color.xy));
-	//return float4(normal, 0.0f);
+	//return float4(normal, 1.0f);
 	//float3 normal3 = normalize(normal.xyz);
 
-	float cosA = normal.x;
-	float A = 3.141592653 - acos(cosA);
+	float projectXY = sqrt(normal.x * normal.x + normal.y * normal.y);
+	float cosA = normal.x / projectXY;
+	float A = acos(cosA);
 	if (normal.y < 0)
-		A = 3.141592653 + acos(cosA);
+		A = -acos(cosA);
 	//return normal;
 
+	//HLSL内部声明的矩阵是列矩阵
+	//vec(A,B) mat|m00,m01|
+	//------------|m10,m11|
+	//矩阵中储存的的数据是row0(m00,m10),row1(m01,m11)
+	//这样mul计算的时候就可以这样计算
+	//x=dp(vec,row0),y=dp(vec,row1),dp是笛卡尔积
+	//但是在C++代码中储存的还是行向量，因此在SetMatrix的时候是会自动进行转置的
+	//所以如果在hlsl直接声明矩阵，或者没有通过SetMatrix传入的话，就需要改变左右位置
+	//所以这里写成mul(矩阵，向量)
 	float2x2 rotationM = float2x2(float2(cos(A), -sin(A)), float2(sin(A), cos(A)));
-	TexCoord = mul(TexCoord - float2(0.5,0.5), rotationM) + float2(0.5,0.5);
+	//TexCoord = mul(TexCoord - float2(0.5,0.5), rotationM) + float2(0.5,0.5);
+	TexCoord = mul(rotationM, TexCoord - float2(0.5, 0.5)) + float2(0.5, 0.5);
+	
+	float2x2 tranS = float2x2(float2(1, 0.2* sin(TexCoord.y*3.141592653) / TexCoord.y), float2(0, 1));
+	//TexCoord = mul(TexCoord, tranS);
+	//TexCoord = mul(tranS, TexCoord);
+
 	//TexCoord = saturate(TexCoord);
 	float4 brush = tex2D(g_sampleInkTex, TexCoord);
 		//brush.rgb = float3(0.5, 0.5, 0.5);
@@ -497,7 +517,11 @@ float4 PShaderParticle(float2 TexCoord : TEXCOORD0,
 		brush = float4(1.0f, 1.0f, 1.0f, 0.0f);
 	}
 	else
-		brush = float4(0.3f, 0.3f, 0.3f, 0.5f);
+	{
+		brush = float4(0.3f, 0.3f, 0.3f, 0.3f);
+		//brush = float4(normal, 0.5f);
+	}
+		
 	//brush.a = brush.r;
 
 

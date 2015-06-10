@@ -118,7 +118,7 @@ void SumiE::CreatePostEffect()
 		abort();
 	}
 	//==========================================================
-	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "Res\\3.bmp", &m_pInkTex))
+	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "Res\\3.bmp", &m_pInkTex))//3.bmp//R_Test.png
 	{
 		MessageBox(GetForegroundWindow(), "TextureError", "InkTex", MB_OK);
 		abort();

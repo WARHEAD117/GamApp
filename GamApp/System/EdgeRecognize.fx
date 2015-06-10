@@ -210,25 +210,25 @@ float4 Normal_Edge(float2 TexCoord)
 
 	if (depthRight > 1000)
 	{
-		normalRight = float3(0, 0, 1);
+		normalRight = float3(0, 0, -1);
 	}
 	if (depthDown > 1000)
 	{
-		normalDown = float3(0, 0, 1);
+		normalDown = float3(0, 0, -1);
 	}
 	if (depthLeft > 1000)
 	{
-		normalLeft = float3(0, 0, 1);
+		normalLeft = float3(0, 0, -1);
 	}
 	if (depthUp > 1000)
 	{
-		normalUp = float3(0, 0, 1);
+		normalUp = float3(0, 0, -1);
 	}
 
 	float dnx = dot(normal, normalRight);
 	float dny = dot(normal, normalDown);
 	float dnx2 = dot(normalLeft, normal);
-	float dny2 = dot(normalDown, normal);
+	float dny2 = dot(normalUp, normal);
 	dnx = min(dnx, dnx2);
 	dny = min(dny, dny2);
 

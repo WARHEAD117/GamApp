@@ -110,6 +110,58 @@ sampler_state
 	bordercolor = float4(1,1,1,1);
 };
 
+texture		g_InkTex1;
+sampler2D g_sampleInkTex1 =
+sampler_state
+{
+	Texture = <g_InkTex1>;
+	MinFilter = Point;
+	MagFilter = Point;
+	MipFilter = Point;
+	AddressU = Border;
+	AddressV = Border;
+	bordercolor = float4(1, 1, 1, 1);
+};
+
+texture		g_InkTex2;
+sampler2D g_sampleInkTex2 =
+sampler_state
+{
+	Texture = <g_InkTex2>;
+	MinFilter = Point;
+	MagFilter = Point;
+	MipFilter = Point;
+	AddressU = Border;
+	AddressV = Border;
+	bordercolor = float4(1, 1, 1, 1);
+};
+
+texture		g_InkTex3;
+sampler2D g_sampleInkTex3 =
+sampler_state
+{
+	Texture = <g_InkTex3>;
+	MinFilter = Point;
+	MagFilter = Point;
+	MipFilter = Point;
+	AddressU = Border;
+	AddressV = Border;
+	bordercolor = float4(1, 1, 1, 1);
+};
+
+texture		g_InkTex4;
+sampler2D g_sampleInkTex4 =
+sampler_state
+{
+	Texture = <g_InkTex4>;
+	MinFilter = Point;
+	MagFilter = Point;
+	MipFilter = Point;
+	AddressU = Border;
+	AddressV = Border;
+	bordercolor = float4(1, 1, 1, 1);
+};
+
 int minI = 0;
 int maxI = 70;
 
@@ -583,11 +635,28 @@ float4 PShaderParticle(float2 TexCoord : TEXCOORD0,
 	
 	//扭曲纹理，初步代码，未完成
 	float2x2 tranS = float2x2(float2(1, 0.2* sin(TexCoord.y*3.141592653) / TexCoord.y), float2(0, 1));
-	//TexCoord = mul(TexCoord, tranS);
-	//TexCoord = mul(tranS, TexCoord);
+		//TexCoord = mul(TexCoord, tranS);
+		//TexCoord = mul(tranS, TexCoord);
 
-	//TexCoord = saturate(TexCoord);
-	float4 brush = tex2D(g_sampleInkTex, TexCoord);
+		//TexCoord = saturate(TexCoord);
+		float4 brush = float4(1, 1, 1, 1);
+
+		float4 brush0 = tex2D(g_sampleInkTex, TexCoord);
+		float4 brush1 = tex2D(g_sampleInkTex1, TexCoord);
+		float4 brush2 = tex2D(g_sampleInkTex2, TexCoord);
+		float4 brush3 = tex2D(g_sampleInkTex3, TexCoord);
+		float4 brush4 = tex2D(g_sampleInkTex4, TexCoord);
+
+		brush = brush2;
+	if (size.x < 10)
+	{
+		brush = lerp(brush4, brush3, size.x / 10);
+	}
+	else if (size.x < g_maxTexSize)
+	{
+		brush = lerp(brush3, brush2, (size.x-10) / (g_maxTexSize-10));
+	}
+	brush = lerp(brush4, brush3, size.x / g_maxTexSize);
 		//brush.rgb = float3(0.5, 0.5, 0.5);
 	brush.a = 1;
 

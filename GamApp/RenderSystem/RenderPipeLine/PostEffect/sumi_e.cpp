@@ -127,7 +127,27 @@ void SumiE::CreatePostEffect()
 		abort();
 	}
 	//==========================================================
-	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "Res\\4.bmp", &m_pInkTex))//3.bmp//R_Test.png//brush2.jpg
+	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "Res\\0.bmp", &m_pInkTex))//3.bmp//R_Test.png//brush2.jpg
+	{
+		MessageBox(GetForegroundWindow(), "TextureError", "InkTex", MB_OK);
+		abort();
+	}
+	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "Res\\1.bmp", &m_pInkTex1))//3.bmp//R_Test.png//brush2.jpg
+	{
+		MessageBox(GetForegroundWindow(), "TextureError", "InkTex", MB_OK);
+		abort();
+	}
+	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "Res\\2.bmp", &m_pInkTex2))//3.bmp//R_Test.png//brush2.jpg
+	{
+		MessageBox(GetForegroundWindow(), "TextureError", "InkTex", MB_OK);
+		abort();
+	}
+	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "Res\\3.bmp", &m_pInkTex3))//3.bmp//R_Test.png//brush2.jpg
+	{
+		MessageBox(GetForegroundWindow(), "TextureError", "InkTex", MB_OK);
+		abort();
+	}
+	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "Res\\4.bmp", &m_pInkTex4))//3.bmp//R_Test.png//brush2.jpg
 	{
 		MessageBox(GetForegroundWindow(), "TextureError", "InkTex", MB_OK);
 		abort();
@@ -427,7 +447,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 	m_postEffect->EndPass();
 
-	bool openParticle = true;
+	bool openParticle = false;
 	if (openParticle)
 	{
 		//=============================================================================================================
@@ -443,6 +463,10 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		m_postEffect->SetTexture(MAINCOLORBUFFER, m_pEdgeBlur);
 		m_postEffect->SetTexture(NORMALBUFFER, RENDERPIPE::Instance().m_pNormalTarget);
 		m_postEffect->SetTexture("g_InkTex", m_pInkTex);
+		m_postEffect->SetTexture("g_InkTex1", m_pInkTex1);
+		m_postEffect->SetTexture("g_InkTex2", m_pInkTex2);
+		m_postEffect->SetTexture("g_InkTex3", m_pInkTex3);
+		m_postEffect->SetTexture("g_InkTex4", m_pInkTex4);
 
 		m_postEffect->SetInt("g_baseTexSize", baseTexSize);
 		m_postEffect->SetInt("g_maxTexSize", maxTexSize);

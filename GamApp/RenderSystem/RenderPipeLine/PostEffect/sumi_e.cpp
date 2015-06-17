@@ -74,6 +74,11 @@ void SumiE::CreatePostEffect()
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
 		1, D3DUSAGE_RENDERTARGET,
 		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
+		&m_pEdgeForward, NULL);
+
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
+		1, D3DUSAGE_RENDERTARGET,
+		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
 		&m_Garyscale, NULL);
 
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
@@ -122,7 +127,7 @@ void SumiE::CreatePostEffect()
 		abort();
 	}
 	//==========================================================
-	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "Res\\3.bmp", &m_pInkTex))//3.bmp//R_Test.png
+	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "Res\\4.bmp", &m_pInkTex))//3.bmp//R_Test.png//brush2.jpg
 	{
 		MessageBox(GetForegroundWindow(), "TextureError", "InkTex", MB_OK);
 		abort();
@@ -369,6 +374,22 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	m_postEffect->EndPass();
 
 	SafeRelease(pSurf_SA5);
+	//=============================================================================================================
+	//È¥³ý±ßÔµµÄºó¾°ÏñËØ
+	PDIRECT3DSURFACE9 pSurf_EdgeForward = NULL;
+	m_pEdgeForward->GetSurfaceLevel(0, &pSurf_EdgeForward);
+
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_EdgeForward);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
+
+	m_postEffect->SetTexture(POSITIONBUFFER, RENDERPIPE::Instance().m_pPositionTarget);
+	m_postEffect->SetTexture(MAINCOLORBUFFER, mainBuffer);
+
+	m_postEffect->CommitChanges();
+
+	m_postEffect->BeginPass(4);
+	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+	m_postEffect->EndPass();
 
 	//=============================================================================================================
 	//Ä£ºýÂÖÀªÍ¼
@@ -379,7 +400,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
 	m_postEffect->SetTexture(POSITIONBUFFER, RENDERPIPE::Instance().m_pPositionTarget);
-	m_postEffect->SetTexture(MAINCOLORBUFFER, mainBuffer);
+	m_postEffect->SetTexture(MAINCOLORBUFFER, m_pEdgeForward);
 
 	m_postEffect->CommitChanges();
 
@@ -392,7 +413,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pPostSurface);
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
-	m_postEffect->SetTexture(MAINCOLORBUFFER, m_pEdgeBlur); //m_pEdgeImage//m_pEdgeBlur//mainBuffer//RENDERPIPE::Instance().m_pNormalTarget
+	m_postEffect->SetTexture(MAINCOLORBUFFER, m_pEdgeBlur); //m_pEdgeImage//m_pEdgeBlur//mainBuffer//m_pEdgeForward//RENDERPIPE::Instance().m_pNormalTarget
 
 	m_postEffect->SetTexture("SA1", m_StrokesArea_1);
 	m_postEffect->SetTexture("SA2", m_StrokesArea_2);

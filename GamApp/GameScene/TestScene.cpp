@@ -22,6 +22,8 @@ TestScene::~TestScene()
 Entity* krisEntity;
 Entity* shevaEntity;
 Entity* horseEntity;
+Entity* horse2Entity;
+Entity* bunnyEntity;
 Entity* sponzaEntity;
 Material testMat1;
 EffectLoader effectLoader;
@@ -78,7 +80,9 @@ void TestScene::OnLoad()
 	horseEntity->SetTexture("Res\\Mesh\\horse\\HorseB_512.jpg");
 	//horseEntity->SetNormalMap("Res\\Mesh\\horse\\HorseB _NRM_512.jpg");
 
-	
+	bunnyEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\bunny.X");
+
+	horse2Entity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\horse2.X");
 
 	if (false)
 	{
@@ -158,6 +162,28 @@ void TestScene::OnLoad()
 	D3DXMATRIX horseRotMat;
 	D3DXMatrixRotationY(&horseRotMat, -0.225f * D3DX_PI);
 	horseEntity->SetWorldTransform(horseRotMat * horseS * horseM);
+
+	D3DXMATRIX bunnyM;
+	move = D3DXVECTOR3(-12, 0, 22.5f);
+	D3DXMatrixTranslation(&bunnyM, move.x, move.y, move.z);
+	move = D3DXVECTOR3(0.5f, 0.5f, 0.5f);
+	D3DXMATRIX bunnyS;
+	D3DXMatrixScaling(&bunnyS, move.x, move.y, move.z);
+
+	D3DXMATRIX bunnyRotMat;
+	D3DXMatrixRotationY(&bunnyRotMat, -0.5f * D3DX_PI);
+	bunnyEntity->SetWorldTransform(bunnyRotMat * bunnyS * bunnyM);
+
+	D3DXMATRIX horse2M;
+	move = D3DXVECTOR3(-12, 25, -20.5f);
+	D3DXMatrixTranslation(&horse2M, move.x, move.y, move.z);
+	move = D3DXVECTOR3(0.01f, 0.01f, 0.01f);
+	D3DXMATRIX horse2S;
+	D3DXMatrixScaling(&horse2S, move.x, move.y, move.z);
+
+	D3DXMATRIX horse2RotMat;
+	D3DXMatrixRotationY(&horse2RotMat, -0.225f * D3DX_PI);
+	horse2Entity->SetWorldTransform(horse2RotMat * horse2S * horse2M);
 
 	effectLoader.LoadFxEffect("System\\BankBRDFLight.fx");
 	testMat1.effect = effectLoader.GetEffect();

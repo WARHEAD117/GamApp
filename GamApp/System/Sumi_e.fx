@@ -389,7 +389,15 @@ float4 PSAreaSplit(float2 TexCoord : TEXCOORD0) : COLOR
 	
 	int color_int = color * 255;
 	if (color_int < maxI && color_int >= minI)
-		return float4(color, color, color, 1.0f);
+	{
+		if (color_int > maxI - 25)
+		{
+			//return float4(0.5, 0.5, 0.5, 1);
+			float fadeColor = lerp(maxI - 25, 255, (color_int - maxI + 25) / 25.0f);
+			return float4(fadeColor / 255.0f, fadeColor / 255.0f, fadeColor / 255.0f, 1.0f);
+		}
+		return float4(color, color, color, 1.0f); //float4(minI / 255.0f, minI / 255.0f, minI / 255.0f, 1.0f); //
+	}
 	else if (color_int < minI)
 		return float4(minI / 255.0f, minI / 255.0f, minI / 255.0f, 1.0f);
 	else
@@ -512,8 +520,8 @@ float GetOverlap(float dark, float light)
 
 float4 PShaderBlend(float2 TexCoord : TEXCOORD0) : COLOR
 {	
-	return float4(1, 1, 1, 1);
-	return tex2D(g_sampleMainColor, TexCoord);// *tex2D(g_sampleMainColor, TexCoord)*tex2D(g_sampleMainColor, TexCoord);
+	//return float4(1, 1, 1, 1);
+	//return tex2D(g_sampleMainColor, TexCoord);// *tex2D(g_sampleMainColor, TexCoord)*tex2D(g_sampleMainColor, TexCoord);
 
 	//return tex2D(g_sampleGrayscale, TexCoord);
 
@@ -548,8 +556,8 @@ float4 PShaderBlend(float2 TexCoord : TEXCOORD0) : COLOR
 	//	blendedColor = GetOverlap(color3, blendedColor);
 	if (color2 <= 0.99)
 		blendedColor = GetOverlap(color2, blendedColor);
-	if (color1 <= 0.99)
-		blendedColor = GetOverlap(color1, blendedColor);
+	//if (color1 <= 0.99)
+	//	blendedColor = GetOverlap(color1, blendedColor);
 		
 	return float4(blendedColor, blendedColor, blendedColor, 1);
 	

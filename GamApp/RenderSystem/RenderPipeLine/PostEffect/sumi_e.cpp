@@ -44,8 +44,8 @@ void SumiE::CreatePostEffect()
 	Particle* p = 0;
 	mParticleBuffer->Lock(0, 0, (void**)&p, D3DLOCK_DISCARD);
 
-	baseTexSize = 32;
-	maxTexSize = 22;
+	baseTexSize = 26;
+	maxTexSize = 17;
 	//w = 100; //RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth
 	//h = 100; //RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight
 	w = RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth / 1;
@@ -326,8 +326,8 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
 	m_postEffect->SetTexture("g_GrayscaleBuffer", m_BlurredGaryscale);
-	m_postEffect->SetInt("minI", 70);
-	m_postEffect->SetInt("maxI", 120);
+	m_postEffect->SetInt("minI", 95);//70
+	m_postEffect->SetInt("maxI", 125);//120
 
 	m_postEffect->CommitChanges();
 
@@ -345,8 +345,8 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
 	m_postEffect->SetTexture("g_GrayscaleBuffer", m_BlurredGaryscale);
-	m_postEffect->SetInt("minI", 120);
-	m_postEffect->SetInt("maxI", 160);
+	m_postEffect->SetInt("minI", 125);//120
+	m_postEffect->SetInt("maxI", 160);//160
 
 	m_postEffect->CommitChanges();
 

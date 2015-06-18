@@ -650,13 +650,14 @@ float4 PShaderParticle(float2 TexCoord : TEXCOORD0,
 		brush = brush2;
 	if (size.x < 10)
 	{
-		brush = lerp(brush4, brush3, size.x / 10);
+		float tmp = size.x / 10;
+		brush = lerp(brush4, brush3, 2 * tmp - tmp*tmp); //y = 2x-x^2
 	}
 	else if (size.x < g_maxTexSize)
 	{
-		brush = lerp(brush3, brush2, (size.x-10) / (g_maxTexSize-10));
+		brush = lerp(brush3, brush2, pow((size.x - 10),2) / pow((g_maxTexSize - 10), 2)); //
 	}
-	brush = lerp(brush4, brush3, size.x / g_maxTexSize);
+	//brush = lerp(brush4, brush3, size.x / g_maxTexSize);
 		//brush.rgb = float3(0.5, 0.5, 0.5);
 	brush.a = 1;
 

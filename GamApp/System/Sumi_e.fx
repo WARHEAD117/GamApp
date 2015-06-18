@@ -520,7 +520,7 @@ float GetOverlap(float dark, float light)
 
 float4 PShaderBlend(float2 TexCoord : TEXCOORD0) : COLOR
 {	
-	//return float4(1, 1, 1, 1);
+	return float4(1, 1, 1, 1);
 	//return tex2D(g_sampleMainColor, TexCoord);// *tex2D(g_sampleMainColor, TexCoord)*tex2D(g_sampleMainColor, TexCoord);
 
 	//return tex2D(g_sampleGrayscale, TexCoord);

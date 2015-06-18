@@ -206,29 +206,65 @@ float4 Normal_Edge(float2 TexCoord)
 	}
 
 	float3 normalLeft = normalize(GetNormal(TexCoord + float2(-1.0f / g_ScreenWidth, -0.0f / g_ScreenHeight), g_sampleNormal));
-	float3 normalRight = normalize(GetNormal(TexCoord + float2(1.0f / g_ScreenWidth, -0.0f / g_ScreenHeight), g_sampleNormal));
+		float3 normalRight = normalize(GetNormal(TexCoord + float2(1.0f / g_ScreenWidth, -0.0f / g_ScreenHeight), g_sampleNormal));
 		//normalRight = normalize(GetUnsharpMaskedNormal(TexCoord + float2(1.0f / g_ScreenWidth, -0.0f / g_ScreenHeight), g_sampleNormal));
-	float3 normalUp = normalize(GetNormal(TexCoord + float2(-0.0f / g_ScreenWidth, -1.0f / g_ScreenHeight), g_sampleNormal));
-	float3 normalDown = normalize(GetNormal(TexCoord + float2(-0.0f / g_ScreenWidth, 1.0f / g_ScreenHeight), g_sampleNormal));
+		float3 normalUp = normalize(GetNormal(TexCoord + float2(-0.0f / g_ScreenWidth, -1.0f / g_ScreenHeight), g_sampleNormal));
+		float3 normalDown = normalize(GetNormal(TexCoord + float2(-0.0f / g_ScreenWidth, 1.0f / g_ScreenHeight), g_sampleNormal));
 		//normalDown = normalize(GetUnsharpMaskedNormal(TexCoord + float2(-0.0f / g_ScreenWidth, 1.0f / g_ScreenHeight), g_sampleNormal));
 
+		/*
 	if (depthRight > 1000)
 	{
-		normalRight = float3(0, 0, 1);
+	normalRight = float3(0, 0, 1);
 	}
 	if (depthDown > 1000)
 	{
-		normalDown = float3(0, 0, 1);
+	normalDown = float3(0, 0, 1);
 	}
 	if (depthLeft > 1000)
 	{
-		normalLeft = float3(0, 0, 1);
+	normalLeft = float3(0, 0, 1);
 	}
 	if (depthUp > 1000)
+	{
+	normalUp = float3(0, 0, 1);
+	}*/
+
+	float depthFactor = 0.5f;
+	if (depthRight - depth > depthFactor)
+	{
+		normalRight = float3(0, 0, 1);
+	}
+	if (depthDown - depth > depthFactor)
+	{
+		normalDown = float3(0, 0, 1);
+	}
+	if (depthLeft - depth > depthFactor)
+	{
+		normalLeft = float3(0, 0, 1);
+	}
+	if (depthUp - depth > depthFactor)
 	{
 		normalUp = float3(0, 0, 1);
 	}
 
+	if (depth - depthRight > depthFactor)
+	{
+		normal = float3(0, 0, 1);
+	}
+	if (depth - depthRight > depthFactor)
+	{
+		normal = float3(0, 0, 1);
+	}
+	if (depth - depthRight > depthFactor)
+	{
+		normal = float3(0, 0, 1);
+	}
+	if (depth - depthRight > depthFactor)
+	{
+		normal = float3(0, 0, 1);
+	}
+	//return float4(1, 0, 0, 1);
 	float dnx = dot(normal, normalRight);
 	float dny = dot(normal, normalDown);
 	float dnx2 = dot(normalLeft, normal);
@@ -245,6 +281,11 @@ float4 Normal_Edge(float2 TexCoord)
 
 	N = dnx + dny;
 	N /= 2;
+	float limit = 0.4;
+	if (N < limit)
+	{
+		N = limit;
+	}
 	//if (N >= 1)
 	//	return float4(1, 1, 1, 1);
 	return float4(N, N, N, 1);

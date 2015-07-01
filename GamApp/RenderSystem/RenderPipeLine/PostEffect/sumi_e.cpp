@@ -112,15 +112,6 @@ void SumiE::CreatePostEffect()
 		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
 		&m_BlurredGaryscale, NULL);
 
-	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
-		1, D3DUSAGE_RENDERTARGET,
-		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
-		&m_Diffusion1, NULL);
-	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
-		1, D3DUSAGE_RENDERTARGET,
-		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
-		&m_Diffusion2, NULL);
-
 	//create renderTarget
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
 		1, D3DUSAGE_RENDERTARGET,
@@ -338,40 +329,6 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 	m_postEffect->EndPass();
 
-	int d = 0;
-	m_Diffusion2 = m_StrokesArea_1;
-	for (int i = 0; i < d; i++)
-	{
-		//diffusion1
-		PDIRECT3DSURFACE9 pSurf_diffusion1 = NULL;
-		m_Diffusion1->GetSurfaceLevel(0, &pSurf_diffusion1);
-
-		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_diffusion1);
-		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
-
-		m_postEffect->SetTexture("g_DiffusionSource", m_Diffusion2);
-
-		m_postEffect->CommitChanges();
-
-		m_postEffect->BeginPass(4);
-		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
-		m_postEffect->EndPass();
-		//diffusion2
-		PDIRECT3DSURFACE9 pSurf_diffusion2 = NULL;
-		m_Diffusion2->GetSurfaceLevel(0, &pSurf_diffusion2);
-
-		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_diffusion2);
-		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
-
-		m_postEffect->SetTexture("g_DiffusionSource", m_Diffusion1);
-
-		m_postEffect->CommitChanges();
-
-		m_postEffect->BeginPass(4);
-		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
-		m_postEffect->EndPass();
-	}
-	m_StrokesArea_1 = m_Diffusion2;
 	//=============================================================================================================
 	//StrokesArea2
 	PDIRECT3DSURFACE9 pSurf_SA2 = NULL;

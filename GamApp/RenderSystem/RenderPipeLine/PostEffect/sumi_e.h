@@ -45,10 +45,6 @@ private:
 	LPDIRECT3DTEXTURE9	m_StrokesArea_4;
 	LPDIRECT3DTEXTURE9	m_StrokesArea_5;
 
-
-	LPDIRECT3DTEXTURE9 m_Diffusion1;
-	LPDIRECT3DTEXTURE9 m_Diffusion2;
-
 	LPDIRECT3DTEXTURE9 m_pContourTarget;
 	LPDIRECT3DTEXTURE9 m_pInsideTarget;
 

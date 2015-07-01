@@ -491,10 +491,6 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		m_postEffect->SetTexture(NORMALBUFFER, RENDERPIPE::Instance().m_pNormalTarget);
 		m_postEffect->SetTexture(POSITIONBUFFER, RENDERPIPE::Instance().m_pPositionTarget);
 		m_postEffect->SetTexture("g_InkTex", m_pInkMask);
-		m_postEffect->SetTexture("g_InkTex1", m_pInkMask);
-		m_postEffect->SetTexture("g_InkTex2", m_pInkMask);
-		m_postEffect->SetTexture("g_InkTex3", m_pInkMask);
-		m_postEffect->SetTexture("g_InkTex4", m_pInkMask);
 
 		m_postEffect->SetInt("g_baseTexSize", 46);
 		m_postEffect->SetInt("g_maxTexSize", 33);
@@ -510,7 +506,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_POINTSPRITEENABLE, false);
 	}
 
-	bool openParticle = true;
+	bool openParticle = false;
 	if (openParticle)
 	{
 		//=============================================================================================================
@@ -553,61 +549,71 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 	//=======================================================================================================
 	//合并各种纹理
-	numPasses = 0;
-	m_SynthesisEffect->Begin(&numPasses, 0);
+	//=======================================================================================================
+	{
+		
+		numPasses = 0;
+		m_SynthesisEffect->Begin(&numPasses, 0);
 
-	m_SynthesisEffect->SetMatrix(WORLDVIEWPROJMATRIX, &RENDERDEVICE::Instance().OrthoWVPMatrix);
-	m_SynthesisEffect->SetMatrix(INVPROJMATRIX, &RENDERDEVICE::Instance().InvProjMatrix);
-	m_SynthesisEffect->SetMatrix(PROJECTIONMATRIX, &RENDERDEVICE::Instance().ProjMatrix);
-	m_SynthesisEffect->SetMatrix(VIEWMATRIX, &RENDERDEVICE::Instance().ViewMatrix);
+		m_SynthesisEffect->SetMatrix(WORLDVIEWPROJMATRIX, &RENDERDEVICE::Instance().OrthoWVPMatrix);
+		m_SynthesisEffect->SetMatrix(INVPROJMATRIX, &RENDERDEVICE::Instance().InvProjMatrix);
+		m_SynthesisEffect->SetMatrix(PROJECTIONMATRIX, &RENDERDEVICE::Instance().ProjMatrix);
+		m_SynthesisEffect->SetMatrix(VIEWMATRIX, &RENDERDEVICE::Instance().ViewMatrix);
 
-	m_SynthesisEffect->SetFloat("g_zNear", CameraParam::zNear);
-	m_SynthesisEffect->SetFloat("g_zFar", CameraParam::zFar);
+		m_SynthesisEffect->SetFloat("g_zNear", CameraParam::zNear);
+		m_SynthesisEffect->SetFloat("g_zFar", CameraParam::zFar);
 
-	float angle = tan(CameraParam::FOV / 2);
-	m_SynthesisEffect->SetFloat("g_ViewAngle_half_tan", angle);
-	float aspect = (float)RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth / RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight;
-	m_SynthesisEffect->SetFloat("g_ViewAspect", aspect);
-	m_SynthesisEffect->SetInt(SCREENWIDTH, RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth);
-	m_SynthesisEffect->SetInt(SCREENHEIGHT, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight);
+		float angle = tan(CameraParam::FOV / 2);
+		m_SynthesisEffect->SetFloat("g_ViewAngle_half_tan", angle);
+		float aspect = (float)RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth / RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight;
+		m_SynthesisEffect->SetFloat("g_ViewAspect", aspect);
+		m_SynthesisEffect->SetInt(SCREENWIDTH, RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth);
+		m_SynthesisEffect->SetInt(SCREENHEIGHT, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight);
 
-	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, m_pBufferVex, 0, sizeof(VERTEX));
-	RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(D3DFVF_VERTEX);
+		RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, m_pBufferVex, 0, sizeof(VERTEX));
+		RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(D3DFVF_VERTEX);
 
-	m_SynthesisEffect->CommitChanges();
+		m_SynthesisEffect->CommitChanges();
 
-	//======================================================================================================
-	//高斯模糊
-	PDIRECT3DSURFACE9 pSurf_BlurredInside = NULL;
-	m_pBluredInside->GetSurfaceLevel(0, &pSurf_BlurredInside);
+		//======================================================================================================
+		//高斯模糊内部的纹理
+		PDIRECT3DSURFACE9 pSurf_BlurredInside = NULL;
+		m_pBluredInside->GetSurfaceLevel(0, &pSurf_BlurredInside);
 
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_BlurredInside);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_BlurredInside);
+		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
-	m_SynthesisEffect->SetTexture("g_Inside", m_pInsideTarget);
+		m_SynthesisEffect->SetTexture("g_Inside", m_pInsideTarget);
 
-	m_SynthesisEffect->CommitChanges();
+		m_SynthesisEffect->CommitChanges();
 
-	m_SynthesisEffect->BeginPass(1);
-	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
-	m_SynthesisEffect->EndPass();
-	//======================================================================================================
+		m_SynthesisEffect->BeginPass(1);
+		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+		m_SynthesisEffect->EndPass();
+		//======================================================================================================
+		//第二次高斯模糊内部的纹理
+		//并且与背景进行混合
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pPostSurface);
+		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
 
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pPostSurface);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
+		//只处理内部的纹理，边缘纹理其实是不应该和后面混合的。或者找找能让边缘的透明度更均匀的方法
+		//m_SynthesisEffect->SetTexture("g_Contour", m_pContourTarget);
+		m_SynthesisEffect->SetTexture("g_Inside", m_pBluredInside);
+
+		m_SynthesisEffect->BeginPass(0);
+		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+		m_SynthesisEffect->EndPass();
+
+		m_SynthesisEffect->End();
+	}
 	
-	m_SynthesisEffect->SetTexture("g_Contour", m_pContourTarget);
-	m_SynthesisEffect->SetTexture("g_Inside", m_pBluredInside);
-
-	m_SynthesisEffect->BeginPass(0);
-	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
-	m_SynthesisEffect->EndPass();
-
-	m_SynthesisEffect->End();
-
 
 	//====================================================================================================
-	openParticle = false;
+	//重新渲染边缘纹理
+	//因为边缘纹理现在颜色和透明度作用不同，就导致颜色看起来很正常但是透明度是不均匀的
+	//这样如果也渲染到一张纹理上在融合的话就会出现问题，所以只能最后重新渲染一次
+	//====================================================================================================
+	openParticle = true;
 	if (openParticle)
 	{
 		m_postEffect->SetMatrix(WORLDVIEWPROJMATRIX, &RENDERDEVICE::Instance().OrthoWVPMatrix);

@@ -74,8 +74,8 @@ void SumiE::CreatePostEffect()
 	maxTexSize = 17;
 	//w = 100; //RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth
 	//h = 100; //RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight
-	w2 = RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth / 10;
-	h2 = RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight / 10;
+	w2 = RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth / 5;
+	h2 = RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight / 5;
 	// For each living particle.
 	for (UINT j = 0; j < h2; ++j)
 	{
@@ -146,6 +146,11 @@ void SumiE::CreatePostEffect()
 		1, D3DUSAGE_RENDERTARGET,
 		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
 		&m_pInsideTarget, NULL);
+
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
+		1, D3DUSAGE_RENDERTARGET,
+		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
+		&m_pBluredInside, NULL);
 
 	ID3DXBuffer* error = 0;
 	if (E_FAIL == ::D3DXCreateEffectFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "System\\SumieSynthesis.fx", NULL, NULL, D3DXSHADER_DEBUG,
@@ -467,6 +472,10 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	{
 		//=============================================================================================================
 		//粒子TEST
+		PDIRECT3DSURFACE9 pSurf_Inside = NULL;
+		m_pInsideTarget->GetSurfaceLevel(0, &pSurf_Inside);
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_Inside);
+		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
 
 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_POINTSPRITEENABLE, true);
 
@@ -506,6 +515,10 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	{
 		//=============================================================================================================
 		//粒子TEST
+		PDIRECT3DSURFACE9 pSurf_Contour = NULL;
+		m_pContourTarget->GetSurfaceLevel(0, &pSurf_Contour);
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_Contour);
+		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
 
 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_POINTSPRITEENABLE, true);
 
@@ -536,8 +549,61 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_POINTSPRITEENABLE, false);
 	}
 	
-	
 	m_postEffect->End();
+
+	//=======================================================================================================
+	//合并各种纹理
+	numPasses = 0;
+	m_SynthesisEffect->Begin(&numPasses, 0);
+
+	m_SynthesisEffect->SetMatrix(WORLDVIEWPROJMATRIX, &RENDERDEVICE::Instance().OrthoWVPMatrix);
+	m_SynthesisEffect->SetMatrix(INVPROJMATRIX, &RENDERDEVICE::Instance().InvProjMatrix);
+	m_SynthesisEffect->SetMatrix(PROJECTIONMATRIX, &RENDERDEVICE::Instance().ProjMatrix);
+	m_SynthesisEffect->SetMatrix(VIEWMATRIX, &RENDERDEVICE::Instance().ViewMatrix);
+
+	m_SynthesisEffect->SetFloat("g_zNear", CameraParam::zNear);
+	m_SynthesisEffect->SetFloat("g_zFar", CameraParam::zFar);
+
+	float angle = tan(CameraParam::FOV / 2);
+	m_SynthesisEffect->SetFloat("g_ViewAngle_half_tan", angle);
+	float aspect = (float)RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth / RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight;
+	m_SynthesisEffect->SetFloat("g_ViewAspect", aspect);
+	m_SynthesisEffect->SetInt(SCREENWIDTH, RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth);
+	m_SynthesisEffect->SetInt(SCREENHEIGHT, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight);
+
+	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, m_pBufferVex, 0, sizeof(VERTEX));
+	RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(D3DFVF_VERTEX);
+
+	m_SynthesisEffect->CommitChanges();
+
+	//======================================================================================================
+	//高斯模糊
+	PDIRECT3DSURFACE9 pSurf_BlurredInside = NULL;
+	m_pBluredInside->GetSurfaceLevel(0, &pSurf_BlurredInside);
+
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_BlurredInside);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
+
+	m_SynthesisEffect->SetTexture("g_Inside", m_pInsideTarget);
+
+	m_SynthesisEffect->CommitChanges();
+
+	m_SynthesisEffect->BeginPass(1);
+	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+	m_SynthesisEffect->EndPass();
+	//======================================================================================================
+
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pPostSurface);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
+	
+	m_SynthesisEffect->SetTexture("g_Contour", m_pContourTarget);
+	m_SynthesisEffect->SetTexture("g_Inside", m_pBluredInside);
+
+	m_SynthesisEffect->BeginPass(0);
+	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+	m_SynthesisEffect->EndPass();
+
+	m_SynthesisEffect->End();
 }
 
 void SumiE::SetEdgeImage(LPDIRECT3DTEXTURE9 edgeImage)

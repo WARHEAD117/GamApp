@@ -107,6 +107,36 @@ sampler_state
 	MipFilter = Point;
 };
 
+texture		g_Contour;
+sampler2D g_sampleContour =
+sampler_state
+{
+	Texture = <g_Contour>;
+	MinFilter = Point;
+	MagFilter = Point;
+	MipFilter = Point;
+};
+
+texture		g_Inside;
+sampler2D g_sampleInside =
+sampler_state
+{
+	Texture = <g_Inside>;
+	MinFilter = Point;
+	MagFilter = Point;
+	MipFilter = Point;
+};
+
+texture		g_BlurredInside;
+sampler2D g_sampleBlurredInside =
+sampler_state
+{
+	Texture = <g_BlurredInside>;
+	MinFilter = Point;
+	MagFilter = Point;
+	MipFilter = Point;
+};
+
 int minI = 0;
 int maxI = 70;
 
@@ -186,15 +216,6 @@ float4 PShaderGrayscale(float2 TexCoord : TEXCOORD0) : COLOR
 	return float4(nl, nl, nl, 1.0f);
 }
 
-float4 PShaderBlur(float2 TexCoord : TEXCOORD0) : COLOR
-{
-	return tex2D(g_sampleGrayscale, TexCoord);
-
-	float4 color = GaussianBlur(g_ScreenWidth, g_ScreenHeight, g_sampleGrayscale, TexCoord);
-
-	return color;
-}
-
 float GetOverlap(float dark, float light)
 {
 	float tempLight = max(dark, light);
@@ -263,21 +284,45 @@ float4 PShaderBlend(float2 TexCoord : TEXCOORD0) : COLOR
 	return outcolor;
 }
 
+float4 PShaderSynthesis(float2 TexCoord : TEXCOORD0) : COLOR
+{
+	float4 colorContour = tex2D(g_sampleContour, TexCoord);
+	float4 colorInside = tex2D(g_sampleInside, TexCoord);
+	colorInside = GaussianBlur(g_ScreenWidth, g_ScreenHeight, g_sampleInside, TexCoord);
+
+	float4 Inside = colorInside * colorInside.a + float4(1, 1, 1, 1) * (1 - colorInside.a);
+
+	float alpha = colorContour.r;
+	if (alpha < 0.9)
+		alpha /= 2;
+
+	float4 InsideAndContour = Inside * alpha + colorContour *(1 - alpha);
+		return InsideAndContour;
+}
+
+float4 PShaderBlur(float2 TexCoord : TEXCOORD0) : COLOR
+{
+	float4 colorInside = tex2D(g_sampleInside, TexCoord); 
+	colorInside = GaussianBlur(g_ScreenWidth, g_ScreenHeight, g_sampleInside, TexCoord);
+	
+	return colorInside;
+}
+
 technique SumieSynthesis
 {
 	pass p0
 	{
 		vertexShader = compile vs_3_0 VShader();
-		pixelShader = compile ps_3_0 PShaderGrayscale();
+		pixelShader = compile ps_3_0 PShaderSynthesis();
+	}
+
+	pass p1
+	{
+		vertexShader = compile vs_3_0 VShader();
+		pixelShader = compile ps_3_0 PShaderBlur();
 	}
 
 	pass p2
-	{
-		vertexShader = compile vs_3_0 VShader();
-		pixelShader = compile ps_3_0 PShaderBlend();
-	}
-
-	pass p3
 	{
 		vertexShader = compile vs_3_0 VShader();
 		pixelShader = compile ps_3_0 PShaderBlur();

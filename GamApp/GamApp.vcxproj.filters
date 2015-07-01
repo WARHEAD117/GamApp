@@ -381,5 +381,8 @@
     <FxCompile Include="System\Sumi_e.fx">
       <Filter>System</Filter>
     </FxCompile>
+    <FxCompile Include="System\SumieSynthesis.fx">
+      <Filter>System</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

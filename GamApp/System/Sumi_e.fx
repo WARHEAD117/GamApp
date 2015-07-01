@@ -162,6 +162,16 @@ sampler_state
 	bordercolor = float4(1, 1, 1, 1);
 };
 
+texture		g_InkCloud;
+sampler2D g_sampleInkCloud =
+sampler_state
+{
+	Texture = <g_InkCloud>;
+	MinFilter = Point;
+	MagFilter = Point;
+	MipFilter = Point;
+};
+
 int minI = 0;
 int maxI = 70;
 
@@ -524,7 +534,11 @@ float4 PShaderBlend(float2 TexCoord : TEXCOORD0) : COLOR
 	//return tex2D(g_sampleMainColor, TexCoord);// *tex2D(g_sampleMainColor, TexCoord)*tex2D(g_sampleMainColor, TexCoord);
 
 	//return tex2D(g_sampleGrayscale, TexCoord);
-
+	float2 cloudTc = float2(g_ScreenWidth, g_ScreenHeight) * TexCoord / float2(256, 256);
+	float cloud = tex2D(g_sampleInkCloud, cloudTc).r;
+	float outC = tex2D(g_sampleSA1, TexCoord).r;
+	outC = clamp(outC, 0.1, 1);
+	//return float4(outC, outC, outC, 1) * 8 * cloud;
 	//return tex2D(g_sampleSA1, TexCoord);
 	//return tex2D(g_sampleSA2, TexCoord);
 	//return tex2D(g_sampleSA3, TexCoord);
@@ -548,14 +562,14 @@ float4 PShaderBlend(float2 TexCoord : TEXCOORD0) : COLOR
 	//	return float4(1, 0, 0, 1);
 	//else
 	//	return float4(0, 1, 0, 1);
-	float blendedColor = color3;
+	float blendedColor = color2;
 	//if (color4 <= 0.99)
 	//	blendedColor = GetOverlap(color4, color5);
 
 	//if (color3 <= 0.99)
 	//	blendedColor = GetOverlap(color3, blendedColor);
-	if (color2 <= 0.99)
-		blendedColor = GetOverlap(color2, blendedColor);
+	//if (color2 <= 0.99)
+	//	blendedColor = GetOverlap(color2, blendedColor);
 	//if (color1 <= 0.99)
 	//	blendedColor = GetOverlap(color1, blendedColor);
 		
@@ -656,7 +670,7 @@ float4 PShaderParticle(float2 TexCoord : TEXCOORD0,
 		float4 brush4 = tex2D(g_sampleInkTex4, TexCoord);
 
 		brush = brush2;
-	if (size.x < 10)
+	if (size.x <= 10)
 	{
 		float tmp = size.x / 10;
 		brush = lerp(brush4, brush3, 2 * tmp - tmp*tmp); //y = 2x-x^2
@@ -695,6 +709,141 @@ float4 PShaderParticle(float2 TexCoord : TEXCOORD0,
 	if (brush.r > 0.99f)
 		brush = float4(1.0f, 1.0f, 1.0f, 0.0f);
 	
+	//brush = float4(0.1,0.1,0.1,0.5f);
+	return brush;
+	//return float4(1, 0, 0, 1);
+	//return tex2D(g_sampleMainColor, TexCoord);
+}
+
+P_OutVS VShaderParticle2(float4 posL       : POSITION0,
+	float2 TexCoord : TEXCOORD0)
+{
+	P_OutVS outVS = (P_OutVS)0;
+
+	//最终输出的顶点位置（经过世界、观察、投影矩阵变换）
+	//outVS.posWVP = mul(float4(0.5f, 0.5f, 0, 1), g_Proj);
+	//outVS.posWVP = float4(2*TexCoord.x-1, 1-2*TexCoord.y, 0, 1);
+	outVS.posWVP = float4(-2, -2, -2, 1);
+	//outVS.TexCoord = TexCoord;
+
+	outVS.psize = 0;
+
+	float4 color = tex2Dlod(g_sampleMainColor, float4(TexCoord.x, TexCoord.y, 0, 0));
+
+	if (color.r < 0.99f)
+	{
+		outVS.psize = g_baseTexSize * (1 - color.r);
+		outVS.psize = clamp(outVS.psize, 0, g_maxTexSize);
+		
+
+		outVS.posWVP = float4(2 * TexCoord.x - 1, 1 - 2 * TexCoord.y, 0, 1);
+	}
+
+	outVS.size = float4(outVS.psize, outVS.psize, outVS.psize, outVS.psize);
+	
+	outVS.psize = g_maxTexSize;
+
+	float depth = tex2Dlod(g_samplePosition, float4(TexCoord.x, TexCoord.y, 0, 0));
+	float invDepth = 1 - depth / g_zFar;
+	outVS.psize *= invDepth * invDepth * 1;
+	if (outVS.psize < 2)
+		outVS.psize = 2;
+
+	outVS.color = color;
+	outVS.color = float4(TexCoord, 0, 0);
+	return outVS;
+}
+
+float4 PShaderParticle2(float2 TexCoord : TEXCOORD0,
+	float4 size : COLOR1,
+	float4 color : COLOR0) : COLOR
+{
+	float2 localT = TexCoord - float2(0.5, 0.5);
+	float depth = tex2D(g_samplePosition, color.xy + float2(1.0f/g_ScreenWidth, 1.0f/g_ScreenHeight)* size.x * localT);
+	//return float4(depth, depth, depth, 1.0f);
+	if (depth > 1000)
+		return float4(1,1,1,1);
+
+	float3 normal = normalize(GetNormal(g_sampleNormal, color.xy));
+	//return float4(normal, 1.0f);
+	//float3 normal3 = normalize(normal.xyz);
+
+	float projectXY = sqrt(normal.x * normal.x + normal.y * normal.y);
+	float cosA = normal.x / projectXY;
+	float A = acos(cosA);
+	if (normal.y < 0)
+		A = -acos(cosA);
+	float random = (color.x * color.y + color.x / color.y) * (normal.x + normal.y + normal.z) / (normal.x * normal.y * normal.z);
+	//random = (TexCoord.x * TexCoord.y + TexCoord.x / TexCoord.y) * (normal.x + normal.y + normal.z) / (normal.x * normal.y * normal.z);
+	random = frac(random);
+	A += random;
+	//return normal;
+
+	//HLSL内部声明的矩阵是列矩阵
+	//vec(A,B) mat|m00,m01|
+	//------------|m10,m11|
+	//矩阵中储存的的数据是row0(m00,m10),row1(m01,m11)
+	//这样mul计算的时候就可以这样计算
+	//x=dp(vec,row0),y=dp(vec,row1),dp是笛卡尔积
+	//但是在C++代码中储存的还是行向量，因此在SetMatrix的时候是会自动进行转置的
+	//所以如果在hlsl直接声明矩阵，或者没有通过SetMatrix传入的话，就需要改变左右位置
+	//所以这里写成mul(矩阵，向量)
+	float2x2 rotationM = float2x2(float2(cos(A), -sin(A)), float2(sin(A), cos(A)));
+		//TexCoord = mul(TexCoord - float2(0.5,0.5), rotationM) + float2(0.5,0.5);
+		TexCoord = mul(rotationM, TexCoord - float2(0.5, 0.5)) + float2(0.5, 0.5);
+
+	//扭曲纹理，初步代码，未完成
+	float2x2 tranS = float2x2(float2(1, 0.2* sin(TexCoord.y*3.141592653) / TexCoord.y), float2(0, 1));
+		//TexCoord = mul(TexCoord, tranS);
+		//TexCoord = mul(tranS, TexCoord);
+
+		//TexCoord = saturate(TexCoord);
+		float4 brush = float4(1, 1, 1, 1);
+
+		float4 brush0 = tex2D(g_sampleInkTex, TexCoord);
+		float4 brush1 = tex2D(g_sampleInkTex1, TexCoord);
+		float4 brush2 = tex2D(g_sampleInkTex2, TexCoord);
+		float4 brush3 = tex2D(g_sampleInkTex3, TexCoord);
+		float4 brush4 = tex2D(g_sampleInkTex4, TexCoord);
+
+		brush = brush2;
+	if (size.x <= 10)
+	{
+		float tmp = size.x / 10;
+		//brush = lerp(brush4, brush3, 2 * tmp - tmp*tmp); //y = 2x-x^2
+	}
+	else if (size.x < g_maxTexSize)
+	{
+		//brush = lerp(brush3, brush2, pow((size.x - 10), 2) / pow((g_maxTexSize - 10), 2)); //
+	}
+	//brush = lerp(brush4, brush3, size.x / g_maxTexSize);
+	//brush.rgb = float3(0.5, 0.5, 0.5);
+	brush.a = 1;
+
+	float alpha = 1;
+
+	if (brush.r > 0.59f)
+	{
+		brush = float4(1.0f, 1.0f, 1.0f, 0.0f);
+	}
+	else
+	{
+		float tmp = 1 - size.x / g_maxTexSize;
+		float bC = 2*tmp - tmp*tmp; //y = 2x-x^2
+		bC = (1 - 0.8) * tmp + 0.8;
+		brush = float4(bC, bC, bC, 1);// *1.5;
+		//brush = float4(normal, 0.5f);
+	}
+
+	//brush.a = brush.r;
+
+
+	if (TexCoord.x < 0 || TexCoord.x > 1 || TexCoord.y < 0 || TexCoord.y > 1)
+		brush = float4(1.0f, 1.0f, 1.0f, 0.0f);
+
+	if (brush.r > 0.99f)
+		brush = float4(1.0f, 1.0f, 1.0f, 0.0f);
+
 	//brush = float4(0.1,0.1,0.1,0.5f);
 	return brush;
 	//return float4(1, 0, 0, 1);
@@ -746,6 +895,16 @@ technique ColorChange
 	{
 		vertexShader = compile vs_3_0 VShaderParticle();
 		pixelShader = compile ps_3_0 PShaderParticle();
+
+		AlphaBlendEnable = true;
+		SrcBlend = SRCALPHA;
+		DestBlend = INVSRCALPHA;
+	}
+
+	pass p7
+	{
+		vertexShader = compile vs_3_0 VShaderParticle2();
+		pixelShader = compile ps_3_0 PShaderParticle2();
 
 		AlphaBlendEnable = true;
 		SrcBlend = SRCALPHA;

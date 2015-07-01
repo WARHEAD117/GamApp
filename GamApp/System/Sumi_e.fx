@@ -831,7 +831,7 @@ float4 PShaderParticle2(float2 TexCoord : TEXCOORD0,
 		float tmp = 1 - size.x / g_maxTexSize;
 		float bC = 2*tmp - tmp*tmp; //y = 2x-x^2
 		bC = (1 - 0.8) * tmp + 0.8;
-		brush = float4(bC, bC, bC, 1);// *1.5;
+		brush = float4(bC, bC, bC, bC);// *1.5;
 		//brush = float4(normal, 0.5f);
 	}
 

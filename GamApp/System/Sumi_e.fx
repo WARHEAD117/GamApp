@@ -762,7 +762,7 @@ float4 PShaderParticle2(float2 TexCoord : TEXCOORD0,
 	float depth = tex2D(g_samplePosition, color.xy + float2(1.0f/g_ScreenWidth, 1.0f/g_ScreenHeight)* size.x * localT);
 	//return float4(depth, depth, depth, 1.0f);
 	if (depth > 1000)
-		return float4(1,1,1,1);
+		return float4(0,0,0,0);
 
 	float3 normal = normalize(GetNormal(g_sampleNormal, color.xy));
 	//return float4(normal, 1.0f);
@@ -824,14 +824,15 @@ float4 PShaderParticle2(float2 TexCoord : TEXCOORD0,
 
 	if (brush.r > 0.59f)
 	{
-		brush = float4(1.0f, 1.0f, 1.0f, 0.0f);
+		brush = float4(0.0f, 0.0f, 0.0f, 0.0f);
 	}
 	else
 	{
-		float tmp = 1 - size.x / g_maxTexSize;
+		float tmp = size.x / g_maxTexSize;
 		float bC = 2*tmp - tmp*tmp; //y = 2x-x^2
-		bC = (1 - 0.8) * tmp + 0.8;
-		brush = float4(bC, bC, bC, bC);// *1.5;
+		float factor = 0.7f;
+		bC = (1 - factor) * tmp + factor;
+		brush = float4(0, 0, 0, bC);// *1.5;
 		//brush = float4(normal, 0.5f);
 	}
 
@@ -839,10 +840,10 @@ float4 PShaderParticle2(float2 TexCoord : TEXCOORD0,
 
 
 	if (TexCoord.x < 0 || TexCoord.x > 1 || TexCoord.y < 0 || TexCoord.y > 1)
-		brush = float4(1.0f, 1.0f, 1.0f, 0.0f);
+		brush = float4(0.0f, 0.0f, 0.0f, 0.0f);
 
 	if (brush.r > 0.99f)
-		brush = float4(1.0f, 1.0f, 1.0f, 0.0f);
+		brush = float4(0.0f, 0.0f, 0.0f, 0.0f);
 
 	//brush = float4(0.1,0.1,0.1,0.5f);
 	return brush;

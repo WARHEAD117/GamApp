@@ -475,7 +475,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		PDIRECT3DSURFACE9 pSurf_Inside = NULL;
 		m_pInsideTarget->GetSurfaceLevel(0, &pSurf_Inside);
 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_Inside);
-		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
+		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_POINTSPRITEENABLE, true);
 
@@ -604,6 +604,63 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	m_SynthesisEffect->EndPass();
 
 	m_SynthesisEffect->End();
+
+
+	//====================================================================================================
+	openParticle = false;
+	if (openParticle)
+	{
+		m_postEffect->SetMatrix(WORLDVIEWPROJMATRIX, &RENDERDEVICE::Instance().OrthoWVPMatrix);
+		m_postEffect->SetMatrix(INVPROJMATRIX, &RENDERDEVICE::Instance().InvProjMatrix);
+		m_postEffect->SetTexture(POSITIONBUFFER, RENDERPIPE::Instance().m_pPositionTarget);
+
+		m_postEffect->SetFloat("g_zNear", CameraParam::zNear);
+		m_postEffect->SetFloat("g_zFar", CameraParam::zFar);
+
+		m_postEffect->SetInt(SCREENWIDTH, RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth);
+		m_postEffect->SetInt(SCREENHEIGHT, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight);
+
+		m_postEffect->CommitChanges();
+
+		RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, m_pBufferVex, 0, sizeof(VERTEX));
+		RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(D3DFVF_VERTEX);
+
+		UINT numPasses = 0;
+		m_postEffect->Begin(&numPasses, 0);
+		//=============================================================================================================
+		//Á£×ÓTEST
+		
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pPostSurface);
+
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_POINTSPRITEENABLE, true);
+
+		D3DXMATRIX temp = RENDERDEVICE::Instance().ViewMatrix * RENDERDEVICE::Instance().ProjMatrix;
+		m_postEffect->SetMatrix(VIEWPROJMATRIX, &temp);
+		m_postEffect->SetMatrix(WORLDVIEWPROJMATRIX, &temp);
+		m_postEffect->SetMatrix(PROJECTIONMATRIX, &RENDERDEVICE::Instance().ProjMatrix);
+
+		m_postEffect->SetTexture(MAINCOLORBUFFER, m_pEdgeBlur);
+		m_postEffect->SetTexture(NORMALBUFFER, RENDERPIPE::Instance().m_pNormalTarget);
+		m_postEffect->SetTexture("g_InkTex", m_pInkTex);
+		m_postEffect->SetTexture("g_InkTex1", m_pInkTex1);
+		m_postEffect->SetTexture("g_InkTex2", m_pInkTex2);
+		m_postEffect->SetTexture("g_InkTex3", m_pInkTex3);
+		m_postEffect->SetTexture("g_InkTex4", m_pInkTex4);
+
+		m_postEffect->SetInt("g_baseTexSize", baseTexSize);
+		m_postEffect->SetInt("g_maxTexSize", maxTexSize);
+
+		m_postEffect->CommitChanges();
+
+		m_postEffect->BeginPass(6);
+		RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, mParticleBuffer, 0, sizeof(Particle));
+		RENDERDEVICE::Instance().g_pD3DDevice->SetVertexDeclaration(mParticleDecl);
+		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_POINTLIST, 0, w*h);
+		m_postEffect->EndPass();
+
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_POINTSPRITEENABLE, false);
+		m_postEffect->End();
+	}
 }
 
 void SumiE::SetEdgeImage(LPDIRECT3DTEXTURE9 edgeImage)

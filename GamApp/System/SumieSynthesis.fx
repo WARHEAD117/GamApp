@@ -288,16 +288,23 @@ float4 PShaderSynthesis(float2 TexCoord : TEXCOORD0) : COLOR
 {
 	float4 colorContour = tex2D(g_sampleContour, TexCoord);
 	float4 colorInside = tex2D(g_sampleInside, TexCoord);
+
+	//return colorInside;
+
 	colorInside = GaussianBlur(g_ScreenWidth, g_ScreenHeight, g_sampleInside, TexCoord);
 
-	float4 Inside = colorInside * colorInside.a + float4(1, 1, 1, 1) * (1 - colorInside.a);
+	float insideAlpha = colorInside.a;
+	//colorInside = colorInside * colorInside * colorInside;
+
+	float4 Inside = colorInside * insideAlpha + float4(1, 1, 1, 1) * (1 - insideAlpha);
+		Inside = colorInside * insideAlpha + float4(1, 1, 1, 1) * (1 - insideAlpha);
 
 	float alpha = colorContour.r;
 	if (alpha < 0.9)
 		alpha /= 2;
 
 	float4 InsideAndContour = Inside * alpha + colorContour *(1 - alpha);
-		return InsideAndContour;
+	return Inside;
 }
 
 float4 PShaderBlur(float2 TexCoord : TEXCOORD0) : COLOR

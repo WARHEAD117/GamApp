@@ -499,6 +499,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		m_postEffect->SetInt("g_baseInsideTexSize", baseInsideTexSize);
 		m_postEffect->SetInt("g_maxInsideTexSize",  maxInsideTexSize);
 		m_postEffect->SetInt("g_minInsideTexSize",  minInsideTexSize);
+
 		m_postEffect->SetFloat("g_SizeFactor",   1.0f);
 		m_postEffect->SetFloat("g_alphaTestFactor", 0.79f);
 
@@ -508,47 +509,6 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, mParticleBuffer2, 0, sizeof(Particle));
 		RENDERDEVICE::Instance().g_pD3DDevice->SetVertexDeclaration(mParticleDecl);
 		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_POINTLIST, 0, w2*h2);
-		m_postEffect->EndPass();
-
-		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_POINTSPRITEENABLE, false);
-	}
-
-	bool openParticle = false;
-	if (openParticle)
-	{
-		//=============================================================================================================
-		//粒子TEST
-		PDIRECT3DSURFACE9 pSurf_Contour = NULL;
-		m_pContourTarget->GetSurfaceLevel(0, &pSurf_Contour);
-		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_Contour);
-		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
-
-		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_POINTSPRITEENABLE, true);
-
-		D3DXMATRIX temp = RENDERDEVICE::Instance().ViewMatrix * RENDERDEVICE::Instance().ProjMatrix;
-		m_postEffect->SetMatrix(VIEWPROJMATRIX, &temp);
-		m_postEffect->SetMatrix(WORLDVIEWPROJMATRIX, &temp);
-		m_postEffect->SetMatrix(PROJECTIONMATRIX, &RENDERDEVICE::Instance().ProjMatrix);
-
-		m_postEffect->SetTexture(MAINCOLORBUFFER, m_pEdgeBlur);
-		m_postEffect->SetTexture(NORMALBUFFER, RENDERPIPE::Instance().m_pNormalTarget);
-		m_postEffect->SetTexture("g_InkTex", m_pInkTex);
-		m_postEffect->SetTexture("g_InkTex1", m_pInkTex1);
-		m_postEffect->SetTexture("g_InkTex2", m_pInkTex2);
-		m_postEffect->SetTexture("g_InkTex3", m_pInkTex3);
-		m_postEffect->SetTexture("g_InkTex4", m_pInkTex4);
-
-		m_postEffect->SetInt("g_baseTexSize", baseTexSize);
-		m_postEffect->SetInt("g_maxTexSize", maxTexSize);
-
-		m_postEffect->SetInt("g_colorFactor", 0.3);
-
-		m_postEffect->CommitChanges();
-
-		m_postEffect->BeginPass(6);
-		RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, mParticleBuffer, 0, sizeof(Particle));
-		RENDERDEVICE::Instance().g_pD3DDevice->SetVertexDeclaration(mParticleDecl);
-		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_POINTLIST, 0, w*h);
 		m_postEffect->EndPass();
 
 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_POINTSPRITEENABLE, false);
@@ -608,6 +568,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		//只处理内部的纹理，边缘纹理其实是不应该和后面混合的。或者找找能让边缘的透明度更均匀的方法
 		//m_SynthesisEffect->SetTexture("g_Contour", m_pContourTarget);
 		m_SynthesisEffect->SetTexture("g_Inside", m_pBluredInside);
+		//控制内部黑色的程度
 		m_SynthesisEffect->SetFloat("g_AlphaFactor", 0.6);
 		m_SynthesisEffect->CommitChanges();
 
@@ -625,7 +586,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	//因为边缘纹理现在颜色和透明度作用不同，就导致颜色看起来很正常但是透明度是不均匀的
 	//这样如果也渲染到一张纹理上在融合的话就会出现问题，所以只能最后重新渲染一次
 	//====================================================================================================
-	openParticle = true;
+	bool openParticle = true;
 	if (openParticle)
 	{
 		m_postEffect->SetMatrix(WORLDVIEWPROJMATRIX, &RENDERDEVICE::Instance().OrthoWVPMatrix);
@@ -667,6 +628,9 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 		m_postEffect->SetInt("g_baseTexSize", baseTexSize);
 		m_postEffect->SetInt("g_maxTexSize", maxTexSize);
+
+		//控制边缘黑色的程度
+		m_postEffect->SetFloat("g_colorFactor", 0.3);
 
 		m_postEffect->CommitChanges();
 

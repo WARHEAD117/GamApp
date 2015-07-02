@@ -178,7 +178,15 @@ int maxI = 70;
 int g_baseTexSize = 32;
 int g_maxTexSize = 20;
 int g_minTexSize = 2;
-float g_SizeFactor = 1;
+
+float g_colorFactor = 0.3;
+
+int g_baseInsideTexSize = 0;//46
+int g_maxInsideTexSize = 0;//33
+int g_minInsideTexSize = 0;//2
+
+float g_SizeFactor = 0;//1
+float g_alphaTestFactor = 0;//0.79
 
 struct OutputVS
 {
@@ -686,7 +694,7 @@ float4 PShaderParticle(float2 TexCoord : TEXCOORD0,
 	if (size.x <= 10)
 		alpha = size.x / g_maxTexSize / 3;
 
-	float colorFactor = 0.1f;
+	float colorFactor = g_colorFactor;
 	if (brush.r > 0.59f)
 	{
 		brush = float4(1.0f, 1.0f, 1.0f, 0.0f);
@@ -706,24 +714,35 @@ float4 PShaderParticle(float2 TexCoord : TEXCOORD0,
 	return brush;
 }
 
-P_OutVS VShaderParticleInside(float4 posL       : POSITION0,
+float g_baseColorScale = 0;
+float g_maxColorScale = 0;
+
+struct PInside_OutVS
+{
+	float4 posWVP         : POSITION0;
+	float2 TexCoord		  : TEXCOORD0;
+	float  psize		  : PSIZE;
+	float4 texC		      : COLOR0;
+	float4 color		  : COLOR1;
+};
+
+PInside_OutVS VShaderParticleInside(float4 posL       : POSITION0,
 	float2 TexCoord : TEXCOORD0)
 {
-	P_OutVS outVS = (P_OutVS)0;
+	PInside_OutVS outVS = (PInside_OutVS)0;
 
 	//先把所有顶点移动到区域外
 	outVS.posWVP = float4(-2, -2, -2, 1);
-	//默认大小为0
-	float size = 0;
+	//默认颜色为0
+	float thickness = 0;
 	//EdgeMap的纹理采样
-	float4 color = tex2Dlod(g_sampleMainColor, float4(TexCoord.x, TexCoord.y, 0, 0));
-	//如果EdgeMap的颜色小于1.0，也就是不为纯白，就设置其对应的纹理大小和位置
-	if (color.r < 1.0f)
+	float4 texColor = tex2Dlod(g_sampleMainColor, float4(TexCoord.x, TexCoord.y, 0, 0));
+	//如果EdgeMap的颜色小于1.0，也就是不为纯白，就设置其对应的纹理颜色和位置
+	if (texColor.r < 1.0f)
 	{
-		//根据灰度图的颜色确定纹理大小，颜色越深纹理越大，颜色越浅纹理越小（本质是为了后面处理颜色而进行的计算）
-		size = g_baseTexSize * (1 - color.r);
-		//将纹理大小限制在0和最大大小之间
-		size = clamp(size, 0, g_maxTexSize);
+		//根据灰度图的颜色确定纹理颜色，这里值越大颜色越深,也可以理解为墨的浓度值
+		thickness = 1 - texColor.r;
+
 		//根据传入的顶点的UV坐标来计算空间位置
 		outVS.posWVP = float4(2 * TexCoord.x - 1, 1 - 2 * TexCoord.y, 0, 1);
 	}
@@ -734,26 +753,26 @@ P_OutVS VShaderParticleInside(float4 posL       : POSITION0,
 	float invDepth = 1 - depth / g_zFar;
 	//也就是说深度越大，计算出的纹理大小越小，而最大值不会超过g_maxTexSize*sizeFactor，最小不会小于g_minTexSize
 	float sizeFactor = g_SizeFactor;
-	outVS.psize = g_maxTexSize * invDepth * invDepth * sizeFactor;
-	outVS.psize = clamp(outVS.psize, g_minTexSize, g_maxTexSize * sizeFactor);
+	outVS.psize = g_maxInsideTexSize * invDepth * invDepth * sizeFactor;
+	outVS.psize = clamp(outVS.psize, g_minInsideTexSize, g_maxInsideTexSize * sizeFactor);
 
 	//储存纹理坐标，便于后面的计算
 	outVS.texC = float4(TexCoord, 0, 0);
 	//储存控制透明度的size和实际的纹理粒子大小
-	outVS.size = float4(size, outVS.psize, 0, 0);
+	outVS.color = float4(thickness, outVS.psize, 0, 0);
 
 	return outVS;
 }
 
 float4 PShaderParticleInside(float2 TexCoord : TEXCOORD0,//粒子内部的纹理坐标
 	float4 texC : COLOR0,//粒子中心点的全局纹理坐标
-	float4 size : COLOR1
+	float4 color : COLOR1
 	) : COLOR
 {
 	//将粒子的局部纹理坐标转换到以粒子中心为原点的坐标
 	float2 localT = TexCoord - float2(0.5, 0.5);
 	//size.y是粒子的实际大小（像素），根据粒子大小、粒子纹理内部坐标和中心坐标，计算出粒子纹理上每个像素的全局坐标
-	float2 globleT = texC.xy + float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight)* size.y * localT;
+	float2 globleT = texC.xy + float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight)* color.y * localT;
 	float depth = tex2D(g_samplePosition, globleT);
 	//如果深度过大，说明是没有渲染的部分，把那部分的纹理切掉
 	//实际上这里后面应该改成和中心部分相差大于阈值后切掉
@@ -772,7 +791,7 @@ float4 PShaderParticleInside(float2 TexCoord : TEXCOORD0,//粒子内部的纹理坐标
 
 	//根据中心点坐标和法线计算一个伪随机数（其实完全不是随机），让随机数在0到1的范围内，角度是0-3.14，加1还算合理
 	float random = (texC.x * texC.y + texC.x / texC.y) * (normal.x + normal.y + normal.z) / (normal.x * normal.y * normal.z);
-	random = (TexCoord.x * TexCoord.y + TexCoord.x / TexCoord.y) * (normal.x + normal.y + normal.z) / (normal.x * normal.y * normal.z);
+	//random = (TexCoord.x * TexCoord.y + TexCoord.x / TexCoord.y) * (normal.x + normal.y + normal.z) / (normal.x * normal.y * normal.z);
 	random = frac(random);
 	A += random;
 
@@ -793,18 +812,19 @@ float4 PShaderParticleInside(float2 TexCoord : TEXCOORD0,//粒子内部的纹理坐标
 	float4 brush = float4(1, 1, 1, 1);
 	brush = tex2D(g_sampleInkTex, TexCoord);
 
-	if (brush.r > 0.59f)
+	//使用alphaTest处理笔迹纹理
+	float alphaTestFactor = g_alphaTestFactor;
+	if (brush.r < alphaTestFactor)
 	{
-		brush = float4(0.0f, 0.0f, 0.0f, 0.0f);
+		float factor = 0.7f;
+		float thickness = color.x;
+		float bC = (1 - factor) * thickness + factor;
+		brush = float4(0, 0, 0, bC);// *1.5;
+		//brush = float4(normal, 0.5f);
 	}
 	else
 	{
-		float tmp = size.x / g_maxTexSize;
-		float bC = 2*tmp - tmp*tmp; //y = 2x-x^2
-		float factor = 0.7f;
-		bC = (1 - factor) * tmp + factor;
-		brush = float4(0, 0, 0, bC);// *1.5;
-		//brush = float4(normal, 0.5f);
+		brush = float4(0.0f, 0.0f, 0.0f, 0.0f);
 	}
 
 	if (TexCoord.x < 0 || TexCoord.x > 1 || TexCoord.y < 0 || TexCoord.y > 1)

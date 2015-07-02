@@ -31,8 +31,11 @@ int w = 100; //RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth
 int h = 100; //RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight
 int w2 = 100; //RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth
 int h2 = 100; //RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight
-int baseTexSize = 32;
-int maxTexSize = 22;
+int baseTexSize = 0;
+int maxTexSize = 0;
+int baseInsideTexSize = 0;
+int maxInsideTexSize = 0;
+int minInsideTexSize = 0;
 
 void SumiE::CreatePostEffect()
 {
@@ -70,8 +73,9 @@ void SumiE::CreatePostEffect()
 	Particle* p2 = 0;
 	mParticleBuffer2->Lock(0, 0, (void**)&p2, D3DLOCK_DISCARD);
 
-	baseTexSize = 26;
-	maxTexSize = 17;
+	baseInsideTexSize = 46;
+	maxInsideTexSize = 33;
+	minInsideTexSize = 2;
 	//w = 100; //RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth
 	//h = 100; //RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight
 	w2 = RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth / 5;
@@ -471,7 +475,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	if (openInsideParticle)
 	{
 		//=============================================================================================================
-		//粒子TEST
+		//渲染内部纹理
 		PDIRECT3DSURFACE9 pSurf_Inside = NULL;
 		m_pInsideTarget->GetSurfaceLevel(0, &pSurf_Inside);
 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_Inside);
@@ -492,8 +496,11 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		m_postEffect->SetTexture(POSITIONBUFFER, RENDERPIPE::Instance().m_pPositionTarget);
 		m_postEffect->SetTexture("g_InkTex", m_pInkMask);
 
-		m_postEffect->SetInt("g_baseTexSize", 46);
-		m_postEffect->SetInt("g_maxTexSize", 33);
+		m_postEffect->SetInt("g_baseInsideTexSize", baseInsideTexSize);
+		m_postEffect->SetInt("g_maxInsideTexSize",  maxInsideTexSize);
+		m_postEffect->SetInt("g_minInsideTexSize",  minInsideTexSize);
+		m_postEffect->SetFloat("g_SizeFactor",   1.0f);
+		m_postEffect->SetFloat("g_alphaTestFactor", 0.79f);
 
 		m_postEffect->CommitChanges();
 
@@ -533,6 +540,8 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 		m_postEffect->SetInt("g_baseTexSize", baseTexSize);
 		m_postEffect->SetInt("g_maxTexSize", maxTexSize);
+
+		m_postEffect->SetInt("g_colorFactor", 0.3);
 
 		m_postEffect->CommitChanges();
 
@@ -599,6 +608,9 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		//只处理内部的纹理，边缘纹理其实是不应该和后面混合的。或者找找能让边缘的透明度更均匀的方法
 		//m_SynthesisEffect->SetTexture("g_Contour", m_pContourTarget);
 		m_SynthesisEffect->SetTexture("g_Inside", m_pBluredInside);
+		m_SynthesisEffect->SetFloat("g_AlphaFactor", 0.6);
+		m_SynthesisEffect->CommitChanges();
+
 
 		m_SynthesisEffect->BeginPass(0);
 		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);

@@ -87,7 +87,6 @@ OutputVS VShader(float4 posL       : POSITION0,
 float4 PShaderSynthesis(float2 TexCoord : TEXCOORD0) : COLOR
 {
 	float4 colorInside = tex2D(g_sampleInside, TexCoord);
-
 	colorInside = GaussianBlur(g_ScreenWidth, g_ScreenHeight, g_sampleInside, TexCoord);
 
 	float alphaFactor = g_AlphaFactor;

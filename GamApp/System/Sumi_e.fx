@@ -599,7 +599,7 @@ struct P_OutVS
 	float4 posWVP         : POSITION0;
 	float2 TexCoord		  : TEXCOORD0;
 	float  psize		  : PSIZE;
-	float4 texC		  : COLOR0;
+	float4 texC			  : COLOR0;
 	float4 size			  : COLOR1;
 };
 
@@ -629,6 +629,17 @@ P_OutVS VShaderParticle(float4 posL       : POSITION0,
 	outVS.size = float4(outVS.psize, outVS.psize, outVS.psize, outVS.psize);
 
 	outVS.texC = float4(TexCoord, 0, 0);
+	
+	//因为这里不需要纹理大小有区别，所以直接根据深度来确定距离
+	float depth = tex2Dlod(g_samplePosition, float4(TexCoord.x, TexCoord.y, 0, 0));
+	//将深度转化为0-1区间内的值，深度越大，invDepth越小
+	float invDepth = 1 - depth / g_zFar;
+	//也就是说深度越大，计算出的纹理大小越小，而最大值不会超过g_maxTexSize*sizeFactor，最小不会小于g_minTexSize
+	float sizeFactor = 1;
+	float tempSize = outVS.psize;
+	outVS.psize = tempSize * invDepth * invDepth * sizeFactor;
+	outVS.psize = clamp(outVS.psize, 0, tempSize * sizeFactor);
+
 	return outVS;
 }
 
@@ -792,7 +803,9 @@ float4 PShaderParticleInside(float2 TexCoord : TEXCOORD0,//粒子内部的纹理坐标
 	//根据中心点坐标和法线计算一个伪随机数（其实完全不是随机），让随机数在0到1的范围内，角度是0-3.14，加1还算合理
 	float random = (texC.x * texC.y + texC.x / texC.y) * (normal.x + normal.y + normal.z) / (normal.x * normal.y * normal.z);
 	//random = (TexCoord.x * TexCoord.y + TexCoord.x / TexCoord.y) * (normal.x + normal.y + normal.z) / (normal.x * normal.y * normal.z);
+	//random = clamp(random, 0, 3.1416f);
 	random = frac(random);
+	random *= (3.1415f / 2.0f);
 	A += random;
 
 	//HLSL内部声明的矩阵是列矩阵

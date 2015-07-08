@@ -61,6 +61,17 @@ sampler_state
 	MipFilter = Point;
 };
 
+
+texture		g_Background;
+sampler2D g_sampleBackground =
+sampler_state
+{
+	Texture = <g_Background>;
+	MinFilter = Point;
+	MagFilter = Point;
+	MipFilter = Point;
+};
+
 float g_AlphaFactor = 0.8f;
 
 struct OutputVS
@@ -86,13 +97,16 @@ OutputVS VShader(float4 posL       : POSITION0,
 
 float4 PShaderSynthesis(float2 TexCoord : TEXCOORD0) : COLOR
 {
+	float4 bgColor = tex2D(g_sampleBackground, TexCoord);
+
 	float4 colorInside = tex2D(g_sampleInside, TexCoord);
 	colorInside = GaussianBlur(g_ScreenWidth, g_ScreenHeight, g_sampleInside, TexCoord);
 
 	float alphaFactor = g_AlphaFactor;
 	float insideAlpha = colorInside.a * alphaFactor;
 
-	float4 Inside = colorInside * insideAlpha + float4(1, 1, 1, 1) * (1 - insideAlpha);
+	//bgColor = float4(1, 1, 1, 1);
+	float4 Inside = colorInside * insideAlpha + bgColor * (1 - insideAlpha);
 
 	return Inside;
 }

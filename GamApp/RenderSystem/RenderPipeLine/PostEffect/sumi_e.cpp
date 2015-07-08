@@ -206,6 +206,13 @@ void SumiE::CreatePostEffect()
 		MessageBox(GetForegroundWindow(), "TextureError", "InkCloud", MB_OK);
 		abort();
 	}
+	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "Res\\background1.jpg", &m_pBackground))
+	{
+		MessageBox(GetForegroundWindow(), "TextureError", "background1", MB_OK);
+		abort();
+	}
+
+	
 	
 }
 
@@ -568,6 +575,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		//只处理内部的纹理，边缘纹理其实是不应该和后面混合的。或者找找能让边缘的透明度更均匀的方法
 		//m_SynthesisEffect->SetTexture("g_Contour", m_pContourTarget);
 		m_SynthesisEffect->SetTexture("g_Inside", m_pBluredInside);
+		m_SynthesisEffect->SetTexture("g_Background", m_pBackground);
 		//控制内部黑色的程度
 		m_SynthesisEffect->SetFloat("g_AlphaFactor", 0.6);
 		m_SynthesisEffect->CommitChanges();

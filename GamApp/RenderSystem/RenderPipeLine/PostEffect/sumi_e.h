@@ -49,6 +49,7 @@ private:
 	LPDIRECT3DTEXTURE9 m_pInsideTarget;
 
 	LPDIRECT3DTEXTURE9 m_pBluredInside;
+	LPDIRECT3DTEXTURE9 m_pBackground;
 
 	LPD3DXEFFECT		m_SynthesisEffect;
 

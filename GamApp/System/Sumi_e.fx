@@ -31,6 +31,16 @@ sampler_state
 	MipFilter = Point;
 };
 
+texture		g_DiffuseBuffer;
+sampler2D g_sampleDiffuse =
+sampler_state
+{
+	Texture = <g_DiffuseBuffer>;
+	MinFilter = Point;
+	MagFilter = Point;
+	MipFilter = Point;
+};
+
 texture		g_GrayscaleBuffer;
 sampler2D g_sampleGrayscale =
 sampler_state
@@ -746,8 +756,11 @@ PInside_OutVS VShaderParticleInside(float4 posL       : POSITION0,
 	outVS.posWVP = float4(-2, -2, -2, 1);
 	//默认颜色为0
 	float thickness = 0;
-	//EdgeMap的纹理采样
+	//GrayScaleMap的纹理采样
 	float4 texColor = tex2Dlod(g_sampleMainColor, float4(TexCoord.x, TexCoord.y, 0, 0));
+		//DiffuseMap的纹理采样
+		float4 diffuseColor = tex2Dlod(g_sampleDiffuse, float4(TexCoord.x, TexCoord.y, 0, 0));
+		texColor = diffuseColor;
 	//如果EdgeMap的颜色小于1.0，也就是不为纯白，就设置其对应的纹理颜色和位置
 	if (texColor.r < 1.0f)
 	{
@@ -780,6 +793,8 @@ float4 PShaderParticleInside(float2 TexCoord : TEXCOORD0,//粒子内部的纹理坐标
 	float4 color : COLOR1
 	) : COLOR
 {
+	//float outC = 1 - color, x;
+	//return float4(outC, outC, outC, 1.0);
 	//将粒子的局部纹理坐标转换到以粒子中心为原点的坐标
 	float2 localT = TexCoord - float2(0.5, 0.5);
 	//size.y是粒子的实际大小（像素），根据粒子大小、粒子纹理内部坐标和中心坐标，计算出粒子纹理上每个像素的全局坐标
@@ -829,7 +844,7 @@ float4 PShaderParticleInside(float2 TexCoord : TEXCOORD0,//粒子内部的纹理坐标
 	float alphaTestFactor = g_alphaTestFactor;
 	if (brush.r < alphaTestFactor)
 	{
-		float factor = 0.7f;
+		float factor = 0.0f;
 		float thickness = color.x;
 		float bC = (1 - factor) * thickness + factor;
 		brush = float4(0, 0, 0, bC);// *1.5;

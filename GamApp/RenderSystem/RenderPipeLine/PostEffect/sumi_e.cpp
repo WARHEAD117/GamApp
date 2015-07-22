@@ -501,6 +501,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		m_postEffect->SetTexture(MAINCOLORBUFFER, m_StrokesArea_2);
 		m_postEffect->SetTexture(NORMALBUFFER, RENDERPIPE::Instance().m_pNormalTarget);
 		m_postEffect->SetTexture(POSITIONBUFFER, RENDERPIPE::Instance().m_pPositionTarget);
+		m_postEffect->SetTexture(DIFFUSEBUFFER, RENDERPIPE::Instance().m_pDiffuseTarget);
 		m_postEffect->SetTexture("g_InkTex", m_pInkMask);
 
 		m_postEffect->SetInt("g_baseInsideTexSize", baseInsideTexSize);

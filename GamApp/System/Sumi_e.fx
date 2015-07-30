@@ -259,7 +259,7 @@ float4 PShaderGrayscale(float2 TexCoord : TEXCOORD0) : COLOR
 
 	normal = normalize(normal);
 
-	float3 light = float3(0, -0.1, 1);
+	float3 light = float3(0, 0, 1);
 	light = normalize(light);
 
 	float nl = dot(normal, -light);
@@ -308,7 +308,7 @@ float4 Normal_Gray(float2 TexCoord)
 		//normal = GetUnsharpMaskedNormal(TexCoord, g_sampleNormal);
 	
 	
-	float3 light = float3(0, -0.3, 1);
+	float3 light = float3(0, 0, 1);
 	light = normalize(light);
 
 	float nl = dot(normal, -light);
@@ -771,21 +771,45 @@ PInside_OutVS VShaderParticleInside(float4 posL       : POSITION0,
 	float thickness = 0;
 	//GrayScaleMap的纹理采样
 	float4 texColor = tex2Dlod(g_sampleMainColor, float4(TexCoord.x, TexCoord.y, 0, 0));
-		//DiffuseMap的纹理采样
-		float4 diffuseColor = tex2Dlod(g_sampleDiffuse, float4(TexCoord.x, TexCoord.y, 0, 0));
-		texColor = diffuseColor;
+	//DiffuseMap的纹理采样
+	float4 diffuseColor = tex2Dlod(g_sampleDiffuse, float4(TexCoord.x, TexCoord.y, 0, 0));
+	//texColor = diffuseColor;
 	//如果EdgeMap的颜色小于1.0，也就是不为纯白，就设置其对应的纹理颜色和位置
-	if (texColor.g < 1.0f)
+
+	//因为这里不需要纹理大小有区别，所以直接根据深度来确定距离
+	float depth = tex2Dlod(g_samplePosition, float4(TexCoord.x, TexCoord.y, 0, 0));
+
+	int a = 4;
+	if (texColor.r < 0.4)
+	{
+		//float invDepth = 1 - depth / g_zFar;
+		//a = 4 * invDepth;
+		//a = 1;
+
+		if (depth < 5)a = 4;
+		else if (depth < 10)a = 3;
+		else if (depth < 15)a = 2;
+		else if (depth < 20)a = 1;
+		else a = 1;
+	}
+	a = clamp(a, 1, 4);
+	//a = 5;
+	int pixIndex_X = TexCoord.x * g_ScreenWidth;
+	int pixIndex_Y = TexCoord.y * (g_ScreenHeight+1);
+
+	int mod_X = pixIndex_X - pixIndex_X / a * a;
+	int mod_Y = pixIndex_Y - pixIndex_Y / a * a;
+
+	if (mod_X < 1 && mod_Y < 1)
 	{
 		//根据灰度图的颜色确定纹理颜色，这里值越大颜色越深,也可以理解为墨的浓度值
-		thickness = 1 - texColor.g;
+		thickness = 1 - diffuseColor.g;
 
 		//根据传入的顶点的UV坐标来计算空间位置
 		outVS.posWVP = float4(2 * TexCoord.x - 1, 1 - 2 * TexCoord.y, 0, 1);
 	}
 	
-	//因为这里不需要纹理大小有区别，所以直接根据深度来确定距离
-	float depth = tex2Dlod(g_samplePosition, float4(TexCoord.x, TexCoord.y, 0, 0));
+	
 	//将深度转化为0-1区间内的值，深度越大，invDepth越小
 	float invDepth = 1 - depth / g_zFar;
 	//也就是说深度越大，计算出的纹理大小越小，而最大值不会超过g_maxTexSize*sizeFactor，最小不会小于g_minTexSize

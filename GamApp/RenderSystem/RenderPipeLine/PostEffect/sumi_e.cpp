@@ -78,8 +78,8 @@ void SumiE::CreatePostEffect()
 	minInsideTexSize = 10;
 	//w = 100; //RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth
 	//h = 100; //RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight
-	w2 = RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth / 5;
-	h2 = RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight / 5;
+	w2 = RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth / 1;
+	h2 = RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight / 1;
 	// For each living particle.
 	for (UINT j = 0; j < h2; ++j)
 	{

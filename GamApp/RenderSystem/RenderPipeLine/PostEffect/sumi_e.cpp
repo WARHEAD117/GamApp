@@ -73,9 +73,6 @@ void SumiE::CreatePostEffect()
 	Particle* p2 = 0;
 	mParticleBuffer2->Lock(0, 0, (void**)&p2, D3DLOCK_DISCARD);
 
-	baseInsideTexSize = 46;
-	maxInsideTexSize = 33;
-	minInsideTexSize = 10;
 	//w = 100; //RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth
 	//h = 100; //RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight
 	w2 = RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth / 1;
@@ -495,6 +492,8 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		m_postEffect->SetMatrix(WORLDVIEWPROJMATRIX, &temp);
 		m_postEffect->SetMatrix(PROJECTIONMATRIX, &RENDERDEVICE::Instance().ProjMatrix);
 
+		m_postEffect->SetFloat("g_zNear", CameraParam::zNear);
+		m_postEffect->SetFloat("g_zFar", CameraParam::zFar);
 		m_postEffect->SetInt(SCREENWIDTH, RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth);
 		m_postEffect->SetInt(SCREENHEIGHT, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight);
 
@@ -503,6 +502,10 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		m_postEffect->SetTexture(POSITIONBUFFER, RENDERPIPE::Instance().m_pPositionTarget);
 		m_postEffect->SetTexture(DIFFUSEBUFFER, RENDERPIPE::Instance().m_pDiffuseTarget);
 		m_postEffect->SetTexture("g_InkTex", m_pInkMask);
+
+		baseInsideTexSize = 2130;
+		maxInsideTexSize = 33;
+		minInsideTexSize = 10;
 
 		m_postEffect->SetInt("g_baseInsideTexSize", baseInsideTexSize);
 		m_postEffect->SetInt("g_maxInsideTexSize",  maxInsideTexSize);

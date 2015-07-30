@@ -75,7 +75,7 @@ void SumiE::CreatePostEffect()
 
 	baseInsideTexSize = 46;
 	maxInsideTexSize = 33;
-	minInsideTexSize = 2;
+	minInsideTexSize = 10;
 	//w = 100; //RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth
 	//h = 100; //RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight
 	w2 = RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth / 5;

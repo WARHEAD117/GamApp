@@ -650,6 +650,11 @@ P_OutVS VShaderParticle(float4 posL       : POSITION0,
 
 	scaledSize = size * S_scale;
 
+	{
+		//float x = 1.0f * size * g_zNear / depth;
+		//scaledSize = x * 70;
+	}
+
 	int minSize = 2;
 
 	if (scaledSize >= 1 && color.r < 1.0f)
@@ -785,8 +790,16 @@ PInside_OutVS VShaderParticleInside(float4 posL       : POSITION0,
 	float invDepth = 1 - depth / g_zFar;
 	//也就是说深度越大，计算出的纹理大小越小，而最大值不会超过g_maxTexSize*sizeFactor，最小不会小于g_minTexSize
 	float sizeFactor = g_SizeFactor;
-	outVS.psize = g_maxInsideTexSize * invDepth * invDepth * sizeFactor;
-	outVS.psize = clamp(outVS.psize, g_minInsideTexSize, g_maxInsideTexSize * sizeFactor);
+	float S_scale = invDepth * invDepth * sizeFactor;
+	float sizeScaled = g_maxInsideTexSize * S_scale;
+
+	{
+		float x = 1.0f * g_maxInsideTexSize * g_zNear / depth;
+		sizeScaled = x * 70;
+	}
+
+
+	outVS.psize = clamp(sizeScaled, g_minInsideTexSize, g_maxInsideTexSize * sizeFactor);
 	if (depth > 1000) outVS.psize = 0;
 	//储存纹理坐标，便于后面的计算
 	outVS.texC = float4(TexCoord, 0, 0);

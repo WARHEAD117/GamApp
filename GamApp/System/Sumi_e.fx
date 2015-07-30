@@ -626,29 +626,37 @@ P_OutVS VShaderParticle(float4 posL       : POSITION0,
 	
 	outVS.psize = 0;
 
+	//DiffuseMap的纹理采样
+	float4 diffuseColor = tex2Dlod(g_sampleDiffuse, float4(TexCoord.x, TexCoord.y, 0, 0));
+
 	float4 color = tex2Dlod(g_sampleMainColor, float4(TexCoord.x, TexCoord.y, 0, 0));
-	if (color.r < 0.99f)
-	{
-		outVS.psize = g_baseTexSize * (1 - color.r);
-		outVS.psize = clamp(outVS.psize, 0, g_maxTexSize);
-		
 
-		outVS.posWVP = float4(2 * TexCoord.x - 1, 1 - 2 * TexCoord.y, 0, 1);
-	}
+	float size = 0;
+	size = g_baseTexSize * (1 - color.r);
+	size = clamp(size, 0, g_maxTexSize);
 
-	outVS.size = float4(outVS.psize, outVS.psize, outVS.psize, outVS.psize);
+	outVS.size = float4(size, size, size, size);
 
 	outVS.texC = float4(TexCoord, 0, 0);
 	
-	//因为这里不需要纹理大小有区别，所以直接根据深度来确定距离
 	float depth = tex2Dlod(g_samplePosition, float4(TexCoord.x, TexCoord.y, 0, 0));
 	//将深度转化为0-1区间内的值，深度越大，invDepth越小
 	float invDepth = 1 - depth / g_zFar;
 	//也就是说深度越大，计算出的纹理大小越小，而最大值不会超过g_maxTexSize*sizeFactor，最小不会小于g_minTexSize
-	float sizeFactor = 1;
-	float tempSize = outVS.psize;
-	outVS.psize = tempSize * invDepth * invDepth * sizeFactor;
-	outVS.psize = clamp(outVS.psize, 0, tempSize * sizeFactor);
+	float sizeFactor = 0.8;
+	float scaledSize = 0;
+
+	float S_scale = invDepth * invDepth * sizeFactor * diffuseColor;
+
+	scaledSize = size * S_scale;
+
+	int minSize = 2;
+
+	if (scaledSize >= 1 && color.r < 1.0f)
+	{
+		outVS.posWVP = float4(2 * TexCoord.x - 1, 1 - 2 * TexCoord.y, 0, 1);
+		outVS.psize = scaledSize;
+	}
 
 	return outVS;
 }
@@ -762,10 +770,10 @@ PInside_OutVS VShaderParticleInside(float4 posL       : POSITION0,
 		float4 diffuseColor = tex2Dlod(g_sampleDiffuse, float4(TexCoord.x, TexCoord.y, 0, 0));
 		texColor = diffuseColor;
 	//如果EdgeMap的颜色小于1.0，也就是不为纯白，就设置其对应的纹理颜色和位置
-	if (texColor.r < 1.0f)
+	if (texColor.g < 1.0f)
 	{
 		//根据灰度图的颜色确定纹理颜色，这里值越大颜色越深,也可以理解为墨的浓度值
-		thickness = 1 - texColor.r;
+		thickness = 1 - texColor.g;
 
 		//根据传入的顶点的UV坐标来计算空间位置
 		outVS.posWVP = float4(2 * TexCoord.x - 1, 1 - 2 * TexCoord.y, 0, 1);
@@ -779,7 +787,7 @@ PInside_OutVS VShaderParticleInside(float4 posL       : POSITION0,
 	float sizeFactor = g_SizeFactor;
 	outVS.psize = g_maxInsideTexSize * invDepth * invDepth * sizeFactor;
 	outVS.psize = clamp(outVS.psize, g_minInsideTexSize, g_maxInsideTexSize * sizeFactor);
-
+	if (depth > 1000) outVS.psize = 0;
 	//储存纹理坐标，便于后面的计算
 	outVS.texC = float4(TexCoord, 0, 0);
 	//储存控制透明度的size和实际的纹理粒子大小
@@ -800,9 +808,12 @@ float4 PShaderParticleInside(float2 TexCoord : TEXCOORD0,//粒子内部的纹理坐标
 	//size.y是粒子的实际大小（像素），根据粒子大小、粒子纹理内部坐标和中心坐标，计算出粒子纹理上每个像素的全局坐标
 	float2 globleT = texC.xy + float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight)* color.y * localT;
 	float depth = tex2D(g_samplePosition, globleT);
+
+	float4 diffuseColor = tex2D(g_sampleDiffuse, TexCoord);
+	float4 diffuseColor2 = tex2D(g_sampleDiffuse, texC.xy);
 	//如果深度过大，说明是没有渲染的部分，把那部分的纹理切掉
 	//实际上这里后面应该改成和中心部分相差大于阈值后切掉
-	if (depth > 1000)
+	if (depth > 1000 && diffuseColor2.r > 0.3f)
 		return float4(0,0,0,0);
 
 	//获取中心点对应的法线

@@ -24,6 +24,7 @@ Entity* shevaEntity;
 Entity* horseEntity;
 Entity* horse2Entity;
 Entity* bunnyEntity;
+Entity* deerEntity;
 Entity* sponzaEntity;
 Material testMat1;
 EffectLoader effectLoader;
@@ -79,6 +80,8 @@ void TestScene::OnLoad()
 	horseEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\horse\\horse.X");
 	horseEntity->SetTexture("Res\\Mesh\\horse\\HorseB_512.jpg");
 	//horseEntity->SetNormalMap("Res\\Mesh\\horse\\HorseB _NRM_512.jpg");
+
+	deerEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\deer\\deer.X");
 
 	bunnyEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\bunny.X");
 
@@ -173,6 +176,14 @@ void TestScene::OnLoad()
 	D3DXMATRIX bunnyRotMat;
 	D3DXMatrixRotationY(&bunnyRotMat, -0.5f * D3DX_PI);
 	bunnyEntity->SetWorldTransform(bunnyRotMat * bunnyS * bunnyM);
+
+	D3DXMATRIX deerM;
+	D3DXVECTOR3 deerMove = D3DXVECTOR3(-12, 0, 32.5f);
+	D3DXMatrixTranslation(&deerM, deerMove.x, deerMove.y, deerMove.z);
+	D3DXMATRIX deerS;
+	D3DXVECTOR3 deerSV = D3DXVECTOR3(0.1, 0.1, 0.1);
+	D3DXMatrixScaling(&deerS, deerSV.x, deerSV.y, deerSV.z);
+	deerEntity->SetWorldTransform(deerS * deerM);
 
 	D3DXMATRIX horse2M;
 	move = D3DXVECTOR3(-12, 25, -20.5f);

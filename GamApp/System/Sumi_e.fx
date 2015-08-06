@@ -461,7 +461,7 @@ float4 PShaderEdgeBlur(float2 TexCoord : TEXCOORD0) : COLOR
 	float sum = 0;
 	for (int i = 0; i < 9; i++)
 	{
-		if (colorList[i] < 0.99)
+		if (colorList[i] < 0.89)
 		{
 			count++;
 			sum += colorList[i];
@@ -549,7 +549,8 @@ float GetOverlap(float dark, float light)
 
 float4 PShaderBlend(float2 TexCoord : TEXCOORD0) : COLOR
 {	
-	return float4(1, 1, 1, 1);
+	return tex2D(g_sampleSA1, TexCoord);
+	//return float4(1, 1, 1, 1);
 	//return tex2D(g_sampleMainColor, TexCoord);// *tex2D(g_sampleMainColor, TexCoord)*tex2D(g_sampleMainColor, TexCoord);
 
 	//return tex2D(g_sampleGrayscale, TexCoord);
@@ -610,7 +611,7 @@ struct P_OutVS
 	float2 TexCoord		  : TEXCOORD0;
 	float  psize		  : PSIZE;
 	float4 texC			  : COLOR0;
-	float4 size			  : COLOR1;
+	float4 thickness	  : COLOR1;
 };
 
 P_OutVS VShaderParticle(float4 posL       : POSITION0,
@@ -628,17 +629,16 @@ P_OutVS VShaderParticle(float4 posL       : POSITION0,
 
 	//DiffuseMap的纹理采样
 	float4 diffuseColor = tex2Dlod(g_sampleDiffuse, float4(TexCoord.x, TexCoord.y, 0, 0));
-
 	float4 color = tex2Dlod(g_sampleMainColor, float4(TexCoord.x, TexCoord.y, 0, 0));
 
-	float size = 0;
-	size = g_baseTexSize * (1 - color.r);
-	size = clamp(size, 0, g_maxTexSize);
-
-	outVS.size = float4(size, size, size, size);
-
+	float thickness = 1 - color.r;
+	outVS.thickness = float4(thickness, thickness, thickness, thickness);
 	outVS.texC = float4(TexCoord, 0, 0);
+
+	float size = 0;
+	size = thickness * g_baseTexSize;
 	
+	//size = clamp(size, 0, g_maxTexSize);
 	float depth = tex2Dlod(g_samplePosition, float4(TexCoord.x, TexCoord.y, 0, 0));
 	//将深度转化为0-1区间内的值，深度越大，invDepth越小
 	float invDepth = 1 - depth / g_zFar;
@@ -649,15 +649,27 @@ P_OutVS VShaderParticle(float4 posL       : POSITION0,
 	float S_scale = invDepth * invDepth * sizeFactor * diffuseColor;
 
 	scaledSize = size * S_scale;
-
+	
 	{
-		//float x = 1.0f * size * g_zNear / depth;
-		//scaledSize = x * 70;
+		float scale = 1.0f * g_zNear / depth * diffuseColor;
+		
+		//距离是9的时候，更改大小调整的曲线
+		float limit = 17;
+		float b = 0.009;
+		if (depth <= limit)
+		{
+			scale = (g_zNear - limit * b) / (limit * limit * limit) * depth * depth + b;
+			scale = scale * diffuseColor;
+		}
+		
+		scaledSize = size * scale;
+
+		//scaledSize = clamp(scaledSize, g_minTexSize * diffuseColor, g_maxTexSize);
+		scaledSize = max(scaledSize, g_minTexSize * diffuseColor);
+
 	}
 
-	int minSize = 2;
-
-	if (scaledSize >= 1 && color.r < 1.0f)
+	if (scaledSize >= 1 && thickness > 0.0f)
 	{
 		outVS.posWVP = float4(2 * TexCoord.x - 1, 1 - 2 * TexCoord.y, 0, 1);
 		outVS.psize = scaledSize;
@@ -667,7 +679,7 @@ P_OutVS VShaderParticle(float4 posL       : POSITION0,
 }
 
 float4 PShaderParticle(float2 TexCoord : TEXCOORD0,
-	float4 size : COLOR1,
+	float4 thickness : COLOR1,
 	float4 color : COLOR0) : COLOR
 {
 	float3 normal = normalize(GetNormal(g_sampleNormal, color.xy));
@@ -709,24 +721,24 @@ float4 PShaderParticle(float2 TexCoord : TEXCOORD0,
 		float4 brush4 = tex2D(g_sampleInkTex4, TexCoord);
 
 		brush = brush2;
-	if (size.x <= 10)
+	if (thickness.x <= 0.5f)
 	{
-		float tmp = size.x / 10;
+		float tmp = thickness.x / 0.5f;
 		brush = lerp(brush4, brush3, 2 * tmp - tmp*tmp); //y = 2x-x^2
 	}
-	else if (size.x < g_maxTexSize)
+	else if (thickness.x < 1)
 	{
-		brush = lerp(brush3, brush2, pow((size.x - 10),2) / pow((g_maxTexSize - 10), 2)); //
+		brush = lerp(brush3, brush2, pow((thickness.x - 0.5f), 2) / pow((1 - 0.5f), 2)); //
 	}
 	//brush = lerp(brush4, brush3, size.x / g_maxTexSize);
 		//brush.rgb = float3(0.5, 0.5, 0.5);
 	brush.a = 1;
 
 	float alpha = 0.3;
-	if (size.x < g_maxTexSize && size.x > 10)
-		alpha = size.x / g_maxTexSize / 2;
-	if (size.x <= 10)
-		alpha = size.x / g_maxTexSize / 3;
+	if (thickness.x < 1 && thickness.x > 0.5f)
+		alpha = thickness.x / 2;
+	if (thickness.x <= 0.5f)
+		alpha = thickness.x / 3;
 
 	float colorFactor = g_colorFactor;
 	if (brush.r > 0.59f)

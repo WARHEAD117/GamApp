@@ -25,6 +25,8 @@ Entity* horseEntity;
 Entity* horse2Entity;
 Entity* bunnyEntity;
 Entity* deerEntity;
+Entity* deerEntity2;
+
 Entity* sponzaEntity;
 Material testMat1;
 EffectLoader effectLoader;
@@ -82,6 +84,7 @@ void TestScene::OnLoad()
 	//horseEntity->SetNormalMap("Res\\Mesh\\horse\\HorseB _NRM_512.jpg");
 
 	deerEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\deer\\deer.X");
+	deerEntity2 = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\deer\\deer.X");
 
 	bunnyEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\bunny.X");
 
@@ -185,6 +188,14 @@ void TestScene::OnLoad()
 	D3DXMatrixScaling(&deerS, deerSV.x, deerSV.y, deerSV.z);
 	deerEntity->SetWorldTransform(deerS * deerM);
 
+	D3DXMATRIX deer2M;
+	D3DXVECTOR3 deer2Move = D3DXVECTOR3(-12, 0, 32.5f);
+	D3DXMatrixTranslation(&deer2M, deer2Move.x, deer2Move.y, deer2Move.z);
+	D3DXMATRIX deer2S;
+	D3DXVECTOR3 deer2SV = D3DXVECTOR3(0.1, 0.1, 0.1);
+	D3DXMatrixScaling(&deer2S, deer2SV.x, deer2SV.y, deer2SV.z);
+	deerEntity2->SetWorldTransform(deer2S * deer2M);
+
 	D3DXMATRIX horse2M;
 	move = D3DXVECTOR3(-12, 25, -20.5f);
 	D3DXMatrixTranslation(&horse2M, move.x, move.y, move.z);
@@ -207,14 +218,14 @@ void TestScene::OnLoad()
 	dirLight1 = LIGHTMANAGER::Instance().CreateLight<DirectionLight>(eDirectionLight);
 	dirLight1->SetLightColor(D3DXCOLOR(0.3f, 0.3f, 0.3f, 1.0f));
 	dirLight1->SetShadowAreaSize(100, 100);
-	dirLight1->SetUseShadow(true);
+	dirLight1->SetUseShadow(false);
 	D3DXMatrixTranslation(&lightMoveMat, 0, 50, 0);
 	dirLight1->SetWorldTransform(lightMoveMat);
 	//--------------------------------------------------------------------------
 	dirLight2 = LIGHTMANAGER::Instance().CreateLight<DirectionLight>(eDirectionLight);
 	//dirLight2->SetLightColor(D3DXCOLOR(1.0f, 1.0f, 1.3f, 1.0f));
 	dirLight2->SetLightColor(D3DXCOLOR(0.2f, 0.2f, 0.2f, 1.0f));
-	dirLight2->SetUseShadow(true);
+	dirLight2->SetUseShadow(false);
 	dirLight2->SetShadowAreaSize(150,150);
 	D3DXMatrixTranslation(&lightMoveMat, 0, 60, 10);
 	D3DXMatrixRotationX(&lightRot1Mat, 0.125f * D3DX_PI);
@@ -234,7 +245,7 @@ void TestScene::OnLoad()
 	pointLight1 = LIGHTMANAGER::Instance().CreateLight<PointLight>(ePointLight);
 	//pointLight1->SetLightColor(D3DXCOLOR(01.7f, 01.7f, 01.7f, 1.0f));
 	pointLight1->SetLightColor(D3DXCOLOR(0.1f, 0.1f, 0.1f, 1.0f));
-	pointLight1->SetUseShadow(true);
+	pointLight1->SetUseShadow(false);
 	pointLight1->SetLightRange(40);
 	
 	D3DXMatrixTranslation(&lightMoveMat, -5, 3, 0);
@@ -314,7 +325,7 @@ void TestScene::OnLoad()
 
 	spotLight5 = LIGHTMANAGER::Instance().CreateLight<SpotLight>(eSpotLight);
 	spotLight5->SetLightRange(100);
-	spotLight5->SetUseShadow(true);
+	spotLight5->SetUseShadow(false);
 	spotLight5->SetLightColor(D3DXCOLOR(1.0, 0.2, 0.0, 1.0f));
 	spotLight5->SetLightColor(D3DXCOLOR(0.1, 0.1, 0.0, 1.0f));
 	D3DXMatrixTranslation(&lightMoveMat, 0, 50, 0);
@@ -416,6 +427,7 @@ void BuildRot(D3DXMATRIX& world)
 }
 
 float R = 0;
+float R2 = 0;
 void TestScene::OnBeginFrame()
 {
 	D3DXMATRIX cW = mainCamera.GetWorldTransform();
@@ -447,6 +459,16 @@ void TestScene::OnBeginFrame()
 	D3DXMatrixRotationY(&rotMat, -0.5f * D3DX_PI);
 	rotMat *= moveMat;
 	shevaEntity->SetWorldTransform(rotMat);
+
+	move = D3DXVECTOR3(-12, 0, 42.5f);
+	D3DXMatrixTranslation(&moveMat, move.x, move.y, move.z);
+	D3DXMatrixRotationY(&rotMat, (180 + R) / 180.0f * D3DX_PI);
+	D3DXMATRIX deer2S;
+	D3DXVECTOR3 deer2SV = D3DXVECTOR3(0.1, 0.1, 0.1);
+	D3DXMatrixScaling(&deer2S, deer2SV.x, deer2SV.y, deer2SV.z);
+	R2 += 1.0f;
+	rotMat *= moveMat;
+	deerEntity2->SetWorldTransform(deer2S * rotMat);
 }
 
 void TestScene::OnFrame()

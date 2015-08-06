@@ -32,6 +32,7 @@ int h = 100; //RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight
 int w2 = 100; //RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth
 int h2 = 100; //RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight
 int baseTexSize = 0;
+int minTexSize = 0;
 int maxTexSize = 0;
 int baseInsideTexSize = 0;
 int maxInsideTexSize = 0;
@@ -49,8 +50,6 @@ void SumiE::CreatePostEffect()
 	Particle* p = 0;
 	mParticleBuffer->Lock(0, 0, (void**)&p, D3DLOCK_DISCARD);
 
-	baseTexSize = 26;
-	maxTexSize = 17;
 	//w = 100; //RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth
 	//h = 100; //RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight
 	w = RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth / 1;
@@ -97,6 +96,11 @@ void SumiE::CreatePostEffect()
 		1, D3DUSAGE_RENDERTARGET,
 		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
 		&m_pEdgeBlur, NULL);
+
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
+		1, D3DUSAGE_RENDERTARGET,
+		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
+		&m_pEdgeBlur2, NULL);
 
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
 		1, D3DUSAGE_RENDERTARGET,
@@ -439,7 +443,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	//=============================================================================================================
 	//模糊轮廓图
 	PDIRECT3DSURFACE9 pSurf_EdgeBlur = NULL;
-	m_pEdgeBlur->GetSurfaceLevel(0, &pSurf_EdgeBlur);
+	m_pEdgeBlur2->GetSurfaceLevel(0, &pSurf_EdgeBlur);
 
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_EdgeBlur);
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
@@ -453,6 +457,22 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 	m_postEffect->EndPass();
 
+	//模糊轮廓图(第二次)
+	pSurf_EdgeBlur = NULL;
+	m_pEdgeBlur->GetSurfaceLevel(0, &pSurf_EdgeBlur);
+
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_EdgeBlur);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
+
+	m_postEffect->SetTexture(POSITIONBUFFER, RENDERPIPE::Instance().m_pPositionTarget);
+	m_postEffect->SetTexture(MAINCOLORBUFFER, m_pEdgeBlur2);
+
+	m_postEffect->CommitChanges();
+
+	m_postEffect->BeginPass(5);
+	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+	m_postEffect->EndPass();
+	//m_pEdgeBlur = m_pEdgeBlur2;
 	//=============================================================================================================
 	//合并
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pPostSurface);
@@ -460,7 +480,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 	m_postEffect->SetTexture(MAINCOLORBUFFER, mainBuffer); //m_pEdgeImage//m_pEdgeBlur//mainBuffer//m_pEdgeForward//RENDERPIPE::Instance().m_pNormalTarget
 
-	m_postEffect->SetTexture("SA1", m_StrokesArea_1);
+	m_postEffect->SetTexture("SA1", m_pEdgeBlur);
 	m_postEffect->SetTexture("SA2", m_StrokesArea_2);
 	m_postEffect->SetTexture("SA3", m_StrokesArea_3);
 	m_postEffect->SetTexture("SA4", m_StrokesArea_4);
@@ -475,8 +495,10 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	m_postEffect->EndPass();
 
 
+	float useParticle =	true;
+
 	bool openInsideParticle = true;
-	if (openInsideParticle)
+	if (openInsideParticle && useParticle)
 	{
 		//=============================================================================================================
 		//渲染内部纹理
@@ -530,6 +552,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	//=======================================================================================================
 	//合并各种纹理
 	//=======================================================================================================
+	if (openInsideParticle && useParticle)
 	{
 		
 		numPasses = 0;
@@ -599,7 +622,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	//这样如果也渲染到一张纹理上在融合的话就会出现问题，所以只能最后重新渲染一次
 	//====================================================================================================
 	bool openParticle = true;
-	if (openParticle)
+	if (openParticle && useParticle)
 	{
 		m_postEffect->SetMatrix(WORLDVIEWPROJMATRIX, &RENDERDEVICE::Instance().OrthoWVPMatrix);
 		m_postEffect->SetMatrix(INVPROJMATRIX, &RENDERDEVICE::Instance().InvProjMatrix);
@@ -638,7 +661,12 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		m_postEffect->SetTexture("g_InkTex3", m_pInkTex3);
 		m_postEffect->SetTexture("g_InkTex4", m_pInkTex4);
 
+
+		baseTexSize = 1750;
+		maxTexSize = 17;
+		minTexSize = 5;
 		m_postEffect->SetInt("g_baseTexSize", baseTexSize);
+		m_postEffect->SetInt("g_minTexSize", minTexSize);
 		m_postEffect->SetInt("g_maxTexSize", maxTexSize);
 
 		//控制边缘黑色的程度

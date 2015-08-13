@@ -847,6 +847,8 @@ void RenderPipe::RenderAll()
 		edgeRecognize.RenderPost(m_pPostTarget);
 		m_pPostTarget = edgeRecognize.GetPostTarget();
 		
+		//fxaa.RenderPost(m_pPostTarget);
+		//m_pPostTarget = fxaa.GetPostTarget();
 		//============================================
 		edgeChange.RenderPost(m_pPostTarget);
 		m_pTempTarget = edgeChange.GetPostTarget();

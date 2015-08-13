@@ -495,7 +495,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	m_postEffect->EndPass();
 
 
-	float useParticle =	true;
+	float useParticle = true;
 
 	bool openInsideParticle = true;
 	if (openInsideParticle && useParticle)

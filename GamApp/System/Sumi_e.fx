@@ -438,8 +438,8 @@ float4 PShaderEdgeBlur(float2 TexCoord : TEXCOORD0) : COLOR
 	//return tex2D(g_sampleMainColor, TexCoord);
 	//return float4(1, 0, 0, 1);
 	
-
-	float color = tex2D(g_sampleMainColor, TexCoord).r;
+	float4 color4 = tex2D(g_sampleMainColor, TexCoord);
+	float color = color4.r;
 	if (color >= 0.99)
 		return float4(color, color, color, 1);
 
@@ -457,6 +457,9 @@ float4 PShaderEdgeBlur(float2 TexCoord : TEXCOORD0) : COLOR
 
 	float colorList[9] = { color, colorL, colorR, colorU, colorD, colorLU, colorRU, colorLD, colorRD };
 
+	if (color >= 0.89)
+		return color4;
+
 	int count = 0;
 	float sum = 0;
 	for (int i = 0; i < 9; i++)
@@ -467,8 +470,8 @@ float4 PShaderEdgeBlur(float2 TexCoord : TEXCOORD0) : COLOR
 			sum += colorList[i];
 		}
 	}
-	if (count == 0)
-		return float4(1, 1, 1, 1);
+	if (count <= 1)
+		return color4;
 	float finalColor = 1.0f * sum / count;
 	return float4(finalColor, finalColor, finalColor, 1.0f);
 }
@@ -648,8 +651,9 @@ P_OutVS VShaderParticle(float4 posL       : POSITION0,
 
 	float S_scale = invDepth * invDepth * sizeFactor * diffuseColor;
 
-	scaledSize = size * S_scale;
+	scaledSize = size * S_scale / 75;
 	
+	//if (TexCoord.x > 0.5)
 	{
 		float scale = 1.0f * g_zNear / depth * diffuseColor;
 		

@@ -189,7 +189,7 @@ void TestScene::OnLoad()
 	deerEntity->SetWorldTransform(deerS * deerM);
 
 	D3DXMATRIX deer2M;
-	D3DXVECTOR3 deer2Move = D3DXVECTOR3(-12, 0, 32.5f);
+	D3DXVECTOR3 deer2Move = D3DXVECTOR3(-12, 0, 42.5f);
 	D3DXMatrixTranslation(&deer2M, deer2Move.x, deer2Move.y, deer2Move.z);
 	D3DXMATRIX deer2S;
 	D3DXVECTOR3 deer2SV = D3DXVECTOR3(0.1, 0.1, 0.1);

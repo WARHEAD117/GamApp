@@ -61,47 +61,12 @@ sampler_state
 	MipFilter = Point;
 
 };
-texture		SA1;
-sampler2D g_sampleSA1 =
+
+texture		SA;
+sampler2D g_sampleSA =
 sampler_state
 {
-	Texture = <SA1>;
-	MinFilter = Point;
-	MagFilter = Point;
-	MipFilter = Point;
-};
-texture		SA2;
-sampler2D g_sampleSA2 =
-sampler_state
-{
-	Texture = <SA2>;
-	MinFilter = Point;
-	MagFilter = Point;
-	MipFilter = Point;
-};
-texture		SA3;
-sampler2D g_sampleSA3 =
-sampler_state
-{
-	Texture = <SA3>;
-	MinFilter = Point;
-	MagFilter = Point;
-	MipFilter = Point;
-};
-texture		SA4;
-sampler2D g_sampleSA4 =
-sampler_state
-{
-	Texture = <SA4>;
-	MinFilter = Point;
-	MagFilter = Point;
-	MipFilter = Point;
-};
-texture		SA5;
-sampler2D g_sampleSA5 =
-sampler_state
-{
-	Texture = <SA5>;
+	Texture = <SA>;
 	MinFilter = Point;
 	MagFilter = Point;
 	MipFilter = Point;
@@ -279,135 +244,6 @@ float4 PShaderBlur(float2 TexCoord : TEXCOORD0) : COLOR
 	return color;
 }
 
-float4 Normal_Interval(float2 TexCoord)
-{
-	float3 normal = normalize(GetNormal(TexCoord, g_sampleNormal));
-
-	float3 view = float3(0, 0, 1);
-
-	float nv = dot(normal, -view);
-	if (nv > 0 && nv < 0.45f)
-		return float4(0, 0, 0, 0);
-	else
-		return float4(1, 1, 1, 1);
-}
-
-float4 Normal_Gray(float2 TexCoord)
-{
-	float depth = GetDepth(TexCoord, g_samplePosition);
-
-	if (depth > 1000)
-	{
-		//normal = float3(1, 1, 1);
-		return float4(1, 1, 1, 1);
-	}
-
-	float3 normal = GetNormal(TexCoord, g_sampleNormal);
-
-	normal = normalize(normal);
-		//normal = GetUnsharpMaskedNormal(TexCoord, g_sampleNormal);
-	
-	
-	float3 light = float3(0, 0, 1);
-	light = normalize(light);
-
-	float nl = dot(normal, -light);
-	
-	//nl *= nl;
-	nl *= 0.9;
-	
-	int color_int = nl * 255;
-	if (color_int < maxI && color_int >= minI)
-		return float4(nl, nl, nl, 1.0f);
-	else if (color_int < minI)
-		return float4(minI / 255.0f, minI / 255.0f, minI / 255.0f, 1.0f);
-	else
-		return float4(1, 1, 1, 1);
-
-	return float4(nl, nl, nl, 1.0f);
-}
-
-float4 PShaderDiffusion(float2 TexCoord : TEXCOORD0) : COLOR
-{
-	//return float4(1, 0, 0, 1);
-	float color = tex2D(g_sampleDiffusionSource, TexCoord).r;
-	float avg = color;
-	float outColor = color;
-
-	if (color > 0.99)
-	{
-		//return float4(1, 0, 0, 1);
-		float colorL = tex2D(g_sampleDiffusionSource, TexCoord + float2(-1, 0)*float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight)).r;
-		float colorR = tex2D(g_sampleDiffusionSource, TexCoord + float2(1, 0)*float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight)).r;
-		float colorU = tex2D(g_sampleDiffusionSource, TexCoord + float2(0, -1)*float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight)).r;
-		float colorD = tex2D(g_sampleDiffusionSource, TexCoord + float2(0, 1)*float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight)).r;
-
-		float colorLU = tex2D(g_sampleDiffusionSource, TexCoord + float2(-1, -1)*float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight)).r;
-		float colorRU = tex2D(g_sampleDiffusionSource, TexCoord + float2(1, -1)*float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight)).r;
-		float colorLD = tex2D(g_sampleDiffusionSource, TexCoord + float2(-1, 1)*float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight)).r;
-		float colorRD = tex2D(g_sampleDiffusionSource, TexCoord + float2(1, 1)*float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight)).r;
-
-		int InkQ_L = 255 - colorL * 255;
-		int InkQ_R = 255 - colorR * 255;
-		int InkQ_U = 255 - colorU * 255;
-		int InkQ_D = 255 - colorD * 255;
-
-		int InkQ_LU = 255 - colorLU * 255;
-		int InkQ_RU = 255 - colorRU * 255;
-		int InkQ_LD = 255 - colorLD * 255;
-		int InkQ_RD = 255 - colorRD * 255;
-
-		int sum = 0;
-		int count = 0;
-
-		if (InkQ_L > 0)
-		{
-			sum += InkQ_L; count++;
-		}
-		if (InkQ_R > 0)
-		{
-			sum += InkQ_R; count++;
-		}
-		if (InkQ_U > 0)
-		{
-			sum += InkQ_U; count++;
-		}
-		if (InkQ_D > 0)
-		{
-			sum += InkQ_D; count++;
-		}
-		/*
-		if (InkQ_LU > 0)
-		{
-		sum += InkQ_LU; count++;
-		}
-		if (InkQ_RU > 0)
-		{
-		sum += InkQ_RU; count++;
-		}
-		if (InkQ_LD > 0)
-		{
-		sum += InkQ_LD; count++;
-		}
-		if (InkQ_RD > 0)
-		{
-		sum += InkQ_RD; count++;
-		}
-		*/
-		if (count > 0)
-		{
-			//return float4(1, 0, 0, 1);
-			avg = sum / count;
-			float random = frac(TexCoord.x * count + TexCoord.y * avg + 1.17 * 1.86 * avg / 255) * 0.2f;
-			random = 0;
-			avg *= (0.98f - random);
-			outColor = 1 - avg / 255.0f;
-		}
-	}
-	//return float4(1, 0, 0, 1);
-	return float4(outColor, outColor, outColor, 1.0f);
-}
-
 float4 PSAreaSplit(float2 TexCoord : TEXCOORD0) : COLOR
 {
 	float color = tex2D(g_sampleGrayscale, TexCoord).r;
@@ -535,73 +371,10 @@ float4 PShaderForward(float2 TexCoord : TEXCOORD0) : COLOR
 	return float4(color, color, color, 1.0f);
 }
 
-float GetOverlap(float dark, float light)
-{
-	float tempLight = max(dark, light);
-	float tempDark = min(dark, light);
-	dark = tempDark;
-	light = tempLight;
-	int d_stroke = (light - dark) * 255;
-	int d_overlap = (
-		40 * pow(d_stroke / 100, 3) -
-		60 * pow(d_stroke / 100, 2) + 20
-		) * (1 - light);
-	float overlap = dark - d_overlap / 255.0f;
-	return overlap;
-}
-
 float4 PShaderBlend(float2 TexCoord : TEXCOORD0) : COLOR
 {	
-	return tex2D(g_sampleSA1, TexCoord);
-	//return float4(1, 1, 1, 1);
-	//return tex2D(g_sampleMainColor, TexCoord);// *tex2D(g_sampleMainColor, TexCoord)*tex2D(g_sampleMainColor, TexCoord);
-
-	//return tex2D(g_sampleGrayscale, TexCoord);
-	float2 cloudTc = float2(g_ScreenWidth, g_ScreenHeight) * TexCoord / float2(256, 256);
-	float cloud = tex2D(g_sampleInkCloud, cloudTc).r;
-	float outC = tex2D(g_sampleSA1, TexCoord).r;
-	outC = clamp(outC, 0.1, 1);
-	//return float4(outC, outC, outC, 1) * 8 * cloud;
-	//return tex2D(g_sampleSA1, TexCoord);
-	//return tex2D(g_sampleSA2, TexCoord);
-	//return tex2D(g_sampleSA3, TexCoord);
-	//return tex2D(g_sampleSA4, TexCoord);
-	//return tex2D(g_sampleSA5, TexCoord);
-
-	float color1 = tex2D(g_sampleSA1, TexCoord).r;
-		//color1 = GaussianBlur(g_ScreenWidth, g_ScreenHeight, g_sampleSA1, TexCoord).r;
-	float color2 = tex2D(g_sampleSA2, TexCoord).r;
-		//color2 = GaussianBlur(g_ScreenWidth, g_ScreenHeight, g_sampleSA2, TexCoord).r;
-	float color3 = tex2D(g_sampleSA3, TexCoord).r;
-		//color3 = GaussianBlur(g_ScreenWidth, g_ScreenHeight, g_sampleSA3, TexCoord).r;
-	float color4 = tex2D(g_sampleSA4, TexCoord).r;
-		//color4 = GaussianBlur(g_ScreenWidth, g_ScreenHeight, g_sampleSA4, TexCoord).r;
-	float color5 = tex2D(g_sampleSA5, TexCoord).r;
-		//color5 = GaussianBlur(g_ScreenWidth, g_ScreenHeight, g_sampleSA5, TexCoord).r;
-	//float4 color = tex2D(g_sampleMainColor, TexCoord);
-
-	//return float4(color1, color1, color1, 1);
-	//if (color1 >= 0.99)
-	//	return float4(1, 0, 0, 1);
-	//else
-	//	return float4(0, 1, 0, 1);
-	float blendedColor = color2;
-	//if (color4 <= 0.99)
-	//	blendedColor = GetOverlap(color4, color5);
-
-	//if (color3 <= 0.99)
-	//	blendedColor = GetOverlap(color3, blendedColor);
-	//if (color2 <= 0.99)
-	//	blendedColor = GetOverlap(color2, blendedColor);
-	//if (color1 <= 0.99)
-	//	blendedColor = GetOverlap(color1, blendedColor);
-		
-	return float4(blendedColor, blendedColor, blendedColor, 1);
-	
-	float color = color1 * color2 * color3 * color4 *color5;
-
-	float4 outcolor = float4(color, color, color, 1.0f);
-	return outcolor;
+	return tex2D(g_sampleMainColor, TexCoord);
+	//return float4(1, 1, 0, 1);
 }
 
 

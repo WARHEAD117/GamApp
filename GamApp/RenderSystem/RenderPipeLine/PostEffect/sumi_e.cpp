@@ -396,7 +396,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pPostSurface);
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
-	m_postEffect->SetTexture(MAINCOLORBUFFER, m_pTexList[1]); //m_pEdgeImage//m_pEdgeBlur//mainBuffer//m_pEdgeForward//RENDERPIPE::Instance().m_pNormalTarget//m_StrokesArea
+	m_postEffect->SetTexture(MAINCOLORBUFFER, m_pEdgeBlur); //m_pEdgeImage//m_pEdgeBlur//mainBuffer//m_pEdgeForward//RENDERPIPE::Instance().m_pNormalTarget//m_StrokesArea
 
 	m_postEffect->CommitChanges();
 
@@ -595,9 +595,10 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 	}
 
+	bool openCache = true;
 	//m_pTexList[0] = m_pTexList[1];
 	//m_pTexList[1] = m_pPostTarget;
-	if (true)
+	if (useParticle && openCache)
 	{
 		numPasses = 0;
 		m_SynthesisEffect->Begin(&numPasses, 0);
@@ -653,10 +654,10 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		m_SynthesisEffect->EndPass();
 
 		//-------------------------------------------------------------------------------------------------------------------
-		PDIRECT3DSURFACE9 pSurf_ReDraw2 = NULL;
-		m_pPostTarget->GetSurfaceLevel(0, &pSurf_ReDraw2);
+		PDIRECT3DSURFACE9 pSurf_result = NULL;
+		m_pPostTarget->GetSurfaceLevel(0, &pSurf_result);
 
-		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_ReDraw2);
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_result);
 		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
 		m_SynthesisEffect->SetTexture("g_Src", m_pTexList[0]);

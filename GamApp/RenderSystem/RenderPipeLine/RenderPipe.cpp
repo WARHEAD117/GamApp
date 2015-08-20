@@ -897,7 +897,8 @@ void RenderPipe::RenderAll()
 		sumiE.RenderPost(m_pPostTarget);
 		m_pPostTarget = sumiE.GetPostTarget();
 
-		
+		fxaa.RenderPost(m_pPostTarget);
+		m_pPostTarget = fxaa.GetPostTarget();
 		//npr.RenderPost(m_pPostTarget, m_pMainColorTarget);
 		//m_pPostTarget = npr.GetPostTarget();
 	}

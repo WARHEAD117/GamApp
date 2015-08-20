@@ -72,6 +72,53 @@ sampler_state
 	MipFilter = Point;
 };
 
+texture		g_Src;
+sampler2D g_sampleSrc =
+sampler_state
+{
+	Texture = <g_Src>;
+	MinFilter = Point;
+	MagFilter = Point;
+	MipFilter = Point;
+};
+
+texture		g_Src2;
+sampler2D g_sampleSrc2 =
+sampler_state
+{
+	Texture = <g_Src2>;
+	MinFilter = Point;
+	MagFilter = Point;
+	MipFilter = Point;
+};
+texture		g_Src3;
+sampler2D g_sampleSrc3 =
+sampler_state
+{
+	Texture = <g_Src3>;
+	MinFilter = Point;
+	MagFilter = Point;
+	MipFilter = Point;
+};
+texture		g_Src4;
+sampler2D g_sampleSrc4 =
+sampler_state
+{
+	Texture = <g_Src4>;
+	MinFilter = Point;
+	MagFilter = Point;
+	MipFilter = Point;
+};
+texture		g_Src5;
+sampler2D g_sampleSrc5 =
+sampler_state
+{
+	Texture = <g_Src5>;
+	MinFilter = Point;
+	MagFilter = Point;
+	MipFilter = Point;
+};
+
 float g_AlphaFactor = 0.8f;
 
 struct OutputVS
@@ -119,6 +166,31 @@ float4 PShaderBlur(float2 TexCoord : TEXCOORD0) : COLOR
 	return colorInside;
 }
 
+float4 PShaderSrc(float2 TexCoord : TEXCOORD0) : COLOR
+{
+	float4 colorSrc = tex2D(g_sampleSrc, TexCoord);
+	//return float4(1, 0, 1, 0);
+	return colorSrc;
+}
+
+float4 PShaderSrcAdd(float2 TexCoord : TEXCOORD0) : COLOR
+{
+	float4 colorSrc = tex2D(g_sampleSrc, TexCoord);
+	float4 colorSrc2 = tex2D(g_sampleSrc2, TexCoord);
+	float4 colorSrc3 = tex2D(g_sampleSrc3, TexCoord);
+	float4 colorSrc4 = tex2D(g_sampleSrc2, TexCoord);
+	float4 colorSrc5 = tex2D(g_sampleSrc3, TexCoord);
+
+	float4 final = colorSrc*0.0545 + colorSrc2*0.2442 + colorSrc3*0.40262 + colorSrc4*0.2442 + colorSrc5*0.0545;
+	//final = colorSrc*0.2 + colorSrc2*0.2 + colorSrc3*0.2 + colorSrc4*0.2 + colorSrc5*0.2;
+	return final;
+
+	float d = colorSrc2.r - final.r;
+	if (d != 0) d = 1;
+	return float4(abs(d), abs(d), abs(d), 0);
+	return colorSrc;
+}
+
 technique SumieSynthesis
 {
 	pass p0
@@ -131,5 +203,17 @@ technique SumieSynthesis
 	{
 		vertexShader = compile vs_3_0 VShader();
 		pixelShader = compile ps_3_0 PShaderBlur();
+	}
+
+	pass p2
+	{
+		vertexShader = compile vs_3_0 VShader();
+		pixelShader = compile ps_3_0 PShaderSrc();
+	}
+
+	pass p2
+	{
+		vertexShader = compile vs_3_0 VShader();
+		pixelShader = compile ps_3_0 PShaderSrcAdd();
 	}
 }

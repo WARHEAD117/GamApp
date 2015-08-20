@@ -138,6 +138,24 @@ void SumiE::CreatePostEffect()
 		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
 		&m_pBluredInside, NULL);
 
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
+		1, D3DUSAGE_RENDERTARGET,
+		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
+		&m_pTexList[0], NULL);
+
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
+		1, D3DUSAGE_RENDERTARGET,
+		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
+		&m_pTexList[1], NULL);
+	for (int i = 0; i < texCount; i++)
+	{
+		RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
+			1, D3DUSAGE_RENDERTARGET,
+			D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
+			&m_pTexList[i], NULL);
+	}
+	
+
 	ID3DXBuffer* error = 0;
 	if (E_FAIL == ::D3DXCreateEffectFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "System\\SumieSynthesis.fx", NULL, NULL, D3DXSHADER_DEBUG,
 		NULL, &m_SynthesisEffect, &error))
@@ -183,11 +201,7 @@ void SumiE::CreatePostEffect()
 		MessageBox(GetForegroundWindow(), "TextureError", "InkMask", MB_OK);
 		abort();
 	}
-	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "Res\\cloud.bmp", &m_pInkCloud))//3.bmp//R_Test.png//brush2.jpg
-	{
-		MessageBox(GetForegroundWindow(), "TextureError", "InkCloud", MB_OK);
-		abort();
-	}
+
 	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "Res\\background1.jpg", &m_pBackground))
 	{
 		MessageBox(GetForegroundWindow(), "TextureError", "background1", MB_OK);
@@ -382,7 +396,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pPostSurface);
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
-	m_postEffect->SetTexture(MAINCOLORBUFFER, mainBuffer); //m_pEdgeImage//m_pEdgeBlur//mainBuffer//m_pEdgeForward//RENDERPIPE::Instance().m_pNormalTarget//m_StrokesArea
+	m_postEffect->SetTexture(MAINCOLORBUFFER, m_pTexList[1]); //m_pEdgeImage//m_pEdgeBlur//mainBuffer//m_pEdgeForward//RENDERPIPE::Instance().m_pNormalTarget//m_StrokesArea
 
 	m_postEffect->CommitChanges();
 
@@ -578,6 +592,85 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_POINTSPRITEENABLE, false);
 		m_postEffect->End();
+
+	}
+
+	//m_pTexList[0] = m_pTexList[1];
+	//m_pTexList[1] = m_pPostTarget;
+	if (true)
+	{
+		numPasses = 0;
+		m_SynthesisEffect->Begin(&numPasses, 0);
+
+		m_SynthesisEffect->SetMatrix(WORLDVIEWPROJMATRIX, &RENDERDEVICE::Instance().OrthoWVPMatrix);
+		m_SynthesisEffect->SetMatrix(INVPROJMATRIX, &RENDERDEVICE::Instance().InvProjMatrix);
+		m_SynthesisEffect->SetMatrix(PROJECTIONMATRIX, &RENDERDEVICE::Instance().ProjMatrix);
+		m_SynthesisEffect->SetMatrix(VIEWMATRIX, &RENDERDEVICE::Instance().ViewMatrix);
+
+		m_SynthesisEffect->SetFloat("g_zNear", CameraParam::zNear);
+		m_SynthesisEffect->SetFloat("g_zFar", CameraParam::zFar);
+
+		float angle = tan(CameraParam::FOV / 2);
+		m_SynthesisEffect->SetFloat("g_ViewAngle_half_tan", angle);
+		float aspect = (float)RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth / RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight;
+		m_SynthesisEffect->SetFloat("g_ViewAspect", aspect);
+		m_SynthesisEffect->SetInt(SCREENWIDTH, RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth);
+		m_SynthesisEffect->SetInt(SCREENHEIGHT, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight);
+
+		RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, m_pBufferVex, 0, sizeof(VERTEX));
+		RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(D3DFVF_VERTEX);
+		//-------------------------------------------------------------------------------------------------------------------
+		PDIRECT3DSURFACE9 pSurf_ReDraw = NULL;
+
+		for (int i = 0; i < texCount-1; i++)
+		{
+			pSurf_ReDraw = NULL;
+			m_pTexList[i]->GetSurfaceLevel(0, &pSurf_ReDraw);
+
+			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_ReDraw);
+			RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
+
+			m_SynthesisEffect->SetTexture("g_Src", m_pTexList[i+1]);
+
+			m_SynthesisEffect->CommitChanges();
+
+			m_SynthesisEffect->BeginPass(2);
+			RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+			m_SynthesisEffect->EndPass();
+		}//-------------------------------------------------------------------------------------------------------------------
+		pSurf_ReDraw = NULL;
+		m_pTexList[texCount-1]->GetSurfaceLevel(0, &pSurf_ReDraw);
+
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_ReDraw);
+		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
+
+		m_SynthesisEffect->SetTexture("g_Src", m_pPostTarget);
+
+		m_SynthesisEffect->CommitChanges();
+
+		m_SynthesisEffect->BeginPass(2);
+		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+		m_SynthesisEffect->EndPass();
+
+		//-------------------------------------------------------------------------------------------------------------------
+		PDIRECT3DSURFACE9 pSurf_ReDraw2 = NULL;
+		m_pPostTarget->GetSurfaceLevel(0, &pSurf_ReDraw2);
+
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_ReDraw2);
+		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
+
+		m_SynthesisEffect->SetTexture("g_Src", m_pTexList[0]);
+		m_SynthesisEffect->SetTexture("g_Src2", m_pTexList[1]);
+		m_SynthesisEffect->SetTexture("g_Src3", m_pTexList[2]);
+		m_SynthesisEffect->SetTexture("g_Src4", m_pTexList[3]);
+		m_SynthesisEffect->SetTexture("g_Src5", m_pTexList[4]);
+
+		m_SynthesisEffect->CommitChanges();
+
+		m_SynthesisEffect->BeginPass(3);
+		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+		m_SynthesisEffect->EndPass();
+		m_SynthesisEffect->End();
 	}
 }
 

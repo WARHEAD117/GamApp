@@ -35,7 +35,6 @@ private:
 	LPDIRECT3DTEXTURE9	m_pInkTex4;
 
 	LPDIRECT3DTEXTURE9	m_pInkMask;
-	LPDIRECT3DTEXTURE9	m_pInkCloud;
 
 	LPDIRECT3DTEXTURE9	m_Garyscale;
 	LPDIRECT3DTEXTURE9	m_BlurredGaryscale;
@@ -49,6 +48,9 @@ private:
 	LPDIRECT3DTEXTURE9 m_pBackground;
 
 	LPD3DXEFFECT		m_SynthesisEffect;
+
+	int texCount = 5;
+	LPDIRECT3DTEXTURE9 m_pTexList[5];
 
 };
 

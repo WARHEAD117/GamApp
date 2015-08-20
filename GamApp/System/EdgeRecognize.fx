@@ -195,7 +195,7 @@ float4 Normal_Edge(float2 TexCoord)
 	float depthDown = GetDepth(TexCoord + float2(-0.0f / g_ScreenWidth, 1.0f / g_ScreenHeight), g_samplePosition);
 
 	float3 normal = normalize(GetNormal(TexCoord, g_sampleNormal));
-		normal = GetUnsharpMaskedNormal(TexCoord, g_sampleNormal);
+		//normal = GetUnsharpMaskedNormal(TexCoord, g_sampleNormal);
 
 	//return float4(normal, 1.0f);
 
@@ -206,11 +206,13 @@ float4 Normal_Edge(float2 TexCoord)
 	}
 
 	float3 normalLeft = normalize(GetNormal(TexCoord + float2(-1.0f / g_ScreenWidth, -0.0f / g_ScreenHeight), g_sampleNormal));
+		//normalLeft = GetUnsharpMaskedNormal(TexCoord + float2(-1.0f / g_ScreenWidth, -0.0f / g_ScreenHeight), g_sampleNormal);
 	float3 normalRight = normalize(GetNormal(TexCoord + float2(1.0f / g_ScreenWidth, -0.0f / g_ScreenHeight), g_sampleNormal));
-		//normalRight = normalize(GetUnsharpMaskedNormal(TexCoord + float2(1.0f / g_ScreenWidth, -0.0f / g_ScreenHeight), g_sampleNormal));
+		//normalRight = GetUnsharpMaskedNormal(TexCoord + float2(1.0f / g_ScreenWidth, -0.0f / g_ScreenHeight), g_sampleNormal);
 	float3 normalUp = normalize(GetNormal(TexCoord + float2(-0.0f / g_ScreenWidth, -1.0f / g_ScreenHeight), g_sampleNormal));
+		//normalUp = GetUnsharpMaskedNormal(TexCoord + float2(-0.0f / g_ScreenWidth, -1.0f / g_ScreenHeight), g_sampleNormal);
 	float3 normalDown = normalize(GetNormal(TexCoord + float2(-0.0f / g_ScreenWidth, 1.0f / g_ScreenHeight), g_sampleNormal));
-		//normalDown = normalize(GetUnsharpMaskedNormal(TexCoord + float2(-0.0f / g_ScreenWidth, 1.0f / g_ScreenHeight), g_sampleNormal));
+		//normalDown = GetUnsharpMaskedNormal(TexCoord + float2(-0.0f / g_ScreenWidth, 1.0f / g_ScreenHeight), g_sampleNormal);
 
 	if (depthRight > 1000)
 	{
@@ -240,6 +242,7 @@ float4 Normal_Edge(float2 TexCoord)
 
 	N = dnx + dny;
 	N /= 2;
+	//N = min(dny, dnx);
 	//if (N >= 1)
 	//	return float4(1, 1, 1, 1);
 	return float4(N, N, N, 1);

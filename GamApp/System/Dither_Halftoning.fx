@@ -7,9 +7,9 @@ sampler2D g_sampleMainColor =
 sampler_state
 {
 	Texture = <g_MainColorBuffer>;
-	MinFilter = linear;
-	MagFilter = linear;
-	MipFilter = linear;
+	MinFilter = point;
+	MagFilter = point;
+	MipFilter = point;
 };
 
 struct OutputVS

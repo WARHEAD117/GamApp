@@ -27,6 +27,8 @@ Entity* bunnyEntity;
 Entity* deerEntity;
 Entity* deerEntity2;
 
+Entity* planeEntity;
+
 Entity* sponzaEntity;
 Material testMat1;
 EffectLoader effectLoader;
@@ -85,6 +87,8 @@ void TestScene::OnLoad()
 
 	deerEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\deer\\deer.X");
 	deerEntity2 = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\deer\\deer.X");
+
+	planeEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\plane2_diff2.X");
 
 	bunnyEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\bunny.X");
 
@@ -153,9 +157,9 @@ void TestScene::OnLoad()
 
 	
 
-	D3DXMATRIX planeM;
+	D3DXMATRIX roomM;
 	D3DXVECTOR3 move = D3DXVECTOR3(0, -5, 0);
-	D3DXMatrixTranslation(&planeM, move.x, move.y, move.z); 
+	D3DXMatrixTranslation(&roomM, move.x, move.y, move.z);
 	//roomEntity->SetWorldTransform(planeM);
 
 	D3DXMATRIX horseM;
@@ -195,6 +199,16 @@ void TestScene::OnLoad()
 	D3DXVECTOR3 deer2SV = D3DXVECTOR3(0.1, 0.1, 0.1);
 	D3DXMatrixScaling(&deer2S, deer2SV.x, deer2SV.y, deer2SV.z);
 	deerEntity2->SetWorldTransform(deer2S * deer2M);
+
+	D3DXMATRIX planeM;
+	D3DXVECTOR3 planeMove = D3DXVECTOR3(-30, -0.5f, 0);
+	D3DXMatrixTranslation(&planeM, planeMove.x, planeMove.y, planeMove.z);
+	D3DXMATRIX planeS;
+	D3DXVECTOR3 planeSV = D3DXVECTOR3(1, 1, 1);
+	D3DXMatrixScaling(&planeS, planeSV.x, planeSV.y, planeSV.z);
+	D3DXMATRIX planeRotMat;
+	D3DXMatrixRotationY(&planeRotMat, -0.5f * D3DX_PI);
+	planeEntity->SetWorldTransform(planeRotMat * planeS * planeM);
 
 	D3DXMATRIX horse2M;
 	move = D3DXVECTOR3(-12, 25, -20.5f);

@@ -372,7 +372,32 @@ float4 PShaderForward(float2 TexCoord : TEXCOORD0) : COLOR
 }
 
 float4 PShaderBlend(float2 TexCoord : TEXCOORD0) : COLOR
-{	
+{ return tex2D(g_sampleMainColor, TexCoord);
+	float4 color[9];
+	float2 offset = float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight);
+	//中，上，右上，右，右下，下，左下，左，左上
+	color[0] = tex2D(g_sampleMainColor, TexCoord);
+	color[1] = tex2D(g_sampleMainColor, TexCoord + offset * float2(0, -1));
+	color[2] = tex2D(g_sampleMainColor, TexCoord + offset * float2(1, -1));
+	color[3] = tex2D(g_sampleMainColor, TexCoord + offset * float2(1,  0));
+	color[4] = tex2D(g_sampleMainColor, TexCoord + offset * float2(1,  1));
+	color[5] = tex2D(g_sampleMainColor, TexCoord + offset * float2(0,  1));
+	color[6] = tex2D(g_sampleMainColor, TexCoord + offset * float2(-1, 1));
+	color[7] = tex2D(g_sampleMainColor, TexCoord + offset * float2(-1, 0));
+	color[8] = tex2D(g_sampleMainColor, TexCoord + offset * float2(-1, -1));
+
+
+	for (int i = 0; i < 9; i++)
+	{
+		//if (color[i] > 0.3f && color())
+	}
+
+	if (color[0].r > 0.3f && color[0].r - color[1].r >= 0.3f  && color[0].r - color[3].r <= 0.3f)
+	{
+		return float4(1.0f, 0, 0, 1);
+	}
+
+
 	return tex2D(g_sampleMainColor, TexCoord);
 	//return float4(1, 1, 0, 1);
 }
@@ -629,7 +654,8 @@ float4 PShaderParticleInside(float2 TexCoord : TEXCOORD0,//粒子内部的纹理坐标
 	float4 diffuseColor2 = tex2D(g_sampleDiffuse, texC.xy);
 	//如果深度过大，说明是没有渲染的部分，把那部分的纹理切掉
 	//实际上这里后面应该改成和中心部分相差大于阈值后切掉
-	if (depth > 1000 && diffuseColor2.r > 0.3f)
+	float depthCenter = tex2D(g_samplePosition, texC.xy);
+	if (abs(depth - depthCenter) > 0.2 && diffuseColor2.r > 0.3f)
 		return float4(0,0,0,0);
 
 	//获取中心点对应的法线

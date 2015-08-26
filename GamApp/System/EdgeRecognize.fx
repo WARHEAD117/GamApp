@@ -205,6 +205,12 @@ float4 Normal_Edge(float2 TexCoord)
 		return float4(1, 1, 1, 1);
 	}
 
+	if (depth - depthLeft > depth / 10.0f || depth - depthRight > depth / 10.0f || depth - depthUp > depth / 10.0f || depth - depthDown > depth / 10.0f)
+	{
+		
+		return float4(1, 1, 1, 1);
+	}
+
 	float3 normalLeft = normalize(GetNormal(TexCoord + float2(-1.0f / g_ScreenWidth, -0.0f / g_ScreenHeight), g_sampleNormal));
 		//normalLeft = GetUnsharpMaskedNormal(TexCoord + float2(-1.0f / g_ScreenWidth, -0.0f / g_ScreenHeight), g_sampleNormal);
 	float3 normalRight = normalize(GetNormal(TexCoord + float2(1.0f / g_ScreenWidth, -0.0f / g_ScreenHeight), g_sampleNormal));

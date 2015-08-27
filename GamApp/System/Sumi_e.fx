@@ -315,7 +315,7 @@ float4 PShaderEdgeBlur(float2 TexCoord : TEXCOORD0) : COLOR
 float4 PShaderForward(float2 TexCoord : TEXCOORD0) : COLOR
 {
 	float color = tex2D(g_sampleMainColor, TexCoord).r;
-	if (color >= 0.99)
+	//if (color >= 0.99)
 		return float4(color, color, color, 1);
 
 	float2 offset = float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight);

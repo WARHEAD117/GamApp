@@ -396,7 +396,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pPostSurface);
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
-	m_postEffect->SetTexture(MAINCOLORBUFFER, m_pEdgeBlur); //m_pEdgeImage//m_pEdgeBlur//mainBuffer//m_pEdgeForward//RENDERPIPE::Instance().m_pNormalTarget//m_StrokesArea
+	m_postEffect->SetTexture(MAINCOLORBUFFER, mainBuffer); //m_pEdgeImage//m_pEdgeBlur//mainBuffer//m_pEdgeForward//RENDERPIPE::Instance().m_pNormalTarget//m_StrokesArea
 
 	m_postEffect->CommitChanges();
 
@@ -572,9 +572,9 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		m_postEffect->SetTexture("g_InkTex4", m_pInkTex4);
 
 
-		baseTexSize = 1750;
+		baseTexSize = 3250;
 		maxTexSize = 17;
-		minTexSize = 5;
+		minTexSize = 7;
 		m_postEffect->SetInt("g_baseTexSize", baseTexSize);
 		m_postEffect->SetInt("g_minTexSize", minTexSize);
 		m_postEffect->SetInt("g_maxTexSize", maxTexSize);

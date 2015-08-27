@@ -205,10 +205,43 @@ float4 Normal_Edge(float2 TexCoord)
 		return float4(1, 1, 1, 1);
 	}
 
-	if (depth - depthLeft > depth / 10.0f || depth - depthRight > depth / 10.0f || depth - depthUp > depth / 10.0f || depth - depthDown > depth / 10.0f)
+	
+
+	bool isEdge = false;
+
+	bool isUpEdge = false;
+	bool isDownEdge = false;
+	bool isLeftEdge = false;
+	bool isRightEdge = false;
+
+	float deltaD_Inner = depth / 10.0f;
+	float deltaD_Outer = depth / 20.0f;
+
+
+	if (depth - depthLeft > deltaD_Outer || depth - depthRight > deltaD_Outer || depth - depthUp > deltaD_Outer || depth - depthDown > deltaD_Outer)
 	{
-		
 		return float4(1, 1, 1, 1);
+	}
+
+	if (depthUp - depth  > deltaD_Inner)
+	{
+		isEdge = true;
+		isUpEdge = true;
+	}
+	if (depthDown - depth  > deltaD_Inner)
+	{
+		isEdge = true;
+		isDownEdge = true;
+	}
+	if (depthLeft - depth > deltaD_Inner)
+	{
+		isEdge = true;
+		isLeftEdge = true;
+	}
+	if (depthRight - depth  > deltaD_Inner)
+	{
+		isEdge = true;
+		isRightEdge = true;
 	}
 
 	float3 normalLeft = normalize(GetNormal(TexCoord + float2(-1.0f / g_ScreenWidth, -0.0f / g_ScreenHeight), g_sampleNormal));
@@ -220,27 +253,16 @@ float4 Normal_Edge(float2 TexCoord)
 	float3 normalDown = normalize(GetNormal(TexCoord + float2(-0.0f / g_ScreenWidth, 1.0f / g_ScreenHeight), g_sampleNormal));
 		//normalDown = GetUnsharpMaskedNormal(TexCoord + float2(-0.0f / g_ScreenWidth, 1.0f / g_ScreenHeight), g_sampleNormal);
 
-	if (depthRight > 1000)
-	{
-		normalRight = float3(0, 0, -1);
-	}
-	if (depthDown > 1000)
-	{
-		normalDown = float3(0, 0, -1);
-	}
-	if (depthLeft > 1000)
-	{
-		normalLeft = float3(0, 0, -1);
-	}
-	if (depthUp > 1000)
-	{
-		normalUp = float3(0, 0, -1);
-	}
-
 	float dnx = dot(normal, normalRight);
+	if (isRightEdge) dnx = 10;
 	float dny = dot(normal, normalDown);
+	if (isDownEdge) dny = 10;
 	float dnx2 = dot(normalLeft, normal);
+	if (isLeftEdge) dnx2 = 10;
 	float dny2 = dot(normalUp, normal);
+	if (isUpEdge) dny2 = 10;
+
+
 	dnx = min(dnx, dnx2);
 	dny = min(dny, dny2);
 
@@ -248,6 +270,15 @@ float4 Normal_Edge(float2 TexCoord)
 
 	N = dnx + dny;
 	N /= 2;
+
+	if (isEdge)
+	{
+		if (dnx >= 1 && dny < 1) N = dny;
+		if (dnx < 1 && dny >= 1) N = dnx;
+		if (dnx >= 1 && dny >= 1) N = 1;
+		if (dnx < 1 && dny < 1) N = N*N*N*0.4;
+	}
+	
 	//N = min(dny, dnx);
 	//if (N >= 1)
 	//	return float4(1, 1, 1, 1);

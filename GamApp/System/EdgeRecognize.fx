@@ -176,9 +176,8 @@ float3 GetUnsharpMaskedNormal(float2 texCoords, sampler2D texSampler)
 	float3 blurredNormal = normalize(normal);
 
 	float3 unsharpedMaskedNormal = oriNormal + 5*(oriNormal - blurredNormal);
-
 	float3 importance = oriNormal - blurredNormal;
-	
+
 	if (importance.z < 0)
 		return oriNormal;
 	return normalize(unsharpedMaskedNormal);
@@ -253,30 +252,66 @@ float4 Normal_Edge(float2 TexCoord)
 	float3 normalDown = normalize(GetNormal(TexCoord + float2(-0.0f / g_ScreenWidth, 1.0f / g_ScreenHeight), g_sampleNormal));
 		//normalDown = GetUnsharpMaskedNormal(TexCoord + float2(-0.0f / g_ScreenWidth, 1.0f / g_ScreenHeight), g_sampleNormal);
 
-	float dnx = dot(normal, normalRight);
-	if (isRightEdge) dnx = 10;
-	float dny = dot(normal, normalDown);
-	if (isDownEdge) dny = 10;
-	float dnx2 = dot(normalLeft, normal);
-	if (isLeftEdge) dnx2 = 10;
-	float dny2 = dot(normalUp, normal);
-	if (isUpEdge) dny2 = 10;
+	float dnR = abs(dot(normal, normalRight));
+	if (isRightEdge) dnR = 10;
+	float dnD = abs(dot(normal, normalDown));
+	if (isDownEdge) dnD = 10;
+	float dnL = abs(dot(normalLeft, normal));
+	if (isLeftEdge) dnL = 10;
+	float dnU = abs(dot(normalUp, normal));
+	if (isUpEdge) dnU = 10;
 
+	if (isRightEdge) dnR = dnL;
+	if (isDownEdge) dnD = dnU;
+	if (isLeftEdge) dnL = dnR;
+	if (isUpEdge) dnU = dnD;
 
-	dnx = min(dnx, dnx2);
-	dny = min(dny, dny2);
+	float res_dnx = 0.5 * (dnR + dnL);
+	float res_dny = 0.5 * (dnD + dnU);
 
-	float N = sqrt(dnx*dnx + dny*dny);
-
-	N = dnx + dny;
+	float N = res_dnx + res_dny;
 	N /= 2;
 
+	
 	if (isEdge)
 	{
-		if (dnx >= 1 && dny < 1) N = dny;
-		if (dnx < 1 && dny >= 1) N = dnx;
-		if (dnx >= 1 && dny >= 1) N = 1;
-		if (dnx < 1 && dny < 1) N = N*N*N*0.4;
+		if (isRightEdge && !isDownEdge && !isLeftEdge && !isUpEdge) N = (dnD + dnL + dnU) / 3;
+		if (!isRightEdge && isDownEdge && !isLeftEdge && !isUpEdge) N = (dnR + dnL + dnU) / 3;
+		if (!isRightEdge && !isDownEdge && isLeftEdge && !isUpEdge) N = (dnR + dnD + dnU) / 3;
+		if (!isRightEdge && !isDownEdge && !isLeftEdge && isUpEdge) N = (dnR + dnD + dnL) / 3;
+
+		if (!isRightEdge && !isDownEdge && isLeftEdge && isUpEdge) N = (dnR + dnD) * 0.5;
+		if (!isRightEdge && isDownEdge && !isLeftEdge && isUpEdge) N = (dnR + dnL) * 0.5;
+		if (!isRightEdge && isDownEdge && isLeftEdge && !isUpEdge) N = (dnR + dnU) * 0.5;
+		if (isRightEdge && !isDownEdge && !isLeftEdge && isUpEdge) N = (dnD + dnL) * 0.5;
+		if (isRightEdge && !isDownEdge && isLeftEdge && !isUpEdge) N = (dnD + dnU) * 0.5;
+		if (isRightEdge && isDownEdge && !isLeftEdge && !isUpEdge) N = (dnL + dnU) * 0.5;
+
+		if (!isRightEdge && isDownEdge && isLeftEdge && isUpEdge) N = dnR;
+		if (isRightEdge && !isDownEdge && isLeftEdge && isUpEdge) N = dnD;
+		if (isRightEdge && isDownEdge && !isLeftEdge && isUpEdge) N = dnL;
+		if (isRightEdge && isDownEdge && isLeftEdge && !isUpEdge) N = dnU;
+
+		if (isRightEdge && isDownEdge&& isLeftEdge&& isUpEdge)
+			N = 1;
+		else 
+			N = N*N*N*0.4;
+	}
+	else
+	{
+		
+		N = ((dnR+dnL) + (dnU+dnD))/4;
+		N = N*N*N;
+	}
+
+	
+
+	if (false)
+	{
+		if (res_dnx >= 1 && res_dny < 1) N = res_dny;
+		if (res_dnx < 1 && res_dny >= 1) N = res_dnx;
+		if (res_dnx >= 1 && res_dny >= 1) N = 1;
+		if (res_dnx < 1 && res_dny < 1) N = N*N*N*0.4;
 	}
 	
 	//N = min(dny, dnx);

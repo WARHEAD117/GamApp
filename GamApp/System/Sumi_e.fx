@@ -312,65 +312,6 @@ float4 PShaderEdgeBlur(float2 TexCoord : TEXCOORD0) : COLOR
 	return float4(finalColor, finalColor, finalColor, 1.0f);
 }
 
-float4 PShaderForward(float2 TexCoord : TEXCOORD0) : COLOR
-{
-	float color = tex2D(g_sampleMainColor, TexCoord).r;
-	//if (color >= 0.99)
-		return float4(color, color, color, 1);
-
-	float2 offset = float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight);
-
-
-	float colorL = tex2D(g_sampleMainColor, TexCoord + float2(-1, 0) * offset).r;
-	float colorR = tex2D(g_sampleMainColor, TexCoord + float2(1, 0) * offset).r;
-	float colorU = tex2D(g_sampleMainColor, TexCoord + float2(0, -1) * offset).r;
-	float colorD = tex2D(g_sampleMainColor, TexCoord + float2(0, 1) * offset).r;
-	float colorLU = tex2D(g_sampleMainColor, TexCoord + float2(-1, -1) * offset).r;
-	float colorRU = tex2D(g_sampleMainColor, TexCoord + float2(1, -1) * offset).r;
-	float colorLD = tex2D(g_sampleMainColor, TexCoord + float2(-1, 1) * offset).r;
-	float colorRD = tex2D(g_sampleMainColor, TexCoord + float2(1, 1) * offset).r;
-
-	float colorList[9] = { color, colorL, colorR, colorU, colorD, colorLU, colorRU, colorLD, colorRD };
-
-	//--------------------------------------------------------------------
-	//因为一般是需要强调前景，所以当前像素是后景时，邻接像素如果有
-	//前景的话，当前这个像素是没有必要存在的，所以把这个像素去掉
-	//但是因为阈值无论如何设置，都是无法照顾到所有情形，所以将需要剔掉的像素
-	//的颜色设置为0.8，这样在之后的平均化的时候就可以使这一区域的边缘淡化
-	//也就可以使纹理变小，就不会出现脏兮兮的感觉了
-	//但是现在还是混在平滑化的代码里，需要单独提出来
-	float3 pos = GetPosition(TexCoord, g_samplePosition);
-
-	float3 posUp = GetPosition(TexCoord + float2(0, -1) * offset, g_samplePosition);
-	float3 posDown = GetPosition(TexCoord + float2(0, 1) * offset, g_samplePosition);
-	float3 posLeft = GetPosition(TexCoord + float2(-1, 0) * offset, g_samplePosition);
-	float3 posRight = GetPosition(TexCoord + float2(1, 0) * offset, g_samplePosition);
-	float3 posUpLeft = GetPosition(TexCoord + float2(-1, -1) * offset, g_samplePosition);
-	float3 posUpRight = GetPosition(TexCoord + float2(1, -1) * offset, g_samplePosition);
-	float3 posDownLeft = GetPosition(TexCoord + float2(-1, 1) * offset, g_samplePosition);
-	float3 posDownRight = GetPosition(TexCoord + float2(1, 1) * offset, g_samplePosition);
-
-	float3 neighbour[8] = { posLeft, posRight, posUp, posDown, posUpLeft, posUpRight, posDownLeft, posDownRight };
-
-	bool hasCloserPix = false;
-	int factor = 0.8;
-	for (int neigIndex = 0; neigIndex < 4; neigIndex++)
-	{
-		if (pos.z - neighbour[neigIndex].z >= factor && color < 0.1f && colorList[neigIndex + 1] < 0.1)
-		{
-			hasCloserPix = true;
-			break;
-		}
-	}
-	if (hasCloserPix)
-	{
-		//return float4(1, 1, 1, 1);
-		return float4(0.9, 0.9, 0.9, 1);
-	}
-
-	return float4(color, color, color, 1.0f);
-}
-
 float4 PShaderBlend(float2 TexCoord : TEXCOORD0) : COLOR
 { return tex2D(g_sampleMainColor, TexCoord);
 	float4 color[9];
@@ -741,13 +682,6 @@ technique ColorChange
 	{
 		vertexShader = compile vs_3_0 VShader();
 		pixelShader = compile ps_3_0 PShaderBlur();
-	}
-
-	pass p4
-	{
-		vertexShader = compile vs_3_0 VShader();
-		//pixelShader = compile ps_3_0 PShaderDiffusion();
-		pixelShader = compile ps_3_0 PShaderForward();
 	}
 
 	pass p5

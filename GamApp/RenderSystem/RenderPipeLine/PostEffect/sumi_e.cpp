@@ -341,22 +341,6 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	m_postEffect->EndPass();
 
 	SafeRelease(pSurf_SA);
-	//=============================================================================================================
-	//È¥³ý±ßÔµµÄºó¾°ÏñËØ
-	PDIRECT3DSURFACE9 pSurf_EdgeForward = NULL;
-	m_pEdgeForward->GetSurfaceLevel(0, &pSurf_EdgeForward);
-
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_EdgeForward);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
-
-	m_postEffect->SetTexture(POSITIONBUFFER, RENDERPIPE::Instance().m_pPositionTarget);
-	m_postEffect->SetTexture(MAINCOLORBUFFER, mainBuffer);
-
-	m_postEffect->CommitChanges();
-
-	m_postEffect->BeginPass(4);
-	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
-	m_postEffect->EndPass();
 
 	//=============================================================================================================
 	//Ä£ºýÂÖÀªÍ¼
@@ -367,11 +351,11 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
 	m_postEffect->SetTexture(POSITIONBUFFER, RENDERPIPE::Instance().m_pPositionTarget);
-	m_postEffect->SetTexture(MAINCOLORBUFFER, m_pEdgeForward);
+	m_postEffect->SetTexture(MAINCOLORBUFFER, mainBuffer);
 
 	m_postEffect->CommitChanges();
 
-	m_postEffect->BeginPass(5);
+	m_postEffect->BeginPass(4);
 	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 	m_postEffect->EndPass();
 
@@ -387,7 +371,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 	m_postEffect->CommitChanges();
 
-	m_postEffect->BeginPass(5);
+	m_postEffect->BeginPass(4);
 	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 	m_postEffect->EndPass();
 	//m_pEdgeBlur = m_pEdgeBlur2;
@@ -448,7 +432,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 		m_postEffect->CommitChanges();
 
-		m_postEffect->BeginPass(7);
+		m_postEffect->BeginPass(6);
 		RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, mParticleBuffer2, 0, sizeof(Particle));
 		RENDERDEVICE::Instance().g_pD3DDevice->SetVertexDeclaration(mParticleDecl);
 		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_POINTLIST, 0, w2*h2);
@@ -584,7 +568,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 		m_postEffect->CommitChanges();
 
-		m_postEffect->BeginPass(6);
+		m_postEffect->BeginPass(5);
 		RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, mParticleBuffer, 0, sizeof(Particle));
 		RENDERDEVICE::Instance().g_pD3DDevice->SetVertexDeclaration(mParticleDecl);
 		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_POINTLIST, 0, w*h);

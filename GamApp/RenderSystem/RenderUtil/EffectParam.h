@@ -19,6 +19,7 @@
 #define AMBIENTMATERIAL		"g_AmbientMaterial"
 #define SPECULARMATERIAL	"g_SpecularMaterial"
 #define SPECULARPOWER		"g_SpecularPower"
+#define THICKNESS			"g_Thickness"
 
 #define MAINCOLORBUFFER		"g_MainColorBuffer"
 #define NORMALBUFFER		"g_NormalBuffer"

@@ -42,6 +42,7 @@ struct Material
 	D3DXVECTOR4   Specular;       /* Specular 'shininess' */
 	D3DXVECTOR4   Emissive;       /* Emissive color RGB */
 	float           Power;          /* Sharpness if specular highlight */
+	float			thickness;
 
 	LPD3DXEFFECT	effect;
 
@@ -51,6 +52,8 @@ struct Material
 		Ambient = D3DXVECTOR4(1.0f, 1.0f, 1.0f, 1.0f);
 		Specular = D3DXVECTOR4(1.0f, 1.0f, 1.0f, 1.0f);
 		Emissive = D3DXVECTOR4(1.0f, 1.0f, 1.0f, 1.0f);
+		Power = 1;
+		thickness = 1;
 	}
 
 	void operator = (const D3DMATERIAL9& d3dmat)

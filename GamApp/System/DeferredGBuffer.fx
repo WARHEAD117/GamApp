@@ -6,6 +6,8 @@ bool		g_IsSky;
 
 float		g_shininess = 1.0f;
 
+float4		g_AmbientMaterial = float4(1,1,1,1);
+
 texture		g_Texture;
 sampler2D g_sampleTexture =
 sampler_state
@@ -150,6 +152,8 @@ OutputPS PShader(float3 NormalV		: NORMAL,
 
 	//
 	clip(Texture.a < 0.1f ? -1 : 1);
+
+	Texture.xyz = g_IsSky ? Texture.xyz : Texture.xyz * g_AmbientMaterial.xyz;
 
 	//RGB通道储存纹理颜色
 	PsOut.diffuse.rgb = Texture.xyz;

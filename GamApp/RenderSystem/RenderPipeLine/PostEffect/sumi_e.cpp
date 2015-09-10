@@ -105,6 +105,11 @@ void SumiE::CreatePostEffect()
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
 		1, D3DUSAGE_RENDERTARGET,
 		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
+		&m_pJudgeImage, NULL);
+
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
+		1, D3DUSAGE_RENDERTARGET,
+		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
 		&m_pEdgeForward, NULL);
 
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
@@ -377,9 +382,12 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	//m_pEdgeBlur = m_pEdgeBlur2;
 	//=============================================================================================================
 	//ºÏ²¢
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pPostSurface);
+	PDIRECT3DSURFACE9 pSurf_Judge = NULL;
+	m_pJudgeImage->GetSurfaceLevel(0, &pSurf_Judge);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_Judge);
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
+	m_postEffect->SetTexture(NORMALBUFFER, RENDERPIPE::Instance().m_pNormalTarget);
 	m_postEffect->SetTexture(MAINCOLORBUFFER, mainBuffer); //m_pEdgeImage//m_pEdgeBlur//mainBuffer//m_pEdgeForward//RENDERPIPE::Instance().m_pNormalTarget//m_StrokesArea
 
 	m_postEffect->CommitChanges();
@@ -390,7 +398,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 	//=====================================================================================================
 
-	float useParticle = false;
+	float useParticle = true;
 
 	bool openInsideParticle = true;
 	if (openInsideParticle && useParticle)
@@ -555,6 +563,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		m_postEffect->SetTexture("g_InkTex3", m_pInkTex3);
 		m_postEffect->SetTexture("g_InkTex4", m_pInkTex4);
 
+		m_postEffect->SetTexture("g_JudgeTex", m_pJudgeImage);
 
 		baseTexSize = 3250;
 		maxTexSize = 17;

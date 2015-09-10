@@ -314,10 +314,13 @@ float4 Normal_Edge(float2 TexCoord)
 		if (res_dnx < 1 && res_dny < 1) N = N*N*N*0.4;
 	}
 	
+	float alpha = 1;
+	if (isEdge)
+		alpha = 0;
 	//N = min(dny, dnx);
 	//if (N >= 1)
 	//	return float4(1, 1, 1, 1);
-	return float4(N, N, N, 1);
+	return float4(N, N, N, alpha);
 }
 
 float4 Normal_Depth_Edge(float2 TexCoord)

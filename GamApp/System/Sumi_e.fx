@@ -147,6 +147,16 @@ sampler_state
 	MipFilter = Point;
 };
 
+texture		g_JudgeTex;
+sampler2D g_sampleJudgeTex =
+sampler_state
+{
+	Texture = <g_JudgeTex>;
+	MinFilter = Point;
+	MagFilter = Point;
+	MipFilter = Point;
+};
+
 int minI = 0;
 int maxI = 70;
 
@@ -309,11 +319,11 @@ float4 PShaderEdgeBlur(float2 TexCoord : TEXCOORD0) : COLOR
 	if (count <= 1)
 		return color4;
 	float finalColor = 1.0f * sum / count;
-	return float4(finalColor, finalColor, finalColor, 1.0f);
+	return float4(finalColor, finalColor, finalColor, color4.a);
 }
 
 float4 PShaderBlend(float2 TexCoord : TEXCOORD0) : COLOR
-{ return tex2D(g_sampleMainColor, TexCoord);
+{
 	float4 color[9];
 	float2 offset = float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight);
 	//中，上，右上，右，右下，下，左下，左，左上
@@ -325,8 +335,48 @@ float4 PShaderBlend(float2 TexCoord : TEXCOORD0) : COLOR
 	color[5] = tex2D(g_sampleMainColor, TexCoord + offset * float2(0,  1));
 	color[6] = tex2D(g_sampleMainColor, TexCoord + offset * float2(-1, 1));
 	color[7] = tex2D(g_sampleMainColor, TexCoord + offset * float2(-1, 0));
-	color[8] = tex2D(g_sampleMainColor, TexCoord + offset * float2(-1, -1));
+	color[8] = tex2D(g_sampleMainColor, TexCoord + offset * float2(-1,-1));
 
+	float3 normal[9];
+	normal[0] = normalize(GetNormal(g_sampleNormal, TexCoord));
+	normal[1] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2(0, -1)));
+	normal[2] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2(1, -1)));
+	normal[3] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2(1,  0)));
+	normal[4] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2(1,  1)));
+	normal[5] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2(0,  1)));
+	normal[6] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2(-1, 1)));
+	normal[7] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2(-1, 0)));
+	normal[8] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2(-1,-1)));
+
+	//return float4(color[1].a, color[1].a, color[1].a, 1);
+
+	int countN = 0;
+	float judge = 0;
+
+	if (color[0].a < 0.5)
+	{
+		for (int i = 1; i < 9; i++)
+		{
+			if (color[i].a < 0.5)
+			{
+				countN++;
+				judge += abs(dot(normal[i], normal[0]));
+
+			}
+		}
+	}
+	judge = judge / countN;
+	judge = judge*judge;
+
+	return float4(judge, judge, judge, 1);
+
+	if ((color[1].a < 0.5 || color[3].a < 0.5 || color[5].a < 0.5 || color[7].a < 0.5) && color[0].a > 0.5)
+	{
+		//return float4(color[1].a, color[1].a, color[1].a, 1);
+		return float4(normal[0], 1);
+	}
+	//return float4(color[1].a, color[1].a, color[1].a, 1);
+	return tex2D(g_sampleMainColor, TexCoord);
 
 	for (int i = 0; i < 9; i++)
 	{
@@ -342,10 +392,6 @@ float4 PShaderBlend(float2 TexCoord : TEXCOORD0) : COLOR
 	return tex2D(g_sampleMainColor, TexCoord);
 	//return float4(1, 1, 0, 1);
 }
-
-
-
-
 
 struct P_OutVS
 {
@@ -388,15 +434,11 @@ P_OutVS VShaderParticle(float4 posL       : POSITION0,
 	float sizeFactor = 0.8;
 	float scaledSize = 0;
 
-	float S_scale = invDepth * invDepth * sizeFactor * diffuseColor;
-
-	scaledSize = size * S_scale / 75;
-	
 	//if (TexCoord.x > 0.5)
 	{
 		float scale = 1.0f * g_zNear / depth * diffuseColor;
 		
-		//距离是9的时候，更改大小调整的曲线
+		//距离是_的时候，更改大小调整的曲线
 		float limit = 17;
 		float b = 0.009;
 		if (depth <= limit)

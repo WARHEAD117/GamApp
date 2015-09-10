@@ -384,7 +384,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	//ºÏ²¢
 	PDIRECT3DSURFACE9 pSurf_Judge = NULL;
 	m_pJudgeImage->GetSurfaceLevel(0, &pSurf_Judge);
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_Judge);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pPostSurface);
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
 	m_postEffect->SetTexture(NORMALBUFFER, RENDERPIPE::Instance().m_pNormalTarget);

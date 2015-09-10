@@ -98,7 +98,7 @@ void TestScene::OnLoad()
 	//horseEntity->SetNormalMap("Res\\Mesh\\horse\\HorseB _NRM_512.jpg");
 
 	Material horseMat;
-	horseMat.Ambient = D3DXVECTOR4(0.5, 0.7, 1, 1);
+	horseMat.Thickness = D3DXVECTOR4(0.5, 0.7, 1, 1);
 	horseEntity->SetMaterial(&horseMat);
 
 	D3DXMATRIX horseM;
@@ -115,7 +115,8 @@ void TestScene::OnLoad()
 	horse2Entity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\horse2.X");
 
 	Material horse2Mat;
-	horse2Mat.Ambient = D3DXVECTOR4(1.5, 0.8, 1, 1);
+	horse2Mat.Thickness = D3DXVECTOR4(1.5, 0.8, 1, 1);
+	horse2Mat.MatIndex = 1;
 	horse2Entity->SetMaterial(&horse2Mat);
 
 	D3DXMATRIX horse2M;
@@ -167,7 +168,8 @@ void TestScene::OnLoad()
 	bunnyEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\bunny.X");
 	
 	Material bunnyMat;
-	bunnyMat.Ambient = D3DXVECTOR4(0.7, 1, 1, 1);
+	bunnyMat.Thickness = D3DXVECTOR4(0.7, 1, 1, 1);
+	bunnyMat.MatIndex = 1;
 	bunnyEntity->SetMaterial(&bunnyMat);
 
 	D3DXMATRIX bunnyM;
@@ -212,7 +214,7 @@ void TestScene::OnLoad()
 	grass1Entity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\tree\\grass.X");
 
 	Material grassMat;
-	grassMat.Ambient = D3DXVECTOR4(0.5, 1, 1, 1);
+	grassMat.Thickness = D3DXVECTOR4(0.5, 1, 1, 1);
 	grass1Entity->SetMaterial(&grassMat);
 
 	D3DXMATRIX grass1M;

@@ -528,8 +528,23 @@ PInside_OutVS VShaderParticleInside(float4 posL       : POSITION0,
 	float4 texColor = tex2Dlod(g_sampleMainColor, float4(TexCoord.x, TexCoord.y, 0, 0));
 	//DiffuseMap的纹理采样
 	float4 diffuseColor = tex2Dlod(g_sampleDiffuse, float4(TexCoord.x, TexCoord.y, 0, 0));
-	//texColor = diffuseColor;
-	//如果EdgeMap的颜色小于1.0，也就是不为纯白，就设置其对应的纹理颜色和位置
+
+	//根据灰度图的颜色确定纹理颜色，这里值越大颜色越深,也可以理解为墨的浓度值
+	thickness = 1 - diffuseColor.g;
+
+	//根据diffuse的alpha来判断材质类型
+	if (diffuseColor.a * 255.0f <= 0.5f)
+	{
+		thickness = 1 - diffuseColor.g;
+	}
+	else if (diffuseColor.a * 255.0f <= 1.5f && diffuseColor.a * 255.0f > 0.5f)
+	{
+		thickness = 1 - texColor.r;
+	}
+	else
+	{
+		thickness = 1 - diffuseColor.g;
+	}
 
 	//因为这里不需要纹理大小有区别，所以直接根据深度来确定距离
 	float depth = tex2Dlod(g_samplePosition, float4(TexCoord.x, TexCoord.y, 0, 0));
@@ -557,9 +572,6 @@ PInside_OutVS VShaderParticleInside(float4 posL       : POSITION0,
 
 	if (mod_X < 1 && mod_Y < 1)
 	{
-		//根据灰度图的颜色确定纹理颜色，这里值越大颜色越深,也可以理解为墨的浓度值
-		thickness = 1 - diffuseColor.g;
-
 		//根据传入的顶点的UV坐标来计算空间位置
 		outVS.posWVP = float4(2 * TexCoord.x - 1, 1 - 2 * TexCoord.y, 0, 1);
 	}

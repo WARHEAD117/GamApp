@@ -6,7 +6,8 @@ bool		g_IsSky;
 
 float		g_shininess = 1.0f;
 
-float4		g_AmbientMaterial = float4(1,1,1,1);
+float4		g_ThicknessMaterial = float4(1, 1, 1, 1);
+int			g_MatIndex = 0;
 
 texture		g_Texture;
 sampler2D g_sampleTexture =
@@ -153,13 +154,13 @@ OutputPS PShader(float3 NormalV		: NORMAL,
 	//
 	clip(Texture.a < 0.1f ? -1 : 1);
 
-	Texture.xyz = g_IsSky ? Texture.xyz : Texture.xyz * g_AmbientMaterial.xyz;
+	Texture.xyz = g_IsSky ? Texture.xyz : Texture.xyz * g_ThicknessMaterial.xyz;
 
 	//RGB通道储存纹理颜色
 	PsOut.diffuse.rgb = Texture.xyz;
 
 	//A通道储存高光强度
-	PsOut.diffuse.a = Specular.x;
+	PsOut.diffuse.a = g_MatIndex / 255.0f; // Specular.x;
 	PsOut.normal = float4(sampledNormalV.xyz, 1.0f);
 	PsOut.normal.a = 1.0f / (Shininess + epsilon);
 	PsOut.position = posV.zzzz;

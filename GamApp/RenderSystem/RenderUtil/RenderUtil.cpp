@@ -275,8 +275,9 @@ void RenderUtil::RenderDeferredGeometry(ID3DXEffect* pEffect)
 			pEffect->SetTexture(SPECULARMAP, RENDERDEVICE::Instance().GetDefaultTexture());
 		}
 
-		pEffect->SetVector(AMBIENTMATERIAL, &mSubMeshList[i].pMaterial.Ambient);
-
+		pEffect->SetVector("g_ThicknessMaterial", &mSubMeshList[i].pMaterial.Thickness);
+		pEffect->SetInt("g_MatIndex", mSubMeshList[i].pMaterial.MatIndex);
+		
 		pEffect->CommitChanges();
 
 		RENDERDEVICE::Instance().g_pD3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0,

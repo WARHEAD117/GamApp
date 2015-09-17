@@ -154,6 +154,11 @@ void TestScene::OnLoad()
 	//==========================================================================================
 	mountainEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\plane2_diff2.X");
 
+	Material mountainMat;
+	mountainMat.Thickness = D3DXVECTOR4(1.5, 1, 1, 1);
+	mountainMat.MatIndex = 1;
+	mountainEntity->SetMaterial(&mountainMat);
+
 	D3DXMATRIX mountainM;
 	D3DXVECTOR3 mountainMV = D3DXVECTOR3(-30, -0.5f, 0);
 	D3DXMatrixTranslation(&mountainM, mountainMV.x, mountainMV.y, mountainMV.z);
@@ -199,6 +204,11 @@ void TestScene::OnLoad()
 	//==========================================================================================
 	rock2Entity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\rock\\rock2.X");
 	//rock2Entity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\rock\\rock2.X");
+
+	Material rock2Mat;
+	rock2Mat.Thickness = D3DXVECTOR4(1.5, 1, 1, 1);
+	rock2Mat.MatIndex = 1;
+	rock2Entity->SetMaterial(&rock2Mat);
 
 	D3DXMATRIX rock2M;
 	D3DXVECTOR3 rock2MV = D3DXVECTOR3(-35, -0.5f, 25);

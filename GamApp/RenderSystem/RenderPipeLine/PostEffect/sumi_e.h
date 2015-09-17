@@ -46,10 +46,15 @@ private:
 	LPDIRECT3DTEXTURE9 m_pContourTarget;
 	LPDIRECT3DTEXTURE9 m_pInsideTarget;
 
-	LPDIRECT3DTEXTURE9 m_pBluredInside;
-	LPDIRECT3DTEXTURE9 m_pBackground;
 
 	LPD3DXEFFECT		m_SynthesisEffect;
+
+	LPDIRECT3DTEXTURE9 m_pDarkPart;
+	LPDIRECT3DTEXTURE9 m_pHorizontalBlur;
+	LPDIRECT3DTEXTURE9 m_pVerticalBlur;
+
+	LPDIRECT3DTEXTURE9 m_pBluredInside;
+	LPDIRECT3DTEXTURE9 m_pBackground;
 
 	int texCount = 5;
 	LPDIRECT3DTEXTURE9 m_pTexList[5];

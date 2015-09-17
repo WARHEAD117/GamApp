@@ -157,7 +157,7 @@ OutputPS PShader(float3 NormalV		: NORMAL,
 	Texture.xyz = g_IsSky ? Texture.xyz : Texture.xyz * g_ThicknessMaterial.xyz;
 
 	//RGB通道储存纹理颜色
-	PsOut.diffuse.rgb = Texture.xyz;
+	PsOut.diffuse.rgb = Texture.xyz / 2.0f;
 
 	//A通道储存高光强度
 	PsOut.diffuse.a = g_MatIndex / 255.0f; // Specular.x;

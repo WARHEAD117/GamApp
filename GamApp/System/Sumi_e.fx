@@ -416,7 +416,7 @@ P_OutVS VShaderParticle(float4 posL       : POSITION0,
 	outVS.psize = 0;
 
 	//DiffuseMap的纹理采样
-	float4 diffuseColor = tex2Dlod(g_sampleDiffuse, float4(TexCoord.x, TexCoord.y, 0, 0));
+	float4 diffuseColor = tex2Dlod(g_sampleDiffuse, float4(TexCoord.x, TexCoord.y, 0, 0)) * float4(2,2,2,1);
 	float4 color = tex2Dlod(g_sampleMainColor, float4(TexCoord.x, TexCoord.y, 0, 0));
 
 	float thickness = 1 - color.r;
@@ -569,7 +569,7 @@ PInside_OutVS VShaderParticleInside(float4 posL       : POSITION0,
 	//GrayScaleMap的纹理采样
 	float4 texColor = tex2Dlod(g_sampleMainColor, float4(TexCoord.x, TexCoord.y, 0, 0));
 	//DiffuseMap的纹理采样
-	float4 diffuseColor = tex2Dlod(g_sampleDiffuse, float4(TexCoord.x, TexCoord.y, 0, 0));
+	float4 diffuseColor = tex2Dlod(g_sampleDiffuse, float4(TexCoord.x, TexCoord.y, 0, 0)) * float4(2, 2, 2, 1);
 
 	//根据灰度图的颜色确定纹理颜色，这里值越大颜色越深,也可以理解为墨的浓度值
 	thickness = 1 - diffuseColor.g;
@@ -645,8 +645,8 @@ float4 PShaderParticleInside(float2 TexCoord : TEXCOORD0,//粒子内部的纹理坐标
 	float2 globleT = texC.xy + float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight)* color.y * localT;
 	float depth = tex2D(g_samplePosition, globleT);
 
-	float4 diffuseColor = tex2D(g_sampleDiffuse, TexCoord);
-	float4 diffuseColor2 = tex2D(g_sampleDiffuse, texC.xy);
+	float4 diffuseColor = tex2D(g_sampleDiffuse, TexCoord) * float4(2, 2, 2, 1);
+	float4 diffuseColor2 = tex2D(g_sampleDiffuse, texC.xy) * float4(2, 2, 2, 1);
 	//如果深度过大，说明是没有渲染的部分，把那部分的纹理切掉
 	//实际上这里后面应该改成和中心部分相差大于阈值后切掉
 	float depthCenter = tex2D(g_samplePosition, texC.xy);

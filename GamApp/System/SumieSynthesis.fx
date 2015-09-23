@@ -51,6 +51,36 @@ sampler_state
 	MipFilter = Point;
 };
 
+texture		g_Horizontal;
+sampler2D g_sampleHorizontal =
+sampler_state
+{
+	Texture = <g_Horizontal>;
+	MinFilter = Point;
+	MagFilter = Point;
+	MipFilter = Point;
+};
+
+texture		g_DarkPart;
+sampler2D g_sampleDarkPart =
+sampler_state
+{
+	Texture = <g_DarkPart>;
+	MinFilter = Point;
+	MagFilter = Point;
+	MipFilter = Point;
+};
+
+texture		g_Bloomed;
+sampler2D g_sampleBloomed =
+sampler_state
+{
+	Texture = <g_Bloomed>;
+	MinFilter = Point;
+	MagFilter = Point;
+	MipFilter = Point;
+};
+
 texture		g_BlurredInside;
 sampler2D g_sampleBlurredInside =
 sampler_state
@@ -150,12 +180,21 @@ float4 PShaderSynthesis(float2 TexCoord : TEXCOORD0) : COLOR
 	colorInside = GaussianBlur(g_ScreenWidth, g_ScreenHeight, g_sampleInside, TexCoord);
 
 	float alphaFactor = g_AlphaFactor;
-	float insideAlpha = colorInside.a * alphaFactor;
+	float insideAlpha = colorInside.a;// *alphaFactor;
+
+
+	float4 bloomColor = tex2D(g_sampleBloomed, TexCoord);
+
+	float bloomFactor = 1 - insideAlpha;
+	insideAlpha = bloomFactor * bloomColor.a + (1-bloomFactor)* insideAlpha;
+	
+	insideAlpha = insideAlpha *alphaFactor;
 
 	//bgColor = float4(1, 1, 1, 1);
 	float4 Inside = colorInside * insideAlpha + bgColor * (1 - insideAlpha);
 
-	return Inside;
+
+	return bloomColor + Inside;
 }
 
 float4 PShaderBlur(float2 TexCoord : TEXCOORD0) : COLOR
@@ -191,6 +230,59 @@ float4 PShaderSrcAdd(float2 TexCoord : TEXCOORD0) : COLOR
 	return colorSrc;
 }
 
+float4 PShaderGetDarkPart(float2 TexCoord : TEXCOORD0) : COLOR
+{
+	float4 colorSrc = tex2D(g_sampleInside, TexCoord);
+	if (colorSrc.a > 0.2)
+	{
+		return colorSrc;
+	}
+	return float4(0, 0, 0, 0);
+	/*
+	if (colorSrc.a > 0.8)
+	{
+		float darkness = 1 - colorSrc.a;
+		return float4(darkness, darkness, darkness, 1);
+	}
+	return float4(1, 1, 1, 1);
+	*/
+}
+
+#define SAMPLE_COUNT 15
+
+// 偏移数组
+float2 g_SampleOffsets[SAMPLE_COUNT];
+// 权重数组
+float g_SampleWeights[SAMPLE_COUNT];
+
+float4 PShaderHorizontalBlur(float2 TexCoord : TEXCOORD0) : COLOR
+{
+	float4 c = 0;
+
+	// 按偏移及权重数组叠加周围颜色值到该像素
+	// 相对原理，即可理解为该像素颜色按特定权重发散到周围偏移像素
+	for (int i = 0; i < SAMPLE_COUNT; i++)
+	{
+		c += tex2D(g_sampleDarkPart, TexCoord + g_SampleOffsets[i]) * g_SampleWeights[i];
+	}
+
+	return c;
+}
+
+float4 PShaderVerticalBlur(float2 TexCoord : TEXCOORD0) : COLOR
+{
+	float4 c = 0;
+
+	// 按偏移及权重数组叠加周围颜色值到该像素
+	// 相对原理，即可理解为该像素颜色按特定权重发散到周围偏移像素
+	for (int i = 0; i < SAMPLE_COUNT; i++)
+	{
+		c += tex2D(g_sampleHorizontal, TexCoord + g_SampleOffsets[i]) * g_SampleWeights[i];
+	}
+
+	return c;
+}
+
 technique SumieSynthesis
 {
 	pass p0
@@ -211,9 +303,27 @@ technique SumieSynthesis
 		pixelShader = compile ps_3_0 PShaderSrc();
 	}
 
-	pass p2
+	pass p3
 	{
 		vertexShader = compile vs_3_0 VShader();
 		pixelShader = compile ps_3_0 PShaderSrcAdd();
+	}
+
+	pass p4
+	{
+		vertexShader = compile vs_3_0 VShader();
+		pixelShader = compile ps_3_0 PShaderGetDarkPart();
+	}
+
+	pass p5
+	{
+		vertexShader = compile vs_3_0 VShader();
+		pixelShader = compile ps_3_0 PShaderHorizontalBlur();
+	}
+
+	pass p6
+	{
+		vertexShader = compile vs_3_0 VShader();
+		pixelShader = compile ps_3_0 PShaderVerticalBlur();
 	}
 }

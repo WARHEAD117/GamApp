@@ -4,6 +4,7 @@
 #include "RenderUtil/EffectParam.h"
 #include "RenderSystem/RenderPipeLine/RenderPipe.h"
 #include "Camera/CameraParam.h"
+#include <math.h>
 
 SumiE::SumiE()
 {
@@ -231,6 +232,10 @@ void SumiE::CreatePostEffect()
 	
 	
 }
+
+int sampleCount = 15;
+float sampleWeights[15];
+float sampleOffsets[30];
 
 void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 {
@@ -495,6 +500,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 		m_SynthesisEffect->CommitChanges();
 
+		
 		//======================================================================================================
 		//高斯模糊内部的纹理
 		PDIRECT3DSURFACE9 pSurf_BlurredInside = NULL;
@@ -510,6 +516,124 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		m_SynthesisEffect->BeginPass(1);
 		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 		m_SynthesisEffect->EndPass();
+
+		//======================================================================================================
+		//提取暗部
+		PDIRECT3DSURFACE9 pSurf_DarkPart = NULL;
+		m_pDarkPart->GetSurfaceLevel(0, &pSurf_DarkPart);
+
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_DarkPart);
+		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
+
+		m_SynthesisEffect->SetTexture("g_Inside", m_pBluredInside);
+
+		m_SynthesisEffect->CommitChanges();
+
+		m_SynthesisEffect->BeginPass(4);
+		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+		m_SynthesisEffect->EndPass();
+
+		//======================================================================================================
+		//水平模糊
+		PDIRECT3DSURFACE9 pSurf_HorizontalBlur = NULL;
+		m_pHorizontalBlur->GetSurfaceLevel(0, &pSurf_HorizontalBlur);
+
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_HorizontalBlur);
+		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
+
+		m_SynthesisEffect->SetTexture("g_DarkPart", m_pDarkPart);
+
+		{
+			//===
+			sampleWeights[0] = ComputeGaussian(0);
+			sampleOffsets[0] = 0.0f;
+			sampleOffsets[1] = 0.0f;
+
+			float totalWeights = sampleWeights[0];
+
+			for (int i = 0; i < sampleCount / 2; i++)
+			{
+				float weight = ComputeGaussian(i + 1);
+				sampleWeights[i * 2 + 1] = weight;
+				sampleWeights[i * 2 + 2] = weight;
+				totalWeights += weight * 2;
+
+				float sampleOffset = i * 2 + 1.5f;
+				D3DXVECTOR2 delta = D3DXVECTOR2(1.0f / RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, 0) * sampleOffset;
+
+				sampleOffsets[i * 4 + 1] = delta.x;
+				sampleOffsets[i * 4 + 2] = delta.y;
+				sampleOffsets[i * 4 + 3] = -delta.x;
+				sampleOffsets[i * 4 + 4] = -delta.y;
+			}
+
+			for (int i = 0; i < sampleCount; i++)
+			{
+				sampleWeights[i] /= totalWeights;
+			}
+
+			// 将计算结果传递到GaussianBlur特效
+			m_SynthesisEffect->SetFloatArray("g_SampleWeights", sampleWeights, sampleCount);
+			m_SynthesisEffect->SetFloatArray("g_SampleOffsets", sampleOffsets, sampleCount * 2);
+			//==
+		}
+
+		m_SynthesisEffect->CommitChanges();
+
+		m_SynthesisEffect->BeginPass(5);
+		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+		m_SynthesisEffect->EndPass();
+		//======================================================================================================
+		//垂直模糊
+		PDIRECT3DSURFACE9 pSurf_VerticalBlur = NULL;
+		m_pVerticalBlur->GetSurfaceLevel(0, &pSurf_VerticalBlur);
+
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_VerticalBlur);
+		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
+
+		m_SynthesisEffect->SetTexture("g_Horizontal", m_pHorizontalBlur);
+
+		{
+			//===
+			sampleWeights[0] = ComputeGaussian(0);
+			sampleOffsets[0] = 0.0f;
+			sampleOffsets[1] = 0.0f;
+
+			float totalWeights = sampleWeights[0];
+
+			for (int i = 0; i < sampleCount / 2; i++)
+			{
+				float weight = ComputeGaussian(i + 1);
+				sampleWeights[i * 2 + 1] = weight;
+				sampleWeights[i * 2 + 2] = weight;
+				totalWeights += weight * 2;
+
+				float sampleOffset = i * 2 + 1.5f;
+				D3DXVECTOR2 delta = D3DXVECTOR2(0, 1.0f / RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight) * sampleOffset;
+
+				sampleOffsets[i * 4 + 1] = delta.x;
+				sampleOffsets[i * 4 + 2] = delta.y;
+				sampleOffsets[i * 4 + 3] = -delta.x;
+				sampleOffsets[i * 4 + 4] = -delta.y;
+			}
+
+			for (int i = 0; i < sampleCount; i++)
+			{
+				sampleWeights[i] /= totalWeights;
+			}
+
+			// 将计算结果传递到GaussianBlur特效
+			m_SynthesisEffect->SetFloatArray("g_SampleWeights", sampleWeights, sampleCount);
+			m_SynthesisEffect->SetFloatArray("g_SampleOffsets", sampleOffsets, sampleCount * 2);
+			//==
+		}
+
+		m_SynthesisEffect->CommitChanges();
+
+		m_SynthesisEffect->BeginPass(6);
+		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+		m_SynthesisEffect->EndPass();
+
 		//======================================================================================================
 		//第二次高斯模糊内部的纹理
 		//并且与背景进行混合
@@ -518,10 +642,16 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 		//只处理内部的纹理，边缘纹理其实是不应该和后面混合的。或者找找能让边缘的透明度更均匀的方法
 		//m_SynthesisEffect->SetTexture("g_Contour", m_pContourTarget);
+		m_SynthesisEffect->SetTexture("g_Bloomed", m_pVerticalBlur);
+		m_SynthesisEffect->SetTexture(POSITIONBUFFER, RENDERPIPE::Instance().m_pPositionTarget);
 		m_SynthesisEffect->SetTexture("g_Inside", m_pBluredInside);
 		m_SynthesisEffect->SetTexture("g_Background", m_pBackground);
+
+		m_SynthesisEffect->SetFloat("g_zNear", CameraParam::zNear);
+		m_SynthesisEffect->SetFloat("g_zFar", CameraParam::zFar);
+
 		//控制内部黑色的程度
-		m_SynthesisEffect->SetFloat("g_AlphaFactor", 0.6);
+		m_SynthesisEffect->SetFloat("g_AlphaFactor", 0.7);
 		m_SynthesisEffect->CommitChanges();
 
 
@@ -681,6 +811,15 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		m_SynthesisEffect->EndPass();
 		m_SynthesisEffect->End();
 	}
+}
+
+float m_BlurAmount = 5.5;
+float SumiE::ComputeGaussian(float n)
+{
+	//高斯参数计算公式
+	float theta = m_BlurAmount;
+	return (float)((1.0 / sqrt(2 * D3DX_PI * theta)) *
+		exp(-(n * n) / (2 * theta * theta)));
 }
 
 void SumiE::SetEdgeImage(LPDIRECT3DTEXTURE9 edgeImage)

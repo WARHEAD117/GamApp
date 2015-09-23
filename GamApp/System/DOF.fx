@@ -149,7 +149,7 @@ float4 DrawDof(float2 TexCoord, OffsetData offsetData)
 		half sampleDepth = GetPosition(sampleCoords, g_samplePosition).z;
 
 		half weight = sampleDepth < centerDepth ? samplePixel.a * bleedingMult : 1.0f;
-		weight = (centerPixelCoC > samplePixel.a + bleedingBias) ? weight : 1.0f;
+		weight = (centerPixelCoC > (samplePixel.a + bleedingBias)) ? weight : 1.0f;
 		weight = saturate(weight);
 
 		color += samplePixel * weight;

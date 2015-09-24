@@ -152,11 +152,11 @@ void TestScene::OnLoad()
 	deerEntity2->SetWorldTransform(deer2S * deer2M);
 
 	//==========================================================================================
-	mountainEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\plane2_diff2.X");
+	mountainEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\farMountain.X");
 
 	Material mountainMat;
 	mountainMat.Thickness = D3DXVECTOR4(1.5, 1, 1, 1);
-	mountainMat.MatIndex = 1;
+	mountainMat.MatIndex = 2;
 	mountainEntity->SetMaterial(&mountainMat);
 
 	D3DXMATRIX mountainM;

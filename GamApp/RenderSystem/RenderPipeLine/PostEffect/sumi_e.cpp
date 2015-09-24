@@ -541,7 +541,8 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_HorizontalBlur);
 		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
-		m_SynthesisEffect->SetTexture("g_DarkPart", m_pDarkPart);
+		m_SynthesisEffect->SetTexture(POSITIONBUFFER, RENDERPIPE::Instance().m_pPositionTarget);
+		m_SynthesisEffect->SetTexture("g_InputTex", m_pDarkPart);
 
 		{
 			//===
@@ -591,7 +592,8 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_VerticalBlur);
 		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
-		m_SynthesisEffect->SetTexture("g_Horizontal", m_pHorizontalBlur);
+		m_SynthesisEffect->SetTexture(POSITIONBUFFER, RENDERPIPE::Instance().m_pPositionTarget);
+		m_SynthesisEffect->SetTexture("g_InputTex", m_pHorizontalBlur);
 
 		{
 			//===
@@ -630,7 +632,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 		m_SynthesisEffect->CommitChanges();
 
-		m_SynthesisEffect->BeginPass(6);
+		m_SynthesisEffect->BeginPass(5);
 		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 		m_SynthesisEffect->EndPass();
 
@@ -643,7 +645,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		//只处理内部的纹理，边缘纹理其实是不应该和后面混合的。或者找找能让边缘的透明度更均匀的方法
 		//m_SynthesisEffect->SetTexture("g_Contour", m_pContourTarget);
 		m_SynthesisEffect->SetTexture("g_Bloomed", m_pVerticalBlur);
-		m_SynthesisEffect->SetTexture(POSITIONBUFFER, RENDERPIPE::Instance().m_pPositionTarget);
+		
 		m_SynthesisEffect->SetTexture("g_Inside", m_pBluredInside);
 		m_SynthesisEffect->SetTexture("g_Background", m_pBackground);
 

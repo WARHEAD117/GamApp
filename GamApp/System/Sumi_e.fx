@@ -583,6 +583,10 @@ PInside_OutVS VShaderParticleInside(float4 posL       : POSITION0,
 	{
 		thickness = 1 - texColor.r;
 	}
+	else if (diffuseColor.a * 255.0f <= 2.5f && diffuseColor.a * 255.0f > 1.5f)
+	{
+		thickness = (1 - texColor.r)*(diffuseColor.g);
+	}
 	else
 	{
 		thickness = 1 - diffuseColor.g;

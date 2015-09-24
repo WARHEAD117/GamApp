@@ -51,21 +51,11 @@ sampler_state
 	MipFilter = Point;
 };
 
-texture		g_Horizontal;
-sampler2D g_sampleHorizontal =
+texture		g_InputTex;
+sampler2D g_sampleInput =
 sampler_state
 {
-	Texture = <g_Horizontal>;
-	MinFilter = Point;
-	MagFilter = Point;
-	MipFilter = Point;
-};
-
-texture		g_DarkPart;
-sampler2D g_sampleDarkPart =
-sampler_state
-{
-	Texture = <g_DarkPart>;
+	Texture = <g_InputTex>;
 	MinFilter = Point;
 	MagFilter = Point;
 	MipFilter = Point;
@@ -255,31 +245,26 @@ float2 g_SampleOffsets[SAMPLE_COUNT];
 // 权重数组
 float g_SampleWeights[SAMPLE_COUNT];
 
-float4 PShaderHorizontalBlur(float2 TexCoord : TEXCOORD0) : COLOR
+float4 PShaderInputBlur(float2 TexCoord : TEXCOORD0) : COLOR
 {
 	float4 c = 0;
 
+	float depthCenter = tex2D(g_samplePosition, TexCoord).r;
 	// 按偏移及权重数组叠加周围颜色值到该像素
 	// 相对原理，即可理解为该像素颜色按特定权重发散到周围偏移像素
+	float totalWeight = 0;
 	for (int i = 0; i < SAMPLE_COUNT; i++)
 	{
-		c += tex2D(g_sampleDarkPart, TexCoord + g_SampleOffsets[i]) * g_SampleWeights[i];
+		float depthSample = tex2D(g_samplePosition, TexCoord + g_SampleOffsets[i]).r;
+		float weight = g_SampleWeights[i];
+
+		float deltaD_Inner = depthCenter / 10.0f;
+		if (depthCenter - depthSample >deltaD_Inner && depthSample < 50)
+			weight = 0;
+		c += tex2D(g_sampleInput, TexCoord + g_SampleOffsets[i]) * weight;
+		totalWeight += weight;
 	}
-
-	return c;
-}
-
-float4 PShaderVerticalBlur(float2 TexCoord : TEXCOORD0) : COLOR
-{
-	float4 c = 0;
-
-	// 按偏移及权重数组叠加周围颜色值到该像素
-	// 相对原理，即可理解为该像素颜色按特定权重发散到周围偏移像素
-	for (int i = 0; i < SAMPLE_COUNT; i++)
-	{
-		c += tex2D(g_sampleHorizontal, TexCoord + g_SampleOffsets[i]) * g_SampleWeights[i];
-	}
-
+	c = c / totalWeight;
 	return c;
 }
 
@@ -318,12 +303,6 @@ technique SumieSynthesis
 	pass p5
 	{
 		vertexShader = compile vs_3_0 VShader();
-		pixelShader = compile ps_3_0 PShaderHorizontalBlur();
-	}
-
-	pass p6
-	{
-		vertexShader = compile vs_3_0 VShader();
-		pixelShader = compile ps_3_0 PShaderVerticalBlur();
+		pixelShader = compile ps_3_0 PShaderInputBlur();
 	}
 }

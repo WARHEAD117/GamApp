@@ -219,11 +219,13 @@ float4 fliter(float3x3 _filter, sampler2D _image, float2 texCoord, float2 texSiz
 }
 
 float4 PShaderGrayscale(float2 TexCoord : TEXCOORD0) : COLOR
-{
+{ 
+	//return float4(1, 1, 1, 1.0f);
+	
 	float4 color = tex2D(g_sampleMainColor, TexCoord);
 
 	float depth = GetDepth(TexCoord, g_samplePosition);
-
+	
 	if (depth > 1000)
 	{
 		//normal = float3(1, 1, 1);
@@ -236,6 +238,10 @@ float4 PShaderGrayscale(float2 TexCoord : TEXCOORD0) : COLOR
 
 	float3 light = float3(0, 0, 1);
 	light = normalize(light);
+
+	float3 pos = GetPosition(TexCoord, g_samplePosition);
+	pos = normalize(pos);
+	light = pos;
 
 	float nl = dot(normal, -light);
 
@@ -255,7 +261,7 @@ float4 PShaderBlur(float2 TexCoord : TEXCOORD0) : COLOR
 }
 
 float4 PSAreaSplit(float2 TexCoord : TEXCOORD0) : COLOR
-{
+{ 
 	float color = tex2D(g_sampleGrayscale, TexCoord).r;
 	//if (color < 0.9f)
 	//	return float4(color, color, color, 1.0f);
@@ -324,6 +330,8 @@ float4 PShaderEdgeBlur(float2 TexCoord : TEXCOORD0) : COLOR
 
 float4 PShaderBlend(float2 TexCoord : TEXCOORD0) : COLOR
 {
+	return tex2D(g_sampleMainColor, TexCoord);
+
 	float4 color[9];
 	float2 offset = float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight);
 	//中，上，右上，右，右下，下，左下，左，左上
@@ -585,7 +593,7 @@ PInside_OutVS VShaderParticleInside(float4 posL       : POSITION0,
 	}
 	else if (diffuseColor.a * 255.0f <= 2.5f && diffuseColor.a * 255.0f > 1.5f)
 	{
-		thickness = (1 - texColor.r)*(diffuseColor.g);
+		thickness = (1 - texColor.r * diffuseColor.b)*(diffuseColor.g);
 	}
 	else
 	{
@@ -627,6 +635,16 @@ PInside_OutVS VShaderParticleInside(float4 posL       : POSITION0,
 	float sizeScaled = 1.0f * g_baseInsideTexSize * g_zNear / depth;
 
 	outVS.psize = clamp(sizeScaled, g_minInsideTexSize, g_maxInsideTexSize);
+
+
+	
+	if (depth > 150)
+	{
+		float maxminFactor = depth / 150.0f;
+		maxminFactor = clamp(maxminFactor, 1, 2);
+		outVS.psize = clamp(sizeScaled, g_minInsideTexSize * maxminFactor, g_maxInsideTexSize);
+	}
+
 	if (depth > 1000) outVS.psize = 0;
 	//储存纹理坐标，便于后面的计算
 	outVS.texC = float4(TexCoord, 0, 0);

@@ -233,9 +233,9 @@ void SumiE::CreatePostEffect()
 	
 }
 
-int sampleCount = 15;
-float sampleWeights[15];
-float sampleOffsets[30];
+int sampleCount = 30;
+float m_SampleWeights[30];
+float m_SampleOffsets[60];
 
 void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 {
@@ -265,6 +265,11 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_Garyscale);
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
+
+	float angle = tan(CameraParam::FOV / 2);
+	m_postEffect->SetFloat("g_ViewAngle_half_tan", angle);
+	float aspect = (float)RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth / RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight;
+	m_postEffect->SetFloat("g_ViewAspect", aspect);
 
 	m_postEffect->SetTexture(NORMALBUFFER, RENDERPIPE::Instance().m_pNormalTarget);
 	m_postEffect->SetTexture(POSITIONBUFFER, RENDERPIPE::Instance().m_pPositionTarget);
@@ -357,7 +362,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 	m_postEffect->SetTexture("g_GrayscaleBuffer", m_BlurredGaryscale);
 	m_postEffect->SetInt("minI", 30);//70
-	m_postEffect->SetInt("maxI", 165);//120
+	m_postEffect->SetInt("maxI", 220);//120
 
 	m_postEffect->CommitChanges();
 
@@ -408,7 +413,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
 	m_postEffect->SetTexture(NORMALBUFFER, RENDERPIPE::Instance().m_pNormalTarget);
-	m_postEffect->SetTexture(MAINCOLORBUFFER, mainBuffer); //m_pEdgeImage//m_pEdgeBlur//mainBuffer//m_pEdgeForward//RENDERPIPE::Instance().m_pNormalTarget//m_StrokesArea
+	m_postEffect->SetTexture(MAINCOLORBUFFER, m_StrokesArea); //m_pEdgeImage//m_pEdgeBlur//mainBuffer//m_pEdgeForward//RENDERPIPE::Instance().m_pNormalTarget//m_StrokesArea
 
 	m_postEffect->CommitChanges();
 
@@ -418,7 +423,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 	//=====================================================================================================
 
-	float useParticle = true;
+	float useParticle = false;
 
 	bool openInsideParticle = true;
 	if (openInsideParticle && useParticle)
@@ -544,40 +549,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		m_SynthesisEffect->SetTexture(POSITIONBUFFER, RENDERPIPE::Instance().m_pPositionTarget);
 		m_SynthesisEffect->SetTexture("g_InputTex", m_pDarkPart);
 
-		{
-			//===
-			sampleWeights[0] = ComputeGaussian(0);
-			sampleOffsets[0] = 0.0f;
-			sampleOffsets[1] = 0.0f;
-
-			float totalWeights = sampleWeights[0];
-
-			for (int i = 0; i < sampleCount / 2; i++)
-			{
-				float weight = ComputeGaussian(i + 1);
-				sampleWeights[i * 2 + 1] = weight;
-				sampleWeights[i * 2 + 2] = weight;
-				totalWeights += weight * 2;
-
-				float sampleOffset = i * 2 + 1.5f;
-				D3DXVECTOR2 delta = D3DXVECTOR2(1.0f / RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, 0) * sampleOffset;
-
-				sampleOffsets[i * 4 + 1] = delta.x;
-				sampleOffsets[i * 4 + 2] = delta.y;
-				sampleOffsets[i * 4 + 3] = -delta.x;
-				sampleOffsets[i * 4 + 4] = -delta.y;
-			}
-
-			for (int i = 0; i < sampleCount; i++)
-			{
-				sampleWeights[i] /= totalWeights;
-			}
-
-			// 将计算结果传递到GaussianBlur特效
-			m_SynthesisEffect->SetFloatArray("g_SampleWeights", sampleWeights, sampleCount);
-			m_SynthesisEffect->SetFloatArray("g_SampleOffsets", sampleOffsets, sampleCount * 2);
-			//==
-		}
+		SetGaussian(m_SynthesisEffect, 1.0f / RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, 0, "g_SampleWeights", "g_SampleOffsets");
 
 		m_SynthesisEffect->CommitChanges();
 
@@ -595,40 +567,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		m_SynthesisEffect->SetTexture(POSITIONBUFFER, RENDERPIPE::Instance().m_pPositionTarget);
 		m_SynthesisEffect->SetTexture("g_InputTex", m_pHorizontalBlur);
 
-		{
-			//===
-			sampleWeights[0] = ComputeGaussian(0);
-			sampleOffsets[0] = 0.0f;
-			sampleOffsets[1] = 0.0f;
-
-			float totalWeights = sampleWeights[0];
-
-			for (int i = 0; i < sampleCount / 2; i++)
-			{
-				float weight = ComputeGaussian(i + 1);
-				sampleWeights[i * 2 + 1] = weight;
-				sampleWeights[i * 2 + 2] = weight;
-				totalWeights += weight * 2;
-
-				float sampleOffset = i * 2 + 1.5f;
-				D3DXVECTOR2 delta = D3DXVECTOR2(0, 1.0f / RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight) * sampleOffset;
-
-				sampleOffsets[i * 4 + 1] = delta.x;
-				sampleOffsets[i * 4 + 2] = delta.y;
-				sampleOffsets[i * 4 + 3] = -delta.x;
-				sampleOffsets[i * 4 + 4] = -delta.y;
-			}
-
-			for (int i = 0; i < sampleCount; i++)
-			{
-				sampleWeights[i] /= totalWeights;
-			}
-
-			// 将计算结果传递到GaussianBlur特效
-			m_SynthesisEffect->SetFloatArray("g_SampleWeights", sampleWeights, sampleCount);
-			m_SynthesisEffect->SetFloatArray("g_SampleOffsets", sampleOffsets, sampleCount * 2);
-			//==
-		}
+		SetGaussian(m_SynthesisEffect, 0, 1.0f / RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight, "g_SampleWeights", "g_SampleOffsets");
 
 		m_SynthesisEffect->CommitChanges();
 
@@ -815,8 +754,45 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	}
 }
 
+
+void SumiE::SetGaussian(LPD3DXEFFECT effect, float deltaX, float deltaY, std::string weightArrayName, std::string offsetArrayName)
+{
+	//===
+	m_SampleWeights[0] = ComputeGaussianWeight(0);
+	m_SampleOffsets[0] = 0.0f;
+	m_SampleOffsets[1] = 0.0f;
+
+	float totalWeights = m_SampleWeights[0];
+
+	for (int i = 0; i < sampleCount / 2; i++)
+	{
+		float weight = ComputeGaussianWeight(i + 1);
+		m_SampleWeights[i * 2 + 1] = weight;
+		m_SampleWeights[i * 2 + 2] = weight;
+		totalWeights += weight * 2;
+
+		float sampleOffset = i * 2 + 1.5f;
+		D3DXVECTOR2 delta = D3DXVECTOR2(deltaX, deltaY) * sampleOffset;
+
+		m_SampleOffsets[i * 4 + 1] = delta.x;
+		m_SampleOffsets[i * 4 + 2] = delta.y;
+		m_SampleOffsets[i * 4 + 3] = -delta.x;
+		m_SampleOffsets[i * 4 + 4] = -delta.y;
+	}
+
+	for (int i = 0; i < sampleCount; i++)
+	{
+		m_SampleWeights[i] /= totalWeights;
+	}
+
+	// 将计算结果传递到GaussianBlur特效
+	effect->SetFloatArray(weightArrayName.c_str(), m_SampleWeights, sampleCount);
+	effect->SetFloatArray(offsetArrayName.c_str(), m_SampleOffsets, sampleCount * 2);
+	//==
+}
+
 float m_BlurAmount = 5.5;
-float SumiE::ComputeGaussian(float n)
+float SumiE::ComputeGaussianWeight(float n)
 {
 	//高斯参数计算公式
 	float theta = m_BlurAmount;

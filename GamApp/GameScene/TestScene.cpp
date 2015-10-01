@@ -155,7 +155,7 @@ void TestScene::OnLoad()
 	mountainEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\farMountain.X");
 
 	Material mountainMat;
-	mountainMat.Thickness = D3DXVECTOR4(1.5, 1, 1, 1);
+	mountainMat.Thickness = D3DXVECTOR4(0, 1, 0.5f, 1);
 	mountainMat.MatIndex = 2;
 	mountainEntity->SetMaterial(&mountainMat);
 

@@ -238,7 +238,7 @@ float4 PShaderGetDarkPart(float2 TexCoord : TEXCOORD0) : COLOR
 	*/
 }
 
-#define SAMPLE_COUNT 15
+#define SAMPLE_COUNT 30
 
 // Æ«ÒÆÊý×é
 float2 g_SampleOffsets[SAMPLE_COUNT];

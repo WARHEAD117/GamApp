@@ -11,7 +11,8 @@ public:
 	void CreatePostEffect();
 	
 	void SetEdgeImage(LPDIRECT3DTEXTURE9 edgeImage);
-	float ComputeGaussian(float n);
+	float ComputeGaussianWeight(float n);
+	void SetGaussian(LPD3DXEFFECT effect, float deltaX, float deltaY, std::string weightArrayName, std::string offsetArrayName);
 private:
 	LPDIRECT3DVERTEXDECLARATION9	mParticleDecl;
 	LPDIRECT3DVERTEXBUFFER9			mParticleBuffer;

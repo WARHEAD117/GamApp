@@ -261,6 +261,8 @@ float4 PShaderInputBlur(float2 TexCoord : TEXCOORD0) : COLOR
 		float deltaD_Inner = depthCenter / 10.0f;
 		if (depthCenter - depthSample >deltaD_Inner && depthSample < 50)
 			weight = 0;
+		if (depthCenter - depthSample >deltaD_Inner && (depthSample >= 50 && depthSample < 100))
+			weight = g_SampleWeights[i] * ((depthSample - 50.0f) / 50.0f);
 		c += tex2D(g_sampleInput, TexCoord + g_SampleOffsets[i]) * weight;
 		totalWeight += weight;
 	}

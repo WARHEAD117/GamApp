@@ -152,7 +152,7 @@ void TestScene::OnLoad()
 	deerEntity2->SetWorldTransform(deer2S * deer2M);
 
 	//==========================================================================================
-	mountainEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\farMountain.X");
+	mountainEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\farMountain2.X");
 
 	Material mountainMat;
 	mountainMat.Thickness = D3DXVECTOR4(0, 1, 0.5f, 1);
@@ -224,7 +224,7 @@ void TestScene::OnLoad()
 	grass1Entity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\tree\\grass.X");
 
 	Material grassMat;
-	grassMat.Thickness = D3DXVECTOR4(0.5, 1, 1, 1);
+	grassMat.Thickness = D3DXVECTOR4(0.4, 1, 1, 1);
 	grass1Entity->SetMaterial(&grassMat);
 
 	D3DXMATRIX grass1M;

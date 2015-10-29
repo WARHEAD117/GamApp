@@ -129,6 +129,12 @@ void SumiE::CreatePostEffect()
 		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
 		&m_StrokesArea, NULL);
 	
+	//create renderTarget
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
+		1, D3DUSAGE_RENDERTARGET,
+		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
+		&m_StrokesArea2, NULL);
+
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
 		1, D3DUSAGE_RENDERTARGET,
 		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
@@ -138,6 +144,11 @@ void SumiE::CreatePostEffect()
 		1, D3DUSAGE_RENDERTARGET,
 		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
 		&m_pInsideTarget, NULL);
+
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
+		1, D3DUSAGE_RENDERTARGET,
+		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
+		&m_pInsideTarget2, NULL);
 
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
 		1, D3DUSAGE_RENDERTARGET,
@@ -357,12 +368,18 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	PDIRECT3DSURFACE9 pSurf_SA = NULL;
 	m_StrokesArea->GetSurfaceLevel(0, &pSurf_SA);
 
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_SA);
+	PDIRECT3DSURFACE9 pSurf_SA2 = NULL;
+	m_StrokesArea2->GetSurfaceLevel(0, &pSurf_SA2);
+
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_SA2);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(1, pSurf_SA);
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
 	m_postEffect->SetTexture("g_GrayscaleBuffer", m_BlurredGaryscale);
-	m_postEffect->SetInt("minI", 30);//70
-	m_postEffect->SetInt("maxI", 220);//120
+	m_postEffect->SetInt("minI", 60);//70
+	m_postEffect->SetInt("maxI", 150);//120
+	m_postEffect->SetInt("minI_2", 180);//70
+	m_postEffect->SetInt("maxI_2", 255);//120
 
 	m_postEffect->CommitChanges();
 
@@ -371,6 +388,9 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	m_postEffect->EndPass();
 
 	SafeRelease(pSurf_SA);
+	SafeRelease(pSurf_SA2);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, NULL);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(1, NULL);
 
 	//=============================================================================================================
 	//Ä£ºýÂÖÀªÍ¼
@@ -450,7 +470,9 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		m_postEffect->SetTexture(NORMALBUFFER, RENDERPIPE::Instance().m_pNormalTarget);
 		m_postEffect->SetTexture(POSITIONBUFFER, RENDERPIPE::Instance().m_pPositionTarget);
 		m_postEffect->SetTexture(DIFFUSEBUFFER, RENDERPIPE::Instance().m_pDiffuseTarget);
+		m_postEffect->SetTexture("g_JudgeTex", m_BlurredGaryscale);
 		m_postEffect->SetTexture("g_InkTex", m_pInkMask);
+		m_postEffect->SetBool("g_UpperLayer", false);
 
 		baseInsideTexSize = 2130;
 		maxInsideTexSize = 33;
@@ -461,6 +483,57 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		m_postEffect->SetInt("g_minInsideTexSize",  minInsideTexSize);
 
 		m_postEffect->SetFloat("g_SizeFactor",   1.0f);
+		m_postEffect->SetFloat("g_alphaTestFactor", 0.79f);
+
+		m_postEffect->CommitChanges();
+
+		m_postEffect->BeginPass(6);
+		RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, mParticleBuffer2, 0, sizeof(Particle));
+		RENDERDEVICE::Instance().g_pD3DDevice->SetVertexDeclaration(mParticleDecl);
+		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_POINTLIST, 0, w2*h2);
+		m_postEffect->EndPass();
+
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_POINTSPRITEENABLE, false);
+	}
+
+	if (openInsideParticle && useParticle)
+	{
+		//äÖÈ¾ÄÚ²¿ÎÆÀí
+		PDIRECT3DSURFACE9 pSurf_Inside = NULL;
+		m_pInsideTarget2->GetSurfaceLevel(0, &pSurf_Inside);
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_Inside);
+		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
+
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_POINTSPRITEENABLE, true);
+
+		D3DXMATRIX temp = RENDERDEVICE::Instance().ViewMatrix * RENDERDEVICE::Instance().ProjMatrix;
+		m_postEffect->SetMatrix(VIEWPROJMATRIX, &temp);
+		m_postEffect->SetMatrix(WORLDVIEWPROJMATRIX, &temp);
+		m_postEffect->SetMatrix(PROJECTIONMATRIX, &RENDERDEVICE::Instance().ProjMatrix);
+
+		m_postEffect->SetFloat("g_zNear", CameraParam::zNear);
+		m_postEffect->SetFloat("g_zFar", CameraParam::zFar);
+		m_postEffect->SetInt(SCREENWIDTH, RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth);
+		m_postEffect->SetInt(SCREENHEIGHT, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight);
+
+		m_postEffect->SetTexture(MAINCOLORBUFFER, m_StrokesArea2);
+		m_postEffect->SetTexture(NORMALBUFFER, RENDERPIPE::Instance().m_pNormalTarget);
+		m_postEffect->SetTexture(POSITIONBUFFER, RENDERPIPE::Instance().m_pPositionTarget);
+		m_postEffect->SetTexture(DIFFUSEBUFFER, RENDERPIPE::Instance().m_pDiffuseTarget);
+		m_postEffect->SetTexture("g_InkTex", m_pInkMask);
+		m_postEffect->SetTexture("g_JudgeTex", m_BlurredGaryscale);
+		
+		m_postEffect->SetBool("g_UpperLayer", true);
+
+		baseInsideTexSize = 2130;
+		maxInsideTexSize = 33;
+		minInsideTexSize = 10;
+
+		m_postEffect->SetInt("g_baseInsideTexSize", baseInsideTexSize);
+		m_postEffect->SetInt("g_maxInsideTexSize", maxInsideTexSize);
+		m_postEffect->SetInt("g_minInsideTexSize", minInsideTexSize);
+
+		m_postEffect->SetFloat("g_SizeFactor", 1.0f);
 		m_postEffect->SetFloat("g_alphaTestFactor", 0.79f);
 
 		m_postEffect->CommitChanges();
@@ -515,6 +588,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
 		m_SynthesisEffect->SetTexture("g_Inside", m_pInsideTarget);
+		m_SynthesisEffect->SetTexture("g_Inside2", m_pInsideTarget2);
 
 		m_SynthesisEffect->CommitChanges();
 
@@ -653,7 +727,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 		baseTexSize = 3250;
 		maxTexSize = 17;
-		minTexSize = 7;
+		minTexSize = 9;
 		m_postEffect->SetInt("g_baseTexSize", baseTexSize);
 		m_postEffect->SetInt("g_minTexSize", minTexSize);
 		m_postEffect->SetInt("g_maxTexSize", maxTexSize);

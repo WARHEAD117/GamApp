@@ -51,6 +51,16 @@ sampler_state
 	MipFilter = Point;
 };
 
+texture		g_Inside2;
+sampler2D g_sampleInside2 =
+sampler_state
+{
+	Texture = <g_Inside2>;
+	MinFilter = Point;
+	MagFilter = Point;
+	MipFilter = Point;
+};
+
 texture		g_InputTex;
 sampler2D g_sampleInput =
 sampler_state
@@ -169,6 +179,10 @@ float4 PShaderSynthesis(float2 TexCoord : TEXCOORD0) : COLOR
 	float4 colorInside = tex2D(g_sampleInside, TexCoord);
 	colorInside = GaussianBlur(g_ScreenWidth, g_ScreenHeight, g_sampleInside, TexCoord);
 
+	float4 colorInside2 = tex2D(g_sampleInside2, TexCoord);
+	colorInside2 = GaussianBlur(g_ScreenWidth, g_ScreenHeight, g_sampleInside2, TexCoord);
+	float insideAlpha2 = colorInside2.a * 0.5;// *alphaFactor;
+
 	float alphaFactor = g_AlphaFactor;
 	float insideAlpha = colorInside.a;// *alphaFactor;
 
@@ -183,6 +197,8 @@ float4 PShaderSynthesis(float2 TexCoord : TEXCOORD0) : COLOR
 	//bgColor = float4(1, 1, 1, 1);
 	float4 Inside = colorInside * insideAlpha + bgColor * (1 - insideAlpha);
 
+	Inside = colorInside2 * insideAlpha2 + Inside * (1 - insideAlpha2);
+		
 
 	return bloomColor + Inside;
 }
@@ -190,8 +206,10 @@ float4 PShaderSynthesis(float2 TexCoord : TEXCOORD0) : COLOR
 float4 PShaderBlur(float2 TexCoord : TEXCOORD0) : COLOR
 {
 	float4 colorInside = tex2D(g_sampleInside, TexCoord); 
+	float4 colorInside2 = tex2D(g_sampleInside2, TexCoord);
 	colorInside = GaussianBlur(g_ScreenWidth, g_ScreenHeight, g_sampleInside, TexCoord);
-	
+	colorInside2 = GaussianBlur(g_ScreenWidth, g_ScreenHeight, g_sampleInside2, TexCoord);
+	//colorInside.a = max(colorInside.a, colorInside2.a);
 	return colorInside;
 }
 
@@ -261,8 +279,9 @@ float4 PShaderInputBlur(float2 TexCoord : TEXCOORD0) : COLOR
 		float deltaD_Inner = depthCenter / 10.0f;
 		if (depthCenter - depthSample >deltaD_Inner && depthSample < 50)
 			weight = 0;
-		if (depthCenter - depthSample >deltaD_Inner && (depthSample >= 50 && depthSample < 100))
+		else if (depthCenter - depthSample >deltaD_Inner && (depthSample >= 50 && depthSample < 100))
 			weight = g_SampleWeights[i] * ((depthSample - 50.0f) / 50.0f);
+
 		c += tex2D(g_sampleInput, TexCoord + g_SampleOffsets[i]) * weight;
 		totalWeight += weight;
 	}

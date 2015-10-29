@@ -159,6 +159,8 @@ sampler_state
 
 int minI = 0;
 int maxI = 70;
+int minI_2 = 70;
+int maxI_2 = 120;
 
 int g_baseTexSize = 32;
 int g_maxTexSize = 20;
@@ -173,6 +175,7 @@ int g_minInsideTexSize = 0;//2
 float g_SizeFactor = 0;//1
 float g_alphaTestFactor = 0;//0.79
 
+bool g_UpperLayer = false;
 struct OutputVS
 {
 	float4 posWVP         : POSITION0;
@@ -260,29 +263,42 @@ float4 PShaderBlur(float2 TexCoord : TEXCOORD0) : COLOR
 	return color;
 }
 
-float4 PSAreaSplit(float2 TexCoord : TEXCOORD0) : COLOR
+float GetAplitedColor(float srcColor, int min, int max)
+{
+	int color_int = srcColor * 255;
+	if (color_int < max && color_int >= min)
+	{
+		if (color_int > max - 25 && color_int < max)
+		{
+			//return float4(0.5, 0.5, 0.5, 1);
+			//float fadeColor = lerp(max - 25, 255, (color_int - max + 25) / 25.0f);
+			//return float4(fadeColor / 255.0f, fadeColor / 255.0f, fadeColor / 255.0f, 1.0f);
+		}
+		return float4(srcColor, srcColor, srcColor, 1.0f); //float4(minI / 255.0f, minI / 255.0f, minI / 255.0f, 1.0f); //
+	}
+	else if (color_int < min)
+		return float4(min / 255.0f, min / 255.0f, min / 255.0f, 1.0f);
+	else
+		return float4(1, 1, 1, 1);
+}
+
+struct OutputPSAreaSplit
+{
+	float4 area1			: COLOR0;
+	float4 area2			: COLOR1;
+};
+
+OutputPSAreaSplit PSAreaSplit(float2 TexCoord : TEXCOORD0)
 { 
+	OutputPSAreaSplit output = (OutputPSAreaSplit)0;
 	float color = tex2D(g_sampleGrayscale, TexCoord).r;
 	//if (color < 0.9f)
 	//	return float4(color, color, color, 1.0f);
 	//else
 	//	return float4(1, 1, 1, 1.0f);
-	
-	int color_int = color * 255;
-	if (color_int < maxI && color_int >= minI)
-	{
-		if (color_int > maxI - 25)
-		{
-			//return float4(0.5, 0.5, 0.5, 1);
-			float fadeColor = lerp(maxI - 25, 255, (color_int - maxI + 25) / 25.0f);
-			return float4(fadeColor / 255.0f, fadeColor / 255.0f, fadeColor / 255.0f, 1.0f);
-		}
-		return float4(color, color, color, 1.0f); //float4(minI / 255.0f, minI / 255.0f, minI / 255.0f, 1.0f); //
-	}
-	else if (color_int < minI)
-		return float4(minI / 255.0f, minI / 255.0f, minI / 255.0f, 1.0f);
-	else
-		return float4(1, 1, 1, 1);
+	output.area1 = GetAplitedColor(color,minI, maxI);
+	output.area2 = GetAplitedColor(color, minI_2, maxI_2);
+	return output;
 }
 
 float4 PShaderEdgeBlur(float2 TexCoord : TEXCOORD0) : COLOR
@@ -444,7 +460,7 @@ P_OutVS VShaderParticle(float4 posL       : POSITION0,
 
 	//if (TexCoord.x > 0.5)
 	{
-		float scale = 1.0f * g_zNear / depth * diffuseColor;
+		float scale = 1.0f * g_zNear / depth;
 		
 		//距离是_的时候，更改大小调整的曲线
 		float limit = 17;
@@ -452,10 +468,9 @@ P_OutVS VShaderParticle(float4 posL       : POSITION0,
 		if (depth <= limit)
 		{
 			scale = (g_zNear - limit * b) / (limit * limit * limit) * depth * depth + b;
-			scale = scale * diffuseColor;
 		}
 		
-		scaledSize = size * scale;
+		scaledSize = size * scale * diffuseColor;
 
 		//scaledSize = clamp(scaledSize, g_minTexSize * diffuseColor, g_maxTexSize);
 		scaledSize = max(scaledSize, g_minTexSize * diffuseColor);
@@ -575,11 +590,13 @@ PInside_OutVS VShaderParticleInside(float4 posL       : POSITION0,
 	//默认颜色为0
 	float thickness = 0;
 	//GrayScaleMap的纹理采样
+	float4 judegColor = tex2Dlod(g_sampleJudgeTex, float4(TexCoord.x, TexCoord.y, 0, 0));
+	//笔迹区域
 	float4 texColor = tex2Dlod(g_sampleMainColor, float4(TexCoord.x, TexCoord.y, 0, 0));
 	//DiffuseMap的纹理采样
 	float4 diffuseColor = tex2Dlod(g_sampleDiffuse, float4(TexCoord.x, TexCoord.y, 0, 0)) * float4(2, 2, 2, 1);
 
-	//根据灰度图的颜色确定纹理颜色，这里值越大颜色越深,也可以理解为墨的浓度值
+	//根据diffuseMap的颜色确定纹理颜色，这里值越大颜色越深,也可以理解为墨的浓度值
 	thickness = 1 - diffuseColor.g;
 
 	//根据diffuse的alpha来判断材质类型
@@ -600,11 +617,21 @@ PInside_OutVS VShaderParticleInside(float4 posL       : POSITION0,
 		thickness = 1 - diffuseColor.g;
 	}
 
-	//因为这里不需要纹理大小有区别，所以直接根据深度来确定距离
+	if (g_UpperLayer)
+	{
+		if (diffuseColor.a * 255.0f <= 0.5f)
+		{
+			thickness = 0;
+		}
+		else if (diffuseColor.a * 255.0f <= 2.5f && diffuseColor.a * 255.0f > 1.5f)
+		{
+			thickness = (1 - texColor.r)*(diffuseColor.g);
+		}
+	}
 	float depth = tex2Dlod(g_samplePosition, float4(TexCoord.x, TexCoord.y, 0, 0));
 
 	int a = 4;
-	if (texColor.r < 0.4)
+	if (judegColor.r < 0.4)
 	{
 		//float invDepth = 1 - depth / g_zFar;
 		//a = 4 * invDepth;

@@ -44,9 +44,12 @@ private:
 	LPDIRECT3DTEXTURE9	m_BlurredGaryscale;
 
 	LPDIRECT3DTEXTURE9	m_StrokesArea;
+	LPDIRECT3DTEXTURE9	m_StrokesArea2;
 
 	LPDIRECT3DTEXTURE9 m_pContourTarget;
 	LPDIRECT3DTEXTURE9 m_pInsideTarget;
+
+	LPDIRECT3DTEXTURE9 m_pInsideTarget2;
 
 
 	LPD3DXEFFECT		m_SynthesisEffect;

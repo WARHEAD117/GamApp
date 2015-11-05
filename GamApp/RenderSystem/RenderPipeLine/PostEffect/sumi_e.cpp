@@ -433,7 +433,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
 	m_postEffect->SetTexture(NORMALBUFFER, RENDERPIPE::Instance().m_pNormalTarget);
-	m_postEffect->SetTexture(MAINCOLORBUFFER, mainBuffer); //m_pEdgeImage//m_pEdgeBlur//mainBuffer//m_pEdgeForward//RENDERPIPE::Instance().m_pNormalTarget//m_StrokesArea
+	m_postEffect->SetTexture(MAINCOLORBUFFER, m_BlurredGaryscale); //m_pEdgeImage//m_pEdgeBlur//mainBuffer//m_pEdgeForward//RENDERPIPE::Instance().m_pNormalTarget//m_StrokesArea
 
 	m_postEffect->CommitChanges();
 
@@ -446,6 +446,8 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	float useParticle = true;
 
 	bool openInsideParticle = true;
+
+	//渲染第一次的内部粒子，浅色部分
 	if (openInsideParticle && useParticle)
 	{
 		//渲染内部纹理
@@ -496,6 +498,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_POINTSPRITEENABLE, false);
 	}
 
+	//渲染第二次的内部粒子，深色部分
 	if (openInsideParticle && useParticle)
 	{
 		//渲染内部纹理
@@ -679,7 +682,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	
 
 	//====================================================================================================
-	//重新渲染边缘纹理
+	//渲染边缘纹理
 	//因为边缘纹理现在颜色和透明度作用不同，就导致颜色看起来很正常但是透明度是不均匀的
 	//这样如果也渲染到一张纹理上在融合的话就会出现问题，所以只能最后重新渲染一次
 	//====================================================================================================
@@ -748,6 +751,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 	}
 
+	//渲染五张图，使用高斯模糊合并，来减轻轮廓的扰动
 	bool openCache = true;
 	//m_pTexList[0] = m_pTexList[1];
 	//m_pTexList[1] = m_pPostTarget;

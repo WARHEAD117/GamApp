@@ -172,6 +172,17 @@ OutputVS VShader(float4 posL       : POSITION0,
 	return outVS;
 }
 
+float GetOverlap(float dark, float light)
+{
+	int d_stroke = (light - dark) * 255;
+	int d_overlap = (
+		40 * pow(d_stroke / 100, 3) -
+		60 * pow(d_stroke / 100, 2) + 20
+		) * (1 - light);
+	float overlap = d_overlap / 255.0f;
+	return overlap;
+}
+
 float4 PShaderSynthesis(float2 TexCoord : TEXCOORD0) : COLOR
 {
 	float4 bgColor = tex2D(g_sampleBackground, TexCoord);
@@ -181,23 +192,26 @@ float4 PShaderSynthesis(float2 TexCoord : TEXCOORD0) : COLOR
 
 	float4 colorInside2 = tex2D(g_sampleInside2, TexCoord);
 	colorInside2 = GaussianBlur(g_ScreenWidth, g_ScreenHeight, g_sampleInside2, TexCoord);
-	float insideAlpha2 = colorInside2.a * 0.5;// *alphaFactor;
 
-	float alphaFactor = g_AlphaFactor;
-	float insideAlpha = colorInside.a;// *alphaFactor;
-
+	float insideAlpha = colorInside.a;// *g_AlphaFactor;
+	float insideAlpha2 = colorInside2.a *0.5;// *g_AlphaFactor;
 
 	float4 bloomColor = tex2D(g_sampleBloomed, TexCoord);
 
 	float bloomFactor = 1 - insideAlpha;
 	insideAlpha = bloomFactor * bloomColor.a + (1-bloomFactor)* insideAlpha;
 	
-	insideAlpha = insideAlpha *alphaFactor;
+	insideAlpha = insideAlpha *g_AlphaFactor;
 
 	//bgColor = float4(1, 1, 1, 1);
 	float4 Inside = colorInside * insideAlpha + bgColor * (1 - insideAlpha);
 
-	Inside = colorInside2 * insideAlpha2 + Inside * (1 - insideAlpha2);
+		float overlap = GetOverlap(1 - insideAlpha2, 1 - insideAlpha);
+	if (overlap < 0)overlap = 0;
+	overlap = insideAlpha2 + overlap;
+	//if (colorInside2.a <= 0.1f)
+	//	overlap = 0;
+	Inside = colorInside2 * overlap + Inside * (1 - overlap);
 		
 
 	return bloomColor + Inside;

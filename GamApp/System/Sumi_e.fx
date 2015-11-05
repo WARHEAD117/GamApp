@@ -248,7 +248,7 @@ float4 PShaderGrayscale(float2 TexCoord : TEXCOORD0) : COLOR
 
 	float nl = dot(normal, -light);
 
-	nl = pow(nl, 1.5);
+	nl = pow(nl, 3.5);
 	//nl *= 0.9;
 
 	return float4(nl, nl, nl, 1.0f);

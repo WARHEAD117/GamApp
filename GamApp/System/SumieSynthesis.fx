@@ -197,17 +197,20 @@ float4 PShaderSynthesis(float2 TexCoord : TEXCOORD0) : COLOR
 	float insideAlpha2 = colorInside2.a *0.5;// *g_AlphaFactor;
 
 	float4 bloomColor = tex2D(g_sampleBloomed, TexCoord);
+	bloomColor.rgb = 0;
 
 	float bloomFactor = 1 - insideAlpha;
 	insideAlpha = bloomFactor * bloomColor.a + (1-bloomFactor)* insideAlpha;
 	
 	insideAlpha = insideAlpha *g_AlphaFactor;
 
-	//bgColor = float4(1, 1, 1, 1);
-	float4 Inside = colorInside * insideAlpha + bgColor * (1 - insideAlpha);
+	float4 brushColor = float4(0, 0, 0, 0);
+	float4 Inside = brushColor * insideAlpha + bgColor * (1 - insideAlpha);
 
-	Inside = colorInside2 * insideAlpha2 + Inside * (1 - insideAlpha2);
-		
+	//insideAlpha2 = insideAlpha2 * colorInside.r;
+
+	Inside = brushColor * insideAlpha2 + Inside * (1 - insideAlpha2);
+
 	return bloomColor + Inside;
 }
 

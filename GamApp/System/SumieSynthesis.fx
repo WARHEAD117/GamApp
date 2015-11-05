@@ -206,14 +206,8 @@ float4 PShaderSynthesis(float2 TexCoord : TEXCOORD0) : COLOR
 	//bgColor = float4(1, 1, 1, 1);
 	float4 Inside = colorInside * insideAlpha + bgColor * (1 - insideAlpha);
 
-		float overlap = GetOverlap(1 - insideAlpha2, 1 - insideAlpha);
-	if (overlap < 0)overlap = 0;
-	overlap = insideAlpha2 + overlap;
-	//if (colorInside2.a <= 0.1f)
-	//	overlap = 0;
-	Inside = colorInside2 * overlap + Inside * (1 - overlap);
+	Inside = colorInside2 * insideAlpha2 + Inside * (1 - insideAlpha2);
 		
-
 	return bloomColor + Inside;
 }
 

@@ -696,8 +696,7 @@ float4 PShaderParticleInside(float2 TexCoord : TEXCOORD0,//粒子内部的纹理坐标
 
 	float4 diffuseColor = tex2D(g_sampleDiffuse, TexCoord) * float4(2, 2, 2, 1);
 	float4 diffuseColorCenter = tex2D(g_sampleDiffuse, texC.xy) * float4(2, 2, 2, 1);
-	//如果深度过大，说明是没有渲染的部分，把那部分的纹理切掉
-	//实际上这里后面应该改成和中心部分相差大于阈值后切掉
+	//和中心部分相差大于阈值后,多余的部分切除切掉。同时要满足边缘是硬边
 	float depthCenter = tex2D(g_samplePosition, texC.xy);
 	if (abs(depth - depthCenter) > 0.2 && diffuseColorCenter.r > 0.3f)
 		return float4(0,0,0,0);
@@ -758,7 +757,7 @@ float4 PShaderParticleInside(float2 TexCoord : TEXCOORD0,//粒子内部的纹理坐标
 	if (brush.r > 0.99f)
 		brush = float4(0.0f, 0.0f, 0.0f, 0.0f);
 
-	if (diffuseColorCenter.a * 255.0f > 0.5f)
+	if (diffuseColorCenter.a * 255.0f < 0.5f)
 		brush.r = 1;
 
 	return brush;

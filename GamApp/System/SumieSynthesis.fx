@@ -207,10 +207,12 @@ float4 PShaderSynthesis(float2 TexCoord : TEXCOORD0) : COLOR
 	float4 brushColor = float4(0, 0, 0, 0);
 	float4 Inside = brushColor * insideAlpha + bgColor * (1 - insideAlpha);
 
-	//insideAlpha2 = insideAlpha2 * colorInside.r;
-
+	
+	insideAlpha2 = insideAlpha2 * (1 - colorInside.r);
+	//if (colorInside.r <= 0)
 	Inside = brushColor * insideAlpha2 + Inside * (1 - insideAlpha2);
 
+	//return colorInside;
 	return bloomColor + Inside;
 }
 

@@ -630,8 +630,8 @@ PInside_OutVS VShaderParticleInside(float4 posL       : POSITION0,
 	}
 	float depth = tex2Dlod(g_samplePosition, float4(TexCoord.x, TexCoord.y, 0, 0));
 
-	int a = 4;
-	if (judegColor.r < 0.5)
+	int a = 3;
+	if (judegColor.r < 0.4)
 	{
 		//float invDepth = 1 - depth / g_zFar;
 		//a = 4 * invDepth;

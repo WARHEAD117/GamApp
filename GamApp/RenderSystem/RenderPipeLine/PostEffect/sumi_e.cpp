@@ -472,7 +472,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		m_postEffect->SetTexture(NORMALBUFFER, RENDERPIPE::Instance().m_pNormalTarget);
 		m_postEffect->SetTexture(POSITIONBUFFER, RENDERPIPE::Instance().m_pPositionTarget);
 		m_postEffect->SetTexture(DIFFUSEBUFFER, RENDERPIPE::Instance().m_pDiffuseTarget);
-		m_postEffect->SetTexture("g_JudgeTex", m_BlurredGaryscale);
+		m_postEffect->SetTexture("g_JudgeTex", m_Garyscale);
 		m_postEffect->SetTexture("g_InkTex", m_pInkMask);
 		m_postEffect->SetBool("g_UpperLayer", false);
 
@@ -524,7 +524,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		m_postEffect->SetTexture(POSITIONBUFFER, RENDERPIPE::Instance().m_pPositionTarget);
 		m_postEffect->SetTexture(DIFFUSEBUFFER, RENDERPIPE::Instance().m_pDiffuseTarget);
 		m_postEffect->SetTexture("g_InkTex", m_pInkMask);
-		m_postEffect->SetTexture("g_JudgeTex", m_BlurredGaryscale);
+		m_postEffect->SetTexture("g_JudgeTex", m_Garyscale);
 		
 		m_postEffect->SetBool("g_UpperLayer", true);
 

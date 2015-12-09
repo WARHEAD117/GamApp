@@ -55,6 +55,8 @@ struct OutputVS
 	float2 TexCoord			: TEXCOORD0;
 	float4 posP				: TEXCOORD1;
 	float4 posV				: TEXCOORD2;
+
+	float isEdge			: TEXCOORD3;
 };
 
 
@@ -63,6 +65,7 @@ struct OutputPS
 	float4 diffuse			: COLOR0;
 	float4 normal			: COLOR1;
 	float4 position			: COLOR2;
+	float4 silhouette		: COLOR3;
 };
 
 OutputVS VShader(float4 posL		: POSITION,
@@ -90,6 +93,12 @@ OutputVS VShader(float4 posL		: POSITION,
 	outVS.posV = mul(posL, g_WorldView);
 	outVS.TexCoord = TexCoord;
 
+	float flag = dot(normalize(outVS.normalV), -normalize(outVS.posV));
+	if (flag >= 0 && flag <= 0.2)
+		outVS.isEdge = flag;
+	else
+		outVS.isEdge = 0;
+
 	return outVS;
 }
 
@@ -99,7 +108,8 @@ OutputPS PShader(float3 NormalV		: NORMAL,
 				 float3 BinormalV	: BINORMAL,
 				 float2 TexCoord		: TEXCOORD0,
 				 float4 posP			: TEXCOORD1,
-				 float4 posV			: TEXCOORD2)
+				 float4 posV			: TEXCOORD2,
+				 float isEdge : TEXCOORD3)
 {
 	OutputPS PsOut;
 
@@ -164,6 +174,17 @@ OutputPS PShader(float3 NormalV		: NORMAL,
 	PsOut.normal = float4(sampledNormalV.xyz, 1.0f);
 	PsOut.normal.a = 1.0f / (Shininess + epsilon);
 	PsOut.position = posV.zzzz;
+
+	PsOut.silhouette = float4(1, 1, 1, 1);
+
+	return PsOut;
+
+	if (isEdge >= 0)
+		PsOut.diffuse = float4(isEdge * 5, 1, PsOut.diffuse.b, PsOut.diffuse.a);
+	else
+		PsOut.diffuse = float4(0, 1, PsOut.diffuse.b, PsOut.diffuse.a);
+	if (g_IsSky)PsOut.diffuse = float4(0, 1, PsOut.diffuse.b, PsOut.diffuse.a);
+
 	return PsOut;
 }
 

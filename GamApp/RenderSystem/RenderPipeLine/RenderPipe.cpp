@@ -198,6 +198,13 @@ void RenderPipe::BuildBuffers()
 		&m_pPositionTarget, NULL);
 	hr = m_pPositionTarget->GetSurfaceLevel(0, &m_pPositionSurface);
 
+	//ÂÖÀªÍ¼
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
+		1, D3DUSAGE_RENDERTARGET,
+		D3DFMT_R32F, D3DPOOL_DEFAULT,
+		&m_pSilhouetteTarget, NULL);
+	hr = m_pSilhouetteTarget->GetSurfaceLevel(0, &m_pSilhouetteSurface);
+
 	//L-Buffer
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
 		1, D3DUSAGE_RENDERTARGET,
@@ -274,6 +281,8 @@ void RenderPipe::RenderGBuffer()
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pDiffuseSurface);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(1, m_pNormalSurface);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(2, m_pPositionSurface);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(3, m_pSilhouetteSurface);
+	
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER | D3DCLEAR_STENCIL, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
 	UINT nPasses = 0;
@@ -295,6 +304,7 @@ void RenderPipe::RenderGBuffer()
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, NULL);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(1, NULL);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(2, NULL);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(3, NULL);
 }
 
 void RenderPipe::RenderDiffuse()

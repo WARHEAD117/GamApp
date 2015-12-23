@@ -9,6 +9,11 @@
 #include "Light/SpotLight.h"
 #include "Light/LightManager.h"
 
+#include "RenderSystem/TempSkin/SkinnedMesh.h"
+#include "RenderSystem/TempSkin/Vertex.h"
+
+#include "RenderSystem/RenderPipeLine/RenderPipe.h"
+
 TestScene::TestScene()
 {
 }
@@ -37,6 +42,8 @@ Entity* grass2Entity;
 Entity* grass3Entity;
 
 Entity* sponzaEntity;
+
+
 Material testMat1;
 EffectLoader effectLoader;
 DirectionLight* dirLight1;
@@ -53,6 +60,14 @@ SpotLight* spotLight3;
 SpotLight* spotLight4;
 
 SpotLight* spotLight5;
+
+
+//-----------------------
+//ÁÙÊ±skinedmesh
+SkinnedMesh* mSkinnedMesh;
+
+SkinnedMesh* mSkinnedMeshLittle;
+
 void TestScene::OnLoad()
 {
 	//===================================================================================================
@@ -105,6 +120,7 @@ void TestScene::OnLoad()
 	D3DXVECTOR3 horseMV = D3DXVECTOR3(-12, 0, 1.5f);
 	D3DXMatrixTranslation(&horseM, horseMV.x, horseMV.y, horseMV.z);
 	D3DXVECTOR3 horseSV = D3DXVECTOR3(0.1f, 0.1f, 0.1f);
+	horseSV = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
 	D3DXMATRIX horseS;
 	D3DXMatrixScaling(&horseS, horseSV.x, horseSV.y, horseSV.z);
 	D3DXMATRIX horseRotMat;
@@ -454,6 +470,50 @@ void TestScene::OnLoad()
 	//spotLight5->SetWorldTransform(lightRot1Mat * lightMoveMat);
 
 	
+	//skinnedmesh
+	InitAllVertexDeclarations();
+
+	mSkinnedMesh = new SkinnedMesh("Res\\DeerAnim\\deer5.x");
+	//mSkinnedMesh = new SkinnedMesh("Res\\DeerAnim\\deer4.x");
+
+	mSkinnedMesh->SetTexture("Res\\DeerAnim\\deer1.png");
+
+	Material ADeerMat;
+	ADeerMat.Thickness = D3DXVECTOR4(1, 1, 1, 1);
+	ADeerMat.MatIndex = 0;
+	mSkinnedMesh->SetMaterial(&ADeerMat);
+
+	D3DXMATRIX ADeerM;
+	D3DXVECTOR3 ADeerMV = D3DXVECTOR3(100, 220, 90);
+	ADeerMV = D3DXVECTOR3(-15, -3, -2.0f);
+	D3DXMatrixTranslation(&ADeerM, ADeerMV.x, ADeerMV.y, ADeerMV.z);
+	D3DXVECTOR3 ADeerSV = D3DXVECTOR3(40.1f, 40.1f, 40.1f);
+	D3DXMATRIX ADeerS;
+	D3DXMatrixScaling(&ADeerS, ADeerSV.x, ADeerSV.y, ADeerSV.z);
+	D3DXMATRIX ADeerRotMat;
+	D3DXMatrixRotationY(&ADeerRotMat, 0.225f * D3DX_PI);
+	mSkinnedMesh->SetWorldTransform(ADeerRotMat * ADeerS * ADeerM);
+	RENDERPIPE::Instance().PushSkinnedMesh(mSkinnedMesh);
+
+	mSkinnedMeshLittle = new SkinnedMesh("Res\\DeerAnim\\LittleDeer_1.x");
+	//mSkinnedMeshLittle->SetTexture("Res\\DeerAnim\\deer1.png");
+
+	Material ALittleDeerMat;
+	ALittleDeerMat.Thickness = D3DXVECTOR4(0.65, 0.6, 1, 1);
+	ALittleDeerMat.MatIndex = 2;
+	mSkinnedMeshLittle->SetMaterial(&ALittleDeerMat);
+
+	D3DXMATRIX ALittleDeerM;
+	D3DXVECTOR3 ALittleDeerMV = D3DXVECTOR3(100, 220, 90);
+	ALittleDeerMV = D3DXVECTOR3(-12.5, 0, -4.0f);
+	D3DXMatrixTranslation(&ALittleDeerM, ALittleDeerMV.x, ALittleDeerMV.y, ALittleDeerMV.z);
+	D3DXVECTOR3 ALittleDeerSV = D3DXVECTOR3(10.1f, 10.1f, 10.1f);
+	D3DXMATRIX ALittleDeerS;
+	D3DXMatrixScaling(&ALittleDeerS, ALittleDeerSV.x, ALittleDeerSV.y, ALittleDeerSV.z);
+	D3DXMATRIX ALittleDeerRotMat;
+	D3DXMatrixRotationY(&ALittleDeerRotMat, -1.225f * D3DX_PI);
+	mSkinnedMeshLittle->SetWorldTransform(ALittleDeerRotMat * ALittleDeerS * ALittleDeerM);
+	RENDERPIPE::Instance().PushSkinnedMesh(mSkinnedMeshLittle);
 }
 
 void ComputeMove(D3DXVECTOR3& move)
@@ -565,7 +625,7 @@ void TestScene::OnBeginFrame()
 	cW = moveMat *cW;
 	mainCamera.SetWorldTransform(cW);
 	
-	move = D3DXVECTOR3(10, -5, -5);
+	move = D3DXVECTOR3(10, 100-5, -5);
 	D3DXMatrixTranslation(&moveMat, move.x, move.y, move.z);
 	D3DXMATRIX rotMat;
 	D3DXMatrixRotationY(&rotMat, (180+R) / 180.0f * D3DX_PI);
@@ -573,7 +633,7 @@ void TestScene::OnBeginFrame()
 	rotMat *= moveMat;
 	krisEntity->SetWorldTransform(rotMat);
 
-	move = D3DXVECTOR3(10, -4.5, 7);
+	move = D3DXVECTOR3(10, 100-4.5, 7);
 	D3DXMatrixTranslation(&moveMat, move.x, move.y, move.z);
 	rotMat;
 	D3DXMatrixIdentity(&rotMat);
@@ -590,6 +650,11 @@ void TestScene::OnBeginFrame()
 	R2 += 1.0f;
 	rotMat *= moveMat;
 	deerEntity2->SetWorldTransform(deer2S * rotMat);
+
+	//-------------------------------------------
+	double dTime = GLOBALTIMER::Instance().GetFrameTime();
+	mSkinnedMesh->update(dTime);
+	mSkinnedMeshLittle->update(dTime);
 }
 
 void TestScene::OnFrame()

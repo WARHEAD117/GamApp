@@ -67,6 +67,9 @@
     <Filter Include="RenderSystem\Light">
       <UniqueIdentifier>{5377fa5d-c848-457b-ae32-dd7c95997279}</UniqueIdentifier>
     </Filter>
+    <Filter Include="RenderSystem\TempSkin">
+      <UniqueIdentifier>{8111db4b-5f3b-407e-8c0b-816885b64d18}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DrawSkyBox.h" />
@@ -199,6 +202,18 @@
     <ClInclude Include="RenderSystem\RenderPipeLine\PostEffect\sumi_e.h">
       <Filter>RenderSystem\PostEffect</Filter>
     </ClInclude>
+    <ClInclude Include="RenderSystem\TempSkin\SkinnedMesh.h">
+      <Filter>RenderSystem\TempSkin</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderSystem\TempSkin\Vertex.h">
+      <Filter>RenderSystem\TempSkin</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderSystem\TempSkin\AllocMeshHierarchy.h">
+      <Filter>RenderSystem\TempSkin</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderSystem\TempSkin\d3dUtil.h">
+      <Filter>RenderSystem\TempSkin</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DrawSkyBox.cpp" />
@@ -316,6 +331,18 @@
     <ClCompile Include="RenderSystem\RenderPipeLine\PostEffect\sumi_e.cpp">
       <Filter>RenderSystem\PostEffect</Filter>
     </ClCompile>
+    <ClCompile Include="RenderSystem\TempSkin\SkinnedMesh.cpp">
+      <Filter>RenderSystem\TempSkin</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderSystem\TempSkin\AllocMeshHierarchy.cpp">
+      <Filter>RenderSystem\TempSkin</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderSystem\TempSkin\d3dUtil.cpp">
+      <Filter>RenderSystem\TempSkin</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderSystem\TempSkin\Vertex.cpp">
+      <Filter>RenderSystem\TempSkin</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="System\commonDiffuse.fx">
@@ -382,6 +409,9 @@
       <Filter>System</Filter>
     </FxCompile>
     <FxCompile Include="System\SumieSynthesis.fx">
+      <Filter>System</Filter>
+    </FxCompile>
+    <FxCompile Include="System\DeferredSkinnedGBuffer.fx">
       <Filter>System</Filter>
     </FxCompile>
   </ItemGroup>

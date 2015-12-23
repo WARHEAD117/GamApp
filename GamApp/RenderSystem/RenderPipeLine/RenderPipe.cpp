@@ -37,6 +37,7 @@ LPDIRECT3DVERTEXBUFFER9		pScreenQuadVertex;
 LPDIRECT3DINDEXBUFFER9		pScreenQuadIndex;
 
 LPD3DXEFFECT GBufferEffect;
+LPD3DXEFFECT SkinnedGBufferEffect;
 
 LPD3DXEFFECT deferredMultiPassEffect;
 LPD3DXEFFECT shadingPassEffect;
@@ -257,7 +258,16 @@ void RenderPipe::BuildEffects()
 	if (E_FAIL == ::D3DXCreateEffectFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "System\\DeferredGBuffer.fx", NULL, NULL, D3DXSHADER_DEBUG,
 		NULL, &GBufferEffect, &error))
 	{
-		MessageBox(GetForegroundWindow(), (char*)error->GetBufferPointer(), "Shader", MB_OK);
+		MessageBox(GetForegroundWindow(), (char*)error->GetBufferPointer(), "GBufferShader", MB_OK);
+		abort();
+	}
+
+	//=============================================================================================================================================
+	error = 0;
+	if (E_FAIL == ::D3DXCreateEffectFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "System\\DeferredSkinnedGBuffer.fx", NULL, NULL, D3DXSHADER_DEBUG,
+		NULL, &SkinnedGBufferEffect, &error))
+	{
+		MessageBox(GetForegroundWindow(), (char*)error->GetBufferPointer(), "SkinnedShader", MB_OK);
 		abort();
 	}
 
@@ -301,6 +311,21 @@ void RenderPipe::RenderGBuffer()
 
 	GBufferEffect->EndPass();
 	GBufferEffect->End();
+
+	//======================================================
+	nPasses = 0;
+	r1 = SkinnedGBufferEffect->Begin(&nPasses, 0);
+	r2 = SkinnedGBufferEffect->BeginPass(0);
+
+	for (int i = 0; i < mSkinnedMeshList.size(); ++i)
+	{
+		mSkinnedMeshList[i]->RenderDeferredGeometry(SkinnedGBufferEffect);
+	}
+
+	SkinnedGBufferEffect->EndPass();
+	SkinnedGBufferEffect->End();
+
+
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, NULL);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(1, NULL);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(2, NULL);
@@ -1045,5 +1070,10 @@ void RenderPipe::UpdateRenderState()
 // 	{
 // 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_SHADEMODE, D3DSHADE_PHONG);
 // 	}
+}
+
+void RenderPipe::PushSkinnedMesh(SkinnedMesh* const skinnedMesh)
+{
+	mSkinnedMeshList.push_back(skinnedMesh);
 }
 

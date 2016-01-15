@@ -678,6 +678,15 @@ PInside_OutVS VShaderParticleInside(float4 posL       : POSITION0,
 	//储存控制透明度的size和实际的纹理粒子大小
 	outVS.color = float4(thickness, outVS.psize, 0, 0);
 
+
+	if (diffuseColor.a * 255.0f > 2.5f && diffuseColor.a * 255.0f <= 3.5f)
+	{
+		outVS.posWVP = float4(2 * TexCoord.x - 1, 1 - 2 * TexCoord.y, 0, 1);
+		outVS.psize = 1;
+		thickness = 1-diffuseColor.g;
+		outVS.color = float4(thickness, outVS.psize, 0, 0);
+	}
+
 	return outVS;
 }
 
@@ -735,6 +744,10 @@ float4 PShaderParticleInside(float2 TexCoord : TEXCOORD0,//粒子内部的纹理坐标
 	//TexCoord = saturate(TexCoord);
 	float4 brush = float4(1, 1, 1, 1);
 	brush = tex2D(g_sampleInkTex, TexCoord);
+	if (diffuseColorCenter.a * 255.0f > 2.5f && diffuseColorCenter.a * 255.0f <= 3.5f)
+	{
+		brush = float4(0, 0, 0, 0);
+	}
 
 	//使用alphaTest处理笔迹纹理
 	float alphaTestFactor = g_alphaTestFactor;

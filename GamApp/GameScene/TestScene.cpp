@@ -33,6 +33,7 @@ Entity* deerEntity;
 Entity* deerEntity2;
 
 Entity* mountainEntity;
+Entity* groundEntity;
 
 Entity* rock1Entity;
 Entity* rock2Entity;
@@ -169,12 +170,15 @@ void TestScene::OnLoad()
 
 	//==========================================================================================
 	mountainEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\farMountain2.X");
+	//mountainEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\plane2.X");
+	//mountainEntity->SetTexture("System\\white.dds");
 
 	Material mountainMat;
 	mountainMat.Thickness = D3DXVECTOR4(0, 1, 0.5f, 1);
 	mountainMat.MatIndex = 2;
 	mountainEntity->SetMaterial(&mountainMat);
 
+	
 	D3DXMATRIX mountainM;
 	D3DXVECTOR3 mountainMV = D3DXVECTOR3(-30, -0.5f, 0);
 	D3DXMatrixTranslation(&mountainM, mountainMV.x, mountainMV.y, mountainMV.z);
@@ -184,6 +188,28 @@ void TestScene::OnLoad()
 	D3DXMATRIX mountainRotMat;
 	D3DXMatrixRotationY(&mountainRotMat, -0.5f * D3DX_PI);
 	mountainEntity->SetWorldTransform(mountainRotMat * mountainS * mountainM);
+
+	{
+		//==========================================================================================
+		//groundEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\farMountain2.X");
+		groundEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\ground.X");
+		//groundEntity->SetTexture("Res\\Mesh\\ground.png");
+
+		Material groundMat;
+		groundMat.Thickness = D3DXVECTOR4(0, 1, 1, 1);
+		groundMat.MatIndex = 3;
+		groundEntity->SetMaterial(&groundMat);
+
+		D3DXMATRIX groundM;
+		D3DXVECTOR3 groundMV = D3DXVECTOR3(-20, -0.5f, 0);
+		D3DXMatrixTranslation(&groundM, groundMV.x, groundMV.y, groundMV.z);
+		D3DXMATRIX groundS;
+		D3DXVECTOR3 groundSV = D3DXVECTOR3(2, 2, 2);
+		D3DXMatrixScaling(&groundS, groundSV.x, groundSV.y, groundSV.z);
+		D3DXMATRIX groundRotMat;
+		D3DXMatrixRotationY(&groundRotMat, -0.5f * D3DX_PI);
+		groundEntity->SetWorldTransform(groundRotMat * groundS * groundM);
+	}
 
 	//==========================================================================================
 	bunnyEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\bunny.X");
@@ -347,7 +373,7 @@ void TestScene::OnLoad()
 	D3DXVECTOR3 move = D3DXVECTOR3(0, -5, 0);
 	D3DXMatrixTranslation(&roomM, move.x, move.y, move.z);
 	//roomEntity->SetWorldTransform(planeM);
-
+	/*
 	//--------------------------------------------------------------------------
 	D3DXMATRIX lightMoveMat;
 	D3DXMATRIX lightRot1Mat;
@@ -468,7 +494,7 @@ void TestScene::OnLoad()
 	D3DXMatrixTranslation(&lightMoveMat, 0, 50, 0);
 	D3DXMatrixRotationX(&lightRot1Mat, -0.0f * D3DX_PI);
 	//spotLight5->SetWorldTransform(lightRot1Mat * lightMoveMat);
-
+	*/
 	
 	//skinnedmesh
 	InitAllVertexDeclarations();

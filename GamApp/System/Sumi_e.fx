@@ -346,10 +346,68 @@ float4 PShaderEdgeBlur(float2 TexCoord : TEXCOORD0) : COLOR
 
 float4 PShaderBlend(float2 TexCoord : TEXCOORD0) : COLOR
 {
+	float2 offset = float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight);
+	float3 normalR[9];
+	normalR[0] = normalize(GetNormal(g_sampleNormal, TexCoord));
+	normalR[1] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2(0, -1)));
+	normalR[2] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2(1, -1)));
+	normalR[3] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2(1, 0)));
+	normalR[4] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2(1, 1)));
+	normalR[5] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2(0, 1)));
+	normalR[6] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2(-1, 1)));
+	normalR[7] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2(-1, 0)));
+	normalR[8] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2(-1, -1)));
+
+	float dl = dot(normalR[7], normalR[0]);
+	float dr = dot(normalR[0], normalR[3]);
+	float du = dot(normalR[1], normalR[0]);
+	float dd = dot(normalR[0], normalR[5]);
+	dl = acos(dl);
+	dr = acos(dr);
+	du = acos(du);
+	dd = acos(dd);
+	float dmax = (max(max(max(dl, dr), du), dd));
+	float dmin = (min(min(min(dl, dr), du), dd));
+	//return float4(dmax, dmax, dmax, 1);
+	float d1 = (dl + dr) * 0.5f;
+	float d2 = (du + dd) * 0.5f;
+	float d = d1 * d2/2;
+	//return float4(d, d, d, d);
+
+	float depthC[9];
+	depthC[0] = GetDepth(TexCoord, g_samplePosition);
+	depthC[1] = GetDepth(TexCoord + offset * float2(0, -1), g_samplePosition);
+	depthC[2] = GetDepth(TexCoord + offset * float2(0, 1), g_samplePosition);
+	depthC[3] = GetDepth(TexCoord + offset * float2(-1, 0), g_samplePosition);
+	depthC[4] = GetDepth(TexCoord + offset * float2(1, 0), g_samplePosition);
+	depthC[5] = GetDepth(TexCoord + offset * float2(-1, -1), g_samplePosition);
+	depthC[6] = GetDepth(TexCoord + offset * float2(-1, 1), g_samplePosition);
+	depthC[7] = GetDepth(TexCoord + offset * float2(1, -1), g_samplePosition);
+	depthC[8] = GetDepth(TexCoord + offset * float2(1, 1), g_samplePosition);
+
+	float k1 = 2 * (depthC[4] + depthC[3] - 2 * depthC[0]) / pow((2 * 2 + pow((depthC[4] - depthC[3]),2)), 3.0f / 2.0f);
+	float k2 = 2 * (depthC[2] + depthC[1] - 2 * depthC[0]) / pow((2 * 2 + pow((depthC[2] - depthC[1]),2)), 3.0f / 2.0f);
+	float k3 = 2 * 1.414f * (depthC[8] + depthC[5] - 2 * 1.414f * depthC[0]) / pow((2 * 2 * 2+ pow(depthC[8] - depthC[5],2)), 3.0f / 2.0f);
+	float k4 = 2 * 1.414f * (depthC[7] + depthC[6] - 2 * 1.414f * depthC[0]) / pow((2 * 2 * 2+ pow(depthC[7] - depthC[6],2)), 3.0f / 2.0f);
+	float kmax = (max(max(max(k1, k2), k3), k4));
+	float kmin = (min(min(min(k1, k2), k3), k4));
+	kmax = max(k1, k2);
+	kmin = min(k1, k2);
+	float k = kmax * kmax;// / 10000.0f;// *1000000;
+	k = (k1 + k2) * 0.5f;
+	k *= 1000;
+	return float4(k, k, k, 1);
+	if (k > 0)
+		return float4(0, 1, 0, 1);
+	else  if (k < 0)
+		return float4(1, 0, 0, 1);
+	else
+		return float4(1, 1, 0, 1);
+
 	return tex2D(g_sampleMainColor, TexCoord);
 
 	float4 color[9];
-	float2 offset = float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight);
+	//float2 offset = float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight);
 	//中，上，右上，右，右下，下，左下，左，左上
 	color[0] = tex2D(g_sampleMainColor, TexCoord);
 	color[1] = tex2D(g_sampleMainColor, TexCoord + offset * float2(0, -1));

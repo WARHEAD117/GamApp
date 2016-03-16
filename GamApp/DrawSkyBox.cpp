@@ -41,8 +41,8 @@ HRESULT CDrawSkyBox::InitVB()
 		return E_FAIL;
 	}
 
-	//³õÊ¼»¯Ìì¿ÕºĞµÄ¶¥µã»º³åÇø
-	//=============================================================ÏÂ±íÃæ
+	//åˆå§‹åŒ–å¤©ç©ºç›’çš„é¡¶ç‚¹ç¼“å†²åŒº
+	//=============================================================ä¸‹è¡¨é¢
 	pVertices1->position = D3DXVECTOR3(12.0f, -12.0f, 12.0f);
 	pVertices1->color    = D3DCOLOR_XRGB(255,255,255);
 	pVertices1->tu       = 1.0f;
@@ -68,7 +68,7 @@ HRESULT CDrawSkyBox::InitVB()
 	pVertices1++;
 
 
-	//==========================================================================×ó±íÃæ 
+	//==========================================================================å·¦è¡¨é¢ 
 	pVertices1->position = D3DXVECTOR3(-12.0f, 12.0f, 12.0f);
 	pVertices1->color    = D3DCOLOR_XRGB(255,255,255);
 	pVertices1->tu       = 1.0f;
@@ -95,7 +95,7 @@ HRESULT CDrawSkyBox::InitVB()
 
 	
 
-	//==========================================================================ÓÒ±íÃæ
+	//==========================================================================å³è¡¨é¢
 	pVertices1->position = D3DXVECTOR3(12.0f, 12.0f, -12.0f);
 	pVertices1->color    = D3DCOLOR_XRGB(255,255,255);
 	pVertices1->tu       = 1.0f;
@@ -120,7 +120,7 @@ HRESULT CDrawSkyBox::InitVB()
 	pVertices1->tv       = 1.0f;
 	pVertices1++;
 
-// 	//==========================================================================ÉÏ±íÃæ
+// 	//==========================================================================ä¸Šè¡¨é¢
 	pVertices1->position = D3DXVECTOR3(-12.0f, 12.0f, 12.0f);
 	pVertices1->color    = D3DCOLOR_XRGB(255,255,255);
 	pVertices1->tu       = 0.0f;
@@ -148,7 +148,7 @@ HRESULT CDrawSkyBox::InitVB()
 	pVertices1++;
 
 // 
-// 	//==========================================================================ºó±íÃæ
+// 	//==========================================================================åè¡¨é¢
 	pVertices1->position = D3DXVECTOR3(-12.0f, -12.0f, 12.0f);
 	pVertices1->color    = D3DCOLOR_XRGB(255,255,255);
 	pVertices1->tu       = 0.0f;
@@ -173,7 +173,7 @@ HRESULT CDrawSkyBox::InitVB()
 	pVertices1->tv       = 0.0f;
 	pVertices1++;
 // 
-// 	//==========================================================================Ç°±íÃæ
+// 	//==========================================================================å‰è¡¨é¢
 	pVertices1->position = D3DXVECTOR3(12.0f, -12.0f, -12.0f);
 	pVertices1->color    = D3DCOLOR_XRGB(255,255,255);
 	pVertices1->tu       = 0.0f;
@@ -224,29 +224,29 @@ bool CDrawSkyBox::SetTexture(const char *FileTexture, int flag)
 void CDrawSkyBox::Render(D3DXVECTOR3 CameraPos)
 {
 	m_pd3dDevice->SetRenderState( D3DRS_LIGHTING, FALSE );
-	//¾ØÕóµ¥Î»»¯
+	//çŸ©é˜µå•ä½åŒ–
 	//D3DXMatrixIdentity(&matWorld);
 
-	//--¹Ø±ÕÉî¶È»º´æ£¬²»äÖÈ¾Æ½ÃæµÄ·´Ãæ
+	//--å…³é—­æ·±åº¦ç¼“å­˜ï¼Œä¸æ¸²æŸ“å¹³é¢çš„åé¢
 	m_pd3dDevice->SetRenderState(D3DRS_ZENABLE,FALSE);
 	m_pd3dDevice->SetRenderState(D3DRS_CULLMODE,D3DCULL_CW);
 	
-	//--×ø±ê×ª»»
+	//--åæ ‡è½¬æ¢
 	D3DXMATRIX  matWorld;
 	D3DXMatrixTranslation(&matWorld,CameraPos.x, CameraPos.y, CameraPos.z);
 	m_pd3dDevice->SetTransform(D3DTS_WORLD,&matWorld );
 
-	//¼ĞÈ¡Ñ°Ö·
+	//å¤¹å–å¯»å€
 	m_pd3dDevice->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
 	m_pd3dDevice->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
 
-	//ÌùÍ¼
+	//è´´å›¾
 //	m_pd3dDevice->SetTextureStageState(0, D3DTSS_COLOROP,D3DTOP_SELECTARG1);
 //`	m_pd3dDevice->SetTextureStageState(0, D3DTSS_COLORARG1,D3DTA_TEXTURE);
 
 	m_pd3dDevice->SetRenderState(D3DRS_AMBIENT,D3DCOLOR_XRGB(200,200,200));
 
-	//äÖÈ¾6¸öÃæ==========================================================================ÏÂ×óÓÒÉÏÇ°ºó
+	//æ¸²æŸ“6ä¸ªé¢==========================================================================ä¸‹å·¦å³ä¸Šå‰å
 	for(int i=0;i<6;i++)
 	{
 		m_pd3dDevice->SetTexture(0,m_pTexScene[i]);
@@ -258,11 +258,11 @@ void CDrawSkyBox::Render(D3DXVECTOR3 CameraPos)
 		m_pd3dDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP,0,2);
 	}
 
-	//¹Ø±Õ¼ĞÈ¡Ñ°Ö·
+	//å…³é—­å¤¹å–å¯»å€
 	m_pd3dDevice->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_WRAP);
 	m_pd3dDevice->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_WRAP);
 
-	//--´ò¿ªÉî¶È»º´æ£¬ÃæµÄÇĞ¸î·½Ê½»Ö¸´Ä¬ÈÏ
+	//--æ‰“å¼€æ·±åº¦ç¼“å­˜ï¼Œé¢çš„åˆ‡å‰²æ–¹å¼æ¢å¤é»˜è®¤
 	m_pd3dDevice->SetRenderState(D3DRS_ZENABLE,TRUE);
 	m_pd3dDevice->SetRenderState(D3DRS_CULLMODE,D3DCULL_NONE);
 

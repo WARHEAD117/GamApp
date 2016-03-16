@@ -443,7 +443,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 	//=====================================================================================================
 
-	float useParticle = false;
+	float useParticle = true;
 
 	bool openInsideParticle = true;
 

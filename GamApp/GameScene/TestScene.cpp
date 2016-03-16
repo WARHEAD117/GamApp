@@ -42,6 +42,8 @@ Entity* grass1Entity;
 Entity* grass2Entity;
 Entity* grass3Entity;
 
+Entity* houseEntity;
+
 Entity* sponzaEntity;
 
 
@@ -157,6 +159,10 @@ void TestScene::OnLoad()
 	D3DXMatrixScaling(&deerS, deerSV.x, deerSV.y, deerSV.z);
 	deerEntity->SetWorldTransform(deerS * deerM);
 
+	Material deerMat;
+	deerMat.Thickness = D3DXVECTOR4(1, 1, 1, 1);
+	deerMat.MatIndex = 0;
+	deerEntity->SetMaterial(&deerMat);
 	//==========================================================================================
 	deerEntity2 = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\deer\\deer.X");
 
@@ -306,7 +312,21 @@ void TestScene::OnLoad()
 	D3DXMATRIX grass3RotMat;
 	D3DXMatrixRotationY(&grass3RotMat, -0.5f * D3DX_PI);
 	grass3Entity->SetWorldTransform(grass3RotMat * grass3S * grass3M);
+	//==========================================================================================
+	houseEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\city\\city.X");
+	houseEntity->SetTexture("");
+	D3DXMATRIX houseM;
+	D3DXVECTOR3 houseMove = D3DXVECTOR3(-52, -20, 48.5f);
+	D3DXMatrixTranslation(&houseM, houseMove.x, houseMove.y, houseMove.z);
+	D3DXMATRIX houseS;
+	D3DXVECTOR3 houseSV = D3DXVECTOR3(0.1, 0.1, 0.1);
+	D3DXMatrixScaling(&houseS, houseSV.x, houseSV.y, houseSV.z);
+	houseEntity->SetWorldTransform(houseS * houseM);
 
+	Material houseMat;
+	houseMat.Thickness = D3DXVECTOR4(0.4, 2, 0.5, 1);
+	houseMat.MatIndex = 3;
+	houseEntity->SetMaterial(&houseMat);
 	//==========================================================================================
 	if (false)
 	{

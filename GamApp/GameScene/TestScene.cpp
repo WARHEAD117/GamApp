@@ -66,7 +66,7 @@ SpotLight* spotLight5;
 
 
 //-----------------------
-//ÁÙÊ±skinedmesh
+//ä¸´æ—¶skinedmesh
 SkinnedMesh* mSkinnedMesh;
 
 SkinnedMesh* mSkinnedMeshLittle;
@@ -326,7 +326,7 @@ void TestScene::OnLoad()
 	Material houseMat;
 	houseMat.Thickness = D3DXVECTOR4(0.4, 2, 0.5, 1);
 	houseMat.MatIndex = 3;
-	houseEntity->SetMaterial(&houseMat);
+	//houseEntity->SetMaterial(&houseMat);
 	//==========================================================================================
 	if (false)
 	{

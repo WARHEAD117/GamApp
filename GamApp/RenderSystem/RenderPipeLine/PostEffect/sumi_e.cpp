@@ -270,7 +270,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	m_postEffect->Begin(&numPasses, 0);
 
 	//=============================================================================================================
-	//äÖÈ¾»Ò¶ÈÍ¼
+	//æ¸²æŸ“ç°åº¦å›¾
 	PDIRECT3DSURFACE9 pSurf_Garyscale = NULL;
 	m_Garyscale->GetSurfaceLevel(0, &pSurf_Garyscale);
 
@@ -293,7 +293,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	m_postEffect->EndPass();
 
 	//=============================================================================================================
-	//¸ßË¹Ä£ºı
+	//é«˜æ–¯æ¨¡ç³Š
 	PDIRECT3DSURFACE9 pSurf_BlurredGaryscale = NULL;
 	m_BlurredGaryscale->GetSurfaceLevel(0, &pSurf_BlurredGaryscale);
 
@@ -307,7 +307,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	m_postEffect->BeginPass(3);
 	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 	m_postEffect->EndPass();
-	//¸ßË¹Ä£ºı2
+	//é«˜æ–¯æ¨¡ç³Š2
 	PDIRECT3DSURFACE9 pSurf_BlurredGaryscale2 = NULL;
 	m_Garyscale->GetSurfaceLevel(0, &pSurf_BlurredGaryscale2);
 
@@ -321,7 +321,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	m_postEffect->BeginPass(3);
 	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 	m_postEffect->EndPass();
-	//¸ßË¹Ä£ºı3
+	//é«˜æ–¯æ¨¡ç³Š3
 	PDIRECT3DSURFACE9 pSurf_BlurredGaryscale3 = NULL;
 	m_BlurredGaryscale->GetSurfaceLevel(0, &pSurf_BlurredGaryscale3);
 
@@ -335,7 +335,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	m_postEffect->BeginPass(3);
 	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 	m_postEffect->EndPass();
-	//¸ßË¹Ä£ºı4
+	//é«˜æ–¯æ¨¡ç³Š4
 	PDIRECT3DSURFACE9 pSurf_BlurredGaryscale4 = NULL;
 	m_Garyscale->GetSurfaceLevel(0, &pSurf_BlurredGaryscale4);
 
@@ -349,7 +349,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	m_postEffect->BeginPass(3);
 	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 	m_postEffect->EndPass();
-	//¸ßË¹Ä£ºı5
+	//é«˜æ–¯æ¨¡ç³Š5
 	PDIRECT3DSURFACE9 pSurf_BlurredGaryscale5 = NULL;
 	m_BlurredGaryscale->GetSurfaceLevel(0, &pSurf_BlurredGaryscale5);
 
@@ -393,7 +393,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(1, NULL);
 
 	//=============================================================================================================
-	//Ä£ºıÂÖÀªÍ¼
+	//æ¨¡ç³Šè½®å»“å›¾
 	PDIRECT3DSURFACE9 pSurf_EdgeBlur = NULL;
 	m_pEdgeBlur2->GetSurfaceLevel(0, &pSurf_EdgeBlur);
 
@@ -409,7 +409,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 	m_postEffect->EndPass();
 
-	//Ä£ºıÂÖÀªÍ¼(µÚ¶ş´Î)
+	//æ¨¡ç³Šè½®å»“å›¾(ç¬¬äºŒæ¬¡)
 	pSurf_EdgeBlur = NULL;
 	m_pEdgeBlur->GetSurfaceLevel(0, &pSurf_EdgeBlur);
 
@@ -426,14 +426,14 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	m_postEffect->EndPass();
 	//m_pEdgeBlur = m_pEdgeBlur2;
 	//=============================================================================================================
-	//ºÏ²¢
+	//åˆå¹¶
 	PDIRECT3DSURFACE9 pSurf_Judge = NULL;
 	m_pJudgeImage->GetSurfaceLevel(0, &pSurf_Judge);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pPostSurface);
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
 	m_postEffect->SetTexture(NORMALBUFFER, RENDERPIPE::Instance().m_pNormalTarget);
-	m_postEffect->SetTexture(MAINCOLORBUFFER, m_BlurredGaryscale); //m_pEdgeImage//m_pEdgeBlur//mainBuffer//m_pEdgeForward//RENDERPIPE::Instance().m_pNormalTarget//m_StrokesArea
+	m_postEffect->SetTexture(MAINCOLORBUFFER, m_pEdgeBlur); //m_pEdgeImage//m_BlurredGaryscale//m_pEdgeBlur//mainBuffer//m_pEdgeForward//RENDERPIPE::Instance().m_pNormalTarget//m_StrokesArea
 
 	m_postEffect->CommitChanges();
 
@@ -443,14 +443,14 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 	//=====================================================================================================
 
-	float useParticle = true;
-
+	float useParticle = false;
+	useParticle = true;
 	bool openInsideParticle = true;
 
-	//äÖÈ¾µÚÒ»´ÎµÄÄÚ²¿Á£×Ó£¬Ç³É«²¿·Ö
+	//æ¸²æŸ“ç¬¬ä¸€æ¬¡çš„å†…éƒ¨ç²’å­ï¼Œæµ…è‰²éƒ¨åˆ†
 	if (openInsideParticle && useParticle)
 	{
-		//äÖÈ¾ÄÚ²¿ÎÆÀí
+		//æ¸²æŸ“å†…éƒ¨çº¹ç†
 		PDIRECT3DSURFACE9 pSurf_Inside = NULL;
 		m_pInsideTarget->GetSurfaceLevel(0, &pSurf_Inside);
 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_Inside);
@@ -498,10 +498,10 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_POINTSPRITEENABLE, false);
 	}
 
-	//äÖÈ¾µÚ¶ş´ÎµÄÄÚ²¿Á£×Ó£¬ÉîÉ«²¿·Ö
+	//æ¸²æŸ“ç¬¬äºŒæ¬¡çš„å†…éƒ¨ç²’å­ï¼Œæ·±è‰²éƒ¨åˆ†
 	if (openInsideParticle && useParticle)
 	{
-		//äÖÈ¾ÄÚ²¿ÎÆÀí
+		//æ¸²æŸ“å†…éƒ¨çº¹ç†
 		PDIRECT3DSURFACE9 pSurf_Inside = NULL;
 		m_pInsideTarget2->GetSurfaceLevel(0, &pSurf_Inside);
 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_Inside);
@@ -553,7 +553,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	m_postEffect->End();
 
 	//=======================================================================================================
-	//ºÏ²¢¸÷ÖÖÎÆÀí
+	//åˆå¹¶å„ç§çº¹ç†
 	//=======================================================================================================
 	if (openInsideParticle && useParticle)
 	{
@@ -583,7 +583,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 		
 		//======================================================================================================
-		//¸ßË¹Ä£ºıÄÚ²¿µÄÎÆÀí
+		//é«˜æ–¯æ¨¡ç³Šå†…éƒ¨çš„çº¹ç†
 		PDIRECT3DSURFACE9 pSurf_BlurredInside = NULL;
 		m_pBluredInside->GetSurfaceLevel(0, &pSurf_BlurredInside);
 
@@ -600,7 +600,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		m_SynthesisEffect->EndPass();
 
 		//======================================================================================================
-		//ÌáÈ¡°µ²¿
+		//æå–æš—éƒ¨
 		PDIRECT3DSURFACE9 pSurf_DarkPart = NULL;
 		m_pDarkPart->GetSurfaceLevel(0, &pSurf_DarkPart);
 
@@ -616,7 +616,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		m_SynthesisEffect->EndPass();
 
 		//======================================================================================================
-		//Ë®Æ½Ä£ºı
+		//æ°´å¹³æ¨¡ç³Š
 		PDIRECT3DSURFACE9 pSurf_HorizontalBlur = NULL;
 		m_pHorizontalBlur->GetSurfaceLevel(0, &pSurf_HorizontalBlur);
 
@@ -634,7 +634,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 		m_SynthesisEffect->EndPass();
 		//======================================================================================================
-		//´¹Ö±Ä£ºı
+		//å‚ç›´æ¨¡ç³Š
 		PDIRECT3DSURFACE9 pSurf_VerticalBlur = NULL;
 		m_pVerticalBlur->GetSurfaceLevel(0, &pSurf_VerticalBlur);
 
@@ -653,12 +653,12 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		m_SynthesisEffect->EndPass();
 
 		//======================================================================================================
-		//µÚ¶ş´Î¸ßË¹Ä£ºıÄÚ²¿µÄÎÆÀí
-		//²¢ÇÒÓë±³¾°½øĞĞ»ìºÏ
+		//ç¬¬äºŒæ¬¡é«˜æ–¯æ¨¡ç³Šå†…éƒ¨çš„çº¹ç†
+		//å¹¶ä¸”ä¸èƒŒæ™¯è¿›è¡Œæ··åˆ
 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pPostSurface);
 		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
 
-		//Ö»´¦ÀíÄÚ²¿µÄÎÆÀí£¬±ßÔµÎÆÀíÆäÊµÊÇ²»Ó¦¸ÃºÍºóÃæ»ìºÏµÄ¡£»òÕßÕÒÕÒÄÜÈÃ±ßÔµµÄÍ¸Ã÷¶È¸ü¾ùÔÈµÄ·½·¨
+		//åªå¤„ç†å†…éƒ¨çš„çº¹ç†ï¼Œè¾¹ç¼˜çº¹ç†å…¶å®æ˜¯ä¸åº”è¯¥å’Œåé¢æ··åˆçš„ã€‚æˆ–è€…æ‰¾æ‰¾èƒ½è®©è¾¹ç¼˜çš„é€æ˜åº¦æ›´å‡åŒ€çš„æ–¹æ³•
 		//m_SynthesisEffect->SetTexture("g_Contour", m_pContourTarget);
 		m_SynthesisEffect->SetTexture("g_Bloomed", m_pVerticalBlur);
 		
@@ -668,7 +668,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		m_SynthesisEffect->SetFloat("g_zNear", CameraParam::zNear);
 		m_SynthesisEffect->SetFloat("g_zFar", CameraParam::zFar);
 
-		//¿ØÖÆÄÚ²¿ºÚÉ«µÄ³Ì¶È
+		//æ§åˆ¶å†…éƒ¨é»‘è‰²çš„ç¨‹åº¦
 		m_SynthesisEffect->SetFloat("g_AlphaFactor", 0.7);
 		m_SynthesisEffect->CommitChanges();
 
@@ -682,9 +682,9 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	
 
 	//====================================================================================================
-	//äÖÈ¾±ßÔµÎÆÀí
-	//ÒòÎª±ßÔµÎÆÀíÏÖÔÚÑÕÉ«ºÍÍ¸Ã÷¶È×÷ÓÃ²»Í¬£¬¾Íµ¼ÖÂÑÕÉ«¿´ÆğÀ´ºÜÕı³£µ«ÊÇÍ¸Ã÷¶ÈÊÇ²»¾ùÔÈµÄ
-	//ÕâÑùÈç¹ûÒ²äÖÈ¾µ½Ò»ÕÅÎÆÀíÉÏÔÚÈÚºÏµÄ»°¾Í»á³öÏÖÎÊÌâ£¬ËùÒÔÖ»ÄÜ×îºóÖØĞÂäÖÈ¾Ò»´Î
+	//æ¸²æŸ“è¾¹ç¼˜çº¹ç†
+	//å› ä¸ºè¾¹ç¼˜çº¹ç†ç°åœ¨é¢œè‰²å’Œé€æ˜åº¦ä½œç”¨ä¸åŒï¼Œå°±å¯¼è‡´é¢œè‰²çœ‹èµ·æ¥å¾ˆæ­£å¸¸ä½†æ˜¯é€æ˜åº¦æ˜¯ä¸å‡åŒ€çš„
+	//è¿™æ ·å¦‚æœä¹Ÿæ¸²æŸ“åˆ°ä¸€å¼ çº¹ç†ä¸Šåœ¨èåˆçš„è¯å°±ä¼šå‡ºç°é—®é¢˜ï¼Œæ‰€ä»¥åªèƒ½æœ€åé‡æ–°æ¸²æŸ“ä¸€æ¬¡
 	//====================================================================================================
 	bool openParticle = true;
 	if (openParticle && useParticle)
@@ -707,7 +707,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		UINT numPasses = 0;
 		m_postEffect->Begin(&numPasses, 0);
 		//=============================================================================================================
-		//Á£×ÓTEST
+		//ç²’å­TEST
 		
 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pPostSurface);
 
@@ -735,7 +735,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		m_postEffect->SetInt("g_minTexSize", minTexSize);
 		m_postEffect->SetInt("g_maxTexSize", maxTexSize);
 
-		//¿ØÖÆ±ßÔµºÚÉ«µÄ³Ì¶È
+		//æ§åˆ¶è¾¹ç¼˜é»‘è‰²çš„ç¨‹åº¦
 		m_postEffect->SetFloat("g_colorFactor", 0.3);
 
 		m_postEffect->CommitChanges();
@@ -751,7 +751,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 	}
 
-	//äÖÈ¾ÎåÕÅÍ¼£¬Ê¹ÓÃ¸ßË¹Ä£ºıºÏ²¢£¬À´¼õÇáÂÖÀªµÄÈÅ¶¯
+	//æ¸²æŸ“äº”å¼ å›¾ï¼Œä½¿ç”¨é«˜æ–¯æ¨¡ç³Šåˆå¹¶ï¼Œæ¥å‡è½»è½®å»“çš„æ‰°åŠ¨
 	bool openCache = true;
 	//m_pTexList[0] = m_pTexList[1];
 	//m_pTexList[1] = m_pPostTarget;
@@ -863,7 +863,7 @@ void SumiE::SetGaussian(LPD3DXEFFECT effect, float deltaX, float deltaY, std::st
 		m_SampleWeights[i] /= totalWeights;
 	}
 
-	// ½«¼ÆËã½á¹û´«µİµ½GaussianBlurÌØĞ§
+	// å°†è®¡ç®—ç»“æœä¼ é€’åˆ°GaussianBlurç‰¹æ•ˆ
 	effect->SetFloatArray(weightArrayName.c_str(), m_SampleWeights, sampleCount);
 	effect->SetFloatArray(offsetArrayName.c_str(), m_SampleOffsets, sampleCount * 2);
 	//==
@@ -872,7 +872,7 @@ void SumiE::SetGaussian(LPD3DXEFFECT effect, float deltaX, float deltaY, std::st
 float m_BlurAmount = 5.5;
 float SumiE::ComputeGaussianWeight(float n)
 {
-	//¸ßË¹²ÎÊı¼ÆËã¹«Ê½
+	//é«˜æ–¯å‚æ•°è®¡ç®—å…¬å¼
 	float theta = m_BlurAmount;
 	return (float)((1.0 / sqrt(2 * D3DX_PI * theta)) *
 		exp(-(n * n) / (2 * theta * theta)));

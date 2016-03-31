@@ -188,7 +188,7 @@ OutputVS VShader(float4 posL       : POSITION0,
 {
 	OutputVS outVS = (OutputVS)0;
 
-	//×îÖÕÊä³öµÄ¶¥µãÎ»ÖÃ£¨¾­¹ıÊÀ½ç¡¢¹Û²ì¡¢Í¶Ó°¾ØÕó±ä»»£©
+	//æœ€ç»ˆè¾“å‡ºçš„é¡¶ç‚¹ä½ç½®ï¼ˆç»è¿‡ä¸–ç•Œã€è§‚å¯Ÿã€æŠ•å½±çŸ©é˜µå˜æ¢ï¼‰
 	outVS.posWVP = mul(posL, g_WorldViewProj);
 
 	outVS.TexCoord = TexCoord;
@@ -346,6 +346,7 @@ float4 PShaderEdgeBlur(float2 TexCoord : TEXCOORD0) : COLOR
 
 float4 PShaderBlend(float2 TexCoord : TEXCOORD0) : COLOR
 {
+
 	float2 offset = float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight);
 	float3 normalR[9];
 	normalR[0] = normalize(GetNormal(g_sampleNormal, TexCoord));
@@ -368,7 +369,11 @@ float4 PShaderBlend(float2 TexCoord : TEXCOORD0) : COLOR
 	dd = acos(dd);
 	float dmax = (max(max(max(dl, dr), du), dd));
 	float dmin = (min(min(min(dl, dr), du), dd));
-	//return float4(dmax, dmax, dmax, 1);
+
+	return tex2D(g_sampleMainColor, TexCoord);
+
+	//return float4(1-dmax, 1-dmax, 1-dmax, 1);
+	
 	float d1 = (dl + dr) * 0.5f;
 	float d2 = (du + dd) * 0.5f;
 	float d = d1 * d2/2;
@@ -408,7 +413,7 @@ float4 PShaderBlend(float2 TexCoord : TEXCOORD0) : COLOR
 
 	float4 color[9];
 	//float2 offset = float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight);
-	//ÖĞ£¬ÉÏ£¬ÓÒÉÏ£¬ÓÒ£¬ÓÒÏÂ£¬ÏÂ£¬×óÏÂ£¬×ó£¬×óÉÏ
+	//ä¸­ï¼Œä¸Šï¼Œå³ä¸Šï¼Œå³ï¼Œå³ä¸‹ï¼Œä¸‹ï¼Œå·¦ä¸‹ï¼Œå·¦ï¼Œå·¦ä¸Š
 	color[0] = tex2D(g_sampleMainColor, TexCoord);
 	color[1] = tex2D(g_sampleMainColor, TexCoord + offset * float2(0, -1));
 	color[2] = tex2D(g_sampleMainColor, TexCoord + offset * float2(1, -1));
@@ -489,7 +494,7 @@ P_OutVS VShaderParticle(float4 posL       : POSITION0,
 {
 	P_OutVS outVS = (P_OutVS)0;
 
-	//×îÖÕÊä³öµÄ¶¥µãÎ»ÖÃ£¨¾­¹ıÊÀ½ç¡¢¹Û²ì¡¢Í¶Ó°¾ØÕó±ä»»£©
+	//æœ€ç»ˆè¾“å‡ºçš„é¡¶ç‚¹ä½ç½®ï¼ˆç»è¿‡ä¸–ç•Œã€è§‚å¯Ÿã€æŠ•å½±çŸ©é˜µå˜æ¢ï¼‰
 	//outVS.posWVP = mul(float4(0.5f, 0.5f, 0, 1), g_Proj);
 	//outVS.posWVP = float4(2*TexCoord.x-1, 1-2*TexCoord.y, 0, 1);
 	outVS.posWVP = float4( - 2, -2, -2, 1);
@@ -497,7 +502,7 @@ P_OutVS VShaderParticle(float4 posL       : POSITION0,
 	
 	outVS.psize = 0;
 
-	//DiffuseMapµÄÎÆÀí²ÉÑù
+	//DiffuseMapçš„çº¹ç†é‡‡æ ·
 	float4 diffuseColor = tex2Dlod(g_sampleDiffuse, float4(TexCoord.x, TexCoord.y, 0, 0)) * float4(2,2,2,1);
 	float4 color = tex2Dlod(g_sampleMainColor, float4(TexCoord.x, TexCoord.y, 0, 0));
 
@@ -510,9 +515,9 @@ P_OutVS VShaderParticle(float4 posL       : POSITION0,
 	
 	//size = clamp(size, 0, g_maxTexSize);
 	float depth = tex2Dlod(g_samplePosition, float4(TexCoord.x, TexCoord.y, 0, 0));
-	//½«Éî¶È×ª»¯Îª0-1Çø¼äÄÚµÄÖµ£¬Éî¶ÈÔ½´ó£¬invDepthÔ½Ğ¡
+	//å°†æ·±åº¦è½¬åŒ–ä¸º0-1åŒºé—´å†…çš„å€¼ï¼Œæ·±åº¦è¶Šå¤§ï¼ŒinvDepthè¶Šå°
 	float invDepth = 1 - depth / g_zFar;
-	//Ò²¾ÍÊÇËµÉî¶ÈÔ½´ó£¬¼ÆËã³öµÄÎÆÀí´óĞ¡Ô½Ğ¡£¬¶ø×î´óÖµ²»»á³¬¹ıg_maxTexSize*sizeFactor£¬×îĞ¡²»»áĞ¡ÓÚg_minTexSize
+	//ä¹Ÿå°±æ˜¯è¯´æ·±åº¦è¶Šå¤§ï¼Œè®¡ç®—å‡ºçš„çº¹ç†å¤§å°è¶Šå°ï¼Œè€Œæœ€å¤§å€¼ä¸ä¼šè¶…è¿‡g_maxTexSize*sizeFactorï¼Œæœ€å°ä¸ä¼šå°äºg_minTexSize
 	float sizeFactor = 0.8;
 	float scaledSize = 0;
 
@@ -520,7 +525,7 @@ P_OutVS VShaderParticle(float4 posL       : POSITION0,
 	{
 		float scale = 1.0f * g_zNear / depth;
 		
-		//¾àÀëÊÇ_µÄÊ±ºò£¬¸ü¸Ä´óĞ¡µ÷ÕûµÄÇúÏß
+		//è·ç¦»æ˜¯_çš„æ—¶å€™ï¼Œæ›´æ”¹å¤§å°è°ƒæ•´çš„æ›²çº¿
 		float limit = 17;
 		float b = 0.009;
 		if (depth <= limit)
@@ -559,20 +564,20 @@ float4 PShaderParticle(float2 TexCoord : TEXCOORD0,
 
 	//return normal;
 
-	//HLSLÄÚ²¿ÉùÃ÷µÄ¾ØÕóÊÇÁĞ¾ØÕó
+	//HLSLå†…éƒ¨å£°æ˜çš„çŸ©é˜µæ˜¯åˆ—çŸ©é˜µ
 	//vec(A,B) mat|m00,m01|
 	//------------|m10,m11|
-	//¾ØÕóÖĞ´¢´æµÄµÄÊı¾İÊÇrow0(m00,m10),row1(m01,m11)
-	//ÕâÑùmul¼ÆËãµÄÊ±ºò¾Í¿ÉÒÔÕâÑù¼ÆËã
-	//x=dp(vec,row0),y=dp(vec,row1),dpÊÇµÑ¿¨¶û»ı
-	//µ«ÊÇÔÚC++´úÂëÖĞ´¢´æµÄ»¹ÊÇĞĞÏòÁ¿£¬Òò´ËÔÚSetMatrixµÄÊ±ºòÊÇ»á×Ô¶¯½øĞĞ×ªÖÃµÄ
-	//ËùÒÔÈç¹ûÔÚhlslÖ±½ÓÉùÃ÷¾ØÕó£¬»òÕßÃ»ÓĞÍ¨¹ıSetMatrix´«ÈëµÄ»°£¬¾ÍĞèÒª¸Ä±ä×óÓÒÎ»ÖÃ
-	//ËùÒÔÕâÀïĞ´³Émul(¾ØÕó£¬ÏòÁ¿)
+	//çŸ©é˜µä¸­å‚¨å­˜çš„çš„æ•°æ®æ˜¯row0(m00,m10),row1(m01,m11)
+	//è¿™æ ·mulè®¡ç®—çš„æ—¶å€™å°±å¯ä»¥è¿™æ ·è®¡ç®—
+	//x=dp(vec,row0),y=dp(vec,row1),dpæ˜¯ç¬›å¡å°”ç§¯
+	//ä½†æ˜¯åœ¨C++ä»£ç ä¸­å‚¨å­˜çš„è¿˜æ˜¯è¡Œå‘é‡ï¼Œå› æ­¤åœ¨SetMatrixçš„æ—¶å€™æ˜¯ä¼šè‡ªåŠ¨è¿›è¡Œè½¬ç½®çš„
+	//æ‰€ä»¥å¦‚æœåœ¨hlslç›´æ¥å£°æ˜çŸ©é˜µï¼Œæˆ–è€…æ²¡æœ‰é€šè¿‡SetMatrixä¼ å…¥çš„è¯ï¼Œå°±éœ€è¦æ”¹å˜å·¦å³ä½ç½®
+	//æ‰€ä»¥è¿™é‡Œå†™æˆmul(çŸ©é˜µï¼Œå‘é‡)
 	float2x2 rotationM = float2x2(float2(cos(A), -sin(A)), float2(sin(A), cos(A)));
 	//TexCoord = mul(TexCoord - float2(0.5,0.5), rotationM) + float2(0.5,0.5);
 	TexCoord = mul(rotationM, TexCoord - float2(0.5, 0.5)) + float2(0.5, 0.5);
 	
-	//Å¤ÇúÎÆÀí£¬³õ²½´úÂë£¬Î´Íê³É
+	//æ‰­æ›²çº¹ç†ï¼Œåˆæ­¥ä»£ç ï¼Œæœªå®Œæˆ
 	float2x2 tranS = float2x2(float2(1, 0.2* sin(TexCoord.y*3.141592653) / TexCoord.y), float2(0, 1));
 		//TexCoord = mul(TexCoord, tranS);
 		//TexCoord = mul(tranS, TexCoord);
@@ -643,21 +648,21 @@ PInside_OutVS VShaderParticleInside(float4 posL       : POSITION0,
 {
 	PInside_OutVS outVS = (PInside_OutVS)0;
 
-	//ÏÈ°ÑËùÓĞ¶¥µãÒÆ¶¯µ½ÇøÓòÍâ
+	//å…ˆæŠŠæ‰€æœ‰é¡¶ç‚¹ç§»åŠ¨åˆ°åŒºåŸŸå¤–
 	outVS.posWVP = float4(-2, -2, -2, 1);
-	//Ä¬ÈÏÑÕÉ«Îª0
+	//é»˜è®¤é¢œè‰²ä¸º0
 	float thickness = 0;
-	//GrayScaleMapµÄÎÆÀí²ÉÑù
+	//GrayScaleMapçš„çº¹ç†é‡‡æ ·
 	float4 judegColor = tex2Dlod(g_sampleJudgeTex, float4(TexCoord.x, TexCoord.y, 0, 0));
-	//±Ê¼£ÇøÓò
+	//ç¬”è¿¹åŒºåŸŸ
 	float4 texColor = tex2Dlod(g_sampleMainColor, float4(TexCoord.x, TexCoord.y, 0, 0));
-	//DiffuseMapµÄÎÆÀí²ÉÑù
+	//DiffuseMapçš„çº¹ç†é‡‡æ ·
 	float4 diffuseColor = tex2Dlod(g_sampleDiffuse, float4(TexCoord.x, TexCoord.y, 0, 0)) * float4(2, 2, 2, 1);
 
-	//¸ù¾İdiffuseMapµÄÑÕÉ«È·¶¨ÎÆÀíÑÕÉ«£¬ÕâÀïÖµÔ½´óÑÕÉ«Ô½Éî,Ò²¿ÉÒÔÀí½âÎªÄ«µÄÅ¨¶ÈÖµ
+	//æ ¹æ®diffuseMapçš„é¢œè‰²ç¡®å®šçº¹ç†é¢œè‰²ï¼Œè¿™é‡Œå€¼è¶Šå¤§é¢œè‰²è¶Šæ·±,ä¹Ÿå¯ä»¥ç†è§£ä¸ºå¢¨çš„æµ“åº¦å€¼
 	thickness = 1 - diffuseColor.g;
 
-	//¸ù¾İdiffuseµÄalphaÀ´ÅĞ¶Ï²ÄÖÊÀàĞÍ
+	//æ ¹æ®diffuseçš„alphaæ¥åˆ¤æ–­æè´¨ç±»å‹
 	if (diffuseColor.a * 255.0f <= 0.5f)
 	{
 		thickness = 1 - diffuseColor.g;
@@ -711,12 +716,12 @@ PInside_OutVS VShaderParticleInside(float4 posL       : POSITION0,
 
 	if (mod_X < 1 && mod_Y < 1)
 	{
-		//¸ù¾İ´«ÈëµÄ¶¥µãµÄUV×ø±êÀ´¼ÆËã¿Õ¼äÎ»ÖÃ
+		//æ ¹æ®ä¼ å…¥çš„é¡¶ç‚¹çš„UVåæ ‡æ¥è®¡ç®—ç©ºé—´ä½ç½®
 		outVS.posWVP = float4(2 * TexCoord.x - 1, 1 - 2 * TexCoord.y, 0, 1);
 	}
 	
 	
-	//Éî¶ÈÔ½´ó£¬ÎÆÀí´óĞ¡Ô½Ğ¡
+	//æ·±åº¦è¶Šå¤§ï¼Œçº¹ç†å¤§å°è¶Šå°
 	float sizeScaled = 1.0f * g_baseInsideTexSize * g_zNear / depth;
 
 	outVS.psize = clamp(sizeScaled, g_minInsideTexSize, g_maxInsideTexSize);
@@ -731,9 +736,9 @@ PInside_OutVS VShaderParticleInside(float4 posL       : POSITION0,
 	}
 
 	if (depth > 1000) outVS.psize = 0;
-	//´¢´æÎÆÀí×ø±ê£¬±ãÓÚºóÃæµÄ¼ÆËã
+	//å‚¨å­˜çº¹ç†åæ ‡ï¼Œä¾¿äºåé¢çš„è®¡ç®—
 	outVS.texC = float4(TexCoord, 0, 0);
-	//´¢´æ¿ØÖÆÍ¸Ã÷¶ÈµÄsizeºÍÊµ¼ÊµÄÎÆÀíÁ£×Ó´óĞ¡
+	//å‚¨å­˜æ§åˆ¶é€æ˜åº¦çš„sizeå’Œå®é™…çš„çº¹ç†ç²’å­å¤§å°
 	outVS.color = float4(thickness, outVS.psize, 0, 0);
 
 
@@ -748,37 +753,37 @@ PInside_OutVS VShaderParticleInside(float4 posL       : POSITION0,
 	return outVS;
 }
 
-float4 PShaderParticleInside(float2 TexCoord : TEXCOORD0,//Á£×ÓÄÚ²¿µÄÎÆÀí×ø±ê
-	float4 texC : COLOR0,//Á£×ÓÖĞĞÄµãµÄÈ«¾ÖÎÆÀí×ø±ê
+float4 PShaderParticleInside(float2 TexCoord : TEXCOORD0,//ç²’å­å†…éƒ¨çš„çº¹ç†åæ ‡
+	float4 texC : COLOR0,//ç²’å­ä¸­å¿ƒç‚¹çš„å…¨å±€çº¹ç†åæ ‡
 	float4 color : COLOR1
 	) : COLOR
 {
 	//float outC = 1 - color, x;
 	//return float4(outC, outC, outC, 1.0);
-	//½«Á£×ÓµÄ¾Ö²¿ÎÆÀí×ø±ê×ª»»µ½ÒÔÁ£×ÓÖĞĞÄÎªÔ­µãµÄ×ø±ê
+	//å°†ç²’å­çš„å±€éƒ¨çº¹ç†åæ ‡è½¬æ¢åˆ°ä»¥ç²’å­ä¸­å¿ƒä¸ºåŸç‚¹çš„åæ ‡
 	float2 localT = TexCoord - float2(0.5, 0.5);
-	//size.yÊÇÁ£×ÓµÄÊµ¼Ê´óĞ¡£¨ÏñËØ£©£¬¸ù¾İÁ£×Ó´óĞ¡¡¢Á£×ÓÎÆÀíÄÚ²¿×ø±êºÍÖĞĞÄ×ø±ê£¬¼ÆËã³öÁ£×ÓÎÆÀíÉÏÃ¿¸öÏñËØµÄÈ«¾Ö×ø±ê
+	//size.yæ˜¯ç²’å­çš„å®é™…å¤§å°ï¼ˆåƒç´ ï¼‰ï¼Œæ ¹æ®ç²’å­å¤§å°ã€ç²’å­çº¹ç†å†…éƒ¨åæ ‡å’Œä¸­å¿ƒåæ ‡ï¼Œè®¡ç®—å‡ºç²’å­çº¹ç†ä¸Šæ¯ä¸ªåƒç´ çš„å…¨å±€åæ ‡
 	float2 globleT = texC.xy + float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight)* color.y * localT;
 	float depth = tex2D(g_samplePosition, globleT);
 
 	float4 diffuseColor = tex2D(g_sampleDiffuse, TexCoord) * float4(2, 2, 2, 1);
 	float4 diffuseColorCenter = tex2D(g_sampleDiffuse, texC.xy) * float4(2, 2, 2, 1);
-	//ºÍÖĞĞÄ²¿·ÖÏà²î´óÓÚãĞÖµºó,¶àÓàµÄ²¿·ÖÇĞ³ıÇĞµô¡£Í¬Ê±ÒªÂú×ã±ßÔµÊÇÓ²±ß
+	//å’Œä¸­å¿ƒéƒ¨åˆ†ç›¸å·®å¤§äºé˜ˆå€¼å,å¤šä½™çš„éƒ¨åˆ†åˆ‡é™¤åˆ‡æ‰ã€‚åŒæ—¶è¦æ»¡è¶³è¾¹ç¼˜æ˜¯ç¡¬è¾¹
 	float depthCenter = tex2D(g_samplePosition, texC.xy);
 	if (abs(depth - depthCenter) > 0.2 && diffuseColorCenter.r > 0.3f)
 		return float4(0,0,0,0);
 
-	//»ñÈ¡ÖĞĞÄµã¶ÔÓ¦µÄ·¨Ïß
+	//è·å–ä¸­å¿ƒç‚¹å¯¹åº”çš„æ³•çº¿
 	float3 normal = normalize(GetNormal(g_sampleNormal, texC.xy));
 	//return float4(normal, 1.0f);
-	//¼ÆËã·¨ÏßÔÚÆÁÄ»ÉÏµÄÍ¶Ó°£¬¾İ´Ë¼ÆËã³öĞı×ª½Ç¶È
+	//è®¡ç®—æ³•çº¿åœ¨å±å¹•ä¸Šçš„æŠ•å½±ï¼Œæ®æ­¤è®¡ç®—å‡ºæ—‹è½¬è§’åº¦
 	float projectXY = sqrt(normal.x * normal.x + normal.y * normal.y);
 	float cosA = normal.x / projectXY;
 	float A = acos(cosA);
 	if (normal.y < 0)
 		A = -acos(cosA);
 
-	//¸ù¾İÖĞĞÄµã×ø±êºÍ·¨Ïß¼ÆËãÒ»¸öÎ±Ëæ»úÊı£¨ÆäÊµÍêÈ«²»ÊÇËæ»ú£©£¬ÈÃËæ»úÊıÔÚ0µ½1µÄ·¶Î§ÄÚ£¬½Ç¶ÈÊÇ0-3.14£¬¼Ó1»¹ËãºÏÀí
+	//æ ¹æ®ä¸­å¿ƒç‚¹åæ ‡å’Œæ³•çº¿è®¡ç®—ä¸€ä¸ªä¼ªéšæœºæ•°ï¼ˆå…¶å®å®Œå…¨ä¸æ˜¯éšæœºï¼‰ï¼Œè®©éšæœºæ•°åœ¨0åˆ°1çš„èŒƒå›´å†…ï¼Œè§’åº¦æ˜¯0-3.14ï¼ŒåŠ 1è¿˜ç®—åˆç†
 	float random = (texC.x * texC.y + texC.x / texC.y) * (normal.x + normal.y + normal.z) / (normal.x * normal.y * normal.z);
 	//random = (TexCoord.x * TexCoord.y + TexCoord.x / TexCoord.y) * (normal.x + normal.y + normal.z) / (normal.x * normal.y * normal.z);
 	//random = clamp(random, 0, 3.1416f);
@@ -786,15 +791,15 @@ float4 PShaderParticleInside(float2 TexCoord : TEXCOORD0,//Á£×ÓÄÚ²¿µÄÎÆÀí×ø±ê
 	random *= (3.1415f / 2.0f);
 	A += random;
 
-	//HLSLÄÚ²¿ÉùÃ÷µÄ¾ØÕóÊÇÁĞ¾ØÕó
+	//HLSLå†…éƒ¨å£°æ˜çš„çŸ©é˜µæ˜¯åˆ—çŸ©é˜µ
 	//vec(A,B) mat|m00,m01|
 	//------------|m10,m11|
-	//¾ØÕóÖĞ´¢´æµÄµÄÊı¾İÊÇrow0(m00,m10),row1(m01,m11)
-	//ÕâÑùmul¼ÆËãµÄÊ±ºò¾Í¿ÉÒÔÕâÑù¼ÆËã
-	//x=dp(vec,row0),y=dp(vec,row1),dpÊÇµÑ¿¨¶û»ı
-	//µ«ÊÇÔÚC++´úÂëÖĞ´¢´æµÄ»¹ÊÇĞĞÏòÁ¿£¬Òò´ËÔÚSetMatrixµÄÊ±ºòÊÇ»á×Ô¶¯½øĞĞ×ªÖÃµÄ
-	//ËùÒÔÈç¹ûÔÚhlslÖ±½ÓÉùÃ÷¾ØÕó£¬»òÕßÃ»ÓĞÍ¨¹ıSetMatrix´«ÈëµÄ»°£¬¾ÍĞèÒª¸Ä±ä×óÓÒÎ»ÖÃ
-	//ËùÒÔÕâÀïĞ´³Émul(¾ØÕó£¬ÏòÁ¿)
+	//çŸ©é˜µä¸­å‚¨å­˜çš„çš„æ•°æ®æ˜¯row0(m00,m10),row1(m01,m11)
+	//è¿™æ ·mulè®¡ç®—çš„æ—¶å€™å°±å¯ä»¥è¿™æ ·è®¡ç®—
+	//x=dp(vec,row0),y=dp(vec,row1),dpæ˜¯ç¬›å¡å°”ç§¯
+	//ä½†æ˜¯åœ¨C++ä»£ç ä¸­å‚¨å­˜çš„è¿˜æ˜¯è¡Œå‘é‡ï¼Œå› æ­¤åœ¨SetMatrixçš„æ—¶å€™æ˜¯ä¼šè‡ªåŠ¨è¿›è¡Œè½¬ç½®çš„
+	//æ‰€ä»¥å¦‚æœåœ¨hlslç›´æ¥å£°æ˜çŸ©é˜µï¼Œæˆ–è€…æ²¡æœ‰é€šè¿‡SetMatrixä¼ å…¥çš„è¯ï¼Œå°±éœ€è¦æ”¹å˜å·¦å³ä½ç½®
+	//æ‰€ä»¥è¿™é‡Œå†™æˆmul(çŸ©é˜µï¼Œå‘é‡)
 	float2x2 rotationM = float2x2(float2(cos(A), -sin(A)), float2(sin(A), cos(A)));
 	//TexCoord = mul(TexCoord - float2(0.5,0.5), rotationM) + float2(0.5,0.5);
 	TexCoord = mul(rotationM, TexCoord - float2(0.5, 0.5)) + float2(0.5, 0.5);
@@ -807,7 +812,7 @@ float4 PShaderParticleInside(float2 TexCoord : TEXCOORD0,//Á£×ÓÄÚ²¿µÄÎÆÀí×ø±ê
 		brush = float4(0, 0, 0, 0);
 	}
 
-	//Ê¹ÓÃalphaTest´¦Àí±Ê¼£ÎÆÀí
+	//ä½¿ç”¨alphaTestå¤„ç†ç¬”è¿¹çº¹ç†
 	float alphaTestFactor = g_alphaTestFactor;
 	if (brush.r < alphaTestFactor)
 	{

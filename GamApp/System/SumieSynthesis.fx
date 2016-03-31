@@ -163,7 +163,7 @@ OutputVS VShader(float4 posL       : POSITION0,
 {
 	OutputVS outVS = (OutputVS)0;
 
-	//×îÖÕÊä³öµÄ¶¥µãÎ»ÖÃ£¨¾­¹ıÊÀ½ç¡¢¹Û²ì¡¢Í¶Ó°¾ØÕó±ä»»£©
+	//æœ€ç»ˆè¾“å‡ºçš„é¡¶ç‚¹ä½ç½®ï¼ˆç»è¿‡ä¸–ç•Œã€è§‚å¯Ÿã€æŠ•å½±çŸ©é˜µå˜æ¢ï¼‰
 	outVS.posWVP = mul(posL, g_WorldViewProj);
 
 	outVS.TexCoord = TexCoord;
@@ -271,9 +271,9 @@ float4 PShaderGetDarkPart(float2 TexCoord : TEXCOORD0) : COLOR
 
 #define SAMPLE_COUNT 30
 
-// Æ«ÒÆÊı×é
+// åç§»æ•°ç»„
 float2 g_SampleOffsets[SAMPLE_COUNT];
-// È¨ÖØÊı×é
+// æƒé‡æ•°ç»„
 float g_SampleWeights[SAMPLE_COUNT];
 
 float4 PShaderInputBlur(float2 TexCoord : TEXCOORD0) : COLOR
@@ -281,8 +281,8 @@ float4 PShaderInputBlur(float2 TexCoord : TEXCOORD0) : COLOR
 	float4 c = 0;
 
 	float depthCenter = tex2D(g_samplePosition, TexCoord).r;
-	// °´Æ«ÒÆ¼°È¨ÖØÊı×éµş¼ÓÖÜÎ§ÑÕÉ«Öµµ½¸ÃÏñËØ
-	// Ïà¶ÔÔ­Àí£¬¼´¿ÉÀí½âÎª¸ÃÏñËØÑÕÉ«°´ÌØ¶¨È¨ÖØ·¢É¢µ½ÖÜÎ§Æ«ÒÆÏñËØ
+	// æŒ‰åç§»åŠæƒé‡æ•°ç»„å åŠ å‘¨å›´é¢œè‰²å€¼åˆ°è¯¥åƒç´ 
+	// ç›¸å¯¹åŸç†ï¼Œå³å¯ç†è§£ä¸ºè¯¥åƒç´ é¢œè‰²æŒ‰ç‰¹å®šæƒé‡å‘æ•£åˆ°å‘¨å›´åç§»åƒç´ 
 	float totalWeight = 0;
 	for (int i = 0; i < SAMPLE_COUNT; i++)
 	{

@@ -46,7 +46,7 @@ OutputVS VShader(float4 posL       : POSITION0,
 {
 	OutputVS outVS = (OutputVS)0;
 
-	//最终输出的顶点位置（经过世界、观察、投影矩阵变换）
+	//鏈�缁堣緭鍑虹殑椤剁偣浣嶇疆锛堢粡杩囦笘鐣屻�佽瀵熴�佹姇褰辩煩闃靛彉鎹級
 	outVS.posWVP = mul(posL, g_WorldViewProj);
 
 	outVS.TexCoord = TexCoord;
@@ -181,6 +181,284 @@ float3 GetUnsharpMaskedNormal(float2 texCoords, sampler2D texSampler)
 	if (importance.z < 0)
 		return oriNormal;
 	return normalize(unsharpedMaskedNormal);
+}
+
+
+float4 Normal_Edge3(float2 TexCoord)
+{
+
+	float depth = GetDepth(TexCoord, g_samplePosition);
+
+	float depthLeft = GetDepth(TexCoord + float2(-1.0f / g_ScreenWidth, -0.0f / g_ScreenHeight), g_samplePosition);
+	float depthRight = GetDepth(TexCoord + float2(1.0f / g_ScreenWidth, -0.0f / g_ScreenHeight), g_samplePosition);
+	float depthUp = GetDepth(TexCoord + float2(-0.0f / g_ScreenWidth, -1.0f / g_ScreenHeight), g_samplePosition);
+	float depthDown = GetDepth(TexCoord + float2(-0.0f / g_ScreenWidth, 1.0f / g_ScreenHeight), g_samplePosition);
+
+	float3 normal = normalize(GetNormal(TexCoord, g_sampleNormal));
+		//normal = GetUnsharpMaskedNormal(TexCoord, g_sampleNormal);
+
+		//return float4(normal, 1.0f);
+
+	if (depth > 1000)
+	{
+		normal = float3(0, 0, 1);
+		return float4(1, 1, 1, 1);
+	}
+
+
+
+	bool isEdge = false;
+
+	bool isUpEdge = false;
+	bool isDownEdge = false;
+	bool isLeftEdge = false;
+	bool isRightEdge = false;
+
+	float deltaD_Inner = depth / 10.0f;
+	float deltaD_Outer = depth / 20.0f;
+
+
+	if (depth - depthLeft > deltaD_Outer || depth - depthRight > deltaD_Outer || depth - depthUp > deltaD_Outer || depth - depthDown > deltaD_Outer)
+	{
+		return float4(1, 1, 1, 1);
+	}
+
+	if (depthUp - depth  > deltaD_Inner)
+	{
+		isEdge = true;
+		isUpEdge = true;
+	}
+	if (depthDown - depth  > deltaD_Inner)
+	{
+		isEdge = true;
+		isDownEdge = true;
+	}
+	if (depthLeft - depth > deltaD_Inner)
+	{
+		isEdge = true;
+		isLeftEdge = true;
+	}
+	if (depthRight - depth  > deltaD_Inner)
+	{
+		isEdge = true;
+		isRightEdge = true;
+	}
+
+	float3 normalLeft = normalize(GetNormal(TexCoord + float2(-1.0f / g_ScreenWidth, -0.0f / g_ScreenHeight), g_sampleNormal));
+		//normalLeft = GetUnsharpMaskedNormal(TexCoord + float2(-1.0f / g_ScreenWidth, -0.0f / g_ScreenHeight), g_sampleNormal);
+		float3 normalRight = normalize(GetNormal(TexCoord + float2(1.0f / g_ScreenWidth, -0.0f / g_ScreenHeight), g_sampleNormal));
+		//normalRight = GetUnsharpMaskedNormal(TexCoord + float2(1.0f / g_ScreenWidth, -0.0f / g_ScreenHeight), g_sampleNormal);
+		float3 normalUp = normalize(GetNormal(TexCoord + float2(-0.0f / g_ScreenWidth, -1.0f / g_ScreenHeight), g_sampleNormal));
+		//normalUp = GetUnsharpMaskedNormal(TexCoord + float2(-0.0f / g_ScreenWidth, -1.0f / g_ScreenHeight), g_sampleNormal);
+		float3 normalDown = normalize(GetNormal(TexCoord + float2(-0.0f / g_ScreenWidth, 1.0f / g_ScreenHeight), g_sampleNormal));
+		//normalDown = GetUnsharpMaskedNormal(TexCoord + float2(-0.0f / g_ScreenWidth, 1.0f / g_ScreenHeight), g_sampleNormal);
+
+		float3 normalProjX = normalize(float3(normal.x, 0, normal.z));
+		float3 normalProjY = normalize(float3(0, normal.y, normal.z));
+		float3 normalLProj = normalize(float3(normalLeft.x, 0, normalLeft.z));
+		float3 normalRProj = normalize(float3(normalRight.x, 0, normalRight.z));
+		float3 normalUProj = normalize(float3(0, normalUp.y, normalUp.z));
+		float3 normalDProj = normalize(float3(0, normalDown.y, normalDown.z));
+
+	float dnR = abs(dot(normal, normalRight));
+	dnR = acos(dot(normalProjX, normalRProj)) / 3.14;
+	if (isRightEdge) dnR = 10;
+	float dnD = abs(dot(normal, normalDown));
+	dnD = acos(dot(normalProjY, normalDProj)) / 3.14;
+	if (isDownEdge) dnD = 10;
+	float dnL = abs(dot(normalLeft, normal));
+	dnL = acos(dot(normalLeft, normalProjX)) / 3.14;
+	if (isLeftEdge) dnL = 10;
+	float dnU = abs(dot(normalUp, normal));
+	dnU = acos(dot(normalUProj, normalProjY)) / 3.14;
+	if (isUpEdge) dnU = 10;
+
+	if (isRightEdge) dnR = dnL;
+	if (isDownEdge) dnD = dnU;
+	if (isLeftEdge) dnL = dnR;
+	if (isUpEdge) dnU = dnD;
+
+	float res_dnx = 0.5 * (dnR + dnL);
+	float res_dny = 0.5 * (dnD + dnU);
+
+	float N = res_dnx + res_dny;
+	N /= 2;
+
+
+	if (isEdge)
+	{
+		if (isRightEdge && !isDownEdge && !isLeftEdge && !isUpEdge) N = (dnD + dnL + dnU) / 3;
+		if (!isRightEdge && isDownEdge && !isLeftEdge && !isUpEdge) N = (dnR + dnL + dnU) / 3;
+		if (!isRightEdge && !isDownEdge && isLeftEdge && !isUpEdge) N = (dnR + dnD + dnU) / 3;
+		if (!isRightEdge && !isDownEdge && !isLeftEdge && isUpEdge) N = (dnR + dnD + dnL) / 3;
+
+		if (!isRightEdge && !isDownEdge && isLeftEdge && isUpEdge) N = (dnR + dnD) * 0.5;
+		if (!isRightEdge && isDownEdge && !isLeftEdge && isUpEdge) N = (dnR + dnL) * 0.5;
+		if (!isRightEdge && isDownEdge && isLeftEdge && !isUpEdge) N = (dnR + dnU) * 0.5;
+		if (isRightEdge && !isDownEdge && !isLeftEdge && isUpEdge) N = (dnD + dnL) * 0.5;
+		if (isRightEdge && !isDownEdge && isLeftEdge && !isUpEdge) N = (dnD + dnU) * 0.5;
+		if (isRightEdge && isDownEdge && !isLeftEdge && !isUpEdge) N = (dnL + dnU) * 0.5;
+
+		if (!isRightEdge && isDownEdge && isLeftEdge && isUpEdge) N = dnR;
+		if (isRightEdge && !isDownEdge && isLeftEdge && isUpEdge) N = dnD;
+		if (isRightEdge && isDownEdge && !isLeftEdge && isUpEdge) N = dnL;
+		if (isRightEdge && isDownEdge && isLeftEdge && !isUpEdge) N = dnU;
+
+		if (isRightEdge && isDownEdge&& isLeftEdge&& isUpEdge)
+			N = 1;
+		else
+			N = N;
+	}
+	else
+	{
+
+		N = ((dnR + dnL) + (dnU + dnD)) / 4;
+		N = N;
+	}
+
+
+
+	if (false)
+	{
+		if (res_dnx >= 1 && res_dny < 1) N = res_dny;
+		if (res_dnx < 1 && res_dny >= 1) N = res_dnx;
+		if (res_dnx >= 1 && res_dny >= 1) N = 1;
+		if (res_dnx < 1 && res_dny < 1) N = N;
+	}
+
+	float alpha = 1;
+	if (isEdge)
+		alpha = 0;
+	//N = min(dny, dnx);
+	//if (N >= 1)
+	//	return float4(1, 1, 1, 1);
+	N = 1-50*N;
+	return float4(N, N, N, alpha);
+}
+
+float4 Normal_Edge2(float2 TexCoord)
+{
+	float depth = GetDepth(TexCoord, g_samplePosition);
+
+	float depthLeft = GetDepth(TexCoord + float2(-1.0f / g_ScreenWidth, -0.0f / g_ScreenHeight), g_samplePosition);
+	float depthRight = GetDepth(TexCoord + float2(1.0f / g_ScreenWidth, -0.0f / g_ScreenHeight), g_samplePosition);
+	float depthUp = GetDepth(TexCoord + float2(-0.0f / g_ScreenWidth, -1.0f / g_ScreenHeight), g_samplePosition);
+	float depthDown = GetDepth(TexCoord + float2(-0.0f / g_ScreenWidth, 1.0f / g_ScreenHeight), g_samplePosition);
+
+
+	float deltaD_Inner = (depth / 20.0f)*(depth / 20.0f);
+	float deltaD_Outer = depth / 20.0f;
+
+	if (depth - depthLeft > deltaD_Outer || depth - depthRight > deltaD_Outer || depth - depthUp > deltaD_Outer || depth - depthDown > deltaD_Outer)
+	{
+		return float4(1, 1, 1, 1);
+	}
+	if (depth > 1000)
+	{
+		return float4(1, 1, 1, 1);
+	}
+
+	bool isEdge = false;
+	bool isUpEdge, isDownEdge, isLeftEdge, isRightEdge = false;
+	bool edgeList[5] = { false, false, false, false, false };
+	if (depthUp - depth  > deltaD_Inner)
+	{
+		isEdge = true;
+		isUpEdge = true;
+		edgeList[1] = true;
+	}
+	if (depthDown - depth  > deltaD_Inner)
+	{
+		isEdge = true;
+		isDownEdge = true;
+		edgeList[3] = true;
+	}
+	if (depthLeft - depth > deltaD_Inner)
+	{
+		isEdge = true;
+		isLeftEdge = true;
+		edgeList[2] = true;
+	}
+	if (depthRight - depth  > deltaD_Inner)
+	{
+		isEdge = true;
+		isRightEdge = true;
+		edgeList[4] = true;
+	}
+	//if (isEdge)
+	//	return float4(0, 0, 0, 1);
+	//else
+	//	return float4(1, 1, 1, 1);
+
+	float dDepth_L = (depth - depthLeft);// / abs(pos.x - posLeft.x);
+	float dDepth_R = (depth - depthRight);// / abs(posRight.x - pos.x);
+	float dDepth_U = (depth - depthUp);// / abs(posUp.y - pos.y);
+	float dDepth_D = (depth - depthDown);// / abs(pos.y - posDown.y);
+
+
+	float maxD = max(max(max(dDepth_L, dDepth_R), dDepth_U), dDepth_D);
+	maxD = clamp(maxD, 0, 1);
+	//return float4(maxD, maxD, maxD, 1);
+
+
+	float2 offset = float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight);
+	float3 normalR[9];
+	normalR[0] = normalize(GetNormal(g_sampleNormal, TexCoord));
+	normalR[1] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2(0, -1)));
+	normalR[2] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2(1, 0)));
+	normalR[3] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2(0, 1)));
+	normalR[4] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2(-1, 0)));
+	normalR[5] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2(1, -1)));
+	normalR[6] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2(1, 1)));
+	normalR[7] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2(-1, 1)));
+	normalR[8] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2(-1, -1)));
+
+	float3 normalProjX = normalize(float3(normalR[0].x, 0, normalR[0].z));
+	float3 normalProjY = normalize(float3(0, normalR[0].y, normalR[0].z));
+	float3 normalLProj = normalize(float3(normalR[4].x, 0, normalR[4].z));
+	float3 normalRProj = normalize(float3(normalR[2].x, 0, normalR[2].z));
+	float3 normalUProj = normalize(float3(0, normalR[1].y, normalR[1].z));
+	float3 normalDProj = normalize(float3(0, normalR[3].y, normalR[3].z));
+
+	float dl = dot(normalLProj, normalProjX);
+	float dr = dot(normalProjX, normalRProj);
+	float du = dot(normalUProj, normalProjY);
+	float dd = dot(normalProjY, normalDProj);
+	dl = acos(dl);
+	dr = acos(dr);
+	du = acos(du);
+	dd = acos(dd);
+	float dmax = (max(max(max(dl, dr), du), dd));
+	float dmin = (min(min(min(dl, dr), du), dd));
+
+	float d[4] = { du, dr, dd, dl };
+	dmax = -1000;
+	dmin = 1000;
+	for (int i = 1; i < 5; i++)
+	{
+		if (edgeList[i] != true)
+		{
+			dmax = max(d[i - 1], dmax);
+			dmin = min(d[i - 1], dmin);
+		}
+	}
+	
+	dmax = (dmax + dmin) / 2;
+	//dmax = dmax * dmin;
+	float N = 1 - dmax / 3.14 * 0.8;
+
+	
+
+	N = N*N*N ;
+	if (isEdge)
+	{
+		N *= 0.5;
+		//if (N > 0.6) N = 0.6;
+	}
+	float alpha = 1;
+	if (isEdge)
+		alpha = 0;
+	return float4(N, N, N, alpha);
 }
 
 float4 Normal_Edge(float2 TexCoord)
@@ -412,6 +690,8 @@ float4 Normal_Gray(float2 TexCoord)
 	return float4(nl, nl, nl, 1.0f);
 }
 
+int g_switch = 1;
+
 float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
 {
 
@@ -423,7 +703,10 @@ float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
 	//return SobelEdge(g_sampleMainColor, TexCoord, float2(g_ScreenWidth, g_ScreenHeight));
 	//return Normal_Gray(TexCoord);
 	//return Normal_Interval(TexCoord);
-	return Normal_Edge(TexCoord);
+	if (g_switch == 1)
+		return Normal_Edge(TexCoord);
+	else
+		return Normal_Edge2(TexCoord);
 	//return Normal_Depth_Edge(TexCoord);
 	//============================================================================
 	float3x3 sobel = float3x3(-0.5, -1.0, 0.0,

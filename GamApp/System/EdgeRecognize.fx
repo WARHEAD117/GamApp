@@ -336,110 +336,148 @@ float4 Normal_Edge3(float2 TexCoord)
 	return float4(N, N, N, alpha);
 }
 
+
+int g_switch = 1;
+
 float4 Normal_Edge2(float2 TexCoord)
 {
-	float depth = GetDepth(TexCoord, g_samplePosition);
+	int neighborNum = 4;
+	//neighborNum = 8;
 
-	float depthLeft = GetDepth(TexCoord + float2(-1.0f / g_ScreenWidth, -0.0f / g_ScreenHeight), g_samplePosition);
-	float depthRight = GetDepth(TexCoord + float2(1.0f / g_ScreenWidth, -0.0f / g_ScreenHeight), g_samplePosition);
-	float depthUp = GetDepth(TexCoord + float2(-0.0f / g_ScreenWidth, -1.0f / g_ScreenHeight), g_samplePosition);
-	float depthDown = GetDepth(TexCoord + float2(-0.0f / g_ScreenWidth, 1.0f / g_ScreenHeight), g_samplePosition);
+	float2 offset = float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight);
 
+	float depthN[9];
+
+	depthN[0] = GetDepth(TexCoord, g_samplePosition);
+
+	depthN[1] = GetDepth(TexCoord + offset * float2( 0,-1), g_samplePosition); //Up
+	depthN[2] = GetDepth(TexCoord + offset * float2( 1, 0), g_samplePosition); //Right
+	depthN[3] = GetDepth(TexCoord + offset * float2( 0, 1), g_samplePosition); //Down
+	depthN[4] = GetDepth(TexCoord + offset * float2(-1, 0), g_samplePosition); //Left
+
+	depthN[5] = GetDepth(TexCoord + offset * float2( 1,-1), g_samplePosition); //RightUp
+	depthN[6] = GetDepth(TexCoord + offset * float2( 1, 1), g_samplePosition); //RightDown
+	depthN[7] = GetDepth(TexCoord + offset * float2(-1, 1), g_samplePosition); //LeftDown
+	depthN[8] = GetDepth(TexCoord + offset * float2(-1,-1), g_samplePosition); //LeftUp
+
+	float3 normalR[9];
+
+	normalR[0] = normalize(GetNormal(g_sampleNormal, TexCoord));
+
+	normalR[1] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2( 0,-1))); //Up
+	normalR[2] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2( 1, 0))); //Right
+	normalR[3] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2( 0, 1))); //Down
+	normalR[4] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2(-1, 0))); //Left
+
+	normalR[5] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2( 1,-1))); //RightUp
+	normalR[6] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2( 1, 1))); //RIghtDown
+	normalR[7] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2(-1, 1))); //LeftDown
+	normalR[8] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2(-1,-1))); //LeftUp
+
+	float depth = depthN[0];
 
 	float deltaD_Inner = (depth / 20.0f)*(depth / 20.0f);
 	float deltaD_Outer = depth / 20.0f;
 
-	if (depth - depthLeft > deltaD_Outer || depth - depthRight > deltaD_Outer || depth - depthUp > deltaD_Outer || depth - depthDown > deltaD_Outer)
+	for (int i = 1; i<neighborNum + 1; i++)
 	{
-		return float4(1, 1, 1, 1);
+		if (depth - depthN[i] > deltaD_Outer)
+		{
+			return float4(1, 1, 1, 1);
+		}
 	}
+	
 	if (depth > 1000)
 	{
 		return float4(1, 1, 1, 1);
 	}
 
 	bool isEdge = false;
-	bool isUpEdge, isDownEdge, isLeftEdge, isRightEdge = false;
-	bool edgeList[5] = { false, false, false, false, false };
-	if (depthUp - depth  > deltaD_Inner)
+	bool edgeList[9] = { false, false, false, false, false, false, false, false, false };
+	for (int i = 1; i< neighborNum + 1; i++)
 	{
-		isEdge = true;
-		isUpEdge = true;
-		edgeList[1] = true;
+		if (depthN[i] - depth  > deltaD_Inner)
+		{
+			isEdge = true;
+			edgeList[i] = true;
+		}
 	}
-	if (depthDown - depth  > deltaD_Inner)
+
+	float laplace = 4 * depth - (depthN[1] + depthN[2] + depthN[3] + depthN[4]);
+	//if (laplace)
+	//laplace = -laplace;
+	//if (laplace < 0.0f)
+	//	laplace = 0;
+	//laplace = 1 - laplace;
+
+	//return float4(laplace, laplace, laplace, 1);
+
+	if (g_switch == 1)
 	{
-		isEdge = true;
-		isDownEdge = true;
-		edgeList[3] = true;
+		if (laplace < -0.4)
+			isEdge = true;
+		else
+			isEdge = false;
+
 	}
-	if (depthLeft - depth > deltaD_Inner)
-	{
-		isEdge = true;
-		isLeftEdge = true;
-		edgeList[2] = true;
-	}
-	if (depthRight - depth  > deltaD_Inner)
-	{
-		isEdge = true;
-		isRightEdge = true;
-		edgeList[4] = true;
-	}
+
 	//if (isEdge)
 	//	return float4(0, 0, 0, 1);
 	//else
 	//	return float4(1, 1, 1, 1);
 
-	float dDepth_L = (depth - depthLeft);// / abs(pos.x - posLeft.x);
-	float dDepth_R = (depth - depthRight);// / abs(posRight.x - pos.x);
-	float dDepth_U = (depth - depthUp);// / abs(posUp.y - pos.y);
-	float dDepth_D = (depth - depthDown);// / abs(pos.y - posDown.y);
-
-
-	float maxD = max(max(max(dDepth_L, dDepth_R), dDepth_U), dDepth_D);
-	maxD = clamp(maxD, 0, 1);
 	//return float4(maxD, maxD, maxD, 1);
 
 
-	float2 offset = float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight);
-	float3 normalR[9];
-	normalR[0] = normalize(GetNormal(g_sampleNormal, TexCoord));
-	normalR[1] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2(0, -1)));
-	normalR[2] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2(1, 0)));
-	normalR[3] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2(0, 1)));
-	normalR[4] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2(-1, 0)));
-	normalR[5] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2(1, -1)));
-	normalR[6] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2(1, 1)));
-	normalR[7] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2(-1, 1)));
-	normalR[8] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2(-1, -1)));
+	float3 vecXY = normalize(float3(1, 1, 0));
+	float3 vecYX = normalize(float3(1, -1, 0));
 
 	float3 normalProjX = normalize(float3(normalR[0].x, 0, normalR[0].z));
 	float3 normalProjY = normalize(float3(0, normalR[0].y, normalR[0].z));
-	float3 normalLProj = normalize(float3(normalR[4].x, 0, normalR[4].z));
-	float3 normalRProj = normalize(float3(normalR[2].x, 0, normalR[2].z));
-	float3 normalUProj = normalize(float3(0, normalR[1].y, normalR[1].z));
-	float3 normalDProj = normalize(float3(0, normalR[3].y, normalR[3].z));
 
-	float dl = dot(normalLProj, normalProjX);
-	float dr = dot(normalProjX, normalRProj);
+	float3 normalProjXY = dot(normalR[0], vecXY) * vecXY + float3(0, 0, normalR[0].z);
+	float3 normalProjYX = dot(normalR[0], vecYX) * vecYX + float3(0, 0, normalR[0].z);
+
+	float3 normalUProj = normalize(float3(0, normalR[1].y, normalR[1].z));
+	float3 normalRProj = normalize(float3(normalR[2].x, 0, normalR[2].z));
+	float3 normalDProj = normalize(float3(0, normalR[3].y, normalR[3].z));
+	float3 normalLProj = normalize(float3(normalR[4].x, 0, normalR[4].z));
+
+	float3 normalRUProjXY = dot(normalR[5], vecXY) * vecXY + float3(0, 0, normalR[5].z);
+	float3 normalRDProjYX = dot(normalR[6], vecYX) * vecYX + float3(0, 0, normalR[6].z);
+	float3 normalLDProjXY = dot(normalR[7], vecXY) * vecXY + float3(0, 0, normalR[7].z);
+	float3 normalLUProjYX = dot(normalR[8], vecYX) * vecYX + float3(0, 0, normalR[8].z);
+
 	float du = dot(normalUProj, normalProjY);
+	float dr = dot(normalProjX, normalRProj);
 	float dd = dot(normalProjY, normalDProj);
+	float dl = dot(normalLProj, normalProjX);
+
+	float dru = dot(normalRUProjXY, normalProjXY);
+	float drd = dot(normalProjYX, normalRDProjYX);
+	float dld = dot(normalProjXY, normalLDProjXY);
+	float dlu = dot(normalLUProjYX, normalProjYX);
+
 	dl = acos(dl);
 	dr = acos(dr);
 	du = acos(du);
 	dd = acos(dd);
+	dru = acos(dru);
+	drd = acos(drd);
+	dld = acos(dld);
+	dlu = acos(dlu);
 	float dmax = (max(max(max(dl, dr), du), dd));
 	float dmin = (min(min(min(dl, dr), du), dd));
 
-	float d[4] = { du, dr, dd, dl };
+	float d[9] = {0, du, dr, dd, dl, dru, drd, dld, dlu };
 	dmax = -1000;
 	dmin = 1000;
-	for (int i = 1; i < 5; i++)
+	for (int i = 1; i < neighborNum + 1; i++)
 	{
 		if (edgeList[i] != true)
 		{
-			dmax = max(d[i - 1], dmax);
-			dmin = min(d[i - 1], dmin);
+			dmax = max(d[i], dmax);
+			dmin = min(d[i], dmin);
 		}
 	}
 	
@@ -690,7 +728,6 @@ float4 Normal_Gray(float2 TexCoord)
 	return float4(nl, nl, nl, 1.0f);
 }
 
-int g_switch = 1;
 
 float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
 {
@@ -704,7 +741,7 @@ float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
 	//return Normal_Gray(TexCoord);
 	//return Normal_Interval(TexCoord);
 	if (g_switch == 1)
-		return Normal_Edge(TexCoord);
+		return Normal_Edge2(TexCoord);
 	else
 		return Normal_Edge2(TexCoord);
 	//return Normal_Depth_Edge(TexCoord);

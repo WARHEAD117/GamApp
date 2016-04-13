@@ -244,13 +244,26 @@ void SumiE::CreatePostEffect()
 	
 }
 
+int useWhich2 = 1;
+void ConfigInput()
+{
+	if (GAMEINPUT::Instance().KeyDown(DIK_I) && !GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
+	{
+		useWhich2 = 1;
+	}
+	if (GAMEINPUT::Instance().KeyDown(DIK_K) && !GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
+	{
+		useWhich2 = 2;
+	}
+}
+
 int sampleCount = 30;
 float m_SampleWeights[30];
 float m_SampleOffsets[60];
 
 void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 {
-
+	ConfigInput();
 	m_postEffect->SetMatrix(WORLDVIEWPROJMATRIX, &RENDERDEVICE::Instance().OrthoWVPMatrix);
 	m_postEffect->SetMatrix(INVPROJMATRIX, &RENDERDEVICE::Instance().InvProjMatrix);
 	m_postEffect->SetTexture(POSITIONBUFFER, RENDERPIPE::Instance().m_pPositionTarget);
@@ -293,77 +306,6 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	m_postEffect->EndPass();
 
 	//=============================================================================================================
-	//高斯模糊
-	PDIRECT3DSURFACE9 pSurf_BlurredGaryscale = NULL;
-	m_BlurredGaryscale->GetSurfaceLevel(0, &pSurf_BlurredGaryscale);
-
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_BlurredGaryscale);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
-
-	m_postEffect->SetTexture("g_GrayscaleBuffer", m_Garyscale);
-
-	m_postEffect->CommitChanges();
-
-	m_postEffect->BeginPass(3);
-	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
-	m_postEffect->EndPass();
-	//高斯模糊2
-	PDIRECT3DSURFACE9 pSurf_BlurredGaryscale2 = NULL;
-	m_Garyscale->GetSurfaceLevel(0, &pSurf_BlurredGaryscale2);
-
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_BlurredGaryscale2);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
-
-	m_postEffect->SetTexture("g_GrayscaleBuffer", m_BlurredGaryscale);
-
-	m_postEffect->CommitChanges();
-
-	m_postEffect->BeginPass(3);
-	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
-	m_postEffect->EndPass();
-	//高斯模糊3
-	PDIRECT3DSURFACE9 pSurf_BlurredGaryscale3 = NULL;
-	m_BlurredGaryscale->GetSurfaceLevel(0, &pSurf_BlurredGaryscale3);
-
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_BlurredGaryscale3);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
-
-	m_postEffect->SetTexture("g_GrayscaleBuffer", m_Garyscale);
-
-	m_postEffect->CommitChanges();
-
-	m_postEffect->BeginPass(3);
-	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
-	m_postEffect->EndPass();
-	//高斯模糊4
-	PDIRECT3DSURFACE9 pSurf_BlurredGaryscale4 = NULL;
-	m_Garyscale->GetSurfaceLevel(0, &pSurf_BlurredGaryscale4);
-
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_BlurredGaryscale4);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
-
-	m_postEffect->SetTexture("g_GrayscaleBuffer", m_BlurredGaryscale);
-
-	m_postEffect->CommitChanges();
-
-	m_postEffect->BeginPass(3);
-	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
-	m_postEffect->EndPass();
-	//高斯模糊5
-	PDIRECT3DSURFACE9 pSurf_BlurredGaryscale5 = NULL;
-	m_BlurredGaryscale->GetSurfaceLevel(0, &pSurf_BlurredGaryscale5);
-
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_BlurredGaryscale5);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
-
-	m_postEffect->SetTexture("g_GrayscaleBuffer", m_Garyscale);
-
-	m_postEffect->CommitChanges();
-
-	m_postEffect->BeginPass(3);
-	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
-	m_postEffect->EndPass();
-	//=============================================================================================================
 	//StrokesArea
 	PDIRECT3DSURFACE9 pSurf_SA = NULL;
 	m_StrokesArea->GetSurfaceLevel(0, &pSurf_SA);
@@ -375,7 +317,9 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(1, pSurf_SA);
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
-	m_postEffect->SetTexture("g_GrayscaleBuffer", m_BlurredGaryscale);
+
+	m_postEffect->SetTexture("g_GrayscaleBuffer", m_Garyscale);
+
 	m_postEffect->SetInt("minI", 60);//70
 	m_postEffect->SetInt("maxI", 150);//120
 	m_postEffect->SetInt("minI_2", 180);//70

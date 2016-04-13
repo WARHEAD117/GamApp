@@ -7,8 +7,6 @@
 
 EdgeRecognize::EdgeRecognize()
 {
-	m_depthFactor = 0.3f;
-	m_normalFactor = 0.8f;
 }
 
 
@@ -20,8 +18,6 @@ int useWhich = 1;
 void EdgeRecognize::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 {
 	ConfigInput();
-	m_postEffect->SetFloat("g_depthFactor", m_depthFactor);
-	m_postEffect->SetFloat("g_normalFactor", m_normalFactor);
 
 	m_postEffect->SetInt("g_switch", useWhich);
 
@@ -39,14 +35,5 @@ void EdgeRecognize::ConfigInput()
 	if (GAMEINPUT::Instance().KeyDown(DIK_L) && !GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
 		useWhich = 2;
-	}
-
-	if (GAMEINPUT::Instance().KeyDown(DIK_O) && GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
-	{
-		m_depthFactor -= 0.001f;
-	}
-	if (GAMEINPUT::Instance().KeyDown(DIK_L) && GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
-	{
-		m_normalFactor -= 0.001f;
 	}
 }

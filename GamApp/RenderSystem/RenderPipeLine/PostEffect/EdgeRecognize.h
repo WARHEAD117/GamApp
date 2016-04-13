@@ -10,8 +10,6 @@ public:
 	void RenderPost(LPDIRECT3DTEXTURE9 mainBuffer = 0);
 
 private:
-	float m_depthFactor;
-	float m_normalFactor;
 	void ConfigInput();
 };
 

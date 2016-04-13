@@ -360,6 +360,12 @@ float4 Normal_Edge2(float2 TexCoord)
 	depthN[7] = GetDepth(TexCoord + offset * float2(-1, 1), g_samplePosition); //LeftDown
 	depthN[8] = GetDepth(TexCoord + offset * float2(-1,-1), g_samplePosition); //LeftUp
 
+	float depthNN[4];
+	depthNN[0] = GetDepth(TexCoord + offset * float2( 0, -2), g_samplePosition); //UpUp
+	depthNN[1] = GetDepth(TexCoord + offset * float2( 2,  0), g_samplePosition); //RightRight
+	depthNN[2] = GetDepth(TexCoord + offset * float2( 0,  2), g_samplePosition); //DownDown
+	depthNN[3] = GetDepth(TexCoord + offset * float2(-2,  0), g_samplePosition); //LeftLeft
+
 	float3 normalR[9];
 
 	normalR[0] = normalize(GetNormal(g_sampleNormal, TexCoord));
@@ -386,7 +392,6 @@ float4 Normal_Edge2(float2 TexCoord)
 			return float4(1, 1, 1, 1);
 		}
 	}
-	
 	if (depth > 1000)
 	{
 		return float4(1, 1, 1, 1);
@@ -404,22 +409,31 @@ float4 Normal_Edge2(float2 TexCoord)
 	}
 
 	float laplace = 4 * depth - (depthN[1] + depthN[2] + depthN[3] + depthN[4]);
-	//if (laplace)
-	//laplace = -laplace;
-	//if (laplace < 0.0f)
-	//	laplace = 0;
-	//laplace = 1 - laplace;
 
-	//return float4(laplace, laplace, laplace, 1);
+	float laplaceN[5];
+	laplaceN[1] = 4 * depth - (depthN[0] + depthN[5] + depthN[8] + depthNN[0]);
+	laplaceN[2] = 4 * depth - (depthN[0] + depthN[5] + depthN[6] + depthNN[1]);
+	laplaceN[3] = 4 * depth - (depthN[0] + depthN[6] + depthN[7] + depthNN[2]);
+	laplaceN[4] = 4 * depth - (depthN[0] + depthN[7] + depthN[8] + depthNN[3]);
+
+	
 
 	if (g_switch == 1)
 	{
-		if (laplace < -0.4)
-			isEdge = true;
-		else
-			isEdge = false;
-
+		for (int i = 1; i< 5; i++)
+		{
+			if (laplaceN[i]  > 0.6)
+			{
+				//isEdge = true;
+				edgeList[i] = true;
+			}
+		}
 	}
+
+	if (laplace < -0.4)
+		isEdge = true;
+	else
+		isEdge = false;
 
 	//if (isEdge)
 	//	return float4(0, 0, 0, 1);

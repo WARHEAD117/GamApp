@@ -173,50 +173,29 @@ float4 Laplace_Edge(float2 TexCoord)
 
 	float depth = depthN[0];
 
-	float deltaD_Inner = (depth / 20.0f)*(depth / 20.0f);
-	float deltaD_Outer = depth / 20.0f;
-
-	for (int i = 1; i<neighborNum + 1; i++)
-	{
-		if (depth - depthN[i] > deltaD_Outer)
-		{
-			return float4(1, 1, 1, 1);
-		}
-	}
 	if (depth > 1000)
 	{
 		return float4(1, 1, 1, 1);
 	}
-
-	bool isEdge = false;
-	bool edgeList[9] = { false, false, false, false, false, false, false, false, false };
-	for (int i = 1; i< neighborNum + 1; i++)
-	{
-		if (depthN[i] - depth  > deltaD_Inner)
-		{
-			isEdge = true;
-			edgeList[i] = true;
-		}
-	}
-
 	float laplace = 4 * depth - (depthN[1] + depthN[2] + depthN[3] + depthN[4]);
 
 	float laplaceN[5];
-	laplaceN[1] = 4 * depth - (depthN[0] + depthN[5] + depthN[8] + depthNN[0]);
-	laplaceN[2] = 4 * depth - (depthN[0] + depthN[5] + depthN[6] + depthNN[1]);
-	laplaceN[3] = 4 * depth - (depthN[0] + depthN[6] + depthN[7] + depthNN[2]);
-	laplaceN[4] = 4 * depth - (depthN[0] + depthN[7] + depthN[8] + depthNN[3]);
+	laplaceN[1] = 4 * depthN[1] - (depthN[0] + depthN[5] + depthN[8] + depthNN[0]);
+	laplaceN[2] = 4 * depthN[2] - (depthN[0] + depthN[5] + depthN[6] + depthNN[1]);
+	laplaceN[3] = 4 * depthN[3] - (depthN[0] + depthN[6] + depthN[7] + depthNN[2]);
+	laplaceN[4] = 4 * depthN[4] - (depthN[0] + depthN[7] + depthN[8] + depthNN[3]);
 
 	
+	bool isEdge = false;
+	bool edgeList[9] = { false, false, false, false, false, false, false, false, false };
 
 	if (g_switch == 1)
 	{
-		for (int i = 1; i< 5; i++)
+		for (int i = 1; i<neighborNum + 1; i++)
 		{
-			if (laplaceN[i]  > 0.6)
+			if (laplace > 0.6)
 			{
-				//isEdge = true;
-				edgeList[i] = true;
+				return float4(1, 1, 1, 1);
 			}
 		}
 	}
@@ -225,6 +204,15 @@ float4 Laplace_Edge(float2 TexCoord)
 		isEdge = true;
 	else
 		isEdge = false;
+
+
+	for (int i = 1; i< 5; i++)
+	{
+		if (laplaceN[i]  > 0.6)
+		{
+			edgeList[i] = true;
+		}
+	}
 
 	//if (isEdge)
 	//	return float4(0, 0, 0, 1);

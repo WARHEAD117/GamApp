@@ -274,6 +274,11 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	m_postEffect->SetInt(SCREENWIDTH, RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth);
 	m_postEffect->SetInt(SCREENHEIGHT, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight);
 
+	float angle = tan(CameraParam::FOV / 2);
+	m_postEffect->SetFloat("g_ViewAngle_half_tan", angle);
+	float aspect = (float)RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth / RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight;
+	m_postEffect->SetFloat("g_ViewAspect", aspect);
+
 	m_postEffect->CommitChanges();
 
 	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, m_pBufferVex, 0, sizeof(VERTEX));
@@ -282,28 +287,6 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	UINT numPasses = 0;
 	m_postEffect->Begin(&numPasses, 0);
 
-	//=============================================================================================================
-	//渲染灰度图
-	PDIRECT3DSURFACE9 pSurf_Garyscale = NULL;
-	m_Garyscale->GetSurfaceLevel(0, &pSurf_Garyscale);
-
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_Garyscale);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
-
-	float angle = tan(CameraParam::FOV / 2);
-	m_postEffect->SetFloat("g_ViewAngle_half_tan", angle);
-	float aspect = (float)RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth / RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight;
-	m_postEffect->SetFloat("g_ViewAspect", aspect);
-
-	m_postEffect->SetTexture(NORMALBUFFER, RENDERPIPE::Instance().m_pNormalTarget);
-	m_postEffect->SetTexture(POSITIONBUFFER, RENDERPIPE::Instance().m_pPositionTarget);
-	m_postEffect->SetTexture(MAINCOLORBUFFER, mainBuffer);
-
-	m_postEffect->CommitChanges();
-
-	m_postEffect->BeginPass(0);
-	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
-	m_postEffect->EndPass();
 
 	//=============================================================================================================
 	//StrokesArea
@@ -318,7 +301,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
 
-	m_postEffect->SetTexture("g_GrayscaleBuffer", m_Garyscale);
+	m_postEffect->SetTexture("g_GrayscaleBuffer", RENDERPIPE::Instance().m_pGrayscaleTarget);
 
 	m_postEffect->SetInt("minI", 60);//70
 	m_postEffect->SetInt("maxI", 150);//120
@@ -327,7 +310,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 	m_postEffect->CommitChanges();
 
-	m_postEffect->BeginPass(1);
+	m_postEffect->BeginPass(0);
 	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 	m_postEffect->EndPass();
 
@@ -349,7 +332,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 	m_postEffect->CommitChanges();
 
-	m_postEffect->BeginPass(4);
+	m_postEffect->BeginPass(3);
 	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 	m_postEffect->EndPass();
 
@@ -365,7 +348,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 	m_postEffect->CommitChanges();
 
-	m_postEffect->BeginPass(4);
+	m_postEffect->BeginPass(3);
 	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 	m_postEffect->EndPass();
 	//m_pEdgeBlur = m_pEdgeBlur2;
@@ -377,11 +360,11 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
 	m_postEffect->SetTexture(NORMALBUFFER, RENDERPIPE::Instance().m_pNormalTarget);
-	m_postEffect->SetTexture(MAINCOLORBUFFER, mainBuffer); //m_pEdgeImage//m_BlurredGaryscale//m_pEdgeBlur//mainBuffer//m_pEdgeForward//RENDERPIPE::Instance().m_pNormalTarget//m_StrokesArea
+	m_postEffect->SetTexture(MAINCOLORBUFFER, mainBuffer); //m_pEdgeImage//RENDERPIPE::Instance().m_pGrayscaleTarget//m_pEdgeBlur//mainBuffer//m_pEdgeForward//RENDERPIPE::Instance().m_pNormalTarget//m_StrokesArea
 
 	m_postEffect->CommitChanges();
 
-	m_postEffect->BeginPass(2);
+	m_postEffect->BeginPass(1);
 	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 	m_postEffect->EndPass();
 
@@ -416,7 +399,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		m_postEffect->SetTexture(NORMALBUFFER, RENDERPIPE::Instance().m_pNormalTarget);
 		m_postEffect->SetTexture(POSITIONBUFFER, RENDERPIPE::Instance().m_pPositionTarget);
 		m_postEffect->SetTexture(DIFFUSEBUFFER, RENDERPIPE::Instance().m_pDiffuseTarget);
-		m_postEffect->SetTexture("g_JudgeTex", m_Garyscale);
+		m_postEffect->SetTexture("g_JudgeTex", RENDERPIPE::Instance().m_pGrayscaleTarget);
 		m_postEffect->SetTexture("g_InkTex", m_pInkMask);
 		m_postEffect->SetBool("g_UpperLayer", false);
 
@@ -433,7 +416,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 		m_postEffect->CommitChanges();
 
-		m_postEffect->BeginPass(6);
+		m_postEffect->BeginPass(5);
 		RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, mParticleBuffer2, 0, sizeof(Particle));
 		RENDERDEVICE::Instance().g_pD3DDevice->SetVertexDeclaration(mParticleDecl);
 		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_POINTLIST, 0, w2*h2);
@@ -468,7 +451,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		m_postEffect->SetTexture(POSITIONBUFFER, RENDERPIPE::Instance().m_pPositionTarget);
 		m_postEffect->SetTexture(DIFFUSEBUFFER, RENDERPIPE::Instance().m_pDiffuseTarget);
 		m_postEffect->SetTexture("g_InkTex", m_pInkMask);
-		m_postEffect->SetTexture("g_JudgeTex", m_Garyscale);
+		m_postEffect->SetTexture("g_JudgeTex", RENDERPIPE::Instance().m_pGrayscaleTarget);
 		
 		m_postEffect->SetBool("g_UpperLayer", true);
 
@@ -485,7 +468,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 		m_postEffect->CommitChanges();
 
-		m_postEffect->BeginPass(6);
+		m_postEffect->BeginPass(5);
 		RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, mParticleBuffer2, 0, sizeof(Particle));
 		RENDERDEVICE::Instance().g_pD3DDevice->SetVertexDeclaration(mParticleDecl);
 		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_POINTLIST, 0, w2*h2);
@@ -663,6 +646,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		m_postEffect->SetMatrix(PROJECTIONMATRIX, &RENDERDEVICE::Instance().ProjMatrix);
 
 		m_postEffect->SetTexture(MAINCOLORBUFFER, m_pEdgeBlur);
+
 		m_postEffect->SetTexture(NORMALBUFFER, RENDERPIPE::Instance().m_pNormalTarget);
 		m_postEffect->SetTexture("g_InkTex", m_pInkTex);
 		m_postEffect->SetTexture("g_InkTex1", m_pInkTex1);
@@ -684,7 +668,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 		m_postEffect->CommitChanges();
 
-		m_postEffect->BeginPass(5);
+		m_postEffect->BeginPass(4);
 		RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, mParticleBuffer, 0, sizeof(Particle));
 		RENDERDEVICE::Instance().g_pD3DDevice->SetVertexDeclaration(mParticleDecl);
 		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_POINTLIST, 0, w*h);
@@ -699,6 +683,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	bool openCache = true;
 	//m_pTexList[0] = m_pTexList[1];
 	//m_pTexList[1] = m_pPostTarget;
+
 	if (useParticle && openCache)
 	{
 		numPasses = 0;

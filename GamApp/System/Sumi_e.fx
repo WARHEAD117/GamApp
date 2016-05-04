@@ -223,7 +223,7 @@ float4 fliter(float3x3 _filter, sampler2D _image, float2 texCoord, float2 texSiz
 
 float4 PShaderBlur(float2 TexCoord : TEXCOORD0) : COLOR
 {
-	return tex2D(g_sampleGrayscale, TexCoord);
+	//return tex2D(g_sampleGrayscale, TexCoord);
 
 	float4 color = GaussianBlur(g_ScreenWidth, g_ScreenHeight, g_sampleGrayscale, TexCoord);
 
@@ -446,6 +446,7 @@ float4 PShaderParticle(float2 TexCoord : TEXCOORD0,
 		alpha = thickness.x / 2;
 	if (thickness.x <= 0.5f)
 		alpha = thickness.x / 3;
+	alpha = thickness.x / 2;
 
 	float colorFactor = g_colorFactor;
 	if (brush.r > 0.59f)

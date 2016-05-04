@@ -193,7 +193,7 @@ float4 Laplace_Edge(float2 TexCoord)
 	{
 		for (int i = 1; i<neighborNum + 1; i++)
 		{
-			if (laplace > 0.6)
+			if (laplace > 0.4)
 			{
 				return float4(1, 1, 1, 1);
 			}

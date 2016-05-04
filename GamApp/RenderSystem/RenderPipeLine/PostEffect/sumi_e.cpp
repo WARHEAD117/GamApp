@@ -287,7 +287,77 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	UINT numPasses = 0;
 	m_postEffect->Begin(&numPasses, 0);
 
+	//=============================================================================================================
+	//高斯模糊
+	PDIRECT3DSURFACE9 pSurf_BlurredGaryscale = NULL;
+	m_BlurredGaryscale->GetSurfaceLevel(0, &pSurf_BlurredGaryscale);
 
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_BlurredGaryscale);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
+
+	m_postEffect->SetTexture("g_GrayscaleBuffer", RENDERPIPE::Instance().m_pGrayscaleTarget);
+
+	m_postEffect->CommitChanges();
+
+	m_postEffect->BeginPass(2);
+	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+	m_postEffect->EndPass();
+	//高斯模糊2
+	PDIRECT3DSURFACE9 pSurf_BlurredGaryscale2 = NULL;
+	m_Garyscale->GetSurfaceLevel(0, &pSurf_BlurredGaryscale2);
+
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_BlurredGaryscale2);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
+
+	m_postEffect->SetTexture("g_GrayscaleBuffer", m_BlurredGaryscale);
+
+	m_postEffect->CommitChanges();
+
+	m_postEffect->BeginPass(2);
+	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+	m_postEffect->EndPass();
+	//高斯模糊3
+	PDIRECT3DSURFACE9 pSurf_BlurredGaryscale3 = NULL;
+	m_BlurredGaryscale->GetSurfaceLevel(0, &pSurf_BlurredGaryscale3);
+
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_BlurredGaryscale3);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
+
+	m_postEffect->SetTexture("g_GrayscaleBuffer", m_Garyscale);
+
+	m_postEffect->CommitChanges();
+
+	m_postEffect->BeginPass(2);
+	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+	m_postEffect->EndPass();
+	//高斯模糊4
+	PDIRECT3DSURFACE9 pSurf_BlurredGaryscale4 = NULL;
+	m_Garyscale->GetSurfaceLevel(0, &pSurf_BlurredGaryscale4);
+
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_BlurredGaryscale4);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
+
+	m_postEffect->SetTexture("g_GrayscaleBuffer", m_BlurredGaryscale);
+
+	m_postEffect->CommitChanges();
+
+	m_postEffect->BeginPass(2);
+	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+	m_postEffect->EndPass();
+	//高斯模糊5
+	PDIRECT3DSURFACE9 pSurf_BlurredGaryscale5 = NULL;
+	m_BlurredGaryscale->GetSurfaceLevel(0, &pSurf_BlurredGaryscale5);
+
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_BlurredGaryscale5);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
+
+	m_postEffect->SetTexture("g_GrayscaleBuffer", m_Garyscale);
+
+	m_postEffect->CommitChanges();
+
+	m_postEffect->BeginPass(2);
+	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+	m_postEffect->EndPass();
 	//=============================================================================================================
 	//StrokesArea
 	PDIRECT3DSURFACE9 pSurf_SA = NULL;
@@ -300,8 +370,16 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(1, pSurf_SA);
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
-
-	m_postEffect->SetTexture("g_GrayscaleBuffer", RENDERPIPE::Instance().m_pGrayscaleTarget);
+	if (useWhich2 == 1)
+	{
+		m_postEffect->SetTexture("g_GrayscaleBuffer", RENDERPIPE::Instance().m_pGrayscaleTarget);
+	}
+	else
+	{
+		m_postEffect->SetTexture("g_GrayscaleBuffer", m_BlurredGaryscale);
+		
+	}
+	
 
 	m_postEffect->SetInt("minI", 60);//70
 	m_postEffect->SetInt("maxI", 150);//120
@@ -360,7 +438,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
 	m_postEffect->SetTexture(NORMALBUFFER, RENDERPIPE::Instance().m_pNormalTarget);
-	m_postEffect->SetTexture(MAINCOLORBUFFER, mainBuffer); //m_pEdgeImage//RENDERPIPE::Instance().m_pGrayscaleTarget//m_pEdgeBlur//mainBuffer//m_pEdgeForward//RENDERPIPE::Instance().m_pNormalTarget//m_StrokesArea
+	m_postEffect->SetTexture(MAINCOLORBUFFER, m_StrokesArea); //m_pEdgeImage//RENDERPIPE::Instance().m_pGrayscaleTarget//m_pEdgeBlur//mainBuffer//m_pEdgeForward//RENDERPIPE::Instance().m_pNormalTarget//m_StrokesArea
 
 	m_postEffect->CommitChanges();
 

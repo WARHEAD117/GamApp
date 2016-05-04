@@ -108,21 +108,6 @@ void SumiE::CreatePostEffect()
 		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
 		&m_pJudgeImage, NULL);
 
-	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
-		1, D3DUSAGE_RENDERTARGET,
-		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
-		&m_pEdgeForward, NULL);
-
-	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
-		1, D3DUSAGE_RENDERTARGET,
-		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
-		&m_Garyscale, NULL);
-
-	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
-		1, D3DUSAGE_RENDERTARGET,
-		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
-		&m_BlurredGaryscale, NULL);
-
 	//create renderTarget
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
 		1, D3DUSAGE_RENDERTARGET,
@@ -134,11 +119,6 @@ void SumiE::CreatePostEffect()
 		1, D3DUSAGE_RENDERTARGET,
 		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
 		&m_StrokesArea2, NULL);
-
-	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
-		1, D3DUSAGE_RENDERTARGET,
-		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
-		&m_pContourTarget, NULL);
 
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
 		1, D3DUSAGE_RENDERTARGET,
@@ -196,45 +176,30 @@ void SumiE::CreatePostEffect()
 		abort();
 	}
 	//==========================================================
-	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "Res\\testInkImage.png", &m_pTestInk))
+	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "Res\\1.bmp", &m_pInkTex1))
 	{
-		MessageBox(GetForegroundWindow(), "TextureError", "testInkImage", MB_OK);
+		MessageBox(GetForegroundWindow(), "TextureError", "InkTex1", MB_OK);
 		abort();
 	}
-	//==========================================================
-	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "Res\\0.bmp", &m_pInkTex))//3.bmp//R_Test.png//brush2.jpg
+	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "Res\\2.bmp", &m_pInkTex2))
 	{
-		MessageBox(GetForegroundWindow(), "TextureError", "InkTex", MB_OK);
+		MessageBox(GetForegroundWindow(), "TextureError", "InkTex2", MB_OK);
 		abort();
 	}
-	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "Res\\1.bmp", &m_pInkTex1))//3.bmp//R_Test.png//brush2.jpg
+	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "Res\\3.bmp", &m_pInkTex3))
 	{
-		MessageBox(GetForegroundWindow(), "TextureError", "InkTex", MB_OK);
-		abort();
-	}
-	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "Res\\2.bmp", &m_pInkTex2))//3.bmp//R_Test.png//brush2.jpg
-	{
-		MessageBox(GetForegroundWindow(), "TextureError", "InkTex", MB_OK);
-		abort();
-	}
-	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "Res\\3.bmp", &m_pInkTex3))//3.bmp//R_Test.png//brush2.jpg
-	{
-		MessageBox(GetForegroundWindow(), "TextureError", "InkTex", MB_OK);
-		abort();
-	}
-	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "Res\\4.bmp", &m_pInkTex4))//3.bmp//R_Test.png//brush2.jpg
-	{
-		MessageBox(GetForegroundWindow(), "TextureError", "InkTex", MB_OK);
+		MessageBox(GetForegroundWindow(), "TextureError", "InkTex3", MB_OK);
 		abort();
 	}
 
-	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "Res\\testBrush2.bmp", &m_pInkMask))//3.bmp//R_Test.png//brush2.jpg//testBrush1.bmp
+
+	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "Res\\insideMask.bmp", &m_pInkMask))
 	{
 		MessageBox(GetForegroundWindow(), "TextureError", "InkMask", MB_OK);
 		abort();
 	}
 
-	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "Res\\background1.jpg", &m_pBackground))
+	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "Res\\paper.jpg", &m_pBackground))
 	{
 		MessageBox(GetForegroundWindow(), "TextureError", "background1", MB_OK);
 		abort();
@@ -287,78 +252,8 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	UINT numPasses = 0;
 	m_postEffect->Begin(&numPasses, 0);
 
-	//=============================================================================================================
-	//高斯模糊
-	PDIRECT3DSURFACE9 pSurf_BlurredGaryscale = NULL;
-	m_BlurredGaryscale->GetSurfaceLevel(0, &pSurf_BlurredGaryscale);
-
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_BlurredGaryscale);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
-
-	m_postEffect->SetTexture("g_GrayscaleBuffer", RENDERPIPE::Instance().m_pGrayscaleTarget);
-
-	m_postEffect->CommitChanges();
-
-	m_postEffect->BeginPass(2);
-	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
-	m_postEffect->EndPass();
-	//高斯模糊2
-	PDIRECT3DSURFACE9 pSurf_BlurredGaryscale2 = NULL;
-	m_Garyscale->GetSurfaceLevel(0, &pSurf_BlurredGaryscale2);
-
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_BlurredGaryscale2);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
-
-	m_postEffect->SetTexture("g_GrayscaleBuffer", m_BlurredGaryscale);
-
-	m_postEffect->CommitChanges();
-
-	m_postEffect->BeginPass(2);
-	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
-	m_postEffect->EndPass();
-	//高斯模糊3
-	PDIRECT3DSURFACE9 pSurf_BlurredGaryscale3 = NULL;
-	m_BlurredGaryscale->GetSurfaceLevel(0, &pSurf_BlurredGaryscale3);
-
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_BlurredGaryscale3);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
-
-	m_postEffect->SetTexture("g_GrayscaleBuffer", m_Garyscale);
-
-	m_postEffect->CommitChanges();
-
-	m_postEffect->BeginPass(2);
-	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
-	m_postEffect->EndPass();
-	//高斯模糊4
-	PDIRECT3DSURFACE9 pSurf_BlurredGaryscale4 = NULL;
-	m_Garyscale->GetSurfaceLevel(0, &pSurf_BlurredGaryscale4);
-
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_BlurredGaryscale4);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
-
-	m_postEffect->SetTexture("g_GrayscaleBuffer", m_BlurredGaryscale);
-
-	m_postEffect->CommitChanges();
-
-	m_postEffect->BeginPass(2);
-	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
-	m_postEffect->EndPass();
-	//高斯模糊5
-	PDIRECT3DSURFACE9 pSurf_BlurredGaryscale5 = NULL;
-	m_BlurredGaryscale->GetSurfaceLevel(0, &pSurf_BlurredGaryscale5);
-
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_BlurredGaryscale5);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
-
-	m_postEffect->SetTexture("g_GrayscaleBuffer", m_Garyscale);
-
-	m_postEffect->CommitChanges();
-
-	m_postEffect->BeginPass(2);
-	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
-	m_postEffect->EndPass();
-	//=============================================================================================================
+	
+	//分割灰度图，分成深色部分和浅色部分
 	//StrokesArea
 	PDIRECT3DSURFACE9 pSurf_SA = NULL;
 	m_StrokesArea->GetSurfaceLevel(0, &pSurf_SA);
@@ -370,21 +265,26 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(1, pSurf_SA);
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
-	if (useWhich2 == 1)
+
+	m_postEffect->SetTexture("g_GrayscaleBuffer", RENDERPIPE::Instance().m_pGrayscaleTarget);
+
+
+
+	bool useSplit = false;
+	if (useSplit)
 	{
-		m_postEffect->SetTexture("g_GrayscaleBuffer", RENDERPIPE::Instance().m_pGrayscaleTarget);
+		m_postEffect->SetInt("minI", 60);//70
+		m_postEffect->SetInt("maxI", 150);//120
+		m_postEffect->SetInt("minI_2", 180);//70
+		m_postEffect->SetInt("maxI_2", 255);//120
 	}
 	else
 	{
-		m_postEffect->SetTexture("g_GrayscaleBuffer", m_BlurredGaryscale);
-		
+		m_postEffect->SetInt("minI", 60);//70
+		m_postEffect->SetInt("maxI", 150);//120
+		m_postEffect->SetInt("minI_2", 100);//70
+		m_postEffect->SetInt("maxI_2", 180);//120
 	}
-	
-
-	m_postEffect->SetInt("minI", 60);//70
-	m_postEffect->SetInt("maxI", 150);//120
-	m_postEffect->SetInt("minI_2", 180);//70
-	m_postEffect->SetInt("maxI_2", 255);//120
 
 	m_postEffect->CommitChanges();
 
@@ -396,6 +296,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	SafeRelease(pSurf_SA2);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, NULL);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(1, NULL);
+	
 
 	//=============================================================================================================
 	//模糊轮廓图
@@ -431,13 +332,12 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	m_postEffect->EndPass();
 	//m_pEdgeBlur = m_pEdgeBlur2;
 	//=============================================================================================================
-	//合并
+	//用来测试各种RT的效果
 	PDIRECT3DSURFACE9 pSurf_Judge = NULL;
 	m_pJudgeImage->GetSurfaceLevel(0, &pSurf_Judge);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pPostSurface);
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
-	m_postEffect->SetTexture(NORMALBUFFER, RENDERPIPE::Instance().m_pNormalTarget);
 	m_postEffect->SetTexture(MAINCOLORBUFFER, m_StrokesArea); //m_pEdgeImage//RENDERPIPE::Instance().m_pGrayscaleTarget//m_pEdgeBlur//mainBuffer//m_pEdgeForward//RENDERPIPE::Instance().m_pNormalTarget//m_StrokesArea
 
 	m_postEffect->CommitChanges();
@@ -447,7 +347,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	m_postEffect->EndPass();
 
 	//=====================================================================================================
-
+	//实际的水墨画渲染部分
 	float useParticle = false;
 	useParticle = true;
 	bool openInsideParticle = true;
@@ -478,7 +378,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		m_postEffect->SetTexture(POSITIONBUFFER, RENDERPIPE::Instance().m_pPositionTarget);
 		m_postEffect->SetTexture(DIFFUSEBUFFER, RENDERPIPE::Instance().m_pDiffuseTarget);
 		m_postEffect->SetTexture("g_JudgeTex", RENDERPIPE::Instance().m_pGrayscaleTarget);
-		m_postEffect->SetTexture("g_InkTex", m_pInkMask);
+		m_postEffect->SetTexture("g_InkTex1", m_pInkMask);
 		m_postEffect->SetBool("g_UpperLayer", false);
 
 		baseInsideTexSize = 2130;
@@ -504,7 +404,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	}
 
 	//渲染第二次的内部粒子，深色部分
-	if (openInsideParticle && useParticle)
+	if (openInsideParticle && useParticle && useSplit)
 	{
 		//渲染内部纹理
 		PDIRECT3DSURFACE9 pSurf_Inside = NULL;
@@ -528,7 +428,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		m_postEffect->SetTexture(NORMALBUFFER, RENDERPIPE::Instance().m_pNormalTarget);
 		m_postEffect->SetTexture(POSITIONBUFFER, RENDERPIPE::Instance().m_pPositionTarget);
 		m_postEffect->SetTexture(DIFFUSEBUFFER, RENDERPIPE::Instance().m_pDiffuseTarget);
-		m_postEffect->SetTexture("g_InkTex", m_pInkMask);
+		m_postEffect->SetTexture("g_InkTex1", m_pInkMask);
 		m_postEffect->SetTexture("g_JudgeTex", RENDERPIPE::Instance().m_pGrayscaleTarget);
 		
 		m_postEffect->SetBool("g_UpperLayer", true);
@@ -588,15 +488,23 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 		
 		//======================================================================================================
-		//高斯模糊内部的纹理
+		//合并两次的内部纹理，并高斯模糊
 		PDIRECT3DSURFACE9 pSurf_BlurredInside = NULL;
 		m_pBluredInside->GetSurfaceLevel(0, &pSurf_BlurredInside);
 
 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_BlurredInside);
 		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
+
 		m_SynthesisEffect->SetTexture("g_Inside", m_pInsideTarget);
-		m_SynthesisEffect->SetTexture("g_Inside2", m_pInsideTarget2);
+		if (useSplit)
+		{
+			m_SynthesisEffect->SetTexture("g_Inside2", m_pInsideTarget2);
+		}
+		else
+		{
+			m_SynthesisEffect->SetTexture("g_Inside2", m_pInsideTarget);
+		}
 
 		m_SynthesisEffect->CommitChanges();
 
@@ -712,7 +620,6 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		UINT numPasses = 0;
 		m_postEffect->Begin(&numPasses, 0);
 		//=============================================================================================================
-		//粒子TEST
 		
 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pPostSurface);
 
@@ -726,11 +633,9 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		m_postEffect->SetTexture(MAINCOLORBUFFER, m_pEdgeBlur);
 
 		m_postEffect->SetTexture(NORMALBUFFER, RENDERPIPE::Instance().m_pNormalTarget);
-		m_postEffect->SetTexture("g_InkTex", m_pInkTex);
 		m_postEffect->SetTexture("g_InkTex1", m_pInkTex1);
 		m_postEffect->SetTexture("g_InkTex2", m_pInkTex2);
 		m_postEffect->SetTexture("g_InkTex3", m_pInkTex3);
-		m_postEffect->SetTexture("g_InkTex4", m_pInkTex4);
 
 		m_postEffect->SetTexture("g_JudgeTex", m_pJudgeImage);
 

@@ -72,19 +72,6 @@ sampler_state
 	MipFilter = Point;
 };
 
-texture		g_InkTex;
-sampler2D g_sampleInkTex =
-sampler_state
-{
-	Texture = <g_InkTex>;
-	MinFilter = Point;
-	MagFilter = Point;
-	MipFilter = Point;
-	AddressU = Border;
-	AddressV = Border;
-	bordercolor = float4(1,1,1,1);
-};
-
 texture		g_InkTex1;
 sampler2D g_sampleInkTex1 =
 sampler_state
@@ -122,29 +109,6 @@ sampler_state
 	AddressU = Border;
 	AddressV = Border;
 	bordercolor = float4(1, 1, 1, 1);
-};
-
-texture		g_InkTex4;
-sampler2D g_sampleInkTex4 =
-sampler_state
-{
-	Texture = <g_InkTex4>;
-	MinFilter = Point;
-	MagFilter = Point;
-	MipFilter = Point;
-	AddressU = Border;
-	AddressV = Border;
-	bordercolor = float4(1, 1, 1, 1);
-};
-
-texture		g_InkCloud;
-sampler2D g_sampleInkCloud =
-sampler_state
-{
-	Texture = <g_InkCloud>;
-	MinFilter = Point;
-	MagFilter = Point;
-	MipFilter = Point;
 };
 
 texture		g_JudgeTex;
@@ -338,6 +302,7 @@ P_OutVS VShaderParticle(float4 posL       : POSITION0,
 	
 	outVS.psize = 0;
 
+	float depth = tex2Dlod(g_samplePosition, float4(TexCoord.x, TexCoord.y, 0, 0));
 	//DiffuseMap的纹理采样
 	float4 diffuseColor = tex2Dlod(g_sampleDiffuse, float4(TexCoord.x, TexCoord.y, 0, 0)) * float4(2,2,2,1);
 	float4 color = tex2Dlod(g_sampleMainColor, float4(TexCoord.x, TexCoord.y, 0, 0));
@@ -346,35 +311,23 @@ P_OutVS VShaderParticle(float4 posL       : POSITION0,
 	outVS.thickness = float4(thickness, thickness, thickness, thickness);
 	outVS.texC = float4(TexCoord, 0, 0);
 
-	float size = 0;
-	size = thickness * g_baseTexSize;
-	
-	//size = clamp(size, 0, g_maxTexSize);
-	float depth = tex2Dlod(g_samplePosition, float4(TexCoord.x, TexCoord.y, 0, 0));
-	//将深度转化为0-1区间内的值，深度越大，invDepth越小
-	float invDepth = 1 - depth / g_zFar;
-	//也就是说深度越大，计算出的纹理大小越小，而最大值不会超过g_maxTexSize*sizeFactor，最小不会小于g_minTexSize
 	float sizeFactor = 0.8;
 	float scaledSize = 0;
+	float size = thickness * g_baseTexSize;
+	
+	float scale = 1.0f * g_zNear / depth;
 
-	//if (TexCoord.x > 0.5)
+	//距离是_的时候，更改大小调整的曲线
+	float limit = 17;
+	float b = 0.009;
+	if (depth <= limit)
 	{
-		float scale = 1.0f * g_zNear / depth;
-		
-		//距离是_的时候，更改大小调整的曲线
-		float limit = 17;
-		float b = 0.009;
-		if (depth <= limit)
-		{
-			scale = (g_zNear - limit * b) / (limit * limit * limit) * depth * depth + b;
-		}
-		
-		scaledSize = size * scale * diffuseColor;
-
-		//scaledSize = clamp(scaledSize, g_minTexSize * diffuseColor, g_maxTexSize);
-		scaledSize = max(scaledSize, g_minTexSize * diffuseColor);
-
+		scale = (g_zNear - limit * b) / (limit * limit * limit) * depth * depth + b;
 	}
+
+	scaledSize = size * scale * diffuseColor;
+
+	scaledSize = max(scaledSize, g_minTexSize * diffuseColor);
 
 	if (scaledSize >= 1 && thickness > 0.0f)
 	{
@@ -413,40 +366,29 @@ float4 PShaderParticle(float2 TexCoord : TEXCOORD0,
 	//TexCoord = mul(TexCoord - float2(0.5,0.5), rotationM) + float2(0.5,0.5);
 	TexCoord = mul(rotationM, TexCoord - float2(0.5, 0.5)) + float2(0.5, 0.5);
 	
-	//扭曲纹理，初步代码，未完成
-	float2x2 tranS = float2x2(float2(1, 0.2* sin(TexCoord.y*3.141592653) / TexCoord.y), float2(0, 1));
-		//TexCoord = mul(TexCoord, tranS);
-		//TexCoord = mul(tranS, TexCoord);
 
-		//TexCoord = saturate(TexCoord);
-		float4 brush = float4(1, 1, 1, 1);
+	//TexCoord = saturate(TexCoord);
+	float4 brush = float4(1, 1, 1, 1);
 
-		float4 brush0 = tex2D(g_sampleInkTex, TexCoord);
 		float4 brush1 = tex2D(g_sampleInkTex1, TexCoord);
 		float4 brush2 = tex2D(g_sampleInkTex2, TexCoord);
 		float4 brush3 = tex2D(g_sampleInkTex3, TexCoord);
-		float4 brush4 = tex2D(g_sampleInkTex4, TexCoord);
 
-		brush = brush2;
+		brush = brush1;
 	if (thickness.x <= 0.5f)
 	{
 		float tmp = thickness.x / 0.5f;
-		brush = lerp(brush4, brush3, 2 * tmp - tmp*tmp); //y = 2x-x^2
+		brush = lerp(brush3, brush2, 2 * tmp - tmp*tmp); //y = -x^2+2x
 	}
-	else if (thickness.x < 1)
+	else if (thickness.x <= 1)
 	{
-		brush = lerp(brush3, brush2, pow((thickness.x - 0.5f), 2) / pow((1 - 0.5f), 2)); //
+		float tmp = (thickness.x-0.5f) / 0.5f;
+		brush = lerp(brush2, brush1, tmp * tmp); //y = x^2
 	}
-	//brush = lerp(brush4, brush3, size.x / g_maxTexSize);
-		//brush.rgb = float3(0.5, 0.5, 0.5);
+
 	brush.a = 1;
 
-	float alpha = 0.3;
-	if (thickness.x < 1 && thickness.x > 0.5f)
-		alpha = thickness.x / 2;
-	if (thickness.x <= 0.5f)
-		alpha = thickness.x / 3;
-	alpha = thickness.x / 2;
+	float alpha = thickness.x / 2;
 
 	float colorFactor = g_colorFactor;
 	if (brush.r > 0.59f)
@@ -456,15 +398,11 @@ float4 PShaderParticle(float2 TexCoord : TEXCOORD0,
 	else
 	{
 		brush = float4(colorFactor, colorFactor, colorFactor, alpha);
-		//brush = float4(normal, 0.5f);
 	}
 		
 	if (TexCoord.x < 0 || TexCoord.x > 1 || TexCoord.y < 0 || TexCoord.y > 1)
 		brush = float4(1.0f, 1.0f, 1.0f, 0.0f);
 
-	if (brush.r > 0.99f)
-		brush = float4(1.0f, 1.0f, 1.0f, 0.0f);
-	
 	return brush;
 }
 
@@ -544,7 +482,7 @@ PInside_OutVS VShaderParticleInside(float4 posL       : POSITION0,
 		else a = 1;
 	}
 	a = clamp(a, 1, 4);
-	//a = 5;
+
 	int pixIndex_X = TexCoord.x * g_ScreenWidth;
 	int pixIndex_Y = TexCoord.y * (g_ScreenHeight+1);
 
@@ -643,7 +581,7 @@ float4 PShaderParticleInside(float2 TexCoord : TEXCOORD0,//粒子内部的纹理
 
 	//TexCoord = saturate(TexCoord);
 	float4 brush = float4(1, 1, 1, 1);
-	brush = tex2D(g_sampleInkTex, TexCoord);
+	brush = tex2D(g_sampleInkTex1, TexCoord);
 	if (diffuseColorCenter.a * 255.0f > 2.5f && diffuseColorCenter.a * 255.0f <= 3.5f)
 	{
 		brush = float4(0, 0, 0, 0);
@@ -667,9 +605,8 @@ float4 PShaderParticleInside(float2 TexCoord : TEXCOORD0,//粒子内部的纹理
 	if (TexCoord.x < 0 || TexCoord.x > 1 || TexCoord.y < 0 || TexCoord.y > 1)
 		brush = float4(0.0f, 0.0f, 0.0f, 0.0f);
 
-	if (brush.r > 0.99f)
-		brush = float4(0.0f, 0.0f, 0.0f, 0.0f);
 
+	//解决第二次渲染内部纹理时的重叠问题
 	if (diffuseColorCenter.a * 255.0f < 0.5f)
 		brush.r = 1;
 

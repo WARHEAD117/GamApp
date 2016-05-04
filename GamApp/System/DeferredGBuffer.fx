@@ -166,8 +166,8 @@ OutputPS PShader(float3 NormalV		: NORMAL,
 	//
 	clip(Texture.a < 0.1f ? -1 : 1);
 
-	Texture.xyz = g_IsSky ? Texture.xyz : Texture.xyz * g_ThicknessMaterial.xyz;
-
+	//Texture.xyz = g_IsSky ? Texture.xyz : Texture.xyz * g_ThicknessMaterial.xyz;
+	Texture.xyz = g_IsSky ?float4(1,1,1,1) : Texture.xyz * g_ThicknessMaterial.xyz;
 	//RGB通道储存纹理颜色
 	PsOut.diffuse.rgb = Texture.xyz / 2.0f;
 

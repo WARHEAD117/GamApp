@@ -85,6 +85,7 @@ private:
 	bool	m_enableColorChange;
 
 	bool	m_enableEdgeRecognize;
+	bool	m_enableSumieFilter;
 
 #ifdef RENDER_DEBUG
 	enum DEBUG_MODE

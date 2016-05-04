@@ -84,15 +84,16 @@ RenderPipe::RenderPipe()
 	npr.CreatePostEffect("System\\NPR.fx");
 	sumiE.CreatePostEffect();
 
-	m_enableAO = true;
+	m_enableAO = false;
 	m_enableDOF = false;
-	m_enableHDR = true;
+	m_enableHDR = false;
 	m_enableGI = false;
-	m_enableFXAA = true;
+	m_enableFXAA = false;
 	m_enableDither = false;
 	m_enableColorChange = false;
 
-	m_enableEdgeRecognize = false;
+	m_enableEdgeRecognize = true;
+	m_enableSumieFilter = true;
 
 	m_showNormal = false;
 	m_showPosition = false;
@@ -782,7 +783,7 @@ void RenderPipe::RenderAll()
 
 	RENDERDEVICE::Instance().g_pD3DDevice->GetRenderTarget(0, &m_pOriSurface);
 
-	RenderShadow();
+	//RenderShadow();
 
 	RenderGBuffer();
 
@@ -792,51 +793,32 @@ void RenderPipe::RenderAll()
 	
 	//ForwardRender();
 
-	DeferredRender_MultiPass();
+	//DeferredRender_MultiPass();
 
 	m_pPostTarget = m_pMainColorTarget;
 
-	if (GAMEINPUT::Instance().KeyPressed(DIK_1))
+	
+
+	if (GAMEINPUT::Instance().KeyPressed(DIK_7))
 	{
-		m_enableAO = !m_enableAO;
-	}
-	if (m_enableAO)
-	{
-		ssao.RenderPost(m_pPostTarget);
-		m_pPostTarget = ssao.GetPostTarget();
+		m_enableEdgeRecognize = !m_enableEdgeRecognize;
 	}
 
-	if (GAMEINPUT::Instance().KeyPressed(DIK_4))
+	if (m_enableEdgeRecognize)
 	{
-		m_enableGI = !m_enableGI;
+		edgeRecognize.RenderPost(m_pPostTarget);
+		m_pPostTarget = edgeRecognize.GetPostTarget();
 	}
 
-	if (m_enableGI)
+	if (GAMEINPUT::Instance().KeyPressed(DIK_8))
 	{
-		ssgi.RenderPost(m_pPostTarget);
-		m_pPostTarget = ssgi.GetPostTarget();
+		m_enableSumieFilter = !m_enableSumieFilter;
 	}
 
-	if (GAMEINPUT::Instance().KeyPressed(DIK_2))
+	if (m_enableSumieFilter)
 	{
-		m_enableHDR = !m_enableHDR;
-	}
-
-	if (m_enableHDR)
-	{
-		hdrLighting.RenderPost(m_pPostTarget);
-		m_pPostTarget = hdrLighting.GetPostTarget();
-	}
-
-	if (GAMEINPUT::Instance().KeyPressed(DIK_3))
-	{
-		m_enableDOF = !m_enableDOF;
-	}
-
-	if (m_enableDOF)
-	{
-		dof.RenderPost(m_pPostTarget);
-		m_pPostTarget = dof.GetPostTarget();
+		sumiE.RenderPost(m_pPostTarget);
+		m_pPostTarget = sumiE.GetPostTarget();
 	}
 
 	if (GAMEINPUT::Instance().KeyPressed(DIK_5))
@@ -848,94 +830,6 @@ void RenderPipe::RenderAll()
 	{
 		fxaa.RenderPost(m_pPostTarget);
 		m_pPostTarget = fxaa.GetPostTarget();
-	}
-
-	if (GAMEINPUT::Instance().KeyPressed(DIK_6))
-	{
-		m_enableDither = !m_enableDither;
-	}
-
-	if (m_enableDither)
-	{
-		ditherHalfToning.RenderPost(m_pPostTarget);
-		m_pPostTarget = ditherHalfToning.GetPostTarget();
-	}
-
-	if (GAMEINPUT::Instance().KeyPressed(DIK_7))
-	{
-		m_enableColorChange = !m_enableColorChange;
-	}
-
-	if (m_enableColorChange)
-	{
-		colorChange.RenderPost(m_pPostTarget);
-		m_pPostTarget = colorChange.GetPostTarget();
-	}
-
-	if (GAMEINPUT::Instance().KeyPressed(DIK_8))
-	{
-		m_enableEdgeRecognize = !m_enableEdgeRecognize;
-	}
-
-	if (m_enableEdgeRecognize)
-	{
-		edgeRecognize.RenderPost(m_pPostTarget);
-		m_pPostTarget = edgeRecognize.GetPostTarget();
-		
-		//fxaa.RenderPost(m_pPostTarget);
-		//m_pPostTarget = fxaa.GetPostTarget();
-		//============================================
-		edgeChange.RenderPost(m_pPostTarget);
-		m_pTempTarget = edgeChange.GetPostTarget();
-
-		fxaa.RenderPost(m_pTempTarget);
-		m_pTempTarget = fxaa.GetPostTarget();
-
-		edgeChange.RenderPost(m_pTempTarget);
-		m_pTempTarget = edgeChange.GetPostTarget();
-
-// 		fxaa.RenderPost(m_pTempTarget);
-// 		m_pTempTarget = fxaa.GetPostTarget();
-// 
-// 		edgeChange.RenderPost(m_pTempTarget);
-// 		m_pTempTarget = edgeChange.GetPostTarget();
-// 
-// 		fxaa.RenderPost(m_pTempTarget);
-// 		m_pTempTarget = fxaa.GetPostTarget();
-// 
-// 		edgeChange.RenderPost(m_pTempTarget);
-// 		m_pTempTarget = edgeChange.GetPostTarget();
-		//=================================================
-		/*
-		edgeChange.RenderPost(m_pPostTarget);
-		m_pPostTarget = edgeChange.GetPostTarget();
-
-		fxaa.RenderPost(m_pPostTarget);
-		m_pPostTarget = fxaa.GetPostTarget();
-
-		edgeChange.RenderPost(m_pPostTarget);
-		m_pPostTarget = edgeChange.GetPostTarget();
-
-		fxaa.RenderPost(m_pPostTarget);
-		m_pPostTarget = fxaa.GetPostTarget();
-
-		edgeChange.RenderPost(m_pPostTarget);
-		m_pPostTarget = edgeChange.GetPostTarget();
-
-		fxaa.RenderPost(m_pPostTarget);
-		m_pPostTarget = fxaa.GetPostTarget();
-
-		edgeChange.RenderPost(m_pPostTarget);
-		m_pPostTarget = edgeChange.GetPostTarget();
-		*/
-		sumiE.SetEdgeImage(m_pTempTarget);
-		sumiE.RenderPost(m_pPostTarget);
-		m_pPostTarget = sumiE.GetPostTarget();
-
-		fxaa.RenderPost(m_pPostTarget);
-		m_pPostTarget = fxaa.GetPostTarget();
-		//npr.RenderPost(m_pPostTarget, m_pMainColorTarget);
-		//m_pPostTarget = npr.GetPostTarget();
 	}
 
 #ifdef RENDER_DEBUG

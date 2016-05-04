@@ -582,7 +582,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		m_SynthesisEffect->SetFloat("g_zFar", CameraParam::zFar);
 
 		//控制内部黑色的程度
-		m_SynthesisEffect->SetFloat("g_AlphaFactor", 0.7);
+		m_SynthesisEffect->SetFloat("g_AlphaFactor", 0.5);
 		m_SynthesisEffect->CommitChanges();
 
 

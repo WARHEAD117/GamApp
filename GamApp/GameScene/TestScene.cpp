@@ -125,7 +125,7 @@ void TestScene::OnLoad()
 	}
 
 	//==========================================================================================
-	if (false)
+	if (true)
 	{
 		deerEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\deer\\deer.X");
 
@@ -159,7 +159,7 @@ void TestScene::OnLoad()
 	}
 	
 	//==========================================================================================
-	if (false)
+	if (true)
 	{
 		mountainEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\farMountain2.X");
 		//mountainEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\plane2.X");
@@ -206,22 +206,26 @@ void TestScene::OnLoad()
 	}
 
 	//==========================================================================================
-	bunnyEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\bunny.X");
-	
-	Material bunnyMat;
-	bunnyMat.Thickness = D3DXVECTOR4(0.7, 1, 1, 1);
-	bunnyMat.MatIndex = 1;
-	bunnyEntity->SetMaterial(&bunnyMat);
+	if (false)
+	{
 
-	D3DXMATRIX bunnyM;
-	D3DXVECTOR3 bunnyMV = D3DXVECTOR3(-12, 0, 20.5f);
-	D3DXMatrixTranslation(&bunnyM, bunnyMV.x, bunnyMV.y, bunnyMV.z);
-	D3DXVECTOR3 bunnySV = D3DXVECTOR3(0.5f, 0.5f, 0.5f);
-	D3DXMATRIX bunnyS;
-	D3DXMatrixScaling(&bunnyS, bunnySV.x, bunnySV.y, bunnySV.z);
-	D3DXMATRIX bunnyRotMat;
-	D3DXMatrixRotationY(&bunnyRotMat, -0.5f * D3DX_PI);
-	bunnyEntity->SetWorldTransform(bunnyRotMat * bunnyS * bunnyM);
+		bunnyEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\bunny.X");
+
+		Material bunnyMat;
+		bunnyMat.Thickness = D3DXVECTOR4(0.7, 1, 1, 1);
+		bunnyMat.MatIndex = 1;
+		bunnyEntity->SetMaterial(&bunnyMat);
+
+		D3DXMATRIX bunnyM;
+		D3DXVECTOR3 bunnyMV = D3DXVECTOR3(-12, 0, 20.5f);
+		D3DXMatrixTranslation(&bunnyM, bunnyMV.x, bunnyMV.y, bunnyMV.z);
+		D3DXVECTOR3 bunnySV = D3DXVECTOR3(0.5f, 0.5f, 0.5f);
+		D3DXMATRIX bunnyS;
+		D3DXMatrixScaling(&bunnyS, bunnySV.x, bunnySV.y, bunnySV.z);
+		D3DXMATRIX bunnyRotMat;
+		D3DXMatrixRotationY(&bunnyRotMat, -0.5f * D3DX_PI);
+		bunnyEntity->SetWorldTransform(bunnyRotMat * bunnyS * bunnyM);
+	}
 
 	//==========================================================================================
 	if (false)
@@ -313,7 +317,7 @@ void TestScene::OnLoad()
 
 	}
 	//==========================================================================================
-	if (false)
+	if (true)
 	{
 		houseEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\city\\city.X");
 		houseEntity->SetTexture("");
@@ -328,7 +332,7 @@ void TestScene::OnLoad()
 		Material houseMat;
 		houseMat.Thickness = D3DXVECTOR4(0.4, 2, 0.5, 1);
 		houseMat.MatIndex = 3;
-		//houseEntity->SetMaterial(&houseMat);
+		houseEntity->SetMaterial(&houseMat);
 	}
 
 	if (false)

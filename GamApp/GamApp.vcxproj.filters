@@ -190,9 +190,6 @@
     <ClInclude Include="RenderSystem\RenderPipeLine\PostEffect\SSGI.h">
       <Filter>RenderSystem\PostEffect</Filter>
     </ClInclude>
-    <ClInclude Include="System\common.fx">
-      <Filter>System</Filter>
-    </ClInclude>
     <ClInclude Include="RenderSystem\RenderPipeLine\PostEffect\EdgeRecognize.h">
       <Filter>RenderSystem\PostEffect</Filter>
     </ClInclude>
@@ -348,9 +345,6 @@
     <FxCompile Include="System\commonDiffuse.fx">
       <Filter>System</Filter>
     </FxCompile>
-    <FxCompile Include="System\BankBRDFLight.fx">
-      <Filter>System</Filter>
-    </FxCompile>
     <FxCompile Include="System\DeferredDiffuse.fx">
       <Filter>System</Filter>
     </FxCompile>
@@ -412,6 +406,9 @@
       <Filter>System</Filter>
     </FxCompile>
     <FxCompile Include="System\DeferredSkinnedGBuffer.fx">
+      <Filter>System</Filter>
+    </FxCompile>
+    <FxCompile Include="System\BankBRDFLight.fx">
       <Filter>System</Filter>
     </FxCompile>
   </ItemGroup>

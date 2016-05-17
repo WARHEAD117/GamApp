@@ -195,12 +195,12 @@ float4 Laplace_Edge(float2 TexCoord)
 		{
 			if (laplace > 0.4)
 			{
-				return float4(1, 1, 1, 1);
+				//return float4(1, 1, 1, 1);
 			}
 		}
 	}
 
-	if (laplace < -0.4)
+	if (laplace < -0.6)
 		isEdge = true;
 	else
 		isEdge = false;
@@ -209,6 +209,13 @@ float4 Laplace_Edge(float2 TexCoord)
 	for (int i = 1; i< 5; i++)
 	{
 		if (laplaceN[i]  > 0.6)
+		{
+			edgeList[i] = true;
+		}
+	}
+	for (int i = 1; i< 5; i++)
+	{
+		if (laplace > 0.4)
 		{
 			edgeList[i] = true;
 		}

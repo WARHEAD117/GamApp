@@ -44,6 +44,8 @@ Entity* grass3Entity;
 
 Entity* houseEntity;
 
+Entity* chestEntity;
+
 Entity* sponzaEntity;
 
 
@@ -125,7 +127,7 @@ void TestScene::OnLoad()
 	}
 
 	//==========================================================================================
-	if (true)
+	if (false)
 	{
 		deerEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\deer\\deer.X");
 
@@ -159,7 +161,7 @@ void TestScene::OnLoad()
 	}
 	
 	//==========================================================================================
-	if (true)
+	if (false)
 	{
 		mountainEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\farMountain2.X");
 		//mountainEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\plane2.X");
@@ -317,7 +319,7 @@ void TestScene::OnLoad()
 
 	}
 	//==========================================================================================
-	if (true)
+	if (false)
 	{
 		houseEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\city\\city.X");
 		houseEntity->SetTexture("");
@@ -334,7 +336,127 @@ void TestScene::OnLoad()
 		houseMat.MatIndex = 3;
 		houseEntity->SetMaterial(&houseMat);
 	}
+	//==========================================================================================
+	if (false)
+	{
+		chestEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\chest\\Chest.X");
+		//chestEntity->SetTexture("Res\\Mesh\\chest\\chest.jpg");
+		chestEntity->SetTexture("");
+		D3DXMATRIX chestM;
+		D3DXVECTOR3 chestMove = D3DXVECTOR3(-12, 0, 28.5f);
+		D3DXMatrixTranslation(&chestM, chestMove.x, chestMove.y, chestMove.z);
+		D3DXMATRIX chestS;
+		D3DXVECTOR3 chestSV = D3DXVECTOR3(10, 10, 10);
+		D3DXMatrixScaling(&chestS, chestSV.x, chestSV.y, chestSV.z);
+		chestEntity->SetWorldTransform(chestS * chestM);
 
+		Material chestMat;
+		chestMat.Thickness = D3DXVECTOR4(0.5, 1, 1, 1);
+		chestMat.MatIndex = 1;
+		chestEntity->SetMaterial(&chestMat);
+	}
+	//==========================================================================================
+	if (false)
+	{
+
+		Entity* cowEntity;
+		cowEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\cow\\cow.X");
+		//cowEntity->SetTexture("Res\\Mesh\\cow\\cow.jpg");
+		cowEntity->SetTexture("");
+		D3DXMATRIX cowM;
+		D3DXVECTOR3 cowMove = D3DXVECTOR3(-12, 0, 22.5f);
+		D3DXMatrixTranslation(&cowM, cowMove.x, cowMove.y, cowMove.z);
+		D3DXMATRIX cowS;
+		D3DXVECTOR3 cowSV = D3DXVECTOR3(1, 1, 1);
+		D3DXMatrixScaling(&cowS, cowSV.x, cowSV.y, cowSV.z);
+		cowEntity->SetWorldTransform(cowS * cowM);
+
+		Material cowMat;
+		cowMat.Thickness = D3DXVECTOR4(1, 1, 1, 1);
+		cowMat.MatIndex = 1;
+		cowEntity->SetMaterial(&cowMat);
+	}
+	//==========================================================================================
+	if (true)
+	{
+
+		Entity* goatEntity;
+		goatEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\anim\\goat.X");
+		//goatEntity->SetTexture("Res\\Mesh\\goat\\goat.jpg");
+		goatEntity->SetTexture("");
+		D3DXMATRIX goatM;
+		D3DXVECTOR3 goatMove = D3DXVECTOR3(-12, 0, 22.5f);
+		D3DXMatrixTranslation(&goatM, goatMove.x, goatMove.y, goatMove.z);
+		D3DXMATRIX goatS;
+		D3DXVECTOR3 goatSV = D3DXVECTOR3(1, 1, 1);
+		D3DXMatrixScaling(&goatS, goatSV.x, goatSV.y, goatSV.z);
+		goatEntity->SetWorldTransform(goatS * goatM);
+
+		Material goatMat;
+		goatMat.Thickness = D3DXVECTOR4(1, 1, 1, 1);
+		goatMat.MatIndex = 1;
+		goatEntity->SetMaterial(&goatMat);
+	}
+	if (false)
+	{
+
+		Entity* craneEntity;
+		craneEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\Anim\\crane.X");
+		//craneEntity->SetTexture("Res\\Mesh\\crane\\crane.jpg");
+		craneEntity->SetTexture("");
+		D3DXMATRIX craneM;
+		D3DXVECTOR3 craneMove = D3DXVECTOR3(-12, 0, 16.5f);
+		D3DXMatrixTranslation(&craneM, craneMove.x, craneMove.y, craneMove.z);
+		D3DXMATRIX craneS;
+		D3DXVECTOR3 craneSV = D3DXVECTOR3(1, 1, 1);
+		D3DXMatrixScaling(&craneS, craneSV.x, craneSV.y, craneSV.z);
+		craneEntity->SetWorldTransform(craneS * craneM);
+
+		Material craneMat;
+		craneMat.Thickness = D3DXVECTOR4(0.7, 1, 1, 1);
+		craneMat.MatIndex = 1;
+		craneEntity->SetMaterial(&craneMat);
+	}
+	if (false)
+	{
+
+		Entity* EagleEntity;
+		EagleEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\Anim\\Eagle.X");
+		//EagleEntity->SetTexture("Res\\Mesh\\Eagle\\Eagle.jpg");
+		EagleEntity->SetTexture("");
+		D3DXMATRIX EagleM;
+		D3DXVECTOR3 EagleMove = D3DXVECTOR3(-12, 0, 10.5f);
+		D3DXMatrixTranslation(&EagleM, EagleMove.x, EagleMove.y, EagleMove.z);
+		D3DXMATRIX EagleS;
+		D3DXVECTOR3 EagleSV = D3DXVECTOR3(1, 1, 1);
+		D3DXMatrixScaling(&EagleS, EagleSV.x, EagleSV.y, EagleSV.z);
+		EagleEntity->SetWorldTransform(EagleS * EagleM);
+
+		Material EagleMat;
+		EagleMat.Thickness = D3DXVECTOR4(1, 1, 1, 1);
+		EagleMat.MatIndex = 1;
+		EagleEntity->SetMaterial(&EagleMat);
+	}
+	if (false)
+	{
+
+		Entity* HenEntity;
+		HenEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\Anim\\Hen.X");
+		//HenEntity->SetTexture("Res\\Mesh\\Hen\\Hen.jpg");
+		HenEntity->SetTexture("");
+		D3DXMATRIX HenM;
+		D3DXVECTOR3 HenMove = D3DXVECTOR3(-12, 0, 4.5f);
+		D3DXMatrixTranslation(&HenM, HenMove.x, HenMove.y, HenMove.z);
+		D3DXMATRIX HenS;
+		D3DXVECTOR3 HenSV = D3DXVECTOR3(1, 1, 1);
+		D3DXMatrixScaling(&HenS, HenSV.x, HenSV.y, HenSV.z);
+		HenEntity->SetWorldTransform(HenS * HenM);
+
+		Material HenMat;
+		HenMat.Thickness = D3DXVECTOR4(0.75, 1, 1, 1);
+		HenMat.MatIndex = 1;
+		HenEntity->SetMaterial(&HenMat);
+	}
 	if (false)
 	{
 

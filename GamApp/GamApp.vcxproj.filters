@@ -69,7 +69,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="DrawSkyBox.h" />
     <ClInclude Include="GameSystem\Camera\Camera.h">
       <Filter>GameSystem\Camera</Filter>
     </ClInclude>
@@ -192,7 +191,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="DrawSkyBox.cpp" />
     <ClCompile Include="GameSystem\Camera\Camera.cpp">
       <Filter>GameSystem\Camera</Filter>
     </ClCompile>

@@ -1,6 +1,6 @@
 #pragma once
 #include "CommonUtil\\GlobalHeader.h"
-
+ 
 class GlobalTimer
 {
 public:

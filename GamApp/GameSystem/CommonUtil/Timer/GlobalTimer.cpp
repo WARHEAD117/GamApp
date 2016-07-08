@@ -1,6 +1,6 @@
 #include "GlobalTimer.h"
 
-
+ 
 GlobalTimer::GlobalTimer()
 {
 	mLastFrameDurTime = 0;

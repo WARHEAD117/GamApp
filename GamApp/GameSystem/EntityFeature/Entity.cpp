@@ -1,6 +1,6 @@
 #include "Entity.h"
 #include "RenderPipeLine/RenderPipe.h"
-
+ 
 unsigned int Entity::baseFastIndex = 0;
 Entity::Entity() :
 	fastIndex(++baseFastIndex)

@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 #include <map>
-
+ 
 #include "Singleton.h"
 
 template<class COM>
@@ -28,7 +28,7 @@ void Delete(POINT t)
 	}
 }
 
-//安全释放内存
+//瀹夊叏閲婃斁鍐呭瓨
 #define SafeDelete(p)		{if(p) { delete (p); (p) = NULL;}}
 #define SafeDeleteArray(p)	{if(p) { delete[] (p); (p) = NULL;}}
 #define SafeRelease(p)		{if(p) { (p)->Release();(p) = NULL;}}

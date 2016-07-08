@@ -40,7 +40,7 @@ OutputVS VShader(float4 posL       : POSITION0,
 {
 	OutputVS outVS = (OutputVS)0;
 
-	//×îÖÕÊä³öµÄ¶¥µãÎ»ÖÃ£¨¾­¹ıÊÀ½ç¡¢¹Û²ì¡¢Í¶Ó°¾ØÕó±ä»»£©
+	//æœ€ç»ˆè¾“å‡ºçš„é¡¶ç‚¹ä½ç½®ï¼ˆç»è¿‡ä¸–ç•Œã€è§‚å¯Ÿã€æŠ•å½±çŸ©é˜µå˜æ¢ï¼‰
 	outVS.posWVP = mul(posL, g_WorldViewProj);
 	outVS.normalW = mul(normalL, g_World);
 
@@ -93,7 +93,7 @@ float4 bank_brdf(float3 normalW,
 {
 	float4 specular = float4(0.0, 0.0, 0.0, 0.0);
 
-	//¼ÆËã°ë½ÇÏòÁ¿
+	//è®¡ç®—åŠè§’å‘é‡
 	float3 H = normalize(toEyeDirW - g_LightDir.xyz);
 
 	float3 V = toEyeDirW;
@@ -104,13 +104,13 @@ float4 bank_brdf(float3 normalW,
 	float shininess = 10;
 	if (back)
 	{
-		float3 T = normalize(cross(normalW, -V));   // ¼ÆËã¶¥µãÇĞÏòÁ¿ 
+		float3 T = normalize(cross(normalW, -V));   // è®¡ç®—é¡¶ç‚¹åˆ‡å‘é‡ 
 
 			float a = dot(g_LightDir.xyz, T);
 
 		float b = dot(V, T);
 
-		float c = sqrt(1 - pow(a, 2.0))* sqrt(1 - pow(b, 2.0)) - a*b; // ¼ÆËã Bank BRDF ÏµÊı 
+		float c = sqrt(1 - pow(a, 2.0))* sqrt(1 - pow(b, 2.0)) - a*b; // è®¡ç®— Bank BRDF ç³»æ•° 
 
 		float brdf = Ks* pow(c, shininess);
 
@@ -125,20 +125,20 @@ float4 PShader(float2 TexCoord : TEXCOORD0,
 				float3 NormalW : NORMAL0,
 				float3 ToEyeDirW : TEXCOORD1) : COLOR
 {
-	//ÎÆÀí²ÉÑù
+	//çº¹ç†é‡‡æ ·
 	float4 Texture = tex2D(g_sampleTexture, TexCoord);
 
 
-	//¼ÆËã»·¾³¹â
-	float4 Ambient = lightAmbient * g_AmbientMaterial;  //²ÄÖÊ¿ÉÀí½âÎª·´ÉäÏµÊı
+	//è®¡ç®—ç¯å¢ƒå…‰
+	float4 Ambient = lightAmbient * g_AmbientMaterial;  //æè´¨å¯ç†è§£ä¸ºåå°„ç³»æ•°
 
 	NormalW = normalize(NormalW);
 	ToEyeDirW = normalize(ToEyeDirW);
-	//¼ÆËãÂş·´Éä
+	//è®¡ç®—æ¼«åå°„
 	float DiffuseRatio = max(dot(-g_LightDir.xyz, NormalW),0);
 	float4 Diffuse = lightDiffuse * (g_DiffuseMaterial * DiffuseRatio);
 
-		//¼ÆËã¾µÃæ·´Éä
+		//è®¡ç®—é•œé¢åå°„
 
 
 
@@ -146,9 +146,9 @@ float4 PShader(float2 TexCoord : TEXCOORD0,
 
 		Specular = bank_brdf(NormalW, ToEyeDirW, Diffuse);
 		//Specular = tex_brdf(NormalW, ToEyeDirW, float4(1.0f, 1.0f, 1.0f, 1.0f));
-		//»ìºÏ¹âÕÕºÍÎÆÀí
+		//æ··åˆå…‰ç…§å’Œçº¹ç†
 		float4 finalColor = Specular + Texture * Diffuse;// +Ambient*0.1f;
-		//Êä³öÑÕÉ«
+		//è¾“å‡ºé¢œè‰²
 		return finalColor;
 }
 

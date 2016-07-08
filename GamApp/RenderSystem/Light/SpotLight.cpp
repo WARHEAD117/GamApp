@@ -1,6 +1,6 @@
 #include "SpotLight.h"
 #include "D3D9Device.h"
-
+ 
 SpotLight::SpotLight()
 {
 	BuildLightVolume();
@@ -18,7 +18,7 @@ void SpotLight::BuildLightVolume()
 	SafeRelease(m_pBufferVex);
 	SafeRelease(m_pBufferIndex);
 
-	//�ƹ�ʵ�ʷ�ΧӦ���ǵƹ���������򣬸���1/cos(PI/(��������+1))������뾶�Ŵ�ı�������0.2����ֹ�����������ʣ�
+	//灯光实际范围应该是灯光体的内切球，根据1/cos(PI/(经线数量+1))来计算半径放大的比例，加0.2来防止误差（这里有疑问）
 	int sphereSlices = m_SegmentCount;
 	float factor = 1.0f / cos(D3DX_PI / (sphereSlices));
 	//D3DXCreateSphere(RENDERDEVICE::Instance().g_pD3DDevice, 1 * factor, sphereSlices, sphereSlices, &m_lightVolume, NULL);
@@ -41,14 +41,14 @@ void SpotLight::BuildLightVolume()
 		D3DUSAGE_WRITEONLY, D3DFMT_INDEX32, D3DPOOL_MANAGED, &m_pBufferIndex, 0);
 	DWORD* indices = 0;
 	m_pBufferIndex->Lock(0, 0, (void**)&indices, 0);
-	//ȫ����ʱ����ƣ����ӳ���Ⱦʱ�޳����棬�Ϳ��Ա�֤�ƹ����Ⱦ����޳���ͳһ��
+	//全部逆时针绘制，在延迟渲染时剔除正面，就可以保证灯光和渲染面的剔除是统一的
 
 	LIGHTVOLUMEVERTEX* pVertices;
 	m_pBufferVex->Lock(0, 4 * sizeof(LIGHTVOLUMEVERTEX), (void**)&pVertices, 0);
 
 	pVertices->position = D3DXVECTOR3(0, 0, 0);
 	pVertices++;
-	//��ʼ�����㻺����
+	//初始化顶点缓冲区
 	//==========================
 	for (int i = 0; i < segmentCount; i++)
 	{

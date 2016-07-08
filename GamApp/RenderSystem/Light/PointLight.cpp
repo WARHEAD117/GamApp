@@ -1,7 +1,7 @@
 #include "PointLight.h"
 #include "D3D9Device.h"
 #include "RenderUtil/RenderUtil.h"
-
+ 
 PointLight::PointLight()
 {
 	BuildLightVolume();
@@ -19,7 +19,7 @@ void PointLight::BuildLightVolume()
 	SafeRelease(m_pBufferVex);
 	SafeRelease(m_pBufferIndex);
 
-	//µÆ¹âÊµ¼Ê·¶Î§Ó¦¸ÃÊÇµÆ¹âÌåµÄÄÚÇĞÇò£¬¸ù¾İ1/cos(PI/(¾­ÏßÊıÁ¿+1))À´¼ÆËã°ë¾¶·Å´óµÄ±ÈÀı£¬¼Ó0.2À´·ÀÖ¹Îó²î£¨ÕâÀïÓĞÒÉÎÊ£©
+	//ç¯å…‰å®é™…èŒƒå›´åº”è¯¥æ˜¯ç¯å…‰ä½“çš„å†…åˆ‡çƒï¼Œæ ¹æ®1/cos(PI/(ç»çº¿æ•°é‡+1))æ¥è®¡ç®—åŠå¾„æ”¾å¤§çš„æ¯”ä¾‹ï¼ŒåŠ 0.2æ¥é˜²æ­¢è¯¯å·®ï¼ˆè¿™é‡Œæœ‰ç–‘é—®ï¼‰
 	int sphereSlices = 16;
 	float factor = 1.0f / cos(D3DX_PI / (sphereSlices));
 	D3DXCreateSphere(RENDERDEVICE::Instance().g_pD3DDevice, 1 * factor, sphereSlices, sphereSlices, &m_lightVolume, NULL);

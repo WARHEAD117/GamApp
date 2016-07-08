@@ -8,7 +8,7 @@
 #include "Light/PointLight.h"
 #include "Light/SpotLight.h"
 #include "Light/LightManager.h"
-
+ 
 TestScene::TestScene()
 {
 }

@@ -80,7 +80,7 @@ OutputVS VShader(float4 posL       : POSITION0,
 {
 	OutputVS outVS = (OutputVS)0;
 
-	//×îÖÕÊä³öµÄ¶¥µãÎ»ÖÃ£¨¾­¹ıÊÀ½ç¡¢¹Û²ì¡¢Í¶Ó°¾ØÕó±ä»»£©
+	//æœ€ç»ˆè¾“å‡ºçš„é¡¶ç‚¹ä½ç½®ï¼ˆç»è¿‡ä¸–ç•Œã€è§‚å¯Ÿã€æŠ•å½±çŸ©é˜µå˜æ¢ï¼‰
 	outVS.posWVP = mul(posL, g_WorldViewProj);
 
 	outVS.TexCoord = TexCoord;
@@ -116,7 +116,7 @@ float4 ComputeCoC(float2 TexCoord : TEXCOORD0) : COLOR
 
 	const half sensorHeight = 0.024f;
 
-	//ÕâÀïÒªÑ¹ËõCoC£¬·ñÔòÖ±½Ó½ØÈ¡»áµ¼ÖÂ²ĞÁôµÄÇåÎúÇø¼ä¹ıĞ¡£¨ÎªÊ²Ã´£¿£©
+	//è¿™é‡Œè¦å‹ç¼©CoCï¼Œå¦åˆ™ç›´æ¥æˆªå–ä¼šå¯¼è‡´æ®‹ç•™çš„æ¸…æ™°åŒºé—´è¿‡å°ï¼ˆä¸ºä»€ä¹ˆï¼Ÿï¼‰
 	const half percentOfSensor = CoC / sensorHeight * g_scale;
 	
 	half MaxCoC = 1.0f;

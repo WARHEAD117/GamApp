@@ -41,13 +41,13 @@ void DOF::CreatePostEffect()
 }
 
 
-//Í¨¹â¿×Ö±¾¶£¨µ¥Î»£ºm£© ¹âÈ¦Öµ=½¹¾à/Í¨¹â¿×Ö±¾¶
+//é€šå…‰å­”ç›´å¾„ï¼ˆå•ä½ï¼šmï¼‰ å…‰åœˆå€¼=ç„¦è·/é€šå…‰å­”ç›´å¾„
 float g_aperture = 0.135f;
-//½¹¾à(µ¥Î»£ºmm)
+//ç„¦è·(å•ä½ï¼šmm)
 float g_focallength = 135;
-//¾Û½¹¾àÀë£¨µ¥Î»£ºm£©
+//èšç„¦è·ç¦»ï¼ˆå•ä½ï¼šmï¼‰
 float g_planeinfocus = 10;
-//Ä£ºý·¶Î§Ëõ·ÅÏµÊý(ÎªÊ²Ã´ÐèÒªËõ·ÅÏµÊý£¿Ô­Ê¼ÂÛÎÄ²»´øÕâ¸öÏµÊý¾ÍÐÐ)
+//æ¨¡ç³ŠèŒƒå›´ç¼©æ”¾ç³»æ•°(ä¸ºä»€ä¹ˆéœ€è¦ç¼©æ”¾ç³»æ•°ï¼ŸåŽŸå§‹è®ºæ–‡ä¸å¸¦è¿™ä¸ªç³»æ•°å°±è¡Œ)
 float g_scale = 0.04f;
 
 void DOF::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
@@ -120,7 +120,7 @@ void DOF::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	m_postEffect->Begin(&numPasses, 0);
 
 	//=============================================================================================================
-	//alphaÍ¨µÀ±£´æcocµÄÖ÷ÎÆÀí
+	//alphaé€šé“ä¿å­˜cocçš„ä¸»çº¹ç†
 	PDIRECT3DSURFACE9 pSurfCoC = NULL;
 	m_ColorCoCBuffer->GetSurfaceLevel(0, &pSurfCoC);
 
@@ -139,7 +139,7 @@ void DOF::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 	m_postEffect->EndPass();
 	//=============================================================================================================
-	//Ë®Æ½Ä£ºý
+	//æ°´å¹³æ¨¡ç³Š
 	PDIRECT3DSURFACE9 pSurfColorHorizontal = NULL;
 	m_ColorHorizontal->GetSurfaceLevel(0, &pSurfColorHorizontal);
 
@@ -156,7 +156,7 @@ void DOF::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 	SafeRelease(pSurfColorHorizontal);
 	//=============================================================================================================
-	//µÚÒ»²½Ïò×óÆ«ÒÆ
+	//ç¬¬ä¸€æ­¥å‘å·¦åç§»
 	PDIRECT3DSURFACE9 pSurfColorStep1 = NULL;
 	m_ColorStep1->GetSurfaceLevel(0, &pSurfColorStep1);
 
@@ -173,7 +173,7 @@ void DOF::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 	SafeRelease(pSurfColorStep1);
 	//=============================================================================================================
-	//µÚ¶þ²½ÏòÓÒÆ«ÒÆ
+	//ç¬¬äºŒæ­¥å‘å³åç§»
 	PDIRECT3DSURFACE9 pSurfColorStep2 = NULL;
 	m_ColorStep2->GetSurfaceLevel(0, &pSurfColorStep2);
 
@@ -190,7 +190,7 @@ void DOF::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 	SafeRelease(pSurfColorStep2);
 	//=============================================================================================================
-	//ºÏ²¢Ä£ºý
+	//åˆå¹¶æ¨¡ç³Š
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pPostSurface);
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 

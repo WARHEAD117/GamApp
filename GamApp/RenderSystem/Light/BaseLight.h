@@ -1,9 +1,7 @@
 #pragma once
 #include "CommonUtil/GlobalHeader.h"
 #include "CommonUtil/D3D9Header.h"
-
-
-
+ 
 #include "Transform/Transform.h"
 
 class RenderUtil;
@@ -43,7 +41,7 @@ public:
 	virtual void RebuildViewMatrix();
 
 	virtual D3DXMATRIX GetLightVolumeTransform();
-	//»ñÈ¡ÓÃÀ´¼ÆËãÏà»úµ½µÆ¹âÌå¶¥µãµÄÏòÁ¿µÄ¾ØÕó
+	//è·å–ç”¨æ¥è®¡ç®—ç›¸æœºåˆ°ç¯å…‰ä½“é¡¶ç‚¹çš„å‘é‡çš„çŸ©é˜µ
 	virtual D3DXMATRIX GetToViewDirMatrix();
 
 	virtual void SetUseShadow(bool useShadow);
@@ -80,8 +78,8 @@ public:
 	void SetLightRange(float range);
 
 	D3DXVECTOR2 GetLightCosHalfAngle();
-	D3DXVECTOR2 GetLightAngle(); //Íâ½Ç¡¢ÄÚ½Ç
-	//Á½¸ö·ÖÁ¿·Ö±ğÊÇÓÃ½Ç¶È±íÊ¾µÄÍâ½ÇºÍÄÚ½Ç
+	D3DXVECTOR2 GetLightAngle(); //å¤–è§’ã€å†…è§’
+	//ä¸¤ä¸ªåˆ†é‡åˆ†åˆ«æ˜¯ç”¨è§’åº¦è¡¨ç¤ºçš„å¤–è§’å’Œå†…è§’
 	void SetLightAngle(D3DXVECTOR2 angle);
 
 	D3DXVECTOR4 GetLightAttenuation();

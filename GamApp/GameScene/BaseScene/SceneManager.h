@@ -2,7 +2,7 @@
 #include "CommonUtil/GlobalHeader.h"
 #include "CommonUtil/Singleton.h"
 #include "BaseScene.h"
-
+ 
 class SceneManager
 {
 public:

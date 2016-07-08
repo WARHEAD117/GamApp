@@ -1,6 +1,6 @@
 #pragma once
 #include "Light/BaseLight.h"
-
+ 
 class SpotLight : 
 	public BaseLight
 {
@@ -17,7 +17,7 @@ public:
 	virtual void RebuildViewMatrix();
 
 	virtual D3DXMATRIX GetLightVolumeTransform();
-	//获取用来计算相机到灯光体顶点的向量的矩阵
+	//鑾峰彇鐢ㄦ潵璁＄畻鐩告満鍒扮伅鍏変綋椤剁偣鐨勫悜閲忕殑鐭╅樀
 	virtual D3DXMATRIX GetToViewDirMatrix();
 
 	virtual void SetUseShadow(bool useShadow);

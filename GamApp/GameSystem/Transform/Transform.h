@@ -1,4 +1,4 @@
-#pragma once
+#pragma once 
 #include "CommonUtil/GlobalHeader.h"
 #include "CommonUtil/D3D9Header.h"
 

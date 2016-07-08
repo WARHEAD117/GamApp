@@ -75,7 +75,7 @@ OutputVS VShader(float4 posL       : POSITION0,
 {
 	OutputVS outVS = (OutputVS)0;
 
-	//×îÖÕÊä³öµÄ¶¥µãÎ»ÖÃ£¨¾­¹ıÊÀ½ç¡¢¹Û²ì¡¢Í¶Ó°¾ØÕó±ä»»£©
+	//æœ€ç»ˆè¾“å‡ºçš„é¡¶ç‚¹ä½ç½®ï¼ˆç»è¿‡ä¸–ç•Œã€è§‚å¯Ÿã€æŠ•å½±çŸ©é˜µå˜æ¢ï¼‰
 	outVS.posWVP = mul(posL, g_WorldViewProj);
 
 	outVS.TexCoord = TexCoord;
@@ -101,17 +101,17 @@ float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
 {
 	const float2 vec[4] = { float2(1, 0), float2(-1, 0),float2(0, 1), float2(0, -1) };
 	
-	//¹Û²ì¿Õ¼äÎ»ÖÃ
+	//è§‚å¯Ÿç©ºé—´ä½ç½®
 	float3 p = GetPosition(TexCoord, g_samplePosition);
 
-	//Éî¶ÈÖØ½¨µÄÎ»ÖÃ»áÓĞÎó²î£¬×îÔ¶´¦µÄÎó²î»áµ¼ÖÂ±³¾°±ä»Ò£¬ËùÒÔÒªÏû³ıÓ°Ïì
+	//æ·±åº¦é‡å»ºçš„ä½ç½®ä¼šæœ‰è¯¯å·®ï¼Œæœ€è¿œå¤„çš„è¯¯å·®ä¼šå¯¼è‡´èƒŒæ™¯å˜ç°ï¼Œæ‰€ä»¥è¦æ¶ˆé™¤å½±å“
 	if (p.z > g_zFar)
 		return float4(1, 1, 1, 1);
 
-	//¹Û²ì¿Õ¼ä·¨Ïß
+	//è§‚å¯Ÿç©ºé—´æ³•çº¿
 	float3 n = GetNormal(TexCoord, g_sampleNormal);
 	
-	//Ëæ»ú·¨Ïß
+	//éšæœºæ³•çº¿
 	float2 rand = getRandom(TexCoord);
 	float ao = 0.0f;
 	float invDepth = 1 - p.z / g_zFar;
@@ -135,7 +135,7 @@ float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
 
 	ao /= (float)iterations*4.0;
 	//**END**//  
-	//Do stuff here with your occlusion value ¡°ao¡±: modulate ambient lighting,  write it to a buffer for later //use, etc. 
+	//Do stuff here with your occlusion value â€œaoâ€: modulate ambient lighting,  write it to a buffer for later //use, etc. 
 	return float4(1 - ao, 1 - ao, 1 - ao, 1.0f);
 }
 

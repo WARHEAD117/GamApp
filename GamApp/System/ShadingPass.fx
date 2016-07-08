@@ -56,7 +56,7 @@ OutputVS VShader(float4 posL       : POSITION0,
 {
 	OutputVS outVS = (OutputVS)0;
 
-	//×îÖÕÊä³öµÄ¶¥µãÎ»ÖÃ£¨¾­¹ıÊÀ½ç¡¢¹Û²ì¡¢Í¶Ó°¾ØÕó±ä»»£©
+	//æœ€ç»ˆè¾“å‡ºçš„é¡¶ç‚¹ä½ç½®ï¼ˆç»è¿‡ä¸–ç•Œã€è§‚å¯Ÿã€æŠ•å½±çŸ©é˜µå˜æ¢ï¼‰
 	outVS.posWVP = mul(posL, g_WorldViewProj);
 
 	outVS.TexCoord = TexCoord;
@@ -66,31 +66,31 @@ OutputVS VShader(float4 posL       : POSITION0,
 
 float4 ShadingPass(float2 TexCoord : TEXCOORD0) : COLOR
 {
-	//²ÉÑù¹âÕÕ½á¹û
+	//é‡‡æ ·å…‰ç…§ç»“æœ
 	float4 DiffuseLightResult = tex2D(g_sampleDiffuseLight, TexCoord);
 	float4 SpecularLightResult = tex2D(g_sampleSpecularLight, TexCoord);
 
 	float4 diffuseLight = float4(DiffuseLightResult.xyz, 1.0f);
 	float4 specularLight = float4(SpecularLightResult.xyz, 1.0f);
 
-	//ÎÆÀí²ÉÑù
+	//çº¹ç†é‡‡æ ·
 	float4 DiffuseBuffer = tex2D(g_sampleDiffuse, TexCoord);
-	//ÎÆÀíÑÕÉ«
+	//çº¹ç†é¢œè‰²
 	float4 Texture = float4(DiffuseBuffer.rgb, 1.0f);
-	//¸ß¹âÇ¿¶È
+	//é«˜å…‰å¼ºåº¦
 	float  Specularintensity = DiffuseBuffer.a;
 
-	//¼ÆËã×îÖÕ¹âÕÕ
+	//è®¡ç®—æœ€ç»ˆå…‰ç…§
 	return Texture * diffuseLight + specularLight * Specularintensity;
 }
 
 technique DeferredRender
 {
-	pass p0 //×ÅÉ«
+	pass p0 //ç€è‰²
 	{
 		vertexShader = compile vs_3_0 VShader();
 		pixelShader = compile ps_3_0 ShadingPass();
-		AlphaBlendEnable = false;                        //ÉèÖÃäÖÈ¾×´Ì¬        
+		AlphaBlendEnable = false;                        //è®¾ç½®æ¸²æŸ“çŠ¶æ€        
 		//SrcBlend = ZERO;
 		//DestBlend = SrcColor;
 		ColorWriteEnable = 0xFFFFFFFF;

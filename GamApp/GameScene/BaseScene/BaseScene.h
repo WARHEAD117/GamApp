@@ -1,7 +1,7 @@
 #pragma once
 #include "CommonUtil/GlobalHeader.h"
 #include "EntityFeature/EntityManager.h"
-
+ 
 class BaseScene
 {
 public:

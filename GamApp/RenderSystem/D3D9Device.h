@@ -19,8 +19,8 @@ public:
 	LPDIRECT3DTEXTURE9 GetDefaultNormalMap();
 	Material* GetDefaultMaterial();
 
-	LPDIRECT3D9								g_pD3D;       //--Direct3D¶ÔÏóÖ¸Õë
-	LPDIRECT3DDEVICE9						g_pD3DDevice; //--Direct3DµÄÉè±¸
+	LPDIRECT3D9								g_pD3D;       //--Direct3Då¯¹è±¡æŒ‡é’ˆ
+	LPDIRECT3DDEVICE9						g_pD3DDevice; //--Direct3Dçš„è®¾å¤‡
 	D3DPRESENT_PARAMETERS					g_pD3DPP;
 
 	Material								defaultMaterial;

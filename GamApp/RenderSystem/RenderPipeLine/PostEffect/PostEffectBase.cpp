@@ -42,7 +42,7 @@ void PostEffectBase::CreatePostEffect(std::string effectName, D3DFORMAT postTarg
 	VERTEX* pVertices1;
 	m_pBufferVex->Lock(0, 4 * sizeof(VERTEX), (void**)&pVertices1, 0);
 
-	//初始化顶点缓冲区
+	//鍒濆鍖栭《鐐圭紦鍐插尯
 
 	//==========================
 	pVertices1->position = D3DXVECTOR3(1.0f, -1.0f, 0.0f);

@@ -116,7 +116,7 @@ void RenderPipe::BuildScreenQuad()
 		D3DUSAGE_WRITEONLY, D3DFMT_INDEX32, D3DPOOL_MANAGED, &pScreenQuadIndex, 0);
 	DWORD* indices = 0;
 	pScreenQuadIndex->Lock(0, 0, (void**)&indices, 0);
-	//È«²¿ÄæÊ±Õë»æÖÆ£¬ÔÚÑÓ³ÙäÖÈ¾Ê±ÌÞ³ýÕýÃæ£¬¾Í¿ÉÒÔ±£Ö¤µÆ¹âºÍäÖÈ¾ÃæµÄÌÞ³ýÊÇÍ³Ò»µÄ
+	//å…¨éƒ¨é€†æ—¶é’ˆç»˜åˆ¶ï¼Œåœ¨å»¶è¿Ÿæ¸²æŸ“æ—¶å‰”é™¤æ­£é¢ï¼Œå°±å¯ä»¥ä¿è¯ç¯å…‰å’Œæ¸²æŸ“é¢çš„å‰”é™¤æ˜¯ç»Ÿä¸€çš„
 	indices[0] = 0;
 	indices[1] = 2;
 	indices[2] = 1;
@@ -129,7 +129,7 @@ void RenderPipe::BuildScreenQuad()
 	SCREENQUADVERTEX* pVertices1;
 	pScreenQuadVertex->Lock(0, 4 * sizeof(SCREENQUADVERTEX), (void**)&pVertices1, 0);
 
-	//³õÊ¼»¯¶¥µã»º³åÇø
+	//åˆå§‹åŒ–é¡¶ç‚¹ç¼“å†²åŒº
 
 	//==========================
 	pVertices1->position = D3DXVECTOR3(1.0f, -1.0f, 0.0f);
@@ -160,7 +160,7 @@ void RenderPipe::BuildScreenQuad()
 void RenderPipe::BuildBuffers()
 {
 	//G-Buffer
-	//B-Buffer·ÖÅä
+	//B-Bufferåˆ†é…
 	//					   R8			 G8		      B8			  A8
 	//DiffuseBuffer  |  diffuseR  |   diffuseG  |  diffuseG  |  specularIntensity |
 	//NormalBuffer	 |		normalX		 |	 normalY	     |	  shininess       |
@@ -371,13 +371,13 @@ void RenderPipe::DeferredRender_MultiPass()
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZENABLE, FALSE);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZWRITEENABLE, FALSE);
 
-	//äÖÈ¾µÆ¹â½á¹û
+	//æ¸²æŸ“ç¯å…‰ç»“æžœ
 	DeferredRender_Lighting();
 	
-	//Ê¹ÓÃµÆ¹â½á¹û½øÐÐ×ÅÉ«
+	//ä½¿ç”¨ç¯å…‰ç»“æžœè¿›è¡Œç€è‰²
 	DeferredRender_Shading();
 
-	//»Ö¸´äÖÈ¾×´Ì¬
+	//æ¢å¤æ¸²æŸ“çŠ¶æ€
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZWRITEENABLE, TRUE);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZENABLE, TRUE);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZFUNC, D3DCMP_LESSEQUAL);
@@ -539,40 +539,40 @@ void RenderPipe::DeferredRender_Lighting()
 		}
 
 		//====================================================================================
-		//µÆ¹âµÄÄ£°åÌÞ³ý
-		//Í¨¹ýÄ£°åÌÞ³ýµôµÆ¹âÃ»ÓÐÊµ¼ÊÕÕµ½µÄÏñËØ
+		//ç¯å…‰çš„æ¨¡æ¿å‰”é™¤
+		//é€šè¿‡æ¨¡æ¿å‰”é™¤æŽ‰ç¯å…‰æ²¡æœ‰å®žé™…ç…§åˆ°çš„åƒç´ 
 		//
-		//ÒÑÖªµÄÎÊÌâ£º1.Ö»ÓÐVSµÄ»°£¬PS»áÔõÃ´Ö´ÐÐ£¿ÎªÊ²Ã´ÔÚµã¹âÔ´ÒõÓ°Ö®ºóÖ´ÐÐÃ»ÓÐPS½×¶ÎµÄStencilPass»áµ¼ÖÂStencil½á¹û²»ÕýÈ·£¿¿´ÆðÀ´ÊÇ×ªÁË¾ÅÊ®¶È
-		//			 2.ÎªÊ²Ã´°ÑÒõÓ°Ò²Ó¦ÓÃÄ£°åÌÞ³ýµÄ»°£¬Ð§ÂÊ±ÈÆðÖ»´¦ÀíµÆ¹âÒªµÍ£¿
+		//å·²çŸ¥çš„é—®é¢˜ï¼š1.åªæœ‰VSçš„è¯ï¼ŒPSä¼šæ€Žä¹ˆæ‰§è¡Œï¼Ÿä¸ºä»€ä¹ˆåœ¨ç‚¹å…‰æºé˜´å½±ä¹‹åŽæ‰§è¡Œæ²¡æœ‰PSé˜¶æ®µçš„StencilPassä¼šå¯¼è‡´Stencilç»“æžœä¸æ­£ç¡®ï¼Ÿçœ‹èµ·æ¥æ˜¯è½¬äº†ä¹ååº¦
+		//			 2.ä¸ºä»€ä¹ˆæŠŠé˜´å½±ä¹Ÿåº”ç”¨æ¨¡æ¿å‰”é™¤çš„è¯ï¼Œæ•ˆçŽ‡æ¯”èµ·åªå¤„ç†ç¯å…‰è¦ä½Žï¼Ÿ
 		//====================================================================================
-		//·½Ïò¹â²»Ê¹ÓÃÄ£°åÌÞ³ý
+		//æ–¹å‘å…‰ä¸ä½¿ç”¨æ¨¡æ¿å‰”é™¤
 		if (lt != eDirectionLight && enableStencilLight)
 		{
-			//Çå¿ÕÄ£°å»º³å£¬Ê¹StencilÖµ¾ùÎª0
+			//æ¸…ç©ºæ¨¡æ¿ç¼“å†²ï¼Œä½¿Stencilå€¼å‡ä¸º0
 			RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_STENCIL, 0x0, 1.0f, 0);
 
-			//¿ªÆôÉî¶È
+			//å¼€å¯æ·±åº¦
 			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZENABLE, TRUE);
-			//ÆôÓÃÄ£°å
+			//å¯ç”¨æ¨¡æ¿
 			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_STENCILENABLE, true);
 
 			//===============================================
-			//Step.1 äÖÈ¾µÆ¹âÌåµÄ±³Ãæ
-			//µÚÒ»²½ÐèÒª±ê¼Ç³öÔÚµÆ¹âÕÕÉäºó±íÃæÇ°·½µÄËùÓÐÏñËØ£¬¼´Z-BufferÉî¶ÈÐ¡ÓÚµÆ¹âÌåºó±íÃæÉî¶ÈµÄÏñËØ
-			//ËùÒÔ½«Éî¶È²âÊÔ·½Ê½ÉèÖÃÎªGREATER£¬Ê¹µÆ¹âÌåºó±íÃæÉî¶È´óÓÚZ-BufferÉî¶ÈµÄ²¿·Ö±ê¼ÇÎª1
+			//Step.1 æ¸²æŸ“ç¯å…‰ä½“çš„èƒŒé¢
+			//ç¬¬ä¸€æ­¥éœ€è¦æ ‡è®°å‡ºåœ¨ç¯å…‰ç…§å°„åŽè¡¨é¢å‰æ–¹çš„æ‰€æœ‰åƒç´ ï¼Œå³Z-Bufferæ·±åº¦å°äºŽç¯å…‰ä½“åŽè¡¨é¢æ·±åº¦çš„åƒç´ 
+			//æ‰€ä»¥å°†æ·±åº¦æµ‹è¯•æ–¹å¼è®¾ç½®ä¸ºGREATERï¼Œä½¿ç¯å…‰ä½“åŽè¡¨é¢æ·±åº¦å¤§äºŽZ-Bufferæ·±åº¦çš„éƒ¨åˆ†æ ‡è®°ä¸º1
 			//================================================
 
-			//ÉèÖÃÄ£°åÖµÊ±£¬Ê¹ÓÃ¡°1¡±×÷ÎªÒªÉèÖÃµÄÖµ
+			//è®¾ç½®æ¨¡æ¿å€¼æ—¶ï¼Œä½¿ç”¨â€œ1â€ä½œä¸ºè¦è®¾ç½®çš„å€¼
 			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_STENCILREF, 0x1);
 
-			//Éî¶È´óÓÚZ-BufferÊ±Z-Test½á¹ûÎªPass
+			//æ·±åº¦å¤§äºŽZ-Bufferæ—¶Z-Testç»“æžœä¸ºPass
 			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZFUNC, D3DCMP_GREATER);
-			//Stencil-TestµÄ½á¹ûÓÀÔ¶ÎªPass£¬¼´²»×öStencil²âÊÔ
+			//Stencil-Testçš„ç»“æžœæ°¸è¿œä¸ºPassï¼Œå³ä¸åšStencilæµ‹è¯•
 			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_STENCILFUNC, D3DCMP_ALWAYS);
-			//STENCILPASS´ú±í×ÅÉî¶ÈºÍÄ£°å¾ùÍ¨¹ý£¬¶øÄ£°å²âÊÔÓÀÔ¶Í¨¹ý£¬ËùÒÔ´ú±í×ÅÉî¶È²âÊÔÍ¨¹ý£¬¼´½«Éî¶È´óÓÚZ-BufferµÄÏñËØµÄÄ£°åÉèÖÃÎªÉÏÃæÉèÖÃµÄ¡°1¡±
+			//STENCILPASSä»£è¡¨ç€æ·±åº¦å’Œæ¨¡æ¿å‡é€šè¿‡ï¼Œè€Œæ¨¡æ¿æµ‹è¯•æ°¸è¿œé€šè¿‡ï¼Œæ‰€ä»¥ä»£è¡¨ç€æ·±åº¦æµ‹è¯•é€šè¿‡ï¼Œå³å°†æ·±åº¦å¤§äºŽZ-Bufferçš„åƒç´ çš„æ¨¡æ¿è®¾ç½®ä¸ºä¸Šé¢è®¾ç½®çš„â€œ1â€
 			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_STENCILPASS, D3DSTENCILOP_REPLACE);
 
-			//ÉèÖÃÌÞ³ý·½Ê½ÎªÌÞ³ýÕýÃæ£¬äÖÈ¾µÆ¹âÌåµÄ±³Ãæ
+			//è®¾ç½®å‰”é™¤æ–¹å¼ä¸ºå‰”é™¤æ­£é¢ï¼Œæ¸²æŸ“ç¯å…‰ä½“çš„èƒŒé¢
 			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CW);
 			deferredMultiPassEffect->BeginPass(6);
 			pLight->RenderLightVolume();
@@ -581,25 +581,25 @@ void RenderPipe::DeferredRender_Lighting()
 
 
 			//===============================================
-			//Step.2 äÖÈ¾µÆ¹âÌåµÄÕýÃæ
-			//µÚ¶þ²½ÐèÒª±ê¼Ç³öÔÚµÆ¹âÕÕÉäÇ°±íÃæÇ°·½µÄËùÓÐÏñËØ£¬¼´Z-BufferÉî¶ÈÐ¡ÓÚµÆ¹âÌåÇ°±íÃæÉî¶ÈµÄÏñËØ
-			//È»ºó½«ÕâÐ©ÏñËØ´ÓµÚÒ»²½µÄ½á¹ûÖÐÈ¥µô£¬¾Í¿ÉÒÔµÃµ½Í¬Ê±Âú×ã(1)Î»ÓÚµÆ¹âºó±íÃæÇ°·½(2)Î»ÓÚµÆ¹âÇ°±íÃæºó·½ µÄËùÓÐÏñËØ
-			//½«Éî¶È²âÊÔ·½Ê½ÉèÖÃÎªGREATER£¬Ê¹µÆ¹âÌåÇ°±íÃæÉî¶È´óÓÚZ-BufferÉî¶ÈµÄ²¿·Ö±ê¼ÇÎª0
+			//Step.2 æ¸²æŸ“ç¯å…‰ä½“çš„æ­£é¢
+			//ç¬¬äºŒæ­¥éœ€è¦æ ‡è®°å‡ºåœ¨ç¯å…‰ç…§å°„å‰è¡¨é¢å‰æ–¹çš„æ‰€æœ‰åƒç´ ï¼Œå³Z-Bufferæ·±åº¦å°äºŽç¯å…‰ä½“å‰è¡¨é¢æ·±åº¦çš„åƒç´ 
+			//ç„¶åŽå°†è¿™äº›åƒç´ ä»Žç¬¬ä¸€æ­¥çš„ç»“æžœä¸­åŽ»æŽ‰ï¼Œå°±å¯ä»¥å¾—åˆ°åŒæ—¶æ»¡è¶³(1)ä½äºŽç¯å…‰åŽè¡¨é¢å‰æ–¹(2)ä½äºŽç¯å…‰å‰è¡¨é¢åŽæ–¹ çš„æ‰€æœ‰åƒç´ 
+			//å°†æ·±åº¦æµ‹è¯•æ–¹å¼è®¾ç½®ä¸ºGREATERï¼Œä½¿ç¯å…‰ä½“å‰è¡¨é¢æ·±åº¦å¤§äºŽZ-Bufferæ·±åº¦çš„éƒ¨åˆ†æ ‡è®°ä¸º0
 			//
-			//ËµÃ÷£ºµ±Ïà»úÎ»ÓÚµÆ¹â·¶Î§Ö®ÄÚµÄÊ±ºò£¬µÆ¹âµÄÇ°±íÃæÉî¶È¾ùÎª¸ºÖµ£¬Ã»ÓÐÏñËØ»áÍ¨¹ýÉî¶È²âÊÔ
+			//è¯´æ˜Žï¼šå½“ç›¸æœºä½äºŽç¯å…‰èŒƒå›´ä¹‹å†…çš„æ—¶å€™ï¼Œç¯å…‰çš„å‰è¡¨é¢æ·±åº¦å‡ä¸ºè´Ÿå€¼ï¼Œæ²¡æœ‰åƒç´ ä¼šé€šè¿‡æ·±åº¦æµ‹è¯•
 			//================================================
 
-			//ÉèÖÃÄ£°åÖµÊ±£¬Ê¹ÓÃ¡°0¡±×÷ÎªÒªÉèÖÃµÄÖµ
+			//è®¾ç½®æ¨¡æ¿å€¼æ—¶ï¼Œä½¿ç”¨â€œ0â€ä½œä¸ºè¦è®¾ç½®çš„å€¼
 			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_STENCILREF, 0x0);
 
-			//Éî¶È´óÓÚZ-BufferÊ±Z-Test½á¹ûÎªPass
+			//æ·±åº¦å¤§äºŽZ-Bufferæ—¶Z-Testç»“æžœä¸ºPass
 			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZFUNC, D3DCMP_GREATER);
-			//Stencil-TestµÄ½á¹ûÓÀÔ¶ÎªPass£¬¼´²»×öStencil²âÊÔ
+			//Stencil-Testçš„ç»“æžœæ°¸è¿œä¸ºPassï¼Œå³ä¸åšStencilæµ‹è¯•
 			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_STENCILFUNC, D3DCMP_ALWAYS);
-			//½«Éî¶È´óÓÚZ-BufferµÄÏñËØµÄÄ£°åÉèÖÃÎªÉÏÃæÉèÖÃµÄ¡°0¡±
+			//å°†æ·±åº¦å¤§äºŽZ-Bufferçš„åƒç´ çš„æ¨¡æ¿è®¾ç½®ä¸ºä¸Šé¢è®¾ç½®çš„â€œ0â€
 			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_STENCILPASS, D3DSTENCILOP_REPLACE);
 
-			//ÉèÖÃÌÞ³ý·½Ê½ÎªÌÞ³ý±³Ãæ£¬äÖÈ¾µÆ¹âÌåµÄÕýÃæ
+			//è®¾ç½®å‰”é™¤æ–¹å¼ä¸ºå‰”é™¤èƒŒé¢ï¼Œæ¸²æŸ“ç¯å…‰ä½“çš„æ­£é¢
 			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
 			deferredMultiPassEffect->BeginPass(6);
 			pLight->RenderLightVolume();
@@ -608,20 +608,20 @@ void RenderPipe::DeferredRender_Lighting()
 
 
 			//===============================================
-			//Step.3 äÖÈ¾Êµ¼ÊµÄµÆ¹â
-			//½«Z-Test·½Ê½ÉèÖÃÎªALWAYS£¬¼´Ïàµ±ÓÚ²»×öÉî¶È²âÊÔ
-			//ÌÞ³ýËùÓÐÄ£°åÖµµÈÓÚ0µÄÏñËØ£¬Ê£ÓàµÄÏñËØ¾ÍÊÇµÆ¹âÊµ¼ÊÄÜ¹»ÕÕÁÁµÄÏñËØÁË
+			//Step.3 æ¸²æŸ“å®žé™…çš„ç¯å…‰
+			//å°†Z-Testæ–¹å¼è®¾ç½®ä¸ºALWAYSï¼Œå³ç›¸å½“äºŽä¸åšæ·±åº¦æµ‹è¯•
+			//å‰”é™¤æ‰€æœ‰æ¨¡æ¿å€¼ç­‰äºŽ0çš„åƒç´ ï¼Œå‰©ä½™çš„åƒç´ å°±æ˜¯ç¯å…‰å®žé™…èƒ½å¤Ÿç…§äº®çš„åƒç´ äº†
 			//================================================
 
-			//Z-Test½á¹ûÓÀÔ¶ÎªPass
+			//Z-Testç»“æžœæ°¸è¿œä¸ºPass
 			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZFUNC, D3DCMP_ALWAYS);
 
-			//ÉèÖÃÄ£°åÖµÊ±£¬Ê¹ÓÃ¡°0¡±×÷ÎªÒªÉèÖÃµÄÖµ
+			//è®¾ç½®æ¨¡æ¿å€¼æ—¶ï¼Œä½¿ç”¨â€œ0â€ä½œä¸ºè¦è®¾ç½®çš„å€¼
 			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_STENCILREF, 0x0);
 
-			//Ê¹ÓÃÄ£°å²âÊÔ£¬Ä£°åÖµ²»µÈÓÚÉÏÃæÉèÖÃµÄÖµ£¬¼´¡°0¡±Ê±£¬Ä£°å²âÊÔÍ¨¹ý
+			//ä½¿ç”¨æ¨¡æ¿æµ‹è¯•ï¼Œæ¨¡æ¿å€¼ä¸ç­‰äºŽä¸Šé¢è®¾ç½®çš„å€¼ï¼Œå³â€œ0â€æ—¶ï¼Œæ¨¡æ¿æµ‹è¯•é€šè¿‡
 			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_STENCILFUNC, D3DCMP_NOTEQUAL);
-			//Ä£°å²âÊÔ¼°Éî¶È²âÊÔÍ¨¹ýÊ±£¬±£³ÖÄ£°åµÄÖµ
+			//æ¨¡æ¿æµ‹è¯•åŠæ·±åº¦æµ‹è¯•é€šè¿‡æ—¶ï¼Œä¿æŒæ¨¡æ¿çš„å€¼
 			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_STENCILPASS, D3DSTENCILOP_KEEP);
 		}
 
@@ -635,23 +635,23 @@ void RenderPipe::DeferredRender_Lighting()
 
 		deferredMultiPassEffect->EndPass();
 
-		//·½Ïò¹â²»Ê¹ÓÃÄ£°åÌÞ³ý
+		//æ–¹å‘å…‰ä¸ä½¿ç”¨æ¨¡æ¿å‰”é™¤
 		if (lt != eDirectionLight && enableStencilLight)
 		{
-			//¹Ø±ÕÄ£°å
+			//å…³é—­æ¨¡æ¿
 			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_STENCILENABLE, FALSE);
-			//¹Ø±ÕÉî¶È
+			//å…³é—­æ·±åº¦
 			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZENABLE, FALSE);
 		}
 	}
 
-	//ÉèÖÃÈ«ÆÁ¾ØÐÎ
+	//è®¾ç½®å…¨å±çŸ©å½¢
 	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, pScreenQuadVertex, 0, mScreenQuadByteSize);
 	//RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(mFVF);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetVertexDeclaration(mScreenQuadDecl);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetIndices(pScreenQuadIndex);
 
-	//»·¾³¹âPass
+	//çŽ¯å¢ƒå…‰Pass
 	deferredMultiPassEffect->BeginPass(5);
 
 	deferredMultiPassEffect->SetVector("g_AmbientColor", &AmbientColor);
@@ -668,7 +668,7 @@ void RenderPipe::DeferredRender_Shading()
 	//Shading Pass
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pMainColorSurface);
 
-	//ÉèÖÃÈ«ÆÁ¾ØÐÎ
+	//è®¾ç½®å…¨å±çŸ©å½¢
 	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, pScreenQuadVertex, 0, mScreenQuadByteSize);
 	//RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(mFVF);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetVertexDeclaration(mScreenQuadDecl);

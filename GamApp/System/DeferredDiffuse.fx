@@ -24,7 +24,7 @@ OutputVS VShader(float4 posL       : POSITION,
 {
 	OutputVS outVS = (OutputVS)0;
 
-	//��������Ķ���λ�ã��������硢�۲졢ͶӰ����任��
+	//最终输出的顶点位置（经过世界、观察、投影矩阵变换）
 	outVS.posWVP = mul(posL, g_WorldViewProj);
 
 	outVS.TexCoord = TexCoord;
@@ -35,10 +35,10 @@ OutputVS VShader(float4 posL       : POSITION,
 
 float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
 {
-	//��������
+	//纹理采样
 	float4 Texture = tex2D(g_sampleTexture, TexCoord);
 
-	//�����ɫ
+	//输出颜色
 	return Texture;// float4(1.0f, 0.0f, 0.0f, 1.0f);
 }
 

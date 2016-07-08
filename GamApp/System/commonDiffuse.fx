@@ -40,7 +40,7 @@ OutputVS VShader(float4 posL       : POSITION0,
 {
 	OutputVS outVS = (OutputVS)0;
 
-	//×îÖÕÊä³öµÄ¶¥µãÎ»ÖÃ£¨¾­¹ıÊÀ½ç¡¢¹Û²ì¡¢Í¶Ó°¾ØÕó±ä»»£©
+	//æœ€ç»ˆè¾“å‡ºçš„é¡¶ç‚¹ä½ç½®ï¼ˆç»è¿‡ä¸–ç•Œã€è§‚å¯Ÿã€æŠ•å½±çŸ©é˜µå˜æ¢ï¼‰
 	outVS.posWVP = mul(posL, g_WorldViewProj);
 	outVS.normalW = mul(normalL, g_World);
 
@@ -54,37 +54,37 @@ float4 PShader( float2 TexCoord : TEXCOORD0,
 				float3 NormalW : NORMAL0,
 				float3 ToEyeDirW : TEXCOORD1) : COLOR
 {
-	//ÎÆÀí²ÉÑù
+	//çº¹ç†é‡‡æ ·
 	float4 Texture = tex2D(g_sampleTexture, TexCoord);
 
 
-	//¼ÆËã»·¾³¹â
-	float4 Ambient = lightAmbient * g_AmbientMaterial;  //²ÄÖÊ¿ÉÀí½âÎª·´ÉäÏµÊı
+	//è®¡ç®—ç¯å¢ƒå…‰
+	float4 Ambient = lightAmbient * g_AmbientMaterial;  //æè´¨å¯ç†è§£ä¸ºåå°„ç³»æ•°
 
 	NormalW = normalize(NormalW);
 	ToEyeDirW = normalize(ToEyeDirW);
-	//¼ÆËãÂş·´Éä
+	//è®¡ç®—æ¼«åå°„
 	float DiffuseRatio = max(dot(-g_LightDir.xyz, NormalW),0);
 	float4 Diffuse = lightDiffuse * (g_DiffuseMaterial * DiffuseRatio);
 
-	//¼ÆËã¾µÃæ·´Éä
+	//è®¡ç®—é•œé¢åå°„
 
-	//¼ÆËã°ë½ÇÏòÁ¿
+	//è®¡ç®—åŠè§’å‘é‡
 	float3 H = normalize(ToEyeDirW - g_LightDir.xyz);
 
-	//Phong¹âÕÕ
+	//Phongå…‰ç…§
 	//float4 Reflect = normalize(float4(g_LightDir.xyz - 2 * DiffuseRatio * NormalW, 1.0f));
 	//float SpecularRatio = max(dot(Reflect, ToEyeDirW), 0);
 
-	//Blinn-Phong¹âÕÕ
+	//Blinn-Phongå…‰ç…§
 	float SpecularRatio = max(dot(NormalW, H),0);
 	
 	float4	Specular = pow(SpecularRatio, 12);
 		//Specular = lightSpecular* (g_SpecularMaterial * Specular);
 
-	//»ìºÏ¹âÕÕºÍÎÆÀí
+	//æ··åˆå…‰ç…§å’Œçº¹ç†
 	float4 finalColor = Texture * (Diffuse + Ambient*0.1f) + Specular;
-	//Êä³öÑÕÉ«
+	//è¾“å‡ºé¢œè‰²
 	return finalColor;// float4(1.0f, 0.0f, 0.0f, 1.0f);
 }
 

@@ -15,7 +15,7 @@ OutputVS VShader(float4 posL		: POSITION0)
 {
 	OutputVS outVS = (OutputVS)0;
 
-	//��������Ķ���λ�ã��������硢�۲졢ͶӰ����任��
+	//最终输出的顶点位置（经过世界、观察、投影矩阵变换）
 	outVS.posWVP = mul(posL, g_WorldViewProj);
 	outVS.posWV = mul(posL, g_WorldView);
 
@@ -25,7 +25,7 @@ OutputVS VShader(float4 posL		: POSITION0)
 
 float4 PShader(float3 posWV : TEXCOORD0) : COLOR
 {
-	//�����ɫ
+	//输出颜色
 	float4 Color = posWV.z;
 	if (g_IsPointLight)
 	{

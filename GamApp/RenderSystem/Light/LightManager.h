@@ -3,7 +3,7 @@
 #include "CommonUtil/D3D9Header.h"
 #include "CommonUtil/Singleton.h"
 #include "BaseLight.h"
-
+ 
 class LightManager
 {
 public:

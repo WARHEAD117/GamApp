@@ -1,6 +1,6 @@
 #include "DirectionLight.h"
 #include "D3D9Device.h"
-
+ 
 const D3DXVECTOR3 defaultDir(0.0f, -1.0f, 1.0f);
 DirectionLight::DirectionLight():
 m_shadowAreaSize(D3DXVECTOR2(100,100))
@@ -32,7 +32,7 @@ void DirectionLight::BuildLightVolume()
 		D3DUSAGE_WRITEONLY, D3DFMT_INDEX32, D3DPOOL_MANAGED, &m_pBufferIndex, 0);
 	DWORD* indices = 0;
 	m_pBufferIndex->Lock(0, 0, (void**)&indices, 0);
-	//È«²¿ÄæÊ±Õë»æÖÆ£¬ÔÚÑÓ³ÙäÖÈ¾Ê±ÌÞ³ýÕýÃæ£¬¾Í¿ÉÒÔ±£Ö¤µÆ¹âºÍäÖÈ¾ÃæµÄÌÞ³ýÊÇÍ³Ò»µÄ
+	//å…¨éƒ¨é€†æ—¶é’ˆç»˜åˆ¶ï¼Œåœ¨å»¶è¿Ÿæ¸²æŸ“æ—¶å‰”é™¤æ­£é¢ï¼Œå°±å¯ä»¥ä¿è¯ç¯å…‰å’Œæ¸²æŸ“é¢çš„å‰”é™¤æ˜¯ç»Ÿä¸€çš„
 	indices[0] = 0;
 	indices[1] = 2;
 	indices[2] = 1;
@@ -45,7 +45,7 @@ void DirectionLight::BuildLightVolume()
 	LIGHTVOLUMEVERTEX* pVertices;
 	m_pBufferVex->Lock(0, 4 * sizeof(LIGHTVOLUMEVERTEX), (void**)&pVertices, 0);
 
-	//³õÊ¼»¯¶¥µã»º³åÇø
+	//åˆå§‹åŒ–é¡¶ç‚¹ç¼“å†²åŒº
 	//==========================
 	pVertices->position = D3DXVECTOR3(1.0f, -1.0f, 0.0f);
 	pVertices++;

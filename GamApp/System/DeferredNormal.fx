@@ -15,12 +15,12 @@ OutputVS VShader(float4 posL		: POSITION,
 {
 	OutputVS outVS = (OutputVS)0;
 
-	//×îÖÕÊä³öµÄ¶¥µãÎ»ÖÃ£¨¾­¹ıÊÀ½ç¡¢¹Û²ì¡¢Í¶Ó°¾ØÕó±ä»»£©
+	//æœ€ç»ˆè¾“å‡ºçš„é¡¶ç‚¹ä½ç½®ï¼ˆç»è¿‡ä¸–ç•Œã€è§‚å¯Ÿã€æŠ•å½±çŸ©é˜µå˜æ¢ï¼‰
 	outVS.posWVP = mul(posL, g_WorldViewProj);
 	//outVS.posP = mul(posL, g_WorldView);
 	outVS.posP = outVS.posWVP;
 
-	//¹Û²ì¿Õ¼äÏÂµÄ·¨Ïß
+	//è§‚å¯Ÿç©ºé—´ä¸‹çš„æ³•çº¿
 	outVS.normalWV = mul(normalL, g_WorldView);
 
 	return outVS;
@@ -33,11 +33,11 @@ float4 PShader(float3 NormalWV			: NORMAL,
 	NormalWV = normalize(NormalWV);
 	NormalWV = (NormalWV + float3(1.0f, 1.0f, 1.0f)) / 2;
 
-	//Í¶Ó°ºóµÄ·ÇÏßĞÔÉî¶È
+	//æŠ•å½±åçš„éçº¿æ€§æ·±åº¦
 	float Depth = posP.z / posP.w;
 
 	float4 finalColor = float4(NormalWV, Depth);
-	//Êä³öÑÕÉ«
+	//è¾“å‡ºé¢œè‰²
 	return finalColor;// float4(1.0f, 0.0f, 0.0f, 1.0f);
 }
 

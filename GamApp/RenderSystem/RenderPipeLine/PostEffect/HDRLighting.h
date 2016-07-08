@@ -25,7 +25,7 @@ public:
 	void RenderBloom(LPDIRECT3DTEXTURE9 hdrBuffer);
 	void RenderStar();
 
-	LPDIRECT3DTEXTURE9 m_pScaledColor; //ºÍÊäÈëbuffer£¨hdrBuffer£©ÏàÍ¬ ARGB16F
+	LPDIRECT3DTEXTURE9 m_pScaledColor; //å’Œè¾“å…¥bufferï¼ˆhdrBufferï¼‰ç›¸åŒ ARGB16F
 	LPDIRECT3DTEXTURE9 m_pBrightPass; //ARGB8
 	LPDIRECT3DTEXTURE9 m_pAdaptedLuminanceCur; //R16F
 	LPDIRECT3DTEXTURE9 m_pAdaptedLuminanceLast; //R16F

@@ -1,6 +1,6 @@
 #include "BaseLight.h"
 #include "D3D9Device.h"
-
+ 
 #include "RenderUtil/RenderUtil.h"
 
 const D3DXVECTOR3 defaultDir(0.0f, -1.0f, 1.0f);

@@ -109,7 +109,7 @@ HRESULT MeshLoader::LoadXMesh(std::string filePath)
 	// on those vertices so it will improve perf.     
 	m_pMesh->OptimizeInplace(D3DXMESHOPT_VERTEXCACHE, rgdwAdjacency, NULL, NULL, NULL);
 
-	//Èç¹û²»ÖØÐÂ¼ÆËãµÄ»°£¬»á³öÏÖÇÐÏß·½ÏòÓÐÎÊÌâµ¼ÖÂµÄäÖÈ¾´íÎó
+	//å¦‚æžœä¸é‡æ–°è®¡ç®—çš„è¯ï¼Œä¼šå‡ºçŽ°åˆ‡çº¿æ–¹å‘æœ‰é—®é¢˜å¯¼è‡´çš„æ¸²æŸ“é”™è¯¯
 	//if (!hasTangents || !hasBinormals)
 	{
 		ID3DXMesh* pNewMesh;
@@ -146,7 +146,7 @@ HRESULT MeshLoader::LoadXMesh(std::string filePath)
 	{
 		m_Materials[i] = Material[i].MatD3D;
 		m_Materials[i].Ambient = m_Materials[i].Diffuse;
-		m_pTextures[i] = NULL;  //ÎÆÀíÖ¸ÕëÏÈÇå¿Õ ;
+		m_pTextures[i] = NULL;  //çº¹ç†æŒ‡é’ˆå…ˆæ¸…ç©º ;
 		m_pTextures[i] = RENDERDEVICE::Instance().GetDefaultTexture();
 		if (Material[i].pTextureFilename != NULL &&
 			lstrlen(Material[i].pTextureFilename) > 0)
@@ -234,7 +234,7 @@ void MeshLoader::ComputeBoundingSphere()
 	HRESULT hr = 0;
 	BYTE* v = 0;
 	D3DXVECTOR3 center; float radius;
-	// ¼ÆËãµÃµ½Íâ½ÓÇòÇòÐÄ¼°°ë¾¶
+	// è®¡ç®—å¾—åˆ°å¤–æŽ¥çƒçƒå¿ƒåŠåŠå¾„
 	m_pMesh->LockVertexBuffer(0, (void**)&v);
 	hr = D3DXComputeBoundingSphere(
 		(D3DXVECTOR3*)v,

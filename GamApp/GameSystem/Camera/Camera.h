@@ -10,7 +10,7 @@ public:
 	Camera();
 	~Camera();
 
-	void Init(); //³õÊ¼»¯
+	void Init(); //åˆå§‹åŒ–
 
 	void OnFrame();
 
@@ -28,9 +28,9 @@ public:
 	D3DXVECTOR3 GetLookAt(){ return mLookAtW; };
 	D3DXVECTOR3 GetLookDir(){ return mLookAtW - mPosW; };
 
-	D3DXMATRIX mView;   //¹Û²ì¾ØÕó
-	D3DXMATRIX mProj;     //Í¶Ó°¾ØÕó
-	D3DXMATRIX mWorld;  //ÊÀ½ç¾ØÕó
+	D3DXMATRIX mView;   //è§‚å¯ŸçŸ©é˜µ
+	D3DXMATRIX mProj;     //æŠ•å½±çŸ©é˜µ
+	D3DXMATRIX mWorld;  //ä¸–ç•ŒçŸ©é˜µ
 
 private:
 

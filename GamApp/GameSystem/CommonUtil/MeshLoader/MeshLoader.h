@@ -1,4 +1,4 @@
-#pragma once
+#pragma once 
 #include "CommonUtil\\D3D9Header.h"
 #include "D3D9Device.h"
 #include "RenderUtil/RenderUtil.h"
@@ -62,8 +62,8 @@ private:
 	std::vector<LPDIRECT3DTEXTURE9>	m_pTextures;
 	std::vector<LPDIRECT3DTEXTURE9>	m_pNormalMaps;
 	std::vector<LPDIRECT3DTEXTURE9>	m_pSpecularMap;
-	std::vector<D3DMATERIAL9>		m_Materials; //材质
-	DWORD							m_dwMtrlNum; //材质数量
+	std::vector<D3DMATERIAL9>		m_Materials; //鏉愯川
+	DWORD							m_dwMtrlNum; //鏉愯川鏁伴噺
 
 	std::vector<D3DXATTRIBUTERANGE>	m_AttTable;
 

@@ -6,12 +6,12 @@ Input::Input(void)
 	pDI                  = NULL;
 	m_pMouse             = NULL;
 
-	//Êó±êÇ°Ò»¸ö×´Ì¬
+	//é¼ æ ‡å‰ä¸€ä¸ªçŠ¶æ€
 	m_OldMState.left     = false;
 	m_OldMState.right    = false;
 	m_OldMState.pos.x    = 400;
 	m_OldMState.pos.y    = 300;
-	//Êó±êµ±Ç°×´Ì¬
+	//é¼ æ ‡å½“å‰çŠ¶æ€
 	m_CurMState.left     = false;
 	m_CurMState.right    = false;
 	m_CurMState.pos.x    = 400;
@@ -25,7 +25,7 @@ Input::~Input(void)
 
 //-------------------------------------------------
 //Name  InitDInput
-//Desc  ´´½¨DeviceInput
+//Desc  åˆ›å»ºDeviceInput
 //-------------------------------------------------
 bool Input::InitInput( HWND  hWnd, HINSTANCE  hInstance )
 {
@@ -38,18 +38,18 @@ bool Input::InitInput( HWND  hWnd, HINSTANCE  hInstance )
 								  NULL);
     if(result != DI_OK)
 	{
-		MessageBox(NULL, "½¨Á¢DirectInput¶ÔÏóÊ§°Ü",NULL, MB_OK);
+		MessageBox(NULL, "å»ºç«‹DirectInputå¯¹è±¡å¤±è´¥",NULL, MB_OK);
 		return false;
 	}
 
-    //Êó±êµÄ³õÊ¼»¯
-	pDI->CreateDevice( GUID_SysMouse, &m_pMouse, NULL );    //´´½¨Êó±êÉè±¸
-	//ÉèÖÃÊó±êÊý¾Ý¸ñÊ½
+    //é¼ æ ‡çš„åˆå§‹åŒ–
+	pDI->CreateDevice( GUID_SysMouse, &m_pMouse, NULL );    //åˆ›å»ºé¼ æ ‡è®¾å¤‡
+	//è®¾ç½®é¼ æ ‡æ•°æ®æ ¼å¼
 	m_pMouse->SetDataFormat(&c_dfDIMouse2);
-	//´´½¨Êó±êÉè±¸µÄÐ­×÷µÈ¼¶
+	//åˆ›å»ºé¼ æ ‡è®¾å¤‡çš„åä½œç­‰çº§
 	m_pMouse->SetCooperativeLevel( hWnd, DISCL_BACKGROUND | DISCL_NONEXCLUSIVE );
    
-	//Éè¶¨»º³åÇø´óÐ¡
+	//è®¾å®šç¼“å†²åŒºå¤§å°
 	DIPROPDWORD       property;
 	property.diph.dwSize = sizeof(DIPROPDWORD);
 	property.diph.dwHeaderSize = sizeof(DIPROPHEADER);
@@ -61,17 +61,17 @@ bool Input::InitInput( HWND  hWnd, HINSTANCE  hInstance )
 	m_pMouse->Acquire();
 
 
-	//¼üÅÌµÄ³õÊ¼»¯
-	pDI->CreateDevice(GUID_SysKeyboard, &m_pKeyboard, NULL);    //´´½¨¼üÅÌÉè±¸
-	//ÉèÖÃ¼üÅÌÊý¾Ý¸ñÊ½
+	//é”®ç›˜çš„åˆå§‹åŒ–
+	pDI->CreateDevice(GUID_SysKeyboard, &m_pKeyboard, NULL);    //åˆ›å»ºé”®ç›˜è®¾å¤‡
+	//è®¾ç½®é”®ç›˜æ•°æ®æ ¼å¼
 	m_pKeyboard->SetDataFormat(&c_dfDIKeyboard);
-	//´´½¨¼üÅÌÉè±¸µÄÐ­×÷µÈ¼¶
+	//åˆ›å»ºé”®ç›˜è®¾å¤‡çš„åä½œç­‰çº§
 	m_pKeyboard->SetCooperativeLevel(hWnd, DISCL_BACKGROUND | DISCL_NONEXCLUSIVE);
 	m_pKeyboard->Acquire();
 
 	/////////////////////////////////////////////////////////////////////////////////////////////
 
-	//Îª¼üÅÌÉèÖÃ»º³å·½Ê½
+	//ä¸ºé”®ç›˜è®¾ç½®ç¼“å†²æ–¹å¼
 
 	DIPROPDWORD dipdw;
 
@@ -83,7 +83,7 @@ bool Input::InitInput( HWND  hWnd, HINSTANCE  hInstance )
 
 	m_pKeyboard->SetProperty(DIPROP_BUFFERSIZE, &dipdw.diph);
 
-	//Îª¼üÅÌ°²×°ÊÂ¼þÍ¨Öª¹ØÁª£¬²¢×¼±¸»ñÈ¡²É¼¯
+	//ä¸ºé”®ç›˜å®‰è£…äº‹ä»¶é€šçŸ¥å…³è”ï¼Œå¹¶å‡†å¤‡èŽ·å–é‡‡é›†
 	//m_pKeyboard->SetEventNotification(g_Event);
 	m_pKeyboard->Acquire();
 	//----------------------------------------------------------------------
@@ -92,17 +92,17 @@ bool Input::InitInput( HWND  hWnd, HINSTANCE  hInstance )
 }
 
 //--------------------------------------------------
-//Êó±ê
+//é¼ æ ‡
 //--------------------------------------------------
 bool Input::ReadMouse()
 {
-	HRESULT		result;		//ÐÅÏ¢·µ»Ø¾ä±ú
+	HRESULT		result;		//ä¿¡æ¯è¿”å›žå¥æŸ„
 	DIMOUSESTATE2 dims2;
-	ShowCursor(TRUE);     //Òþ²ØÊó±ê
+	ShowCursor(TRUE);     //éšè—é¼ æ ‡
 		
     if( m_pMouse == NULL )
 	{
-		MessageBox(NULL, "Êó±êÉè±¸³ö´í!", NULL, MB_OK);
+		MessageBox(NULL, "é¼ æ ‡è®¾å¤‡å‡ºé”™!", NULL, MB_OK);
 		return false;
 	}
     ZeroMemory( &dims2, sizeof(dims2) );
@@ -110,26 +110,26 @@ bool Input::ReadMouse()
 
   	if( result != DI_OK ) 
     {
-		MessageBox(NULL, "Êó±ê»ñµÃÉè±¸×´Ì¬Ê§°Ü!", NULL, MB_OK);
+		MessageBox(NULL, "é¼ æ ‡èŽ·å¾—è®¾å¤‡çŠ¶æ€å¤±è´¥!", NULL, MB_OK);
 		return false;
 	}
     result = m_pMouse->Acquire();
-    //ËÀÑ­»·£¬Êó±êºÍ¼üÅÌËæÊ±¿ÉÄÜ±»ÏµÍ³¶á×ß 
+    //æ­»å¾ªçŽ¯ï¼Œé¼ æ ‡å’Œé”®ç›˜éšæ—¶å¯èƒ½è¢«ç³»ç»Ÿå¤ºèµ° 
 	while( result == DIERR_INPUTLOST )
 	{
 		result = m_pMouse->Acquire();			
 	}	
-	//ÉèÖÃÊó±êÇ°Ò»×´Ì¬
+	//è®¾ç½®é¼ æ ‡å‰ä¸€çŠ¶æ€
 	m_OldMState.left   =  m_CurMState.left;
 	m_OldMState.right  =  m_CurMState.right;
 	m_OldMState.pos.x  =  m_CurMState.pos.x;
 	m_OldMState.pos.y  =  m_CurMState.pos.y;
 	
-	//ÉèÖÃÊó±êµ±Ç°Î»ÖÃ
+	//è®¾ç½®é¼ æ ‡å½“å‰ä½ç½®
 	m_CurMState.pos.x+=  dims2.lX;  
 	m_CurMState.pos.y+=  dims2.lY; 
-	//ÉèÖÃÊó±êµ±Ç°°´Å¤×´Ì¬
-	if(dims2.rgbButtons[0] & 0x80)        //×ó¼üÊÇ·ñ°´ÏÂ
+	//è®¾ç½®é¼ æ ‡å½“å‰æŒ‰æ‰­çŠ¶æ€
+	if(dims2.rgbButtons[0] & 0x80)        //å·¦é”®æ˜¯å¦æŒ‰ä¸‹
 	{
 		m_CurMState.left  = true;
 	}
@@ -138,7 +138,7 @@ bool Input::ReadMouse()
 		m_CurMState.left  = false;
 	}
 
-	if(dims2.rgbButtons[1] & 0x80)        //ÓÒ¼üÊÇ·ñ°´ÏÂ
+	if(dims2.rgbButtons[1] & 0x80)        //å³é”®æ˜¯å¦æŒ‰ä¸‹
 	{
 		m_CurMState.right  = true;
 	}
@@ -152,11 +152,11 @@ bool Input::ReadMouse()
 
 bool Input::ReadKeyboard()
 {
-	HRESULT		result;		//ÐÅÏ¢·µ»Ø¾ä±ú
+	HRESULT		result;		//ä¿¡æ¯è¿”å›žå¥æŸ„
 
 	if (m_pKeyboard == NULL)
 	{
-		MessageBox(NULL, "¼üÅÌÉè±¸³ö´í!", NULL, MB_OK);
+		MessageBox(NULL, "é”®ç›˜è®¾å¤‡å‡ºé”™!", NULL, MB_OK);
 		return false;
 	}
 	ZeroMemory(m_LastFrameKeyboardState, sizeof(m_LastFrameKeyboardState));
@@ -166,11 +166,11 @@ bool Input::ReadKeyboard()
 
 	if (result != DI_OK)
 	{
-		MessageBox(NULL, "¼üÅÌ»ñµÃÉè±¸×´Ì¬Ê§°Ü!", NULL, MB_OK);
+		MessageBox(NULL, "é”®ç›˜èŽ·å¾—è®¾å¤‡çŠ¶æ€å¤±è´¥!", NULL, MB_OK);
 		return false;
 	}
 	result = m_pKeyboard->Acquire();
-	//ËÀÑ­»·£¬Êó±êºÍ¼üÅÌËæÊ±¿ÉÄÜ±»ÏµÍ³¶á×ß 
+	//æ­»å¾ªçŽ¯ï¼Œé¼ æ ‡å’Œé”®ç›˜éšæ—¶å¯èƒ½è¢«ç³»ç»Ÿå¤ºèµ° 
 	while (result == DIERR_INPUTLOST)
 	{
 		result = m_pKeyboard->Acquire();

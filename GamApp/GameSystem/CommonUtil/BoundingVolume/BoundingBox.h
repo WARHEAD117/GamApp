@@ -1,5 +1,6 @@
 #pragma once
 #include "CommonUtil\BoundingVolume\BoundingVolume.h"
+
 class BoundingBox :
 	public BoundingVolume
 {

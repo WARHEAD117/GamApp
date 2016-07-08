@@ -2,7 +2,7 @@
 
 namespace CameraParam
 {
-	// camera data, not defined yet
+	//camera data
 	const float speed = 5.0f;
 	const D3DXVECTOR3 posW = D3DXVECTOR3(2.0f, 0, 0);
 	const D3DXVECTOR3 rightW = D3DXVECTOR3(0.0f, 0.0f, 1.0f);

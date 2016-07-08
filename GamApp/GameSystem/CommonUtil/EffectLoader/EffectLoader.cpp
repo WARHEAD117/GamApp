@@ -6,10 +6,9 @@ EffectLoader::EffectLoader()
 	
 }
 
-
 EffectLoader::~EffectLoader()
 {
-	SafeRelease(mEffect);
+	SafeRelease(mEffect); 
 }
 
 void EffectLoader::LoadFxEffect(std::string fileName)

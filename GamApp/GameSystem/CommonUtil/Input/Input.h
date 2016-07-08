@@ -7,9 +7,9 @@
 
 typedef struct MouseState
 {
-	bool   left;   //×ó¼üÊÇ·ñ°´ÏÂ
-	bool   right;  //ÓÒ¼üÊÇ·ñ°´ÏÂ
-	D3DXVECTOR2  pos;    //Êó±êµ±Ç°µÄÎ»ÖÃ
+	bool   left;   //å·¦é”®æ˜¯å¦æŒ‰ä¸‹
+	bool   right;  //å³é”®æ˜¯å¦æŒ‰ä¸‹
+	D3DXVECTOR2  pos;    //é¼ æ ‡å½“å‰çš„ä½ç½®
 }MSTATE, *PMSTATE;
 
 enum KeyState
@@ -37,7 +37,7 @@ public:
 	int                     MouseY;
 
 //=======================================================
-// 	//ÊÖ±úÉè±¸ÉùÃ÷
+// 	//æ‰‹æŸ„è®¾å¤‡å£°æ˜
 // 	// Game controller device.
 // 	LPDIRECTINPUTDEVICE8 m_GameControl;
 // 	DIJOYSTATE2 m_GC_State;
@@ -56,9 +56,9 @@ public:
 public:
 	Input(void);
 	~Input(void);
-	bool       InitInput(HWND hWnd, HINSTANCE  hInstance);  //³õÊ¼»¯
-	bool       ReadMouse();									//¶ÁÈ¡Êó±êº¯Êı
-	bool       ReadKeyboard();								//¶ÁÈ¡¼üÅÌº¯Êı
+	bool       InitInput(HWND hWnd, HINSTANCE  hInstance);  //åˆå§‹åŒ–
+	bool       ReadMouse();									//è¯»å–é¼ æ ‡å‡½æ•°
+	bool       ReadKeyboard();								//è¯»å–é”®ç›˜å‡½æ•°
 	bool		UpdateInputState();
 	
 	bool		KeyDown(int keyCode);
@@ -68,16 +68,16 @@ public:
 
 	D3DXVECTOR2		GetMouseMove();
 //==//==============================================================================================//
-//	// Used to create the game controllers.//ÓÃÓÚ´´½¨ÊÖ±ú£¨ÊÖ±úÊÇÃ¶¾ÙµÄ£¬±ØĞëÒªÓÃ»Øµ÷º¯Êı£©
+//	// Used to create the game controllers.//ç”¨äºåˆ›å»ºæ‰‹æŸ„ï¼ˆæ‰‹æŸ„æ˜¯æšä¸¾çš„ï¼Œå¿…é¡»è¦ç”¨å›è°ƒå‡½æ•°ï¼‰
 //	BOOL EnumDeviceCallBack(const DIDEVICEINSTANCE *inst, void* pData);
 //
 //	// Game controller functions.
-//	int ControllerButtonUp(unsigned int button);			//ÊÖ±ú°´¼üËÉ¿ª
-//	int ControllerButtonDown(unsigned int button);			//ÊÖ±ú°´¼ü°´ÏÂ
+//	int ControllerButtonUp(unsigned int button);			//æ‰‹æŸ„æŒ‰é”®æ¾å¼€
+//	int ControllerButtonDown(unsigned int button);			//æ‰‹æŸ„æŒ‰é”®æŒ‰ä¸‹
 //
 //	// Get controller main (left) and right stick position.
-//	POINT GetLeftStickPos();								//×óÒ¡¸Ë×ø±ê
-//	POINT GetRightStickPos();								//ÓÒÒ¡¸Ë×ø±ê
+//	POINT GetLeftStickPos();								//å·¦æ‘‡æ†åæ ‡
+//	POINT GetRightStickPos();								//å³æ‘‡æ†åæ ‡
 //==================================================================================================//
 	void       Clearup();
 };

@@ -5,7 +5,6 @@ BoundingBox::BoundingBox()
 {
 }
 
-
 BoundingBox::~BoundingBox()
 {
 }

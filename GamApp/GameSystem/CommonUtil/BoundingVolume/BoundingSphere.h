@@ -1,4 +1,4 @@
-#pragma once
+#pragma once 
 #include "CommonUtil\BoundingVolume\BoundingVolume.h"
 class BoundingSphere :
 	public BoundingVolume

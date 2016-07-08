@@ -83,7 +83,7 @@ OutputVS VShader(float4 posL       : POSITION0,
 {
 	OutputVS outVS = (OutputVS)0;
 
-	//��������Ķ���λ�ã��������硢�۲졢ͶӰ����任��
+	//最终输出的顶点位置（经过世界、观察、投影矩阵变换）
 	outVS.posWVP = mul(posL, g_WorldViewProj);
 
 	outVS.TexCoord = TexCoord;
@@ -429,7 +429,7 @@ in float2 vScreenPosition : TEXCOORD0
 	// adapted luminance and current luminance by 2% every frame, based on a
 	// 30 fps rate. This is not an accurate model of human adaptation, which can
 	// take longer than half an hour.
-	float fNewAdaptation = fAdaptedLum + (fCurrentLum - fAdaptedLum) * (1 - pow(0.98f, 30 * g_fElapsedTime));
+	float fNewAdaptation = fAdaptedLum + (fCurrentLum - fAdaptedLum) * (1 - pow(0.90f, 30 * g_fElapsedTime));
 	return float4(fNewAdaptation, fNewAdaptation, fNewAdaptation, 1.0f);
 }
 

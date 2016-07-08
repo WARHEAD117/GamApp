@@ -19,7 +19,7 @@ m_LightDir(ZEROVECTOR3),
 m_LightColor(D3DXCOLOR(0.3f,0.3f,0.3f,1.0f)),
 m_LightAttenuation(D3DXVECTOR4(0.0f, 1.0f, 0.0f, 1.0f)),
 m_SegmentCount(16),
-m_ShadowMapSize(1024)
+m_ShadowMapSize(2048)
 {
 	Init();
 }
@@ -217,7 +217,7 @@ void BaseLight::BuildShadowMap()
 {
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(m_ShadowMapSize, m_ShadowMapSize,
 		1, D3DUSAGE_RENDERTARGET,
-		D3DFMT_G16R16F, D3DPOOL_DEFAULT,
+		D3DFMT_G32R32F, D3DPOOL_DEFAULT,
 		&m_pShadowTarget, NULL);
 	HRESULT hr = m_pShadowTarget->GetSurfaceLevel(0, &m_pShadowSurface);
 

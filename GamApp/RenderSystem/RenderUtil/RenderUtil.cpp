@@ -275,6 +275,8 @@ void RenderUtil::RenderDeferredGeometry(ID3DXEffect* pEffect)
 			pEffect->SetTexture(SPECULARMAP, RENDERDEVICE::Instance().GetDefaultTexture());
 		}
 
+		pEffect->SetFloat("g_shininess", mSubMeshList[i].pMaterial.Power);
+
 		pEffect->CommitChanges();
 
 		RENDERDEVICE::Instance().g_pD3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0,

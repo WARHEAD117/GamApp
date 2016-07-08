@@ -9,7 +9,7 @@ texture		g_PointShadowBuffer;
 
 texture		g_ShadowResult;
 
-int			g_ShadowMapSize = 1024;
+int			g_ShadowMapSize = 2048;
 float		g_ShadowBias = 0.2f;
 
 float		g_MinVariance = 0.02;
@@ -55,15 +55,15 @@ sampler_state
 };
 
 //----------------------------
-//Èç¹ûÊ¹ÓÃPCFËã·¨£¬±ØĞëÊ¹ÓÃPoint¹ıÂË
-//Èç¹ûÊ¹ÓÃVSM£¬¾Í¿ÉÊ¹ÓÃ±ğµÄ¹ıÂË·½Ê½£¬±ÈÈçANISOTROPIC
+//å¦‚æœä½¿ç”¨PCFç®—æ³•ï¼Œå¿…é¡»ä½¿ç”¨Pointè¿‡æ»¤
+//å¦‚æœä½¿ç”¨VSMï¼Œå°±å¯ä½¿ç”¨åˆ«çš„è¿‡æ»¤æ–¹å¼ï¼Œæ¯”å¦‚ANISOTROPICæˆ–è€…linear
 sampler g_sampleShadow =
 sampler_state
 {
 	Texture = <g_ShadowBuffer>;
-	MinFilter = ANISOTROPIC;
-	MagFilter = ANISOTROPIC;
-	MipFilter = ANISOTROPIC;// ANISOTROPIC;Point;
+	MinFilter = linear;
+	MagFilter = linear;
+	MipFilter = linear;// ANISOTROPIC;Point;
 	AddressU = Clamp;
 	AddressV = Clamp;
 };
@@ -97,7 +97,7 @@ OutputVS_Quad VShader(float4 posL       : POSITION0,
 {
 	OutputVS_Quad outVS = (OutputVS_Quad)0;
 
-	//×îÖÕÊä³öµÄ¶¥µãÎ»ÖÃ£¨¾­¹ıÊÀ½ç¡¢¹Û²ì¡¢Í¶Ó°¾ØÕó±ä»»£©
+	//æœ€ç»ˆè¾“å‡ºçš„é¡¶ç‚¹ä½ç½®ï¼ˆç»è¿‡ä¸–ç•Œã€è§‚å¯Ÿã€æŠ•å½±çŸ©é˜µå˜æ¢ï¼‰
 	outVS.posWVP = mul(posL, g_WorldViewProj);
 
 	outVS.TexCoord = TexCoord;
@@ -109,7 +109,7 @@ OutputVS_LightVolume VShaderLightVolume(float4 posL       : POSITION0)
 {
 	OutputVS_LightVolume outVS = (OutputVS_LightVolume)0;
 
-	//×îÖÕÊä³öµÄ¶¥µãÎ»ÖÃ£¨¾­¹ıÊÀ½ç¡¢¹Û²ì¡¢Í¶Ó°¾ØÕó±ä»»£©
+	//æœ€ç»ˆè¾“å‡ºçš„é¡¶ç‚¹ä½ç½®ï¼ˆç»è¿‡ä¸–ç•Œã€è§‚å¯Ÿã€æŠ•å½±çŸ©é˜µå˜æ¢ï¼‰
 	outVS.posWVP = mul(posL, g_LightVolumeWVP);
 
 	outVS.TexCoord = outVS.posWVP;
@@ -146,27 +146,41 @@ float ChebyshevUpperBound(float2 Moments, float t)
 
 void LightFunc(float3 normal, float3 toLight, float3 toEye, float4 lightColor, inout float4 DiffuseLight, inout float4 SpecularLight, in float Shininess)
 {
-	//²Ã¼õµô±³¹âµÄÏñËØ
+	//è£å‡æ‰èƒŒå…‰çš„åƒç´ 
 	float NL = dot(toLight, normal);
 	clip(NL);
-	//¼ÆËãÂş·´Éä¹âÕÕ
+	//è®¡ç®—æ¼«åå°„å…‰ç…§
 	float DiffuseRatio = max(NL, 0.0);
 	DiffuseLight = lightColor * DiffuseRatio;
 
-	//Blinn-Phong¹âÕÕ£¬ÒÑ¾­ÊÇ»ùÓÚÎïÀíµÄÁË
-	//¼ÆËã°ë½ÇÏòÁ¿
+	//Blinn-Phongå…‰ç…§ï¼Œå·²ç»æ˜¯åŸºäºç‰©ç†çš„äº†
+	//è®¡ç®—åŠè§’å‘é‡
 	float3 H = normalize(toLight + toEye);
 
-	//ÕÚµ²Ïî
+	//é®æŒ¡é¡¹
 	float lh = dot(toLight, H);
 	float G = 1 / (lh*lh);
 
 	float shininess = Shininess;
 	float SpecularRatio = max(dot(normal, H), 0.0);
-	//¶ÔBlinn-PhongµÄ¸ß¹â¹éÒ»»¯£¬±£Ö¤·´ÉäµÄÄÜÁ¿ÊØºã
+	//å¯¹Blinn-Phongçš„é«˜å…‰å½’ä¸€åŒ–ï¼Œä¿è¯åå°„çš„èƒ½é‡å®ˆæ’
 	float PoweredSpecular = pow(SpecularRatio, shininess) * (shininess + 2.0f) / 8.0f;
 
 	SpecularLight = lightColor * PoweredSpecular * DiffuseRatio * G;
+}
+
+float2 ComputeMoments(float Depth)
+{
+	float2 Moments;
+
+	Moments.x = Depth;
+
+	float dx = ddx(Depth);
+	float dy = ddy(Depth);
+
+	Moments.y = Depth*Depth + 0.25 * (dx*dx + dy*dy);
+
+	return Moments;
 }
 
 float ShadowFunc(bool useShadow, float3 objViewPos)
@@ -182,13 +196,14 @@ float ShadowFunc(bool useShadow, float3 objViewPos)
 
 		float2 ShadowTexCoord = float2(lightU, lightV);
 
-		//²Ã¼õµôshadowMapµÄuvÖµ0-1·¶Î§Ö®ÍâµÄ²¿·Ö
-		//Ò²¿ÉÒÔÊ¹ÓÃborder£¬µ«ÊÇ¶ÔÓÚFP16µÄÖµ£¬ĞèÒªÏÈËõ·Å²ÅÄÜÊ¹ÓÃborder£¬·ñÔòÉèÖÃµÄborderColor×î´óÖµ½öÎª1£¬Ã»·¨Ê¹ÓÃ
+		//è£å‡æ‰shadowMapçš„uvå€¼0-1èŒƒå›´ä¹‹å¤–çš„éƒ¨åˆ†
+		//ä¹Ÿå¯ä»¥ä½¿ç”¨borderï¼Œä½†æ˜¯å¯¹äºFP16çš„å€¼ï¼Œéœ€è¦å…ˆç¼©æ”¾æ‰èƒ½ä½¿ç”¨borderï¼Œå¦åˆ™è®¾ç½®çš„borderColoræœ€å¤§å€¼ä»…ä¸º1ï¼Œæ²¡æ³•ä½¿ç”¨
 		clip(float2(1, 1) - ShadowTexCoord);
 		clip(ShadowTexCoord);
 
 		//float2 Moments = tex2D(g_sampleShadow, ShadowTexCoord);
-		float2 Moments = GaussianBlur(g_ShadowMapSize, g_ShadowMapSize, g_sampleShadow, ShadowTexCoord);
+		//float2 Moments = GaussianBlur(g_ShadowMapSize, g_ShadowMapSize, g_sampleShadow, ShadowTexCoord);
+		float2 Moments = ComputeMoments(GaussianBlur(g_ShadowMapSize, g_ShadowMapSize, g_sampleShadow, ShadowTexCoord).x);
 
 		shadowContribute = ChebyshevUpperBound(Moments, lightViewPos.z);
 	}
@@ -249,7 +264,7 @@ float PCFPointShadowFunc(bool useShadow, float3 worldViewPos)
 	//if (useShadow)
 	{
 		//Shadow
-		//g_LightPosÊÇview¿Õ¼äÏÂµÄµÆ¹âÎ»ÖÃ
+		//g_LightPosæ˜¯viewç©ºé—´ä¸‹çš„ç¯å…‰ä½ç½®
 		float3 toObjVec = worldViewPos - g_LightPos.xyz;
 		float4 worldToObjVec = mul(float4(toObjVec, 0.0f), g_invView);
 
@@ -259,7 +274,7 @@ float PCFPointShadowFunc(bool useShadow, float3 worldViewPos)
 	return shadowContribute;
 }
 
-//¹âÕÕ½á¹ûµÄMRTÊä³ö
+//å…‰ç…§ç»“æœçš„MRTè¾“å‡º
 struct OutputPS
 {
 	float4 diffuseLight		: COLOR0;
@@ -278,7 +293,7 @@ OutputPS DirectionLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD
 
 	float3 pos = GetPosition(TexCoord, viewDir, g_samplePosition);
 
-	//¼ÓÈëµÆ¹âÌåºÍstencilÌŞ³ıºóÖ®ºó¾Í¿ÉÒÔÊ¡ÂÔµôÕâ¸öÅĞ¶ÏÁË
+	//åŠ å…¥ç¯å…‰ä½“å’Œstencilå‰”é™¤åä¹‹åå°±å¯ä»¥çœç•¥æ‰è¿™ä¸ªåˆ¤æ–­äº†
 	if (pos.z > g_zFar)
 		return outPs;
 
@@ -297,10 +312,10 @@ OutputPS DirectionLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD
 	float shadowFinal = 1.0f;
 	//shadowFinal = ShadowFunc(g_bUseShadow, pos);
 
-	//ÒõÓ°Í¼²ÉÑù
+	//é˜´å½±å›¾é‡‡æ ·
 	shadowFinal = tex2D(g_sampleShadowResult, TexCoord);
 
-	//MRTÊä³ö¹âÕÕ½á¹û
+	//MRTè¾“å‡ºå…‰ç…§ç»“æœ
 	outPs.diffuseLight = DiffuseLight * shadowFinal.x;
 	outPs.specularLight = SpecularLight * shadowFinal.x;
 	return outPs;
@@ -318,7 +333,7 @@ OutputPS PointLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1)
 
 	float3 pos = GetPosition(TexCoord, viewDir, g_samplePosition);
 	
-	//¼ÓÈëµÆ¹âÌåºÍstencilÌŞ³ıºóÖ®ºó¾Í¿ÉÒÔÊ¡ÂÔµôÕâ¸öÅĞ¶ÏÁË
+	//åŠ å…¥ç¯å…‰ä½“å’Œstencilå‰”é™¤åä¹‹åå°±å¯ä»¥çœç•¥æ‰è¿™ä¸ªåˆ¤æ–­äº†
 	if (pos.z > g_zFar)
 		return outPs;
 
@@ -330,7 +345,7 @@ OutputPS PointLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1)
 	float3 toLight = g_LightPos.xyz - pos;
 	float toLightDistance = length(toLight);
 	
-	//¼ÓÈëµÆ¹âÌåºÍstencilÌŞ³ıºóÖ®ºó¾Í¿ÉÒÔÊ¡ÂÔµôÕâ¸öÅĞ¶ÏÁË
+	//åŠ å…¥ç¯å…‰ä½“å’Œstencilå‰”é™¤åä¹‹åå°±å¯ä»¥çœç•¥æ‰è¿™ä¸ªåˆ¤æ–­äº†
 	if (toLightDistance > g_LightRange)
 		return outPs;
 
@@ -353,11 +368,11 @@ OutputPS PointLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1)
 	float shadowFinal = 1.0f;
 	//shadowFinal = PointShadowFunc(g_bUseShadow, pos);
 
-	//ÒõÓ°Í¼²ÉÑù£¬ÒòÎªµã¹âÔ´·Ö±æÂÊĞ¡£¬ËùÒÔÄ£ºıÒ»´Î
+	//é˜´å½±å›¾é‡‡æ ·ï¼Œå› ä¸ºç‚¹å…‰æºåˆ†è¾¨ç‡å°ï¼Œæ‰€ä»¥æ¨¡ç³Šä¸€æ¬¡
 	//shadowFinal = tex2D(g_sampleShadowResult, TexCoord);
 	shadowFinal = GaussianBlur(g_ScreenWidth, g_ScreenHeight, g_sampleShadowResult, TexCoord);
 
-	//MRTÊä³ö¹âÕÕ½á¹û
+	//MRTè¾“å‡ºå…‰ç…§ç»“æœ
 	outPs.diffuseLight = DiffuseLight * shadowFinal.x;
 	outPs.specularLight = SpecularLight * shadowFinal.x;
 	return outPs;
@@ -379,7 +394,7 @@ OutputPS SpotLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1)
 
 	float3 pos = GetPosition(TexCoord, viewDir, g_samplePosition);
 	
-	//¼ÓÈëµÆ¹âÌåºÍstencilÌŞ³ıºóÖ®ºó¾Í¿ÉÒÔÊ¡ÂÔµôÕâ¸öÅĞ¶ÏÁË
+	//åŠ å…¥ç¯å…‰ä½“å’Œstencilå‰”é™¤åä¹‹åå°±å¯ä»¥çœç•¥æ‰è¿™ä¸ªåˆ¤æ–­äº†
 	if (pos.z > g_zFar)
 		return outPs;
 
@@ -395,19 +410,19 @@ OutputPS SpotLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1)
 	float disRange = clamp(toLightDistance / g_LightRange, 0.0f, 1.0f);
 
 	float attenuation = (1.0f - disRange) / (g_LightAttenuation.x + g_LightAttenuation.y * disRange + g_LightAttenuation.z * disRange * disRange + 0.000001f);
-	//²»Ê¹ÓÃË¥¼õ²ÎÊı£¬Ö±½ÓË¥¼õµ½±ßÔµ
+	//ä¸ä½¿ç”¨è¡°å‡å‚æ•°ï¼Œç›´æ¥è¡°å‡åˆ°è¾¹ç¼˜
 	//attenuation = 1 - dot(toLight / g_LightRange, toLight / g_LightRange);
 	
 	toLight = normalize(toLight);
 
-	//¹âÔ´µ½ÏñËØµÄÏòÁ¿Óë¹âÔ´·½ÏòµÄ¼Ğ½Ç
+	//å…‰æºåˆ°åƒç´ çš„å‘é‡ä¸å…‰æºæ–¹å‘çš„å¤¹è§’
 	float cosAlpha = dot(-toLight, g_LightDir);
-	//ÄÚ×¶½ÇµÄÒ»°ëµÄcos
+	//å†…é”¥è§’çš„ä¸€åŠçš„cos
 	float cosTheta = g_LightCosAngle.y;
-	//Íâ×¶½ÇµÄÒ»°ëµÄcos
+	//å¤–é”¥è§’çš„ä¸€åŠçš„cos
 	float cosPhi = g_LightCosAngle.x;
 
-	//¾Û¹âµÆÍâ½ÇÒÔÍâºÍ·¶Î§ÒÔÍâ¶¼Ã»ÓĞ¹âÕÕ(¼ÓÈëµÆ¹âÌåÖ®ºó¾Í¿ÉÒÔÊ¡ÂÔµôÕâ¸öÅĞ¶ÏÁË)
+	//èšå…‰ç¯å¤–è§’ä»¥å¤–å’ŒèŒƒå›´ä»¥å¤–éƒ½æ²¡æœ‰å…‰ç…§(åŠ å…¥ç¯å…‰ä½“ä¹‹åå°±å¯ä»¥çœç•¥æ‰è¿™ä¸ªåˆ¤æ–­äº†)
 	if (toLightDistance > g_LightRange || cosAlpha < cosPhi)
 		return outPs;
 	
@@ -416,11 +431,11 @@ OutputPS SpotLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1)
 	{
 		falloff = (cosAlpha - cosPhi) / (cosTheta - cosPhi);
 	}
-	//ÏÂÃæµÄ¹«Ê½¿ÉÒÔ¼ò»¯µôif£¬µ«ÊÇ¿´ÆğÀ´Ã»ÓĞĞ§ÂÊÌáÉı
+	//ä¸‹é¢çš„å…¬å¼å¯ä»¥ç®€åŒ–æ‰ifï¼Œä½†æ˜¯çœ‹èµ·æ¥æ²¡æœ‰æ•ˆç‡æå‡
 	//falloff = 1 - (cosAlpha < cosTheta)* (1 - (cosAlpha - cosPhi) / (cosTheta - cosPhi));
 	
-	//µÆ¹âfalloffµÄÖ¸ÊıË¥¼õ
-	//TODO£º
+	//ç¯å…‰falloffçš„æŒ‡æ•°è¡°å‡
+	//TODOï¼š
 
 	float4 lightColor = attenuation * g_LightColor * falloff;
 	
@@ -432,10 +447,10 @@ OutputPS SpotLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1)
 
 	float shadowFinal = 1.0f;
 	//shadowFinal = ShadowFunc(g_bUseShadow, pos);
-	//ÒõÓ°Í¼²ÉÑù
+	//é˜´å½±å›¾é‡‡æ ·
 	shadowFinal = tex2D(g_sampleShadowResult, TexCoord);
 
-	//MRTÊä³ö¹âÕÕ½á¹û
+	//MRTè¾“å‡ºå…‰ç…§ç»“æœ
 	outPs.diffuseLight = DiffuseLight * shadowFinal.x;
 	outPs.specularLight = SpecularLight * shadowFinal.x;
 	return outPs;
@@ -455,7 +470,7 @@ float4 ShadowPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1) : COLOR
 	//shadowFinal = PCFShadowFunc(g_bUseShadow, pos);
 	shadowFinal = ShadowFunc(g_bUseShadow, pos);
 
-	//Êä³öÒõÓ°½á¹û
+	//è¾“å‡ºé˜´å½±ç»“æœ
 	float4 finalColor = float4(shadowFinal, shadowFinal, shadowFinal, shadowFinal);
 	return finalColor;
 }
@@ -474,7 +489,7 @@ float4 PointShadowPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1) : 
 	float shadowFinal = 1.0f;
 	//shadowFinal = PCFPointShadowFunc(g_bUseShadow, pos);
 	shadowFinal = PointShadowFunc(g_bUseShadow, pos);
-	//Êä³öÒõÓ°½á¹û
+	//è¾“å‡ºé˜´å½±ç»“æœ
 	float4 finalColor = float4(shadowFinal, shadowFinal, shadowFinal, shadowFinal);
 	return finalColor;
 }
@@ -486,10 +501,10 @@ float4 StencilPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1) : COLO
 
 float4 AmbientPass(float2 TexCoord : TEXCOORD0) : COLOR
 {
-	//¼ÆËã»·¾³¹â
+	//è®¡ç®—ç¯å¢ƒå…‰
 	float4 Ambient = g_AmbientColor;
 
-	//¸ßÁÁÌì¿ÕºĞ£¨Êµ¼ÊÉÏÓ¦¸ÃÓÃHDRÌì¿ÕºĞ£©
+	//é«˜äº®å¤©ç©ºç›’ï¼ˆå®é™…ä¸Šåº”è¯¥ç”¨HDRå¤©ç©ºç›’ï¼‰
 	Ambient = GetDepth(TexCoord, g_samplePosition) > g_zFar ? float4(1, 1, 1, 1) : Ambient;
 
 	return Ambient;
@@ -497,11 +512,11 @@ float4 AmbientPass(float2 TexCoord : TEXCOORD0) : COLOR
 
 technique DeferredRender
 {
-	pass p0 //äÖÈ¾µÆ¹â
+	pass p0 //æ¸²æŸ“ç¯å…‰
 	{
 		vertexShader = compile vs_3_0 VShaderLightVolume();
 		pixelShader = compile ps_3_0 DirectionLightPass();
-		AlphaBlendEnable = true;                        //ÉèÖÃäÖÈ¾×´Ì¬        
+		AlphaBlendEnable = true;                        //è®¾ç½®æ¸²æŸ“çŠ¶æ€        
 		SrcBlend = ONE;
 		DestBlend = ONE;
 		ColorWriteEnable = 0xFFFFFFFF;
@@ -511,7 +526,7 @@ technique DeferredRender
 	{
 		vertexShader = compile vs_3_0 VShaderLightVolume();
 		pixelShader = compile ps_3_0 PointLightPass();
-		AlphaBlendEnable = true;                        //ÉèÖÃäÖÈ¾×´Ì¬        
+		AlphaBlendEnable = true;                        //è®¾ç½®æ¸²æŸ“çŠ¶æ€        
 		SrcBlend = ONE;
 		DestBlend = ONE;
 		ColorWriteEnable = 0xFFFFFFFF;
@@ -521,7 +536,7 @@ technique DeferredRender
 	{
 		vertexShader = compile vs_3_0 VShaderLightVolume();
 		pixelShader = compile ps_3_0 SpotLightPass();
-		AlphaBlendEnable = true;                        //ÉèÖÃäÖÈ¾×´Ì¬        
+		AlphaBlendEnable = true;                        //è®¾ç½®æ¸²æŸ“çŠ¶æ€        
 		SrcBlend = ONE;
 		DestBlend = ONE;
 		ColorWriteEnable = 0xFFFFFFFF;
@@ -543,11 +558,11 @@ technique DeferredRender
 		ColorWriteEnable = 0xFFFFFFFF;
 	}
 
-	pass p5 //Ìí¼Ó»·¾³¹â
+	pass p5 //æ·»åŠ ç¯å¢ƒå…‰
 	{
 		vertexShader = compile vs_3_0 VShader();
 		pixelShader = compile ps_3_0 AmbientPass();
-		AlphaBlendEnable = true;                        //ÉèÖÃäÖÈ¾×´Ì¬        
+		AlphaBlendEnable = true;                        //è®¾ç½®æ¸²æŸ“çŠ¶æ€        
 		SrcBlend = ONE;
 		DestBlend = ONE;
 		ColorWriteEnable = 0xFFFFFFFF;
@@ -556,7 +571,7 @@ technique DeferredRender
 	{
 		vertexShader = compile vs_3_0 VShaderLightVolume();
 		pixelShader = compile ps_3_0 StencilPass();
-		AlphaBlendEnable = true;                        //ÉèÖÃäÖÈ¾×´Ì¬        
+		AlphaBlendEnable = true;                        //è®¾ç½®æ¸²æŸ“çŠ¶æ€        
 		SrcBlend = ZERO;
 		DestBlend = ONE;
 		ColorWriteEnable = 0;

@@ -238,7 +238,7 @@ void HDRLighting::CreatePostEffect()
 bool g_bToneMap = true;
 bool g_bBlueShift = false;
 
-float g_fKeyValue = 0.18;
+float g_fKeyValue = 1.25;
 bool g_bAdaptationInvalid = true;
 void HDRLighting::RenderPost(LPDIRECT3DTEXTURE9 hdrBuffer)
 {

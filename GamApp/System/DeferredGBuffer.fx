@@ -70,17 +70,17 @@ OutputVS VShader(float4 posL		: POSITION,
 {
 	OutputVS outVS = (OutputVS)0;
 
-	//×îÖÕÊä³öµÄ¶¥µãÎ»ÖÃ£¨¾­¹ıÊÀ½ç¡¢¹Û²ì¡¢Í¶Ó°¾ØÕó±ä»»£©
+	//æœ€ç»ˆè¾“å‡ºçš„é¡¶ç‚¹ä½ç½®ï¼ˆç»è¿‡ä¸–ç•Œã€è§‚å¯Ÿã€æŠ•å½±çŸ©é˜µå˜æ¢ï¼‰
 	outVS.posWVP = mul(posL, g_WorldViewProj);
 	
 
-	//ÕâÀï²»¸ÃÖ±½Ó³ËÒÔWV£¬¶øÊÇÓ¦¸Ã³ËÒÔworldµÄÄæµÄ×ªÖÃ£¬ÕâÑùÔÚÓĞËõ·ÅµÄÊ±ºò·¨Ïß²ÅÄÜ±£Ö¤ÓëÆ½Ãæ´¹Ö±
-	//¹Û²ì¿Õ¼äÏÂµÄ·¨Ïß
+	//è¿™é‡Œä¸è¯¥ç›´æ¥ä¹˜ä»¥WVï¼Œè€Œæ˜¯åº”è¯¥ä¹˜ä»¥worldçš„é€†çš„è½¬ç½®ï¼Œè¿™æ ·åœ¨æœ‰ç¼©æ”¾çš„æ—¶å€™æ³•çº¿æ‰èƒ½ä¿è¯ä¸å¹³é¢å‚ç›´
+	//è§‚å¯Ÿç©ºé—´ä¸‹çš„æ³•çº¿
 	outVS.normalV = mul(normalL, g_WorldView);
 
-	//¹Û²ì¿Õ¼äÏÂµÄÇĞÏß
+	//è§‚å¯Ÿç©ºé—´ä¸‹çš„åˆ‡çº¿
 	outVS.tangentV = mul(tangentL, g_WorldView);
-	//¹Û²ì¿Õ¼äÏÂµÄ¸±·¨Ïß
+	//è§‚å¯Ÿç©ºé—´ä¸‹çš„å‰¯æ³•çº¿
 	outVS.binormalV = mul(binormalL, g_WorldView);
 
 	outVS.posP = outVS.posWVP;
@@ -109,9 +109,9 @@ OutputPS PShader(float3 NormalV		: NORMAL,
 	//float3 BinormalL3 = cross(NormalL, TangentL3) *tW;
 	//BinormalL3 = normalize(BinormalL3);
 
-	//TBNµÄÄæ¾ØÕó×÷ÓÃÎª°ÑÈı¸ö·ÖÁ¿ËùÔÚ¿Õ¼äµÄÏòÁ¿×ªµ½ÇĞÏß¿Õ¼ä
-	//ËùÒÔTBN×ÔÈ»¾ÍÊÇ½«ÇĞÏß¿Õ¼äµÄÏòÁ¿×ª»ØÈı¸ö·ÖÁ¿µÄ¿Õ¼ä
-	//ÕâÀïÊ¹ÓÃ¹Û²ì¿Õ¼äµÄÈı¸ö·ÖÁ¿£¬ËùÒÔÇĞ¿Õ¼äµÄ·¨Ïß³ËÒÔTBN¾ÍÊÇ¹Û²ì¿Õ¼äµÄ·¨ÏßÁË
+	//TBNçš„é€†çŸ©é˜µä½œç”¨ä¸ºæŠŠä¸‰ä¸ªåˆ†é‡æ‰€åœ¨ç©ºé—´çš„å‘é‡è½¬åˆ°åˆ‡çº¿ç©ºé—´
+	//æ‰€ä»¥TBNè‡ªç„¶å°±æ˜¯å°†åˆ‡çº¿ç©ºé—´çš„å‘é‡è½¬å›ä¸‰ä¸ªåˆ†é‡çš„ç©ºé—´
+	//è¿™é‡Œä½¿ç”¨è§‚å¯Ÿç©ºé—´çš„ä¸‰ä¸ªåˆ†é‡ï¼Œæ‰€ä»¥åˆ‡ç©ºé—´çš„æ³•çº¿ä¹˜ä»¥TBNå°±æ˜¯è§‚å¯Ÿç©ºé—´çš„æ³•çº¿äº†
 	float3x3 TBN = float3x3(TangentV, BinormalV, NormalV);
 	//TBN = transpose(TBN);
 
@@ -119,7 +119,7 @@ OutputPS PShader(float3 NormalV		: NORMAL,
 	sampledNormalT = 2.0f * sampledNormalT - 1.0f - 0.00392f;
 	sampledNormalT = normalize(sampledNormalT);
 
-	//Á½ÖÖÊÇµÈ¼ÛµÄ
+	//ä¸¤ç§æ˜¯ç­‰ä»·çš„
 	float3 sampledNormalV = mul(sampledNormalT, TBN);/* sampledNormalT.x * TBN[0] + sampledNormalT.y * TBN[1] + sampledNormalT.z * TBN[2];*/
 	sampledNormalV = normalize(sampledNormalV);
 
@@ -127,34 +127,34 @@ OutputPS PShader(float3 NormalV		: NORMAL,
 	sampledNormalV.xy = encode(sampledNormalV);
 	sampledNormalV.xyz = float2ToFloat3(sampledNormalV.xy);
 
-	//Ìì¿ÕºĞ
+	//å¤©ç©ºç›’
 	sampledNormalV = g_IsSky ? float3(0, 0, 0) : sampledNormalV;
 
-	//ÎÆÀí²ÉÑù
+	//çº¹ç†é‡‡æ ·
 	float4 Texture = tex2D(g_sampleTexture, TexCoord);
-	//¸ß¹âÍ¼²ÉÑù
+	//é«˜å…‰å›¾é‡‡æ ·
 	float4 Specular = tex2D(g_sampleSpecularMap, TexCoord);
 
-	//Ìì¿ÕºĞ
+	//å¤©ç©ºç›’
 	posV = g_IsSky ? float4(1.0e6, 1.0e6, 1.0e6, 1.0e6) : posV;
 
-	//Í¶Ó°ºóµÄ·ÇÏßĞÔÉî¶È
+	//æŠ•å½±åçš„éçº¿æ€§æ·±åº¦
 	//float DepthP = posP.z / posP.w;
 
-	//ÅĞ¶ÏÊÇ·ñÊÇÌì¿ÕºĞ
+	//åˆ¤æ–­æ˜¯å¦æ˜¯å¤©ç©ºç›’
 	float DepthP = g_IsSky ? 1.0e6 : posP.z / posP.w;
 
-	//ÉèÖÃ¸ß¹âÃİ
+	//è®¾ç½®é«˜å…‰å¹‚
 	float Shininess = g_shininess;
-	Shininess = 50.05f;
+	//Shininess = 50.05f;
 
 	//
-	clip(Texture.a < 0.1f ? -1 : 1);
+	clip(Texture.a < 0.3f ? -1 : 1);
 
-	//RGBÍ¨µÀ´¢´æÎÆÀíÑÕÉ«
+	//RGBé€šé“å‚¨å­˜çº¹ç†é¢œè‰²
 	PsOut.diffuse.rgb = Texture.xyz;
 
-	//AÍ¨µÀ´¢´æ¸ß¹âÇ¿¶È
+	//Aé€šé“å‚¨å­˜é«˜å…‰å¼ºåº¦
 	PsOut.diffuse.a = Specular.x;
 	PsOut.normal = float4(sampledNormalV.xyz, 1.0f);
 	PsOut.normal.a = 1.0f / (Shininess + epsilon);

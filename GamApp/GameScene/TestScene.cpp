@@ -1,4 +1,4 @@
-#include "TestScene.h"
+﻿#include "TestScene.h"
 #include "EntityFeature/Entity.h"
 #include "CommonUtil/Timer/GlobalTimer.h"
 #include "Camera\CameraParam.h"
@@ -8,7 +8,13 @@
 #include "Light/PointLight.h"
 #include "Light/SpotLight.h"
 #include "Light/LightManager.h"
- 
+
+#include "RenderSystem/TempSkin/SkinnedMesh.h"
+//should done in skin component
+#include "RenderSystem/TempSkin/Vertex.h"
+//should done in Entity!
+#include "RenderSystem/RenderPipeLine/RenderPipe.h"
+
 TestScene::TestScene()
 {
 }
@@ -24,6 +30,11 @@ Entity* shevaEntity;
 Entity* horseEntity;
 Entity* sponzaEntity;
 Material testMat1;
+
+SkinnedMesh* mSkinnedMesh;
+
+SkinnedMesh* mSkinnedMeshLittle;
+
 EffectLoader effectLoader;
 DirectionLight* dirLight1;
 DirectionLight* dirLight2;
@@ -142,7 +153,6 @@ void TestScene::OnLoad()
 	//roomEntity->SetTexture("Res\\Mesh\\room\\oldwood.dds", 2);
 	//roomEntity->SetTexture("Res\\Mesh\\room\\FireplaceDiff.dds", 3);
 
-	
 
 	D3DXMATRIX planeM;
 	D3DXVECTOR3 move = D3DXVECTOR3(0, -5, 0);
@@ -161,6 +171,43 @@ void TestScene::OnLoad()
 	testMat1.effect = effectLoader.GetEffect();
 	krisEntity->SetMaterial(&testMat1);
 
+
+
+	//skinnedmesh
+	InitAllVertexDeclarations();
+
+	mSkinnedMesh = new SkinnedMesh("Res\\Mesh\\DeerAnim\\deer5.x");
+	//mSkinnedMesh = new SkinnedMesh("Res\\DeerAnim\\deer4.x");
+
+	mSkinnedMesh->SetTexture("Res\\Mesh\\DeerAnim\\deer1.png");
+
+	D3DXMATRIX ADeerM;
+	D3DXVECTOR3 ADeerMV = D3DXVECTOR3(100, 220, 90);
+	ADeerMV = D3DXVECTOR3(-15, -3, -2.0f);
+	D3DXMatrixTranslation(&ADeerM, ADeerMV.x, ADeerMV.y, ADeerMV.z);
+	D3DXVECTOR3 ADeerSV = D3DXVECTOR3(40.1f, 40.1f, 40.1f);
+	D3DXMATRIX ADeerS;
+	D3DXMatrixScaling(&ADeerS, ADeerSV.x, ADeerSV.y, ADeerSV.z);
+	D3DXMATRIX ADeerRotMat;
+	D3DXMatrixRotationY(&ADeerRotMat, 0.225f * D3DX_PI);
+	mSkinnedMesh->SetWorldTransform(ADeerRotMat * ADeerS * ADeerM);
+	RENDERPIPE::Instance().PushSkinnedMesh(mSkinnedMesh);
+
+	mSkinnedMeshLittle = new SkinnedMesh("Res\\Mesh\\DeerAnim\\LittleDeer_1.x");
+	//mSkinnedMeshLittle->SetTexture("Res\\DeerAnim\\deer1.png");
+
+	D3DXMATRIX ALittleDeerM;
+	D3DXVECTOR3 ALittleDeerMV = D3DXVECTOR3(100, 220, 90);
+	ALittleDeerMV = D3DXVECTOR3(-12.5, 0, -4.0f);
+	D3DXMatrixTranslation(&ALittleDeerM, ALittleDeerMV.x, ALittleDeerMV.y, ALittleDeerMV.z);
+	D3DXVECTOR3 ALittleDeerSV = D3DXVECTOR3(10.1f, 10.1f, 10.1f);
+	D3DXMATRIX ALittleDeerS;
+	D3DXMatrixScaling(&ALittleDeerS, ALittleDeerSV.x, ALittleDeerSV.y, ALittleDeerSV.z);
+	D3DXMATRIX ALittleDeerRotMat;
+	D3DXMatrixRotationY(&ALittleDeerRotMat, -1.225f * D3DX_PI);
+	mSkinnedMeshLittle->SetWorldTransform(ALittleDeerRotMat * ALittleDeerS * ALittleDeerM);
+	RENDERPIPE::Instance().PushSkinnedMesh(mSkinnedMeshLittle);
+	//----------------------------------------------------------
 	//--------------------------------------------------------------------------
 	D3DXMATRIX lightMoveMat;
 	D3DXMATRIX lightRot1Mat;
@@ -412,6 +459,11 @@ void TestScene::OnBeginFrame()
 	rotMatS *= rotMatS2;
 	rotMatS *= moveMat;
 	shevaEntity->SetWorldTransform(rotMatS);
+
+	//-------------------------------------------
+	double dTime = GLOBALTIMER::Instance().GetFrameTime();
+	mSkinnedMesh->update(dTime);
+	mSkinnedMeshLittle->update(dTime);
 }
 
 void TestScene::OnFrame()

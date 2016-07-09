@@ -2,6 +2,8 @@
 #include "CommonUtil/D3D9Header.h"
 #include "RenderUtil/RenderUtil.h"
 
+#include "RenderSystem/TempSkin/SkinnedMesh.h"
+
 class RenderPipe
 {
 public:
@@ -35,6 +37,8 @@ public:
 	
 	void	UpdateRenderState();
 
+	void	PushSkinnedMesh(SkinnedMesh* const skinnedMesh);
+
 	LPDIRECT3DTEXTURE9	m_pDiffuseTarget;
 	LPDIRECT3DTEXTURE9	m_pNormalTarget;
 	LPDIRECT3DTEXTURE9	m_pPositionTarget;
@@ -49,6 +53,8 @@ public:
 
 private:
 	std::vector<RenderUtil*> mRenderUtilList;
+
+	std::vector<SkinnedMesh*> mSkinnedMeshList;
 
 	LPDIRECT3DSURFACE9	m_pDiffuseSurface;
 	LPDIRECT3DSURFACE9	m_pNormalSurface;

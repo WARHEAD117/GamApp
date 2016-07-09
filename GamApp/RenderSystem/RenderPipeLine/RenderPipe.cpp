@@ -265,8 +265,8 @@ void RenderPipe::RenderGBuffer()
 	HRESULT r1 = GBufferEffect->Begin(&nPasses, 0);
 	HRESULT r2 = GBufferEffect->BeginPass(0);
 
-	deferredMultiPassEffect->SetFloat("g_zNear", CameraParam::zNear);
-	deferredMultiPassEffect->SetFloat("g_zFar", CameraParam::zFar);
+	GBufferEffect->SetFloat("g_zNear", CameraParam::zNear);
+	GBufferEffect->SetFloat("g_zFar", CameraParam::zFar);
 
 	skyBox.RenderInGBuffer(GBufferEffect);
 
@@ -276,7 +276,18 @@ void RenderPipe::RenderGBuffer()
 	}
 
 	GBufferEffect->EndPass();
+
+	//skin
+	r2 = GBufferEffect->BeginPass(1);
+
+	for (int i = 0; i < mSkinnedMeshList.size(); ++i)
+	{
+		mSkinnedMeshList[i]->RenderDeferredGeometry(GBufferEffect);
+	}
+	GBufferEffect->EndPass();
+
 	GBufferEffect->End();
+
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, NULL);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(1, NULL);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(2, NULL);
@@ -921,6 +932,11 @@ void RenderPipe::ForwardRender()
 void RenderPipe::PushRenderUtil(RenderUtil* const renderUtil)
 {
 	mRenderUtilList.push_back(renderUtil);
+}
+
+void RenderPipe::PushSkinnedMesh(SkinnedMesh* const skinnedMesh)
+{
+	mSkinnedMeshList.push_back(skinnedMesh);
 }
 
 void RenderPipe::ClearRenderUtil()

@@ -6,6 +6,9 @@ bool		g_IsSky;
 
 float		g_shininess = 1.0f;
 
+uniform extern float4x4 gFinalXForms[54];
+bool g_isSkin = false;
+
 texture		g_Texture;
 sampler2D g_sampleTexture =
 sampler_state
@@ -73,7 +76,6 @@ OutputVS VShader(float4 posL		: POSITION,
 	//最终输出的顶点位置（经过世界、观察、投影矩阵变换）
 	outVS.posWVP = mul(posL, g_WorldViewProj);
 	
-
 	//这里不该直接乘以WV，而是应该乘以world的逆的转置，这样在有缩放的时候法线才能保证与平面垂直
 	//观察空间下的法线
 	outVS.normalV = mul(normalL, g_WorldView);
@@ -90,6 +92,60 @@ OutputVS VShader(float4 posL		: POSITION,
 	return outVS;
 }
 
+
+OutputVS VSkinShader(
+	float4 posL: POSITION,
+	float3 normalL : NORMAL,
+	float3 tangentL : TANGENT,
+	float3 binormalL : BINORMAL,
+	float2 TexCoord : TEXCOORD0,
+	float4 weight0 : BLENDWEIGHT0,
+	int4 boneIndex : BLENDINDICES0)
+{
+	OutputVS outVS = (OutputVS)0;
+
+	// Do the vertex blending calculation for posL and normalL.
+	float weight1 = 1.0f - weight0.x;
+
+	float4 p = weight0.x * mul(posL, gFinalXForms[boneIndex[0]]);
+	p += weight0.y * mul(posL, gFinalXForms[boneIndex[1]]);
+	p += weight0.z * mul(posL, gFinalXForms[boneIndex[2]]);
+	p += (1 - weight0.x - weight0.y - weight0.z) * mul(posL, gFinalXForms[boneIndex[3]]);
+	//p	+= weight2 * mul(float4(posL, 1.0f), gFinalXForms[boneIndex[2]]);
+	p.w = 1.0f;
+
+	// We can use the same matrix to transform normals since we are assuming
+	// no scaling (i.e., rigid-body).
+	float4 n = weight0.x * mul(float4(normalL, 0.0f), gFinalXForms[boneIndex[0]]);
+	n += weight0.y * mul(float4(normalL, 0.0f), gFinalXForms[boneIndex[1]]);
+	n += weight0.z * mul(float4(normalL, 0.0f), gFinalXForms[boneIndex[2]]);
+	n += (1 - weight0.x - weight0.y - weight0.z) * mul(float4(normalL, 0.0f), gFinalXForms[boneIndex[3]]);
+	//n	+= weight2 * mul(float4(normalL, 0.0f), gFinalXForms[boneIndex[2]]);
+	n.w = 0.0f;
+
+	// We can use the same matrix to transform normals since we are assuming
+	// no scaling (i.e., rigid-body).
+	float4 b = weight0.x * mul(float4(normalL, 0.0f), gFinalXForms[boneIndex[0]]);
+	b += weight0.y * mul(float4(normalL, 0.0f), gFinalXForms[boneIndex[1]]);
+	b += weight0.z * mul(float4(normalL, 0.0f), gFinalXForms[boneIndex[2]]);
+	b += (1 - weight0.x - weight0.y - weight0.z) * mul(float4(normalL, 0.0f), gFinalXForms[boneIndex[3]]);
+	//n	+= weight2 * mul(float4(normalL, 0.0f), gFinalXForms[boneIndex[2]]);
+	b.w = 0.0f;
+
+	float4 t = float4(cross(n.xyz, b.xyz), 0.0f);
+
+	outVS.posWVP = mul(p, g_WorldViewProj);
+	outVS.normalV = mul(n, g_WorldView);
+	outVS.tangentV = mul(t, g_WorldView);
+	outVS.binormalV = mul(b, g_WorldView);
+
+
+	outVS.posP = outVS.posWVP;
+	outVS.posV = mul(posL, g_WorldView);
+	outVS.TexCoord = TexCoord;
+
+	return outVS;
+}
 
 OutputPS PShader(float3 NormalV		: NORMAL,
 				 float3 TangentV		: TANGENT,
@@ -167,6 +223,11 @@ technique DeferredGBuffer
 	pass p0
 	{
 		vertexShader = compile vs_3_0 VShader();
+		pixelShader = compile ps_3_0 PShader();
+	}
+	pass p1
+	{
+		vertexShader = compile vs_3_0 VSkinShader();
 		pixelShader = compile ps_3_0 PShader();
 	}
 }

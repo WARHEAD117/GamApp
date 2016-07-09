@@ -115,6 +115,10 @@
     <ClInclude Include="RenderSystem\RenderUtil\EffectParam.h" />
     <ClInclude Include="RenderSystem\RenderUtil\RenderUtil.h" />
     <ClInclude Include="RenderSystem\Sky\SkyBox.h" />
+    <ClInclude Include="RenderSystem\TempSkin\AllocMeshHierarchy.h" />
+    <ClInclude Include="RenderSystem\TempSkin\d3dUtil.h" />
+    <ClInclude Include="RenderSystem\TempSkin\SkinnedMesh.h" />
+    <ClInclude Include="RenderSystem\TempSkin\Vertex.h" />
     <ClInclude Include="Takarazuka\NoteEntity.h" />
     <ClInclude Include="Takarazuka\NoteManager.h" />
     <ClInclude Include="Takarazuka\TakarazukaScene.h" />
@@ -152,6 +156,10 @@
     <ClCompile Include="RenderSystem\RenderPipeLine\RenderPipe.cpp" />
     <ClCompile Include="RenderSystem\RenderUtil\RenderUtil.cpp" />
     <ClCompile Include="RenderSystem\Sky\SkyBox.cpp" />
+    <ClCompile Include="RenderSystem\TempSkin\AllocMeshHierarchy.cpp" />
+    <ClCompile Include="RenderSystem\TempSkin\d3dUtil.cpp" />
+    <ClCompile Include="RenderSystem\TempSkin\SkinnedMesh.cpp" />
+    <ClCompile Include="RenderSystem\TempSkin\Vertex.cpp" />
     <ClCompile Include="Takarazuka\NoteEntity.cpp" />
     <ClCompile Include="Takarazuka\NoteManager.cpp" />
     <ClCompile Include="Takarazuka\TakarazukaScene.cpp" />

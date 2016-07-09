@@ -7,7 +7,6 @@ bool		g_IsSky;
 float		g_shininess = 1.0f;
 
 uniform extern float4x4 gFinalXForms[54];
-bool g_isSkin = false;
 
 texture		g_Texture;
 sampler2D g_sampleTexture =
@@ -141,7 +140,7 @@ OutputVS VSkinShader(
 
 
 	outVS.posP = outVS.posWVP;
-	outVS.posV = mul(posL, g_WorldView);
+    outVS.posV = mul(p, g_WorldView);
 	outVS.TexCoord = TexCoord;
 
 	return outVS;

@@ -15,13 +15,25 @@ public:
 	void OnEndFrame();
 
 	Entity* CreateEntity();
-	Entity* CreateEntityFromXFile(std::string fileName);
+
+	template<typename CLASSTYPE>
+	CLASSTYPE* CreateEntityFromXFile(std::string fileName);
+
 	void AddEntity(Entity& entity);
 	void DelEntity(unsigned int entityIndex);
 
 private:
 	Entity* Creator();
-	std::map< unsigned int, Entity > entityMap;
+	std::map< unsigned int, Entity* > entityMap;
 };
+
+template<typename CLASSTYPE>
+inline CLASSTYPE* EntityManager::CreateEntityFromXFile(std::string fileName)
+{
+	CLASSTYPE* newEntity = new CLASSTYPE(); //Creator();
+	newEntity->SetMeshFileName(fileName);
+	AddEntity(*newEntity);
+	return newEntity;
+}
 
 typedef CSingleton<EntityManager> ENTITYMANAGER;

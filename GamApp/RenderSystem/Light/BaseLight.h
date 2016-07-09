@@ -2,16 +2,12 @@
 #include "CommonUtil/GlobalHeader.h"
 #include "CommonUtil/D3D9Header.h"
  
+#include "RenderSystem/TempSkin/SkinnedMesh.h"
+
 #include "Transform/Transform.h"
 
 class RenderUtil;
 
-enum LightType
-{
-	eDirectionLight,
-	ePointLight,
-	eSpotLight
-};
 class BaseLight :
 	public Transform
 {
@@ -32,7 +28,7 @@ public:
 
 	LightType m_LightType;
 
-	virtual void RenderShadow(const std::vector<RenderUtil*>& mRenderUtilList);
+	virtual void RenderShadow(const std::vector<RenderUtil*>& mRenderUtilList, const std::vector<SkinnedMesh*>* mSkinnedMeshList = NULL);
 
 	virtual void RenderLightVolume();
 	virtual void BuildLightVolume();

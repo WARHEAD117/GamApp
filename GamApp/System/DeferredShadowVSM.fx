@@ -4,6 +4,8 @@ float4		g_ViewPos;
 
 bool		g_IsPointLight;
 
+uniform extern float4x4 gFinalXForms[54];
+
 struct OutputVS
 {
 	float4 posWVP			: POSITION;
@@ -20,6 +22,31 @@ OutputVS VShader(float4 posL		: POSITION0)
 	outVS.posWV = mul(posL, g_WorldView);
 
 	return outVS;
+}
+
+OutputVS VSkinnedShader(
+    float4 posL : POSITION0,
+	float4 weight0 : BLENDWEIGHT0,
+	int4 boneIndex : BLENDINDICES0)
+{
+    OutputVS outVS = (OutputVS) 0;
+
+    // Do the vertex blending calculation for posL and normalL.
+    float weight1 = 1.0f - weight0.x;
+
+    float4 p = weight0.x * mul(posL, gFinalXForms[boneIndex[0]]);
+    p += weight0.y * mul(posL, gFinalXForms[boneIndex[1]]);
+    p += weight0.z * mul(posL, gFinalXForms[boneIndex[2]]);
+    p += (1 - weight0.x - weight0.y - weight0.z) * mul(posL, gFinalXForms[boneIndex[3]]);
+	//p	+= weight2 * mul(float4(posL, 1.0f), gFinalXForms[boneIndex[2]]);
+    p.w = 1.0f;
+
+    
+	//最终输出的顶点位置（经过世界、观察、投影矩阵变换）
+    outVS.posWVP = mul(p, g_WorldViewProj);
+    outVS.posWV = mul(p, g_WorldView);
+
+    return outVS;
 }
 
 float2 ComputeMoments(float Depth)
@@ -67,5 +94,10 @@ technique DeferredShadowVSM
 	{
 		vertexShader = compile vs_3_0 VShader();
 		pixelShader = compile ps_3_0 PShader();
-	}
+    }
+    pass p1
+    {
+        vertexShader = compile vs_3_0 VSkinnedShader();
+        pixelShader = compile ps_3_0 PShader();
+    }
 }

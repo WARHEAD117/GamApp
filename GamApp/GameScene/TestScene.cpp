@@ -1,5 +1,6 @@
 ﻿#include "TestScene.h"
 #include "EntityFeature/Entity.h"
+#include "EntityFeature/SkinEntity.h"
 #include "CommonUtil/Timer/GlobalTimer.h"
 #include "Camera\CameraParam.h"
 #include "CommonUtil/Input/Input.h"
@@ -31,9 +32,9 @@ Entity* horseEntity;
 Entity* sponzaEntity;
 Material testMat1;
 
-SkinnedMesh* mSkinnedMesh;
 
-SkinnedMesh* mSkinnedMeshLittle;
+SkinEntity* mSkinnedMesh;
+SkinEntity* mSkinnedMeshLittle;
 
 EffectLoader effectLoader;
 DirectionLight* dirLight1;
@@ -55,10 +56,10 @@ void TestScene::OnLoad()
 	//===================================================================================================
 	//BuildCamera
 	mainCamera.Init();
-
+	
 	//Create Entity
 	//krisEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\Cube.X");
-	krisEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\kris_sheva\\kris.X");
+	krisEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile<Entity>("Res\\Mesh\\kris_sheva\\kris.X");
 	{
 		krisEntity->SetSpecularMap("Res\\Mesh\\kris_sheva\\378DAAED_SPEC.png", 0);
 		krisEntity->SetSpecularMap("Res\\Mesh\\kris_sheva\\3D9BBDC1_SPEC.png", 1);
@@ -70,7 +71,7 @@ void TestScene::OnLoad()
 		krisEntity->SetSpecularMap("Res\\Mesh\\kris_sheva\\566EC93F_SPEC.png", 16);
 	}
 	//shevaEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\teapot.X");
-	shevaEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\kris_sheva\\sheva.X");
+	shevaEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile<Entity>("Res\\Mesh\\kris_sheva\\sheva.X");
 	{
 		shevaEntity->SetSpecularMap("Res\\Mesh\\kris_sheva\\0A370D7F_SPEC.png", 0);
 		shevaEntity->SetSpecularMap("Res\\Mesh\\kris_sheva\\174D3E25_SPEC.png", 1);
@@ -84,14 +85,14 @@ void TestScene::OnLoad()
 	}
 	//testEntity.SetMeshFileName("Res\\Mesh\\car\\car25.X");
 	//testEntity.SetMeshFileName("Res\\Mesh\\tree3\\tree3.X");
-
-	horseEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\horse\\horse.X");
+	
+	horseEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile<Entity>("Res\\Mesh\\horse\\horse.X");
 	horseEntity->SetTexture("Res\\Mesh\\horse\\HorseB_512.jpg");
 	horseEntity->SetNormalMap("Res\\Mesh\\horse\\HorseB _NRM_512.jpg");
-
+	
 	
 
-	sponzaEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\sponza\\sponza.X");
+	sponzaEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile<Entity>("Res\\Mesh\\sponza\\sponza.X");
 	Material sponzaMat;
 	sponzaMat.Power = 20;
 	sponzaEntity->SetMaterial(&sponzaMat);
@@ -172,11 +173,11 @@ void TestScene::OnLoad()
 	krisEntity->SetMaterial(&testMat1);
 
 
-
+	/**/
 	//skinnedmesh
 	InitAllVertexDeclarations();
-
-	mSkinnedMesh = new SkinnedMesh("Res\\Mesh\\DeerAnim\\deer5.x");
+	
+	mSkinnedMesh = (SkinEntity*)ENTITYMANAGER::Instance().CreateEntityFromXFile<SkinEntity>("Res\\Mesh\\DeerAnim\\deer5.x");
 	//mSkinnedMesh = new SkinnedMesh("Res\\DeerAnim\\deer4.x");
 
 	mSkinnedMesh->SetTexture("Res\\Mesh\\DeerAnim\\deer1.png");
@@ -191,9 +192,8 @@ void TestScene::OnLoad()
 	D3DXMATRIX ADeerRotMat;
 	D3DXMatrixRotationY(&ADeerRotMat, 0.225f * D3DX_PI);
 	mSkinnedMesh->SetWorldTransform(ADeerRotMat * ADeerS * ADeerM);
-	RENDERPIPE::Instance().PushSkinnedMesh(mSkinnedMesh);
 
-	mSkinnedMeshLittle = new SkinnedMesh("Res\\Mesh\\DeerAnim\\LittleDeer_1.x");
+	mSkinnedMeshLittle = (SkinEntity*)ENTITYMANAGER::Instance().CreateEntityFromXFile<SkinEntity>("Res\\Mesh\\DeerAnim\\LittleDeer_1.x");
 	//mSkinnedMeshLittle->SetTexture("Res\\DeerAnim\\deer1.png");
 
 	D3DXMATRIX ALittleDeerM;
@@ -206,7 +206,6 @@ void TestScene::OnLoad()
 	D3DXMATRIX ALittleDeerRotMat;
 	D3DXMatrixRotationY(&ALittleDeerRotMat, -1.225f * D3DX_PI);
 	mSkinnedMeshLittle->SetWorldTransform(ALittleDeerRotMat * ALittleDeerS * ALittleDeerM);
-	RENDERPIPE::Instance().PushSkinnedMesh(mSkinnedMeshLittle);
 	//----------------------------------------------------------
 	//--------------------------------------------------------------------------
 	D3DXMATRIX lightMoveMat;
@@ -292,6 +291,7 @@ void TestScene::OnLoad()
 	//--------------------------------------------------------------------------
 	spotLight1 = LIGHTMANAGER::Instance().CreateLight<SpotLight>(eSpotLight);
 	spotLight1->SetLightRange(20);
+	spotLight1->SetUseShadow(false);
 	spotLight1->SetLightColor(D3DXCOLOR(1.0f, 0.0f, 0.0f, 1.0f));
 	D3DXMatrixTranslation(&lightMoveMat, 5, 5, 5);
 	spotLight1->SetWorldTransform(lightMoveMat);
@@ -315,7 +315,8 @@ void TestScene::OnLoad()
 	spotLight3->SetWorldTransform(lightRot1Mat * lightMoveMat);
 	//--------------------------------------------------------------------------
 	spotLight4 = LIGHTMANAGER::Instance().CreateLight<SpotLight>(eSpotLight);
-	spotLight4->SetLightRange(20);
+	spotLight4->SetLightRange(20); 
+	spotLight4->SetUseShadow(false);
 	spotLight4->SetLightColor(D3DXCOLOR(0.0, 1.5, 1.5, 1.0f));
 	D3DXMatrixTranslation(&lightMoveMat, -10, 4, -5);
 	D3DXMatrixRotationX(&lightRot1Mat, -0.25f * D3DX_PI);
@@ -446,7 +447,8 @@ void TestScene::OnBeginFrame()
 	D3DXMatrixRotationY(&rotMat, (180+R) / 180.0f * D3DX_PI);
 	R+=1.0f;
 	rotMat *= moveMat;
-	krisEntity->SetWorldTransform(rotMat);
+	if (krisEntity)
+		krisEntity->SetWorldTransform(rotMat);
 
 	move = D3DXVECTOR3(0, 12.5, -2.7);
 	D3DXMatrixTranslation(&moveMat, move.x, move.y, move.z);
@@ -458,12 +460,8 @@ void TestScene::OnBeginFrame()
 	D3DXMatrixRotationX(&rotMatS2, 0.25f * D3DX_PI);
 	rotMatS *= rotMatS2;
 	rotMatS *= moveMat;
-	shevaEntity->SetWorldTransform(rotMatS);
-
-	//-------------------------------------------
-	double dTime = GLOBALTIMER::Instance().GetFrameTime();
-	mSkinnedMesh->update(dTime);
-	mSkinnedMeshLittle->update(dTime);
+	if (shevaEntity)
+		shevaEntity->SetWorldTransform(rotMatS);
 }
 
 void TestScene::OnFrame()

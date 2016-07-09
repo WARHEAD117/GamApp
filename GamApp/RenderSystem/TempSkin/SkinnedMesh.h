@@ -7,6 +7,8 @@
 
 #include "d3dUtil.h"
 
+class Entity;
+
 struct FrameEx : public D3DXFRAME
 {
 	D3DXMATRIX toRoot;
@@ -27,6 +29,7 @@ public:
 	void draw();
 	//---------------------------
 	void RenderDeferredGeometry(ID3DXEffect* pEffect);
+	void RenderShadow(D3DXMATRIX lightViewMat, D3DXMATRIX lightProjMat, LightType lightType);
 
 	void SetMaterial(Material* material);
 
@@ -47,8 +50,8 @@ protected:
 
 	Material pMaterial;
 	LPDIRECT3DTEXTURE9 m_pTexture;
-	LPDIRECT3DTEXTURE9 pNormalMap;
-	LPDIRECT3DTEXTURE9 pSpecularMap;
+	LPDIRECT3DTEXTURE9 m_pNormalMap;
+	LPDIRECT3DTEXTURE9 m_pSpecularMap;
 
 	D3DXFRAME*     mRoot;
 	DWORD          mMaxVertInfluences;
@@ -74,6 +77,16 @@ public:
 	D3DXMATRIX	GetWorldTransform();
 	void		SetWorldTransform(D3DXMATRIX matrix);
 	void		SetTexture(std::string fileName);
+	void		SetNormalMap(std::string fileName);
+	void		SetSpecularMap(std::string fileName);
+
+	void	SetOwner(Entity* owner);
+
+private:
+	Entity*						mOwner;
+
+protected:
+	void BuildShadowEffectInfo(D3DXMATRIX lightViewMat, D3DXMATRIX lightProjMat);
 };
 
 inline D3DXMATRIX SkinnedMesh::GetWorldTransform()

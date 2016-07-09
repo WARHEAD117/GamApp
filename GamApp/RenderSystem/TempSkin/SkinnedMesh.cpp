@@ -11,6 +11,7 @@
 #include "Camera/CameraParam.h"
 #include "RenderUtil//EffectParam.h"
 
+#include "EntityFeature/Entity.h"
 
 SkinnedMesh::SkinnedMesh(std::string XFilename)
 {
@@ -47,6 +48,11 @@ SkinnedMesh::~SkinnedMesh()
 	ReleaseCOM(mSkinnedMesh);
 	ReleaseCOM(mSkinInfo);
 	ReleaseCOM(mAnimCtrl);
+}
+
+void SkinnedMesh::SetOwner(Entity* owner)
+{
+	mOwner = owner;
 }
 
 UINT SkinnedMesh::numVertices()
@@ -102,7 +108,7 @@ void SkinnedMesh::draw()
 
 void SkinnedMesh::RenderDeferredGeometry(ID3DXEffect* pEffect)
 {
-	mWorldMat = mWorldTransform;
+	mWorldMat = mOwner->GetWorldTransform();//mWorldTransform;
 	mViewMat = RENDERDEVICE::Instance().ViewMatrix;
 	mProjMat = RENDERDEVICE::Instance().ProjMatrix;
 
@@ -123,8 +129,22 @@ void SkinnedMesh::RenderDeferredGeometry(ID3DXEffect* pEffect)
 	{
 		pEffect->SetTexture(DIFFUSETEXTURE, RENDERDEVICE::Instance().GetDefaultTexture());
 	}
-	pEffect->SetTexture(NORMALMAP, RENDERDEVICE::Instance().GetDefaultNormalMap());
-	pEffect->SetTexture(SPECULARMAP, RENDERDEVICE::Instance().GetDefaultTexture());
+	if (m_pNormalMap)
+	{
+		pEffect->SetTexture(NORMALMAP, m_pNormalMap);
+	}
+	else
+	{
+		pEffect->SetTexture(NORMALMAP, RENDERDEVICE::Instance().GetDefaultNormalMap());
+	}
+	if (m_pSpecularMap)
+	{
+		pEffect->SetTexture(SPECULARMAP, m_pSpecularMap);
+	}
+	else
+	{
+		pEffect->SetTexture(SPECULARMAP, RENDERDEVICE::Instance().GetDefaultTexture());
+	}
 
 	pEffect->SetMatrixArray("gFinalXForms", getFinalXFormArray(), numBones());
 
@@ -180,6 +200,46 @@ void SkinnedMesh::RenderDeferredGeometry(ID3DXEffect* pEffect)
 			mSubMeshList[i].vertexCount, mSubMeshList[i].indexStart, mSubMeshList[i].faceCount);
 	}
 	*/
+}
+
+
+void SkinnedMesh::BuildShadowEffectInfo(D3DXMATRIX lightViewMat, D3DXMATRIX lightProjMat)
+{
+	mWorldMat = mOwner->GetWorldTransform();
+
+	mViewMat = lightViewMat;
+	mProjMat = lightProjMat;
+
+	mWorldView = mWorldMat * mViewMat;
+	mViewProj = mViewMat * mProjMat;
+	mWorldViewProj = mWorldMat * mViewProj;
+}
+
+void SkinnedMesh::RenderShadow(D3DXMATRIX lightViewMat, D3DXMATRIX lightProjMat, LightType lightType)
+{
+	BuildShadowEffectInfo(lightViewMat, lightProjMat);
+
+	RENDERDEVICE::Instance().GetShadowEffect()->SetMatrix(WORLDVIEWPROJMATRIX, &mWorldViewProj);
+	RENDERDEVICE::Instance().GetShadowEffect()->SetMatrix(WORLDVIEWMATRIX, &mWorldView);
+
+	if (lightType == ePointLight)
+		RENDERDEVICE::Instance().GetShadowEffect()->SetBool("g_IsPointLight", true);
+	else
+		RENDERDEVICE::Instance().GetShadowEffect()->SetBool("g_IsPointLight", false);
+
+	UINT nPasses = 0;
+	HRESULT r1 = RENDERDEVICE::Instance().GetShadowEffect()->Begin(&nPasses, 0);
+	HRESULT r2 = RENDERDEVICE::Instance().GetShadowEffect()->BeginPass(1);
+
+
+	RENDERDEVICE::Instance().GetShadowEffect()->SetMatrixArray("gFinalXForms", getFinalXFormArray(), numBones());
+
+	RENDERDEVICE::Instance().GetShadowEffect()->CommitChanges();
+
+	HR(mSkinnedMesh->DrawSubset(0));
+
+	RENDERDEVICE::Instance().GetShadowEffect()->EndPass();
+	RENDERDEVICE::Instance().GetShadowEffect()->End();
 }
 
 
@@ -362,5 +422,23 @@ void SkinnedMesh::SetTexture(std::string fileName)
 	if (res < 0)
 	{
 		m_pTexture = RENDERDEVICE::Instance().GetDefaultTexture();
+	}
+}
+
+void SkinnedMesh::SetNormalMap(std::string fileName)
+{
+	HRESULT res = D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, fileName.c_str(), &m_pNormalMap);
+	if (res < 0)
+	{
+		m_pNormalMap = RENDERDEVICE::Instance().GetDefaultNormalMap();
+	}
+}
+
+void SkinnedMesh::SetSpecularMap(std::string fileName)
+{
+	HRESULT res = D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, fileName.c_str(), &m_pSpecularMap);
+	if (res < 0)
+	{
+		m_pSpecularMap = RENDERDEVICE::Instance().GetDefaultTexture();
 	}
 }

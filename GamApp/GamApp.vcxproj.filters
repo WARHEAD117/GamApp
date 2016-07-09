@@ -204,6 +204,9 @@
     <ClInclude Include="RenderSystem\TempSkin\Vertex.h">
       <Filter>RenderSystem\TempSkin</Filter>
     </ClInclude>
+    <ClInclude Include="GameSystem\EntityFeature\SkinEntity.h">
+      <Filter>GameSystem\EntityFeature</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GameSystem\Camera\Camera.cpp">
@@ -253,9 +256,6 @@
     </ClCompile>
     <ClCompile Include="GameSystem\CommonUtil\EffectLoader\EffectLoader.cpp">
       <Filter>GameSystem\CommonUtil\EffectLoader</Filter>
-    </ClCompile>
-    <ClCompile Include="GameScene\BaseScene\BaseScene.cpp">
-      <Filter>GaneScene\BaseScene</Filter>
     </ClCompile>
     <ClCompile Include="GameScene\BaseScene\SceneManager.cpp">
       <Filter>GaneScene\BaseScene</Filter>
@@ -322,6 +322,12 @@
     </ClCompile>
     <ClCompile Include="RenderSystem\TempSkin\Vertex.cpp">
       <Filter>RenderSystem\TempSkin</Filter>
+    </ClCompile>
+    <ClCompile Include="GameSystem\EntityFeature\SkinEntity.cpp">
+      <Filter>GameSystem\EntityFeature</Filter>
+    </ClCompile>
+    <ClCompile Include="GameScene\BaseScene\BaseScene.cpp">
+      <Filter>GaneScene</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

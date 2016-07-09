@@ -359,7 +359,7 @@ void RenderPipe::RenderShadow()
 	{
 		BaseLight* pLight = LIGHTMANAGER::Instance().GetLight(index);
 		
-		pLight->RenderShadow(mRenderUtilList);
+		pLight->RenderShadow(mRenderUtilList,&mSkinnedMeshList);
 	}
 
 	if (NULL != pOldDS)

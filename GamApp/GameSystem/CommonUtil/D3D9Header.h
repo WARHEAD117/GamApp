@@ -82,3 +82,10 @@ const D3DVERTEXELEMENT9 COMMONVERTEXDECL[] =
 	{ 0, 44, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_BINORMAL, 0 },
 	D3DDECL_END()
 };
+
+enum LightType
+{
+	eDirectionLight,
+	ePointLight,
+	eSpotLight
+};

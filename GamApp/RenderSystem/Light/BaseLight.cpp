@@ -235,7 +235,7 @@ void BaseLight::SetShadowTarget()
 
 }
 
-void BaseLight::RenderShadow(const std::vector<RenderUtil*>& mRenderUtilList)
+void BaseLight::RenderShadow(const std::vector<RenderUtil*>& mRenderUtilList, const std::vector<SkinnedMesh*>* mSkinnedMeshList)
 {
 	if (!m_bUseShadow)
 		return;
@@ -248,8 +248,15 @@ void BaseLight::RenderShadow(const std::vector<RenderUtil*>& mRenderUtilList)
 	{
 		mRenderUtilList[i]->RenderShadow(m_lightViewMat, m_lightProjMat, GetLightType());
 	}
-}
 
+	if (mSkinnedMeshList)
+	{
+		for (int i = 0; i < mSkinnedMeshList->size(); ++i)
+		{
+			(*mSkinnedMeshList)[i]->RenderShadow(m_lightViewMat, m_lightProjMat, GetLightType());
+		}
+	}
+}
 
 LPDIRECT3DBASETEXTURE9 BaseLight::GetShadowTarget()
 {

@@ -89,7 +89,8 @@ void TestScene::OnLoad()
 	horseEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile<Entity>("Res\\Mesh\\horse\\horse.X");
 	horseEntity->SetTexture("Res\\Mesh\\horse\\HorseB_512.jpg");
 	horseEntity->SetNormalMap("Res\\Mesh\\horse\\HorseB _NRM_512.jpg");
-	
+
+	horseEntity->SetWorldScale(0.1f, 0.1f, 0.1f);
 	
 
 	sponzaEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile<Entity>("Res\\Mesh\\sponza\\sponza.X");
@@ -160,65 +161,51 @@ void TestScene::OnLoad()
 	D3DXMatrixTranslation(&planeM, move.x, move.y, move.z); 
 	//roomEntity->SetWorldTransform(planeM);
 
-	D3DXMATRIX horseM;
-	move = D3DXVECTOR3(0, 0, 0);
-	D3DXMatrixTranslation(&horseM, move.x, move.y, move.z);
-	move = D3DXVECTOR3(0.1f, 0.1f, 0.1f);
-	D3DXMATRIX horseS;
-	D3DXMatrixScaling(&horseS, move.x, move.y, move.z);
-	horseEntity->SetWorldTransform(horseS * horseM);
+
 
 	effectLoader.LoadFxEffect("System\\BankBRDFLight.fx");
 	testMat1.effect = effectLoader.GetEffect();
 	krisEntity->SetMaterial(&testMat1);
 
+	Entity* DofMesh = ENTITYMANAGER::Instance().CreateEntityFromXFile<Entity>("Res\\Mesh\\DOFMesh.X");
+	DofMesh->SetWorldTranslate(-6, 0, 0);
+	DofMesh->SetWorldScale(0.05f, 0.03f, 0.03f);
+	DofMesh->SetWorldRotation(0, -0.5f * D3DX_PI, 0);
 
 	/**/
 	//skinnedmesh
 	InitAllVertexDeclarations();
 	
-	mSkinnedMesh = (SkinEntity*)ENTITYMANAGER::Instance().CreateEntityFromXFile<SkinEntity>("Res\\Mesh\\DeerAnim\\deer5.x");
+	mSkinnedMesh = ENTITYMANAGER::Instance().CreateEntityFromXFile<SkinEntity>("Res\\Mesh\\DeerAnim\\deer5.x");
 	//mSkinnedMesh = new SkinnedMesh("Res\\DeerAnim\\deer4.x");
 
 	mSkinnedMesh->SetTexture("Res\\Mesh\\DeerAnim\\deer1.png");
+	mSkinnedMesh->SetWorldTranslate(-15, -3, -2.0f);
+	mSkinnedMesh->SetWorldScale(40.1f, 40.1f, 40.1f);
+	mSkinnedMesh->SetWorldRotation(0, 0.225f * D3DX_PI, 0);
 
-	D3DXMATRIX ADeerM;
-	D3DXVECTOR3 ADeerMV = D3DXVECTOR3(100, 220, 90);
-	ADeerMV = D3DXVECTOR3(-15, -3, -2.0f);
-	D3DXMatrixTranslation(&ADeerM, ADeerMV.x, ADeerMV.y, ADeerMV.z);
-	D3DXVECTOR3 ADeerSV = D3DXVECTOR3(40.1f, 40.1f, 40.1f);
-	D3DXMATRIX ADeerS;
-	D3DXMatrixScaling(&ADeerS, ADeerSV.x, ADeerSV.y, ADeerSV.z);
-	D3DXMATRIX ADeerRotMat;
-	D3DXMatrixRotationY(&ADeerRotMat, 0.225f * D3DX_PI);
-	mSkinnedMesh->SetWorldTransform(ADeerRotMat * ADeerS * ADeerM);
-
-	mSkinnedMeshLittle = (SkinEntity*)ENTITYMANAGER::Instance().CreateEntityFromXFile<SkinEntity>("Res\\Mesh\\DeerAnim\\LittleDeer_1.x");
+	mSkinnedMeshLittle = ENTITYMANAGER::Instance().CreateEntityFromXFile<SkinEntity>("Res\\Mesh\\DeerAnim\\LittleDeer_1.x");
 	//mSkinnedMeshLittle->SetTexture("Res\\DeerAnim\\deer1.png");
-
-	D3DXMATRIX ALittleDeerM;
-	D3DXVECTOR3 ALittleDeerMV = D3DXVECTOR3(100, 220, 90);
-	ALittleDeerMV = D3DXVECTOR3(-12.5, 0, -4.0f);
-	D3DXMatrixTranslation(&ALittleDeerM, ALittleDeerMV.x, ALittleDeerMV.y, ALittleDeerMV.z);
-	D3DXVECTOR3 ALittleDeerSV = D3DXVECTOR3(10.1f, 10.1f, 10.1f);
-	D3DXMATRIX ALittleDeerS;
-	D3DXMatrixScaling(&ALittleDeerS, ALittleDeerSV.x, ALittleDeerSV.y, ALittleDeerSV.z);
-	D3DXMATRIX ALittleDeerRotMat;
-	D3DXMatrixRotationY(&ALittleDeerRotMat, -1.225f * D3DX_PI);
-	mSkinnedMeshLittle->SetWorldTransform(ALittleDeerRotMat * ALittleDeerS * ALittleDeerM);
+	mSkinnedMeshLittle->SetWorldTranslate(-12.5, 0, -4.0f);
+	mSkinnedMeshLittle->SetWorldScale(10.1f, 10.1f, 10.1f);
+	mSkinnedMeshLittle->SetWorldRotation(0, -1.225f * D3DX_PI, 0);
+	
+	/*
+	SkinEntity* BallBot;
+	BallBot = ENTITYMANAGER::Instance().CreateEntityFromXFile<SkinEntity>("Res\\Mesh\\BallBot\\BallBot.x");
+	//mSkinnedMeshLittle->SetTexture("Res\\DeerAnim\\deer1.png");
+	BallBot->SetWorldTranslate(-10, 0, -5.0f);
+	BallBot->SetWorldScale(1.0f, 1.0f, 1.0f);
+	BallBot->SetWorldRotation(0, -1.225f * D3DX_PI, 0);
+	*/
 	//----------------------------------------------------------
 	//--------------------------------------------------------------------------
-	D3DXMATRIX lightMoveMat;
-	D3DXMATRIX lightRot1Mat;
-	D3DXMATRIX lightRot2Mat;
 	dirLight1 = LIGHTMANAGER::Instance().CreateLight<DirectionLight>(eDirectionLight);
 	dirLight1->SetLightColor(D3DXCOLOR(10.0f, 8.0f, 5.3f, 1.0f));
 	dirLight1->SetShadowAreaSize(120, 120);
 	dirLight1->SetUseShadow(true);
-	D3DXMatrixTranslation(&lightMoveMat, 0, 70, 0);
-	D3DXMatrixRotationX(&lightRot1Mat, 0.125f * D3DX_PI);
-	D3DXMatrixRotationY(&lightRot2Mat, 0.125f * D3DX_PI);
-	dirLight1->SetWorldTransform(lightRot1Mat*lightRot2Mat*lightMoveMat);
+	dirLight1->SetWorldTranslate(0, 70, 0);
+	dirLight1->SetWorldRotation(0.125f * D3DX_PI, 0.125f * D3DX_PI, 0);
 	//--------------------------------------------------------------------------
 	/*
 	dirLight2 = LIGHTMANAGER::Instance().CreateLight<DirectionLight>(eDirectionLight);
@@ -236,10 +223,8 @@ void TestScene::OnLoad()
 	pointLight0->SetUseShadow(false);
 	pointLight0->SetLightRange(100);
 	//dirLight3->SetLightAttenuation(D3DXVECTOR4(0,0,0,0));
-	D3DXMatrixTranslation(&lightMoveMat, 0, 10, 0);
-	D3DXMatrixRotationX(&lightRot1Mat, 0.0f * D3DX_PI);
-
-	pointLight0->SetWorldTransform(lightRot1Mat*lightMoveMat);
+	pointLight0->SetWorldTranslate(0, 10, 0);
+	pointLight0->SetWorldRotation(0, 0, 0);
 	//--------------------------------------------------------------------------
 	/*
 	pointLight1 = LIGHTMANAGER::Instance().CreateLight<PointLight>(ePointLight);
@@ -255,18 +240,14 @@ void TestScene::OnLoad()
 	pointLight2->SetLightColor(D3DXCOLOR(0.7f, 0.7f, 0.7f, 1.0f));
 	pointLight2->SetUseShadow(false);
 	pointLight2->SetLightRange(2);
-
-	D3DXMatrixTranslation(&lightMoveMat, 20.0001f, -4, 9);
-	pointLight2->SetWorldTransform(lightMoveMat);
+	pointLight2->SetWorldTranslate(20.0001f, -4, 9);
 
 	//--------------------------------------------------------------------------
 	pointLight3 = LIGHTMANAGER::Instance().CreateLight<PointLight>(ePointLight);
 	pointLight3->SetLightColor(D3DXCOLOR(0.7f, 0.7f, 0.7f, 1.0f));
 	pointLight3->SetUseShadow(false);
 	pointLight3->SetLightRange(2);
-
-	D3DXMatrixTranslation(&lightMoveMat, 19.995f, -4, 10);
-	pointLight3->SetWorldTransform(lightMoveMat);
+	pointLight3->SetWorldTranslate(19.995f, -4, 10);
 
 	//--------------------------------------------------------------------------
 	/*
@@ -293,43 +274,37 @@ void TestScene::OnLoad()
 	spotLight1->SetLightRange(20);
 	spotLight1->SetUseShadow(false);
 	spotLight1->SetLightColor(D3DXCOLOR(1.0f, 0.0f, 0.0f, 1.0f));
-	D3DXMatrixTranslation(&lightMoveMat, 5, 5, 5);
-	spotLight1->SetWorldTransform(lightMoveMat);
+	spotLight1->SetWorldTranslate(5, 5, 5);
 	//--------------------------------------------------------------------------
 	spotLight2 = LIGHTMANAGER::Instance().CreateLight<SpotLight>(eSpotLight);
 	spotLight2->SetLightAngle(D3DXVECTOR2(60, 30));
 	spotLight2->SetLightRange(45);
 	spotLight2->SetUseShadow(false);
 	spotLight2->SetLightColor(D3DXCOLOR(0.0f, 0.1f, 0.0f, 1.0f));
-	D3DXMatrixTranslation(&lightMoveMat, 2, 10, -5);
-	D3DXMatrixRotationX(&lightRot1Mat, -0.4f * D3DX_PI);
-	spotLight2->SetWorldTransform(lightRot1Mat * lightMoveMat);
+	spotLight2->SetWorldRotation(-0.4f * D3DX_PI, 0, 0);
+	spotLight2->SetWorldTranslate(2, 10, -5);
 	//--------------------------------------------------------------------------
 	spotLight3 = LIGHTMANAGER::Instance().CreateLight<SpotLight>(eSpotLight);
 	spotLight3->SetLightRange(2);
 	spotLight3->SetLightColor(D3DXCOLOR(1.5, 1.5, 0.0, 1.0f));
 	spotLight3->SetUseShadow(false);
 	spotLight3->SetLightRange(20);
-	D3DXMatrixTranslation(&lightMoveMat, -10, 4, 5);
-	D3DXMatrixRotationX(&lightRot1Mat, 0.25f * D3DX_PI);
-	spotLight3->SetWorldTransform(lightRot1Mat * lightMoveMat);
+	spotLight3->SetWorldRotation(0.25f * D3DX_PI, 0, 0);
+	spotLight3->SetWorldTranslate(-10, 4, 5);
 	//--------------------------------------------------------------------------
 	spotLight4 = LIGHTMANAGER::Instance().CreateLight<SpotLight>(eSpotLight);
 	spotLight4->SetLightRange(20); 
 	spotLight4->SetUseShadow(false);
 	spotLight4->SetLightColor(D3DXCOLOR(0.0, 1.5, 1.5, 1.0f));
-	D3DXMatrixTranslation(&lightMoveMat, -10, 4, -5);
-	D3DXMatrixRotationX(&lightRot1Mat, -0.25f * D3DX_PI);
-	spotLight4->SetWorldTransform(lightRot1Mat * lightMoveMat);
+	spotLight4->SetWorldTranslate(-10, 4, -5);
+	spotLight4->SetWorldRotation(-0.25f * D3DX_PI, 0, 0);
 
 	spotLight5 = LIGHTMANAGER::Instance().CreateLight<SpotLight>(eSpotLight);
 	spotLight5->SetLightRange(100);
 	spotLight5->SetUseShadow(true);
 	spotLight5->SetLightColor(D3DXCOLOR(1.0, 0.2, 0.0, 1.0f));
-	D3DXMatrixTranslation(&lightMoveMat, 0, 50, 0);
-	D3DXMatrixRotationX(&lightRot1Mat, -0.0f * D3DX_PI);
-	spotLight5->SetWorldTransform(lightRot1Mat * lightMoveMat);
-
+	spotLight5->SetWorldTranslate(0, 50, 0);
+	spotLight5->SetWorldRotation(0, 0, 0);
 	
 }
 
@@ -441,27 +416,19 @@ void TestScene::OnBeginFrame()
 	cW = moveMat *cW;
 	mainCamera.SetWorldTransform(cW);
 	
-	move = D3DXVECTOR3(0, -5, -5);
-	D3DXMatrixTranslation(&moveMat, move.x, move.y, move.z);
-	D3DXMATRIX rotMat;
-	D3DXMatrixRotationY(&rotMat, (180+R) / 180.0f * D3DX_PI);
 	R+=1.0f;
-	rotMat *= moveMat;
-	if (krisEntity)
-		krisEntity->SetWorldTransform(rotMat);
 
-	move = D3DXVECTOR3(0, 12.5, -2.7);
-	D3DXMatrixTranslation(&moveMat, move.x, move.y, move.z);
-	D3DXMATRIX rotMatS;
-	D3DXMatrixIdentity(&rotMatS);
-	D3DXMatrixRotationY(&rotMatS, 0.07f * D3DX_PI);
-	D3DXMATRIX rotMatS2;
-	D3DXMatrixIdentity(&rotMatS2);
-	D3DXMatrixRotationX(&rotMatS2, 0.25f * D3DX_PI);
-	rotMatS *= rotMatS2;
-	rotMatS *= moveMat;
+	if (krisEntity)
+	{
+		krisEntity->SetWorldTranslate(0, -5, -5);
+		krisEntity->SetWorldRotation(0, (180 + R) / 180.0f * D3DX_PI, 0);
+	}
+
 	if (shevaEntity)
-		shevaEntity->SetWorldTransform(rotMatS);
+	{
+		shevaEntity->SetWorldTranslate(0, 12.5, -2.7);
+		shevaEntity->SetWorldRotation(0.25f * D3DX_PI, 0.07f * D3DX_PI, 0);
+	}
 }
 
 void TestScene::OnFrame()

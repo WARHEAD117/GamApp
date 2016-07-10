@@ -86,12 +86,6 @@ void TestScene::OnLoad()
 	//testEntity.SetMeshFileName("Res\\Mesh\\car\\car25.X");
 	//testEntity.SetMeshFileName("Res\\Mesh\\tree3\\tree3.X");
 	
-	horseEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile<Entity>("Res\\Mesh\\horse\\horse.X");
-	horseEntity->SetTexture("Res\\Mesh\\horse\\HorseB_512.jpg");
-	horseEntity->SetNormalMap("Res\\Mesh\\horse\\HorseB _NRM_512.jpg");
-
-	horseEntity->SetWorldScale(0.1f, 0.1f, 0.1f);
-	
 
 	sponzaEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile<Entity>("Res\\Mesh\\sponza\\sponza.X");
 	Material sponzaMat;
@@ -155,41 +149,43 @@ void TestScene::OnLoad()
 	//roomEntity->SetTexture("Res\\Mesh\\room\\oldwood.dds", 2);
 	//roomEntity->SetTexture("Res\\Mesh\\room\\FireplaceDiff.dds", 3);
 
-
-	D3DXMATRIX planeM;
-	D3DXVECTOR3 move = D3DXVECTOR3(0, -5, 0);
-	D3DXMatrixTranslation(&planeM, move.x, move.y, move.z); 
+	//D3DXMATRIX planeM;
+	//D3DXVECTOR3 move = D3DXVECTOR3(0, -5, 0);
+	//D3DXMatrixTranslation(&planeM, move.x, move.y, move.z); 
 	//roomEntity->SetWorldTransform(planeM);
 
-
-
-	effectLoader.LoadFxEffect("System\\BankBRDFLight.fx");
-	testMat1.effect = effectLoader.GetEffect();
-	krisEntity->SetMaterial(&testMat1);
-
+	/*
 	Entity* DofMesh = ENTITYMANAGER::Instance().CreateEntityFromXFile<Entity>("Res\\Mesh\\DOFMesh.X");
 	DofMesh->SetWorldTranslate(-6, 0, 0);
 	DofMesh->SetWorldScale(0.05f, 0.03f, 0.03f);
 	DofMesh->SetWorldRotation(0, -0.5f * D3DX_PI, 0);
+	*/
 
-	/**/
+	/*
+
+	horseEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile<Entity>("Res\\Mesh\\horse\\horse.X");
+	horseEntity->SetTexture("Res\\Mesh\\horse\\HorseB_512.jpg");
+	horseEntity->SetNormalMap("Res\\Mesh\\horse\\HorseB _NRM_512.jpg");
+	horseEntity->SetWorldScale(0.07f, 0.07f, 0.07f);
+
+
 	//skinnedmesh
 	InitAllVertexDeclarations();
-	
-	mSkinnedMesh = ENTITYMANAGER::Instance().CreateEntityFromXFile<SkinEntity>("Res\\Mesh\\DeerAnim\\deer5.x");
-	//mSkinnedMesh = new SkinnedMesh("Res\\DeerAnim\\deer4.x");
 
-	mSkinnedMesh->SetTexture("Res\\Mesh\\DeerAnim\\deer1.png");
-	mSkinnedMesh->SetWorldTranslate(-15, -3, -2.0f);
-	mSkinnedMesh->SetWorldScale(40.1f, 40.1f, 40.1f);
+	mSkinnedMesh = ENTITYMANAGER::Instance().CreateEntityFromXFile<SkinEntity>("Res\\Mesh\\DeerAnim\\deer5.x");
+	mSkinnedMesh->SetTexture("Res\\Mesh\\DeerAnim\\lu_tex.jpg");
+	mSkinnedMesh->SetWorldTranslate(-15, -2.2f, -2.0f);
+	mSkinnedMesh->SetWorldScale(28, 28, 28);
 	mSkinnedMesh->SetWorldRotation(0, 0.225f * D3DX_PI, 0);
 
 	mSkinnedMeshLittle = ENTITYMANAGER::Instance().CreateEntityFromXFile<SkinEntity>("Res\\Mesh\\DeerAnim\\LittleDeer_1.x");
-	//mSkinnedMeshLittle->SetTexture("Res\\DeerAnim\\deer1.png");
-	mSkinnedMeshLittle->SetWorldTranslate(-12.5, 0, -4.0f);
-	mSkinnedMeshLittle->SetWorldScale(10.1f, 10.1f, 10.1f);
+	//mSkinnedMeshLittle->SetTexture("Res\\Mesh\\DeerAnim\\lu_tex.jpg");
+	mSkinnedMeshLittle->SetWorldTranslate(-12.5, -0.1f, -4.0f);
+	mSkinnedMeshLittle->SetWorldScale(7, 7, 7);
 	mSkinnedMeshLittle->SetWorldRotation(0, -1.225f * D3DX_PI, 0);
-	
+	*/
+
+
 	/*
 	SkinEntity* BallBot;
 	BallBot = ENTITYMANAGER::Instance().CreateEntityFromXFile<SkinEntity>("Res\\Mesh\\BallBot\\BallBot.x");
@@ -198,6 +194,8 @@ void TestScene::OnLoad()
 	BallBot->SetWorldScale(1.0f, 1.0f, 1.0f);
 	BallBot->SetWorldRotation(0, -1.225f * D3DX_PI, 0);
 	*/
+
+
 	//----------------------------------------------------------
 	//--------------------------------------------------------------------------
 	dirLight1 = LIGHTMANAGER::Instance().CreateLight<DirectionLight>(eDirectionLight);
@@ -268,13 +266,14 @@ void TestScene::OnLoad()
 
 	D3DXMatrixTranslation(&lightMoveMat, 10.0f, -4, -19.998f);
 	pointLight5->SetWorldTransform(lightMoveMat);
-	*/
+	
 	//--------------------------------------------------------------------------
 	spotLight1 = LIGHTMANAGER::Instance().CreateLight<SpotLight>(eSpotLight);
 	spotLight1->SetLightRange(20);
 	spotLight1->SetUseShadow(false);
 	spotLight1->SetLightColor(D3DXCOLOR(1.0f, 0.0f, 0.0f, 1.0f));
 	spotLight1->SetWorldTranslate(5, 5, 5);
+	
 	//--------------------------------------------------------------------------
 	spotLight2 = LIGHTMANAGER::Instance().CreateLight<SpotLight>(eSpotLight);
 	spotLight2->SetLightAngle(D3DXVECTOR2(60, 30));
@@ -284,6 +283,7 @@ void TestScene::OnLoad()
 	spotLight2->SetWorldRotation(-0.4f * D3DX_PI, 0, 0);
 	spotLight2->SetWorldTranslate(2, 10, -5);
 	//--------------------------------------------------------------------------
+	
 	spotLight3 = LIGHTMANAGER::Instance().CreateLight<SpotLight>(eSpotLight);
 	spotLight3->SetLightRange(2);
 	spotLight3->SetLightColor(D3DXCOLOR(1.5, 1.5, 0.0, 1.0f));
@@ -298,7 +298,7 @@ void TestScene::OnLoad()
 	spotLight4->SetLightColor(D3DXCOLOR(0.0, 1.5, 1.5, 1.0f));
 	spotLight4->SetWorldTranslate(-10, 4, -5);
 	spotLight4->SetWorldRotation(-0.25f * D3DX_PI, 0, 0);
-
+	*/
 	spotLight5 = LIGHTMANAGER::Instance().CreateLight<SpotLight>(eSpotLight);
 	spotLight5->SetLightRange(100);
 	spotLight5->SetUseShadow(true);

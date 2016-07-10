@@ -1,5 +1,7 @@
 #include "common.fx"
 
+bool g_debugPos = false;
+
 texture	g_FinalColorBuffer;
 sampler2D g_sampleFinalColor =
 sampler_state
@@ -34,6 +36,12 @@ float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
 {
 	//纹理采样
 	float4 Texture = tex2D(g_sampleFinalColor, TexCoord);
+
+    if (g_debugPos)
+    {
+        Texture = Texture / g_zFar * 10;
+
+    }
 	
 	return Texture;
 }

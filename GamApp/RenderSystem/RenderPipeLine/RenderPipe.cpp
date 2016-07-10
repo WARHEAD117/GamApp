@@ -720,6 +720,12 @@ void RenderPipe::RenderFinalColor()
 	if (m_pPostTarget == NULL)
 		m_pPostTarget = m_pMainColorTarget;
 
+
+	finalColorEffect->SetBool("g_debugPos", false);
+#ifdef RENDER_DEBUG
+	if (m_debugMode == ShowPosition)
+		finalColorEffect->SetBool("g_debugPos", true);
+#endif
 	finalColorEffect->SetTexture(FINALCOLORBUFFER, m_pPostTarget);
 
 	finalColorEffect->CommitChanges();

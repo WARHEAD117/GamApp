@@ -127,7 +127,7 @@ void TestScene::OnLoad()
 	}
 
 	//==========================================================================================
-	if (false)
+	if (true)
 	{
 		deerEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\deer\\deer.X");
 
@@ -161,7 +161,7 @@ void TestScene::OnLoad()
 	}
 	
 	//==========================================================================================
-	if (false)
+	if (true)
 	{
 		mountainEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\farMountain2.X");
 		//mountainEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\plane2.X");
@@ -184,7 +184,7 @@ void TestScene::OnLoad()
 		mountainEntity->SetWorldTransform(mountainRotMat * mountainS * mountainM);
 	}
 
-	if (false)
+	if (true)
 	{
 		//==========================================================================================
 		//groundEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\farMountain2.X");
@@ -208,7 +208,7 @@ void TestScene::OnLoad()
 	}
 
 	//==========================================================================================
-	if (false)
+	if (true)
 	{
 
 		bunnyEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\bunny.X");
@@ -230,7 +230,7 @@ void TestScene::OnLoad()
 	}
 
 	//==========================================================================================
-	if (false)
+	if (true)
 	{
 		rock1Entity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\rock\\rock1.X");
 		//rock2Entity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\rock\\rock2.X");
@@ -249,7 +249,7 @@ void TestScene::OnLoad()
 	
 
 	//==========================================================================================
-	if (false)
+	if (true)
 	{
 		rock2Entity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\rock\\rock2.X");
 		//rock2Entity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\rock\\rock2.X");
@@ -271,7 +271,7 @@ void TestScene::OnLoad()
 	}
 
 	//==========================================================================================
-	if (false)
+	if (true)
 	{
 		grass1Entity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\tree\\grass.X");
 
@@ -377,7 +377,7 @@ void TestScene::OnLoad()
 		cowEntity->SetMaterial(&cowMat);
 	}
 	//==========================================================================================
-	if (true)
+	if (false)
 	{
 
 		Entity* goatEntity;

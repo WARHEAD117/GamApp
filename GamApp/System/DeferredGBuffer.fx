@@ -46,22 +46,14 @@ sampler_state
 
 struct OutputVS
 {
-	float4 posWVP			: POSITION;
-	float3 normalV			: NORMAL;
-	float3 tangentV			: TANGENT;
-	float3 binormalV		: BINORMAL;
+    float4 posWVP : POSITION;
+    float3 normalV : NORMAL;
+    float3 tangentV : TANGENT;
+    float3 binormalV : BINORMAL;
 
-	float2 TexCoord			: TEXCOORD0;
-	float4 posP				: TEXCOORD1;
-	float4 posV				: TEXCOORD2;
-};
-
-
-struct OutputPS
-{
-	float4 diffuse			: COLOR0;
-	float4 normal			: COLOR1;
-	float4 position			: COLOR2;
+    float2 TexCoord : TEXCOORD0;
+    float4 posP : TEXCOORD1;
+    float4 posV : TEXCOORD2;
 };
 
 OutputVS VShader(float4 posL		: POSITION,
@@ -146,12 +138,20 @@ OutputVS VSkinShader(
 	return outVS;
 }
 
+struct OutputPS
+{
+    float4 diffuse : COLOR0;
+    float4 normal : COLOR1;
+    float4 position : COLOR2;
+};
+
 OutputPS PShader(float3 NormalV		: NORMAL,
 				 float3 TangentV		: TANGENT,
 				 float3 BinormalV	: BINORMAL,
 				 float2 TexCoord		: TEXCOORD0,
 				 float4 posP			: TEXCOORD1,
-				 float4 posV			: TEXCOORD2)
+				 float4 posV : TEXCOORD2,
+                float2 screenPos : VPOS)
 {
 	OutputPS PsOut;
 
@@ -203,8 +203,18 @@ OutputPS PShader(float3 NormalV		: NORMAL,
 	float Shininess = g_shininess;
 	//Shininess = 50.05f;
 
-	//
-	clip(Texture.a < 0.3f ? -1 : 1);
+    int xIn = screenPos.x % 4;
+    int yIn = screenPos.y % 4;
+
+    float4x4 thresholdMatrix =
+    {
+        1.0 / 17.0, 9.0 / 17.0, 3.0 / 17.0, 11.0 / 17.0,
+        13.0 / 17.0, 5.0 / 17.0, 15.0 / 17.0, 7.0 / 17.0,
+        4.0 / 17.0, 12.0 / 17.0, 2.0 / 17.0, 10.0 / 17.0,
+        16.0 / 17.0, 8.0 / 17.0, 14.0 / 17.0, 6.0 / 17.0
+    };
+
+    clip(Texture.a - thresholdMatrix[xIn][yIn]);
 
 	//RGB通道储存纹理颜色
 	PsOut.diffuse.rgb = Texture.xyz;

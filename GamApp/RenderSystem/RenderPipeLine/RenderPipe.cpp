@@ -267,6 +267,8 @@ void RenderPipe::RenderGBuffer()
 
 	GBufferEffect->SetFloat("g_zNear", CameraParam::zNear);
 	GBufferEffect->SetFloat("g_zFar", CameraParam::zFar);
+	GBufferEffect->SetInt(SCREENWIDTH, RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth);
+	GBufferEffect->SetInt(SCREENHEIGHT, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight);
 
 	skyBox.RenderInGBuffer(GBufferEffect);
 

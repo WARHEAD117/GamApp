@@ -86,62 +86,65 @@ void TestScene::OnLoad()
 	//testEntity.SetMeshFileName("Res\\Mesh\\car\\car25.X");
 	//testEntity.SetMeshFileName("Res\\Mesh\\tree3\\tree3.X");
 	
-
-	sponzaEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile<Entity>("Res\\Mesh\\sponza\\sponza.X");
-	Material sponzaMat;
-	sponzaMat.Power = 20;
-	sponzaEntity->SetMaterial(&sponzaMat);
+	if (true)
 	{
-		sponzaEntity->SetSpecularMap("Res\\Mesh\\sponza\\sponza_floor_a_spec.tga", 0);
+		sponzaEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile<Entity>("Res\\Mesh\\sponza\\sponza.X");
+		Material sponzaMat;
+		sponzaMat.Power = 20;
+		sponzaEntity->SetMaterial(&sponzaMat);
+		{
+			sponzaEntity->SetSpecularMap("Res\\Mesh\\sponza\\sponza_floor_a_spec.tga", 0);
 
-		sponzaEntity->SetNormalMap("Res\\Mesh\\sponza\\spnza_bricks_a_ddn.tga", 1);
-		sponzaEntity->SetSpecularMap("Res\\Mesh\\sponza\\spnza_bricks_a_spec.tga", 1);
+			sponzaEntity->SetNormalMap("Res\\Mesh\\sponza\\spnza_bricks_a_ddn.tga", 1);
+			sponzaEntity->SetSpecularMap("Res\\Mesh\\sponza\\spnza_bricks_a_spec.tga", 1);
 
-		sponzaEntity->SetNormalMap("Res\\Mesh\\sponza\\lion_ddn.tga", 3);
+			sponzaEntity->SetNormalMap("Res\\Mesh\\sponza\\lion_ddn.tga", 3);
 
-		sponzaEntity->SetNormalMap("Res\\Mesh\\sponza\\background_ddn.tga", 4);
+			sponzaEntity->SetNormalMap("Res\\Mesh\\sponza\\background_ddn.tga", 4);
 
-		sponzaEntity->SetNormalMap("Res\\Mesh\\sponza\\vase_ddn.tga", 5);
+			sponzaEntity->SetNormalMap("Res\\Mesh\\sponza\\vase_ddn.tga", 5);
 
-		sponzaEntity->SetSpecularMap("Res\\Mesh\\sponza\\vase_plant_spec.tga", 6);
+			sponzaEntity->SetSpecularMap("Res\\Mesh\\sponza\\vase_plant_spec.tga", 6);
 
-		sponzaEntity->SetNormalMap("Res\\Mesh\\sponza\\vase_round_ddn.tga", 7);
-		sponzaEntity->SetSpecularMap("Res\\Mesh\\sponza\\vase_round_spec.tga", 7);
+			sponzaEntity->SetNormalMap("Res\\Mesh\\sponza\\vase_round_ddn.tga", 7);
+			sponzaEntity->SetSpecularMap("Res\\Mesh\\sponza\\vase_round_spec.tga", 7);
 
-		sponzaEntity->SetNormalMap("Res\\Mesh\\sponza\\vase_round_ddn.tga", 8);
-		sponzaEntity->SetSpecularMap("Res\\Mesh\\sponza\\vase_round_spec.tga", 8);
+			sponzaEntity->SetNormalMap("Res\\Mesh\\sponza\\vase_round_ddn.tga", 8);
+			sponzaEntity->SetSpecularMap("Res\\Mesh\\sponza\\vase_round_spec.tga", 8);
 
-		sponzaEntity->SetNormalMap("Res\\Mesh\\sponza\\chain_texture_ddn.tga", 9);
+			sponzaEntity->SetNormalMap("Res\\Mesh\\sponza\\chain_texture_ddn.tga", 9);
 
-		sponzaEntity->SetSpecularMap("Res\\Mesh\\sponza\\sponza_curtain_spec.tga", 10);
-		sponzaEntity->SetSpecularMap("Res\\Mesh\\sponza\\sponza_curtain_spec.tga", 11);
-		sponzaEntity->SetSpecularMap("Res\\Mesh\\sponza\\sponza_curtain_spec.tga", 12);
+			sponzaEntity->SetSpecularMap("Res\\Mesh\\sponza\\sponza_curtain_spec.tga", 10);
+			sponzaEntity->SetSpecularMap("Res\\Mesh\\sponza\\sponza_curtain_spec.tga", 11);
+			sponzaEntity->SetSpecularMap("Res\\Mesh\\sponza\\sponza_curtain_spec.tga", 12);
 
-		sponzaEntity->SetSpecularMap("Res\\Mesh\\sponza\\sponza_flagpole_spec.tga", 13);
+			sponzaEntity->SetSpecularMap("Res\\Mesh\\sponza\\sponza_flagpole_spec.tga", 13);
 
-		sponzaEntity->SetSpecularMap("Res\\Mesh\\sponza\\sponza_fabric_spec.tga", 14);
-		sponzaEntity->SetSpecularMap("Res\\Mesh\\sponza\\sponza_fabric_spec.tga", 15);
-		sponzaEntity->SetSpecularMap("Res\\Mesh\\sponza\\sponza_fabric_spec.tga", 16);
+			sponzaEntity->SetSpecularMap("Res\\Mesh\\sponza\\sponza_fabric_spec.tga", 14);
+			sponzaEntity->SetSpecularMap("Res\\Mesh\\sponza\\sponza_fabric_spec.tga", 15);
+			sponzaEntity->SetSpecularMap("Res\\Mesh\\sponza\\sponza_fabric_spec.tga", 16);
 
-		sponzaEntity->SetNormalMap("Res\\Mesh\\sponza\\sponza_thorn_ddn.tga", 17);
-		sponzaEntity->SetSpecularMap("Res\\Mesh\\sponza\\sponza_thorn_spec.tga", 17);
+			sponzaEntity->SetNormalMap("Res\\Mesh\\sponza\\sponza_thorn_ddn.tga", 17);
+			sponzaEntity->SetSpecularMap("Res\\Mesh\\sponza\\sponza_thorn_spec.tga", 17);
 
-		sponzaEntity->SetNormalMap("Res\\Mesh\\sponza\\sponza_column_b_ddn.tga", 18);
-		sponzaEntity->SetSpecularMap("Res\\Mesh\\sponza\\sponza_column_b_spec.tga", 18);
+			sponzaEntity->SetNormalMap("Res\\Mesh\\sponza\\sponza_column_b_ddn.tga", 18);
+			sponzaEntity->SetSpecularMap("Res\\Mesh\\sponza\\sponza_column_b_spec.tga", 18);
 
-		sponzaEntity->SetNormalMap("Res\\Mesh\\sponza\\sponza_arch_ddn.tga", 19);
-		sponzaEntity->SetSpecularMap("Res\\Mesh\\sponza\\sponza_arch_spec.tga", 19);
+			sponzaEntity->SetNormalMap("Res\\Mesh\\sponza\\sponza_arch_ddn.tga", 19);
+			sponzaEntity->SetSpecularMap("Res\\Mesh\\sponza\\sponza_arch_spec.tga", 19);
 
-		sponzaEntity->SetNormalMap("Res\\Mesh\\sponza\\sponza_column_a_ddn.tga", 20);
-		sponzaEntity->SetSpecularMap("Res\\Mesh\\sponza\\sponza_column_a_spec.tga", 20);
+			sponzaEntity->SetNormalMap("Res\\Mesh\\sponza\\sponza_column_a_ddn.tga", 20);
+			sponzaEntity->SetSpecularMap("Res\\Mesh\\sponza\\sponza_column_a_spec.tga", 20);
 
-		sponzaEntity->SetNormalMap("Res\\Mesh\\sponza\\sponza_column_c_ddn.tga", 21);
-		sponzaEntity->SetSpecularMap("Res\\Mesh\\sponza\\sponza_column_c_spec.tga", 21);
+			sponzaEntity->SetNormalMap("Res\\Mesh\\sponza\\sponza_column_c_ddn.tga", 21);
+			sponzaEntity->SetSpecularMap("Res\\Mesh\\sponza\\sponza_column_c_spec.tga", 21);
 
-		sponzaEntity->SetSpecularMap("Res\\Mesh\\sponza\\sponza_details_spec.tga", 22);
+			sponzaEntity->SetSpecularMap("Res\\Mesh\\sponza\\sponza_details_spec.tga", 22);
 
-		sponzaEntity->SetSpecularMap("Res\\Mesh\\sponza\\sponza_ceiling_a_spec.tga", 23);
+			sponzaEntity->SetSpecularMap("Res\\Mesh\\sponza\\sponza_ceiling_a_spec.tga", 23);
+		}
 	}
+	
 
 	//Entity* roomEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\room\\room.x");
 	//roomEntity->SetTexture("Res\\Mesh\\room\\wallpaper.dds",0);
@@ -154,12 +157,13 @@ void TestScene::OnLoad()
 	//D3DXMatrixTranslation(&planeM, move.x, move.y, move.z); 
 	//roomEntity->SetWorldTransform(planeM);
 
-	/*
+	
 	Entity* DofMesh = ENTITYMANAGER::Instance().CreateEntityFromXFile<Entity>("Res\\Mesh\\DOFMesh.X");
+	DofMesh->SetTexture("Res\\Mesh\\trans.png");
 	DofMesh->SetWorldTranslate(-6, 0, 0);
 	DofMesh->SetWorldScale(0.05f, 0.03f, 0.03f);
 	DofMesh->SetWorldRotation(0, -0.5f * D3DX_PI, 0);
-	*/
+	
 
 	/*
 
@@ -415,8 +419,9 @@ void TestScene::OnBeginFrame()
 	BuildRot(cW);
 	cW = moveMat *cW;
 	mainCamera.SetWorldTransform(cW);
-	
-	R+=1.0f;
+
+	double dTime = GLOBALTIMER::Instance().GetFrameTime();
+	R += 5.0f * dTime;
 
 	if (krisEntity)
 	{

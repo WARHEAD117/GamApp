@@ -355,9 +355,6 @@
     <FxCompile Include="System\DeferredShadowVSM.fx">
       <Filter>System</Filter>
     </FxCompile>
-    <FxCompile Include="System\DeferredGBuffer.fx">
-      <Filter>System</Filter>
-    </FxCompile>
     <FxCompile Include="System\HDRLighting.fx">
       <Filter>System</Filter>
     </FxCompile>
@@ -380,6 +377,9 @@
       <Filter>System</Filter>
     </FxCompile>
     <FxCompile Include="System\Dither_Halftoning.fx">
+      <Filter>System</Filter>
+    </FxCompile>
+    <FxCompile Include="System\DeferredGBuffer.fx">
       <Filter>System</Filter>
     </FxCompile>
   </ItemGroup>

@@ -84,49 +84,114 @@ OutputVS VShader(float4 posL       : POSITION0,
 }
 
 //Maria SSAO
-float doAmbientOcclusion(in float2 sampleCoord, in float3 cNormal, float3 cPos)
+float doAmbientOcclusion(in float2 cTexCoord, in float2 vec, in float3 cNormal, float3 cPos)
 {
+	float2 sampleCoord = cTexCoord + vec;
     float3 samplePos = GetPosition(sampleCoord, g_samplePosition);
-    if (samplePos.z > cPos.z)
-        return 0;
+    //return samplePos.z - cPos.z;
+
+    
     float3 H_Vec = samplePos - cPos;
+    if (dot(H_Vec, cNormal) < 0)
+    //if (samplePos.z > cPos.z)
+        return 0;
     float h = atan(H_Vec.z / length(H_Vec.xy));
-    float t = 3.14159 / 2.0 -  abs(asin(cNormal.z / length(cNormal)));
+	float a = atan(cNormal.y / cNormal.x);
+	float b = dot(cNormal, float3(vec, 0)) / length(vec);
+    float3 pn = b * normalize(float3(vec, 0));
+    float t = atan(length(pn.xy) / cNormal.z);
     if (abs(h) < abs(t))
         return 0;
     float ao = sin(h) - sin(t);
     return abs(ao);
 }
 
+float doAO(float3 normal, float3 H_Vec, float2 vec)
+{
+    float h = atan(H_Vec.z / length(H_Vec.xy));
+    float a = atan(normal.y / normal.x);
+    float b = dot(normal, float3(vec, 0)) / length(vec);
+    float3 pn = b * normalize(float3(vec, 0));
+    float t = atan(length(pn.xy) / normal.z);
+
+    if (abs(h) < abs(t)+ 3.1415 / 6)
+        return 0;
+    float ao = sin(h) - sin(t);
+    return clamp(-ao, 0, 1);
+}
+
 float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
 {
 	const float2 vec[4] = { float2(1, 0), float2(-1, 0),float2(0, 1), float2(0, -1) };
-    int dis = 4;
-    const float2 samplePoint[8] = 
-    { 
-        float2(1, 0), float2(-1, 0), float2(0, 1), float2(0, -1),
-        float2(2, 0), float2(-2, 0), float2(0, 2), float2(0, -2)
+    float R = 1;
+    const float2 samplePoint[8][2] = 
+    {
+        { float2(1, 0),   float2(3, 0) },
+        { float2(0, 1),   float2(0, 3) },
+        { float2(-1, 0),  float2(-3, 0) },
+        { float2(0, -1),  float2(0, -3) },
+        { float2(1, 1),   float2(3, 3) },
+        { float2(1, -1),  float2(3, -3) },
+        { float2(-1, 1),  float2(-3, 3) },
+        { float2(-1, -1), float2(-3, -3) }
     };
 	//观察空间位置
-    float3 pos = GetPosition(TexCoord, g_samplePosition);
+	float3 pos = GetPosition(TexCoord, g_samplePosition);
+	//return float4(pos.z, pos.z, pos.z, 1.0f);
+    float dis = R * g_zNear / pos.z;
+
+    float height = 2 * g_zNear * g_ViewAngle_half_tan;
+    float width = 2 * g_zNear * g_ViewAngle_half_tan * g_ViewAspect;
+
+    float2 r_uv = float2(dis / height, dis / width);
+
+    int stepCount = 5;
+    float2 step = r_uv / stepCount;
 
 	//深度重建的位置会有误差，最远处的误差会导致背景变灰，所以要消除影响
     if (pos .z> g_zFar)
 		return float4(1, 1, 1, 1);
 
 	//观察空间法线
-	float3 n = GetNormal(TexCoord, g_sampleNormal);
+	float3 normal = GetNormal(TexCoord, g_sampleNormal);
 
-    int iterations = 8;
-    float ao = 0;
-    for (int j = 0; j < iterations; ++j)
+    int iterations = 4;
+    float totalAo = 0;
+    for (int i = 0; i < iterations; ++i)
     {
-        ao += doAmbientOcclusion(TexCoord + float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight) * samplePoint[j] * dis, n, pos);
+        float wao = 0;
+        float lastAo = 0;
+        float maxAngle = 0;
+        float ao = 0;
+        float angle = 0;
+        float2 sampleCoord = TexCoord;
+        for (int j = 0; j < stepCount; j++)
+        {
+            sampleCoord += vec[i] * step;
+            float3 samplePos = GetPosition(sampleCoord, g_samplePosition);
+            float3 H_Vec = samplePos - pos;
+            float l = length(H_Vec);
+            float r = l / R;
+            float wr = 1 - r * r;
+            lastAo = ao;
+
+            angle = dot(normalize(H_Vec), normalize(normal));
+            if (l < R && angle > 0 && angle > maxAngle)
+            {
+                maxAngle = angle;
+                ao = doAO(normal, H_Vec, vec[i]);
+                wao += wr * (ao - lastAo);
+            }
+
+
+        }
+        totalAo += wao;
+
     }
-    ao = 1 - ao / (float)iterations;
+    totalAo = 1 - totalAo / (float) iterations;
     //ao = 0.5f;
-    ao = clamp(ao, 0, 1);
-    return float4(ao, 0, 0, 1);
+    totalAo = clamp(totalAo, 0, 1);
+    return float4(totalAo, totalAo, totalAo, 1);
 }
 
 float4 texture2DBilinear(sampler2D textureSampler, float2 uv)

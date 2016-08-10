@@ -25,7 +25,7 @@ void SSAO::CreatePostEffect()
 {
 	PostEffectBase::CreatePostEffect("System\\SSAO.fx", D3DFMT_A16B16G16R16F);
 
-	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth/2, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight/2,
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
 		1, D3DUSAGE_RENDERTARGET,
 		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
 		&m_pAoTarget, NULL);

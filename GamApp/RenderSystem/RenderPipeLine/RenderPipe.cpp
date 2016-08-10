@@ -73,7 +73,7 @@ RenderPipe::RenderPipe()
 
 	//Build Post Effect
 	hbao.CreatePostEffect();
-	//ssao.CreatePostEffect();
+	ssao.CreatePostEffect();
 	hdrLighting.CreatePostEffect();
 	dof.CreatePostEffect();
 	ssgi.CreatePostEffect();

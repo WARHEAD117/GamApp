@@ -8,6 +8,7 @@
 #include "Light/LightManager.h"
 #include "Light/DirectionLight.h"
 
+#include "RenderPipeLine/PostEffect/HBAO.h"
 #include "RenderPipeLine/PostEffect/SSAO.h"
 #include "RenderPipeLine/PostEffect/HDRLighting.h"
 #include "RenderPipeLine/PostEffect/DOF.h"
@@ -44,6 +45,7 @@ D3DXMATRIX shadowOrthoView;
 D3DXMATRIX shadowOrthoProj;
 D3DXMATRIX invShadowOrthoProj;
 
+HBAO hbao;
 SSAO ssao;
 HDRLighting hdrLighting;
 DOF dof;
@@ -54,6 +56,15 @@ PostEffectBase colorChange;
 
 SkyBox skyBox;
 
+bool	m_enableHBAO;
+bool	m_enableAO;
+bool	m_enableDOF;
+bool	m_enableHDR;
+bool	m_enableGI;
+bool	m_enableFXAA;
+bool	m_enableDither;
+bool	m_enableColorChange;
+
 RenderPipe::RenderPipe()
 {
 	BuildScreenQuad();
@@ -61,7 +72,8 @@ RenderPipe::RenderPipe()
 	BuildEffects();
 
 	//Build Post Effect
-	ssao.CreatePostEffect();
+	hbao.CreatePostEffect();
+	//ssao.CreatePostEffect();
 	hdrLighting.CreatePostEffect();
 	dof.CreatePostEffect();
 	ssgi.CreatePostEffect();
@@ -70,7 +82,8 @@ RenderPipe::RenderPipe()
 	ditherHalfToning.CreatePostEffect("System\\Dither_Halftoning.fx");
 	colorChange.CreatePostEffect("System\\ColorChange.fx");
 
-	m_enableAO = true;
+	m_enableHBAO = true; 
+	m_enableAO = false;
 	m_enableDOF = false;
 	m_enableHDR = true;
 	m_enableGI = false;
@@ -765,6 +778,18 @@ void RenderPipe::RenderAll()
 
 	m_pPostTarget = m_pMainColorTarget;
 
+
+	if (GAMEINPUT::Instance().KeyPressed(DIK_7))
+	{
+		m_enableHBAO = !m_enableHBAO;
+	}
+
+	if (m_enableHBAO)
+	{
+		hbao.RenderPost(m_pPostTarget);
+		m_pPostTarget = hbao.GetPostTarget();
+	}
+
 	if (GAMEINPUT::Instance().KeyPressed(DIK_1))
 	{
 		m_enableAO = !m_enableAO;
@@ -829,7 +854,7 @@ void RenderPipe::RenderAll()
 		ditherHalfToning.RenderPost(m_pPostTarget);
 		m_pPostTarget = ditherHalfToning.GetPostTarget();
 	}
-
+	/*
 	if (GAMEINPUT::Instance().KeyPressed(DIK_7))
 	{
 		m_enableColorChange = !m_enableColorChange;
@@ -839,7 +864,7 @@ void RenderPipe::RenderAll()
 	{
 		colorChange.RenderPost(m_pPostTarget);
 		m_pPostTarget = colorChange.GetPostTarget();
-	}
+	}*/
 
 #ifdef RENDER_DEBUG
 	if (GAMEINPUT::Instance().KeyPressed(DIK_F4))

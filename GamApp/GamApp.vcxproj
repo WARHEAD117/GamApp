@@ -108,6 +108,7 @@
     <ClInclude Include="RenderSystem\Light\PointLight.h" />
     <ClInclude Include="RenderSystem\Light\SpotLight.h" />
     <ClInclude Include="RenderSystem\RenderPipeLine\PostEffect\DOF.h" />
+    <ClInclude Include="RenderSystem\RenderPipeLine\PostEffect\HBAO.h" />
     <ClInclude Include="RenderSystem\RenderPipeLine\PostEffect\HDRLighting.h" />
     <ClInclude Include="RenderSystem\RenderPipeLine\PostEffect\PostEffectBase.h" />
     <ClInclude Include="RenderSystem\RenderPipeLine\PostEffect\SSAO.h" />
@@ -151,6 +152,7 @@
     <ClCompile Include="RenderSystem\Light\PointLight.cpp" />
     <ClCompile Include="RenderSystem\Light\SpotLight.cpp" />
     <ClCompile Include="RenderSystem\RenderPipeLine\PostEffect\DOF.cpp" />
+    <ClCompile Include="RenderSystem\RenderPipeLine\PostEffect\HBAO.cpp" />
     <ClCompile Include="RenderSystem\RenderPipeLine\PostEffect\HDRLighting.cpp" />
     <ClCompile Include="RenderSystem\RenderPipeLine\PostEffect\PostEffectBase.cpp" />
     <ClCompile Include="RenderSystem\RenderPipeLine\PostEffect\SSAO.cpp" />
@@ -236,6 +238,10 @@
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">2.0</ShaderModel>
     </FxCompile>
     <FxCompile Include="System\FXAA.fx">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Effect</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">2.0</ShaderModel>
+    </FxCompile>
+    <FxCompile Include="System\HBAO.fx">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Effect</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">2.0</ShaderModel>
     </FxCompile>

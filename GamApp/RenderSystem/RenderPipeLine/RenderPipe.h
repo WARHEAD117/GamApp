@@ -69,15 +69,6 @@ private:
 
 	LPDIRECT3DSURFACE9	m_pOriSurface;
 
-private:
-	bool	m_enableAO;
-	bool	m_enableDOF;
-	bool	m_enableHDR;
-	bool	m_enableGI;
-	bool	m_enableFXAA;
-	bool	m_enableDither;
-	bool	m_enableColorChange;
-
 #ifdef RENDER_DEBUG
 	enum DEBUG_MODE
 	{

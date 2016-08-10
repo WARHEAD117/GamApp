@@ -207,6 +207,9 @@
     <ClInclude Include="GameSystem\EntityFeature\SkinEntity.h">
       <Filter>GameSystem\EntityFeature</Filter>
     </ClInclude>
+    <ClInclude Include="RenderSystem\RenderPipeLine\PostEffect\HBAO.h">
+      <Filter>RenderSystem\PostEffect</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GameSystem\Camera\Camera.cpp">
@@ -329,6 +332,9 @@
     <ClCompile Include="GameScene\BaseScene\BaseScene.cpp">
       <Filter>GaneScene\BaseScene</Filter>
     </ClCompile>
+    <ClCompile Include="RenderSystem\RenderPipeLine\PostEffect\HBAO.cpp">
+      <Filter>RenderSystem\PostEffect</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="System\commonDiffuse.fx">
@@ -380,6 +386,9 @@
       <Filter>System</Filter>
     </FxCompile>
     <FxCompile Include="System\DeferredGBuffer.fx">
+      <Filter>System</Filter>
+    </FxCompile>
+    <FxCompile Include="System\HBAO.fx">
       <Filter>System</Filter>
     </FxCompile>
   </ItemGroup>

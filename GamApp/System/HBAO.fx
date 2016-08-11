@@ -402,9 +402,9 @@ float4 texture2DBilinear(sampler2D textureSampler, float2 uv)
 float4 DrawMain(float2 TexCoord : TEXCOORD0) : COLOR
 {
 	float4 AO = tex2D(g_sampleAo, TexCoord);
-	//float4 fianlColor = AO * tex2D(g_sampleMainColor, TexCoord);
+	float4 fianlColor = AO * tex2D(g_sampleMainColor, TexCoord);
 
-    return AO;
+    return fianlColor;
 }
 technique HBAO
 {

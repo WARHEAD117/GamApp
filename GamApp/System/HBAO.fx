@@ -169,7 +169,8 @@ float ComputeCoarseAO(float2 FullResUV, float RadiusPixels, float4 Rand, float3 
 
         //这个方向是每一步前进的方向，按照Angle和一个随机值进行旋转
         // Compute normalized 2D direction
-        float2 Direction = RotateDirection(float2(cos(Angle), sin(Angle)), Rand.xy);
+        float2 randomRotate = float2(cos(Rand.x), sin(Rand.x));
+        float2 Direction = RotateDirection(float2(cos(Angle), sin(Angle)), randomRotate);
 
         //为什么要+1？
         // Jitter starting sample within the first step
@@ -317,18 +318,13 @@ float MyAO(float2 TexCoord)
 	//随机法线
     float2 rand = getRandom(TexCoord);
     
-    float projectXY = sqrt(rand.x * rand.x + rand.y * rand.y);
-    float cosA = rand.x / projectXY;
-    float A = acos(cosA);
-    //if (rand.y < 0)
-     //   A = -acos(cosA);
 
     int iterations = 6;
     float totalAo = 0;
     for (int i = 0; i < iterations; ++i)
     {
-        float2 dir = float2(cos(A + i * 3.14159 / 3), sin(A + i * 3.14159 / 3));
-
+        float2 dir = float2(cos(i * 3.14159 / 3), sin(i * 3.14159 / 3));
+        dir = RotateDirection(dir, float2(cos(rand.x), sin(rand.x)));
         
         float4 tangentPlane;
         tangentPlane = float4(normal, dot(pos, normal));

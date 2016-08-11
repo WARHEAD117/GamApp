@@ -146,7 +146,7 @@ void TestScene::OnLoad()
 
 	}
 	//==========================================================================================
-	if (false)
+	if (true)
 	{
 		deerEntity2 = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\deer\\deer.X");
 
@@ -457,7 +457,7 @@ void TestScene::OnLoad()
 		HenMat.MatIndex = 1;
 		HenEntity->SetMaterial(&HenMat);
 	}
-	if (false)
+	if (true)
 	{
 
 		//skinnedmesh

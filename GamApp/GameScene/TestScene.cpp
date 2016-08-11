@@ -92,6 +92,7 @@ void TestScene::OnLoad()
 		Material sponzaMat;
 		sponzaMat.Power = 20;
 		sponzaEntity->SetMaterial(&sponzaMat);
+		if (false)
 		{
 			sponzaEntity->SetSpecularMap("Res\\Mesh\\sponza\\sponza_floor_a_spec.tga", 0);
 
@@ -146,7 +147,7 @@ void TestScene::OnLoad()
 	}
 	
 
-	//Entity* roomEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\room\\room.x");
+	//Entity* roomEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile<Entity>("Res\\Mesh\\room\\room.x");
 	//roomEntity->SetTexture("Res\\Mesh\\room\\wallpaper.dds",0);
 	//roomEntity->SetTexture("Res\\Mesh\\room\\DoorDiff.dds", 1);
 	//roomEntity->SetTexture("Res\\Mesh\\room\\oldwood.dds", 2);

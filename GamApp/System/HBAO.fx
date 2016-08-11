@@ -41,6 +41,9 @@ sampler_state
 	MinFilter = Point;
 	MagFilter = Point;
 	MipFilter = Point;
+
+    AddressU = Clamp;
+    AddressV = Clamp;
 };
 
 texture		g_MainColorBuffer;
@@ -83,60 +86,214 @@ OutputVS VShader(float4 posL       : POSITION0,
 	return outVS;
 }
 
-//Maria SSAO
-float doAmbientOcclusion(in float2 cTexCoord, in float2 vec, in float3 cNormal, float3 cPos)
-{
-	float2 sampleCoord = cTexCoord + vec;
-    float3 samplePos = GetPosition(sampleCoord, g_samplePosition);
-    //return samplePos.z - cPos.z;
+//================================================================
 
-    
-    float3 H_Vec = samplePos - cPos;
-    if (dot(H_Vec, cNormal) < 0)
-    //if (samplePos.z > cPos.z)
-        return 0;
-    float h = atan(H_Vec.z / length(H_Vec.xy));
-	float a = atan(cNormal.y / cNormal.x);
-	float b = dot(cNormal, float3(vec, 0)) / length(vec);
-    float3 pn = b * normalize(float3(vec, 0));
-    float t = atan(length(pn.xy) / cNormal.z);
-    if (abs(h) < abs(t))
-        return 0;
-    float ao = sin(h) - sin(t);
-    return abs(ao);
+float3 MinDiff(float3 P, float3 Pr, float3 Pl)
+{
+    float3 V1 = Pr - P;
+    float3 V2 = P - Pl;
+    return (dot(V1, V1) < dot(V2, V2)) ? V1 : V2;
 }
 
-float doAO(float3 normal, float3 H_Vec, float2 vec)
+//#endif //DEINTERLEAVED_TEXTURING
+
+//----------------------------------------------------------------------------------
+float Falloff(float DistanceSquare, float R)
 {
-    float h = atan(H_Vec.z / length(H_Vec.xy));
-    float a = atan(normal.y / normal.x);
+    // 1 scalar mad instruction
+    return DistanceSquare * ( -1.0f / (R * R)) + 1.0;
+}
+
+//----------------------------------------------------------------------------------
+// P = view-space position at the kernel center
+// N = view-space normal at the kernel center
+// S = view-space position of the current sample
+//----------------------------------------------------------------------------------
+float ComputeAO(float3 P, float3 N, float3 S, float bias, float R)
+{
+    float3 V = S - P;
+    float VdotV = dot(V, V);
+    float NdotV = dot(N, V) * rsqrt(VdotV);
+
+    // Use saturate(x) instead of max(x,0.f) because that is faster on Kepler
+    return saturate(NdotV - bias) * saturate(Falloff(VdotV, R));
+}
+
+//----------------------------------------------------------------------------------
+float2 RotateDirection(float2 Dir, float2 CosSin)
+{
+    return float2(Dir.x * CosSin.x - Dir.y * CosSin.y,
+                  Dir.x * CosSin.y + Dir.y * CosSin.x);
+}
+
+//----------------------------------------------------------------------------------
+float4 GetJitter()
+{
+#if !USE_RANDOM_TEXTURE
+    return float4(1, 0, 1, 1);
+#else
+#if DEINTERLEAVED_TEXTURING
+        // Get the current jitter vector from the per-pass constant buffer
+        return g_Jitter;
+#else
+        // (cos(Alpha),sin(Alpha),rand1,rand2)
+        return RandomTexture.Sample(PointWrapSampler, float3(IN.pos.xy / RANDOM_TEXTURE_WIDTH, 0));
+#endif
+#endif
+}
+
+
+float M_PI = 3.1415926;
+
+//----------------------------------------------------------------------------------
+float ComputeCoarseAO(float2 FullResUV, float RadiusPixels, float4 Rand, float3 ViewPosition, float3 ViewNormal, float R)
+{
+#if DEINTERLEAVED_TEXTURING
+    RadiusPixels /= 4.0;
+#endif
+    
+    int NUM_STEPS = 4;
+    int NUM_DIRECTIONS = 6;
+
+    //每一步前进几个像素（半径除以步数）
+    // Divide by NUM_STEPS+1 so that the farthest samples are not fully attenuated
+    float StepSizePixels = RadiusPixels / (NUM_STEPS + 1);
+
+    const float Alpha = 2.0 * M_PI / NUM_DIRECTIONS;
+    float AO = 0;
+
+    //[unroll]
+    for (float DirectionIndex = 0; DirectionIndex < NUM_DIRECTIONS; ++DirectionIndex)
+    {
+        float Angle = Alpha * DirectionIndex;
+
+        //这个方向是每一步前进的方向，按照Angle和一个随机值进行旋转
+        // Compute normalized 2D direction
+        float2 Direction = RotateDirection(float2(cos(Angle), sin(Angle)), Rand.xy);
+
+        //为什么要+1？
+        // Jitter starting sample within the first step
+        float RayPixels = (Rand.z * StepSizePixels + 1.0);
+
+        //[unroll]
+        for (float StepIndex = 0; StepIndex < NUM_STEPS; ++StepIndex)
+        {
+#if DEINTERLEAVED_TEXTURING
+            float2 SnappedUV = round(RayPixels * Direction) * g_InvQuarterResolution + FullResUV;
+            float3 S = FetchQuarterResViewPos(SnappedUV);
+#else
+            //根据前进的步长和方向算出整数的像素数，然后乘每个像素的uv大小。加上中心点的uv，就是最终的采样uv值
+            float2 g_InvFullResolution = float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight);
+            float2 SnappedUV = round(RayPixels * Direction) * g_InvFullResolution + FullResUV;
+            float3 S = GetPosition(SnappedUV, g_samplePosition);
+#endif
+            //累加步长，得到下一步的位置
+            RayPixels += StepSizePixels;
+
+            float bias = 0.3;
+            AO += ComputeAO(ViewPosition, ViewNormal, S, bias, R);
+        }
+    }
+    float g_AOMultiplier = 1.8;
+    AO *= g_AOMultiplier / (NUM_DIRECTIONS * NUM_STEPS);
+    return saturate(1.0 - AO * 2.0);
+}
+
+float NVIDIA_CoarseAO(float2 TexCoord)
+{
+    float R = 0.7;
+
+	//观察空间位置
+    float3 pos = GetPosition(TexCoord, g_samplePosition);
+
+	//观察空间法线
+    float3 normal = GetNormal(TexCoord, g_sampleNormal);
+
+	//深度重建的位置会有误差，最远处的误差会导致背景变灰，所以要消除影响
+    if (pos.z > g_zFar)
+        return float4(1, 1, 1, 1);
+
+    //下面的式子化简后就是只有一行的r_v
+    //float dis = R * g_zNear / pos.z;
+    //float height = 2 * g_zNear * g_ViewAngle_half_tan;
+    //float r_v = dis / height;
+
+    float r_v = 0.5 * R / pos.z / g_ViewAngle_half_tan;
+
+    //计算出3D空间中的半径相当于多少个像素
+    float RadiusPixels = r_v * g_ScreenHeight;
+
+	//随机（现在的图不太好）
+    /*
+    float2 rand = getRandom(TexCoord);
+    
+    float projectXY = sqrt(rand.x * rand.x + rand.y * rand.y);
+    float cosA = rand.x / projectXY;
+    float A = acos(cosA);
+    */
+
+    float4 Rand = GetJitter();
+    Rand = tex2D(g_sampleRandomNormal, float2(g_ScreenWidth, g_ScreenHeight) * TexCoord / float2(256, 256));
+    float AO = ComputeCoarseAO(TexCoord, RadiusPixels, Rand, pos, normal, R);
+    return float4(AO, AO, AO, 1);
+}
+//==========================================================
+
+
+
+float doAO(float3 normal, float3 H_Vec, float2 vec, float3 tangent)
+{
+    float h = atan(-H_Vec.z / length(H_Vec.xy));
+   // float x = -1 * H_Vec.y / H_Vec.x;
+    //float3 n = normalize(float3(x, 1, 0));
     float b = dot(normal, float3(vec, 0)) / length(vec);
     float3 pn = b * normalize(float3(vec, 0));
-    float t = atan(length(pn.xy) / normal.z);
+    float t = -atan(length(pn.xy) / normal.z);
+   // t = atan(tangent.z / length(tangent.xy));
+    
+    if (dot(normal, H_Vec) > 0.80)
+        return 0.0f;
 
-    if (abs(h) < abs(t)+ 3.1415 / 6)
+    if (h < -t+ 3.1415 / 6)
         return 0;
     float ao = sin(h) - sin(t);
-    return clamp(-ao, 0, 1);
+    return clamp(ao, 0, 1);
 }
 
-float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
+float3 getRandom(in float2 uv)
 {
-	const float2 vec[4] = { float2(1, 0), float2(-1, 0),float2(0, 1), float2(0, -1) };
-    float R = 1;
-    const float2 samplePoint[8][2] = 
-    {
-        { float2(1, 0),   float2(3, 0) },
-        { float2(0, 1),   float2(0, 3) },
-        { float2(-1, 0),  float2(-3, 0) },
-        { float2(0, -1),  float2(0, -3) },
-        { float2(1, 1),   float2(3, 3) },
-        { float2(1, -1),  float2(3, -3) },
-        { float2(-1, 1),  float2(-3, 3) },
-        { float2(-1, -1), float2(-3, -3) }
-    };
+    return normalize(tex2D(g_sampleRandomNormal, /*g_screen_size*/float2(g_ScreenWidth, g_ScreenHeight) * uv / /*random_size*/float2(256, 256)).xyz );
+}
+
+float3 tangent_eye_pos(float2 uv, float z, float4 tangentPlane)
+{
+    // view vector going through the surface point at uv
+    float3 V = float3(uv, z);
+    float NdotV = dot(tangentPlane.xyz, V);
+    // intersect with tangent plane except for silhouette edges
+    if (NdotV < 0.0)
+        V *= (tangentPlane.w / NdotV);
+    return V;
+}
+
+float3 min_diff(float3 P, float3 Pr, float3 Pl)
+{
+    float3 V1 = Pr - P;
+    float3 V2 = P - Pl;
+    return (length(V1) < length(V2)) ? V1 : V2;
+}
+
+float3 tangent_vector(float2 deltaUV, float3 dPdu, float3 dPdv)
+{
+    return deltaUV.x * dPdu + deltaUV.y * dPdv;
+}
+
+float MyAO(float2 TexCoord)
+{
+    float R = 0.7;
+
 	//观察空间位置
-	float3 pos = GetPosition(TexCoord, g_samplePosition);
+    float3 pos = GetPosition(TexCoord, g_samplePosition);
 	//return float4(pos.z, pos.z, pos.z, 1.0f);
     float dis = R * g_zNear / pos.z;
 
@@ -145,20 +302,40 @@ float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
 
     float2 r_uv = float2(dis / height, dis / width);
 
-    int stepCount = 5;
-    float2 step = r_uv / stepCount;
+    float RadiusPixels = r_uv.x * g_ScreenWidth;
+
+    int stepCount = 4;
+    float2 step = r_uv / (stepCount + 1);
 
 	//深度重建的位置会有误差，最远处的误差会导致背景变灰，所以要消除影响
-    if (pos .z> g_zFar)
-		return float4(1, 1, 1, 1);
+    if (pos.z > g_zFar)
+        return float4(1, 1, 1, 1);
 
 	//观察空间法线
-	float3 normal = GetNormal(TexCoord, g_sampleNormal);
+    float3 normal = GetNormal(TexCoord, g_sampleNormal);
+    
+	//随机法线
+    float2 rand = getRandom(TexCoord);
+    
+    float projectXY = sqrt(rand.x * rand.x + rand.y * rand.y);
+    float cosA = rand.x / projectXY;
+    float A = acos(cosA);
+    //if (rand.y < 0)
+     //   A = -acos(cosA);
 
-    int iterations = 4;
+    int iterations = 6;
     float totalAo = 0;
     for (int i = 0; i < iterations; ++i)
     {
+        float2 dir = float2(cos(A + i * 3.14159 / 3), sin(A + i * 3.14159 / 3));
+
+        
+        float4 tangentPlane;
+        tangentPlane = float4(normal, dot(pos, normal));
+        float3 tangent;
+        //float3 tangent = nearestPos - pos;
+        //tangent -= dot(normal, tangent) * normal;
+
         float wao = 0;
         float lastAo = 0;
         float maxAngle = 0;
@@ -167,31 +344,43 @@ float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
         float2 sampleCoord = TexCoord;
         for (int j = 0; j < stepCount; j++)
         {
-            sampleCoord += vec[i] * step;
+            sampleCoord = sampleCoord + dir * step;
+
             float3 samplePos = GetPosition(sampleCoord, g_samplePosition);
+
             float3 H_Vec = samplePos - pos;
             float l = length(H_Vec);
             float r = l / R;
             float wr = 1 - r * r;
             lastAo = ao;
 
-            angle = dot(normalize(H_Vec), normalize(normal));
-            if (l < R && angle > 0 && angle > maxAngle)
+            float3 zaxis = float3(0, 0, -1);
+            angle = atan(-H_Vec.z / length(H_Vec.xy));
+            if (l < R && angle > maxAngle)
             {
                 maxAngle = angle;
-                ao = doAO(normal, H_Vec, vec[i]);
+                ao = doAO(normal, H_Vec, dir, tangent);
                 wao += wr * (ao - lastAo);
             }
-
-
         }
         totalAo += wao;
 
     }
     totalAo = 1 - totalAo / (float) iterations;
-    //ao = 0.5f;
+
     totalAo = clamp(totalAo, 0, 1);
     return float4(totalAo, totalAo, totalAo, 1);
+}
+
+float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
+{
+    float AO;
+
+    AO = NVIDIA_CoarseAO(TexCoord);
+    //AO = MyAO(TexCoord);
+
+    return float4(AO, AO, AO, 1);
+
 }
 
 float4 texture2DBilinear(sampler2D textureSampler, float2 uv)

@@ -31,7 +31,7 @@ void HBAO::CreatePostEffect()
 		&m_pAoTarget, NULL);
 	HRESULT hr = m_pAoTarget->GetSurfaceLevel(0, &m_pAoSurface);
 
-	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "System\\123.png", &m_pRandomNormal))
+	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "System\\noiseColor.png", &m_pRandomNormal))
 	{
 		MessageBox(GetForegroundWindow(), "TextureError", "randomNormal", MB_OK);
 		abort();

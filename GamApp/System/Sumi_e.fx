@@ -349,13 +349,14 @@ P_OutVS VShaderParticle(float4 posL       : POSITION0,
 		float projectXY = sqrt(normal.x * normal.x + normal.y * normal.y);
 		float cosA = normal.x / projectXY;
 		float A = acos(cosA);
-		//if (normal.y < 0)
-		//	A = -acos(cosA);
-		float p1 = 1.4f;
-		float p2 = 2.0f;
-		float p3 = 0.7f;
-		float p4 = 0.7f;
-		float res = p1 * sin(A * p2 + p3) + p4;
+		if (normal.y < 0)
+			A = -acos(cosA);
+        float PI = 3.1415926;
+		float p1 = 0.7f;
+		float p2 = 3.0f;
+        float p3 = PI * 0 / 3;
+		float p4 = 0.3f;
+		float res = p1 * (sin(A * p2 + p3) +1) + p4;
 		//
 
 

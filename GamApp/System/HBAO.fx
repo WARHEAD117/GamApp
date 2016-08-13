@@ -291,7 +291,8 @@ float3 tangent_vector(float2 deltaUV, float3 dPdu, float3 dPdv)
 
 float MyAO(float2 TexCoord)
 {
-    float R = 0.7;
+    float R = 1.0;
+    int stepCount = 1;
 
 	//观察空间位置
     float3 pos = GetPosition(TexCoord, g_samplePosition);
@@ -305,8 +306,7 @@ float MyAO(float2 TexCoord)
 
     float RadiusPixels = r_uv.x * g_ScreenWidth;
 
-    int stepCount = 4;
-    float2 step = r_uv / (stepCount + 1);
+    float step = RadiusPixels / (stepCount + 1);
 
 	//深度重建的位置会有误差，最远处的误差会导致背景变灰，所以要消除影响
     if (pos.z > g_zFar)
@@ -314,35 +314,52 @@ float MyAO(float2 TexCoord)
 
 	//观察空间法线
     float3 normal = GetNormal(TexCoord, g_sampleNormal);
-    
+    normal = normalize(normal);
+
 	//随机法线
-    float2 rand = getRandom(TexCoord);
+    float3 rand = getRandom(TexCoord);
     
 
-    int iterations = 6;
+    int iterations = 1;
     float totalAo = 0;
     for (int i = 0; i < iterations; ++i)
     {
         float2 dir = float2(cos(i * 3.14159 / 3), sin(i * 3.14159 / 3));
         dir = RotateDirection(dir, float2(cos(rand.x), sin(rand.x)));
-        
+        dir = normalize(dir);
+
+        float RayPixel = (rand.z * step + 1.0);
+
         float4 tangentPlane;
         tangentPlane = float4(normal, dot(pos, normal));
         float3 tangent;
         //float3 tangent = nearestPos - pos;
         //tangent -= dot(normal, tangent) * normal;
 
+        float b = dot(normal, float3(dir, 0));
+        b = normal.z > 0 ? -b : b;
+        float3 pn = b * float3(dir, 0);
+        float sign = b < 0 ? -1 : 1;
+        float t = b * atan(length(pn.xy) / normal.z);
+        // t = atan(tangent.z / length(tangent.xy));
+
         float wao = 0;
         float lastAo = 0;
-        float maxAngle = 0;
+        float maxAngle = t + M_PI / 6.0f;
+        maxAngle = clamp(maxAngle, -0.5 * M_PI, 0.5 * M_PI);
+
         float ao = 0;
-        float angle = 0;
+        float h = 0;
         float2 sampleCoord = TexCoord;
         for (int j = 0; j < stepCount; j++)
         {
-            sampleCoord = sampleCoord + dir * step;
+            //根据前进的步长和方向算出整数的像素数，然后乘每个像素的uv大小。加上中心点的uv，就是最终的采样uv值
+            float2 g_InvFullResolution = float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight);
+            float2 SnappedUV = round(RayPixel * dir) * g_InvFullResolution + TexCoord;
 
-            float3 samplePos = GetPosition(sampleCoord, g_samplePosition);
+            float3 samplePos = GetPosition(SnappedUV, g_samplePosition);
+
+            RayPixel += step;
 
             float3 H_Vec = samplePos - pos;
             float l = length(H_Vec);
@@ -351,18 +368,32 @@ float MyAO(float2 TexCoord)
             lastAo = ao;
 
             float3 zaxis = float3(0, 0, -1);
-            angle = atan(-H_Vec.z / length(H_Vec.xy));
-            if (l < R && angle > maxAngle)
+            h = atan(-H_Vec.z / length(H_Vec.xy));
+
+
+            if (l < R && h > maxAngle && dot(H_Vec, normal) > 0.0)
             {
-                maxAngle = angle;
-                ao = doAO(normal, H_Vec, dir, tangent);
+                maxAngle = h;
+                //ao = doAO(normal, H_Vec, dir, tangent);
+                ao = sin(h) - sin(t);
                 wao += wr * (ao - lastAo);
+                
+                ///wao = 1;
+
             }
+            else
+            {
+                //wao = 0;
+            }
+            //wao = h / (M_PI / 2);
+
         }
         totalAo += wao;
 
     }
     totalAo = 1 - totalAo / (float) iterations;
+
+    
 
     totalAo = clamp(totalAo, 0, 1);
     return float4(totalAo, totalAo, totalAo, 1);
@@ -372,8 +403,8 @@ float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
 {
     float AO;
 
-    AO = NVIDIA_CoarseAO(TexCoord);
-    //AO = MyAO(TexCoord);
+    //AO = NVIDIA_CoarseAO(TexCoord);
+    AO = MyAO(TexCoord);
 
     return float4(AO, AO, AO, 1);
 
@@ -400,7 +431,7 @@ float4 DrawMain(float2 TexCoord : TEXCOORD0) : COLOR
 	float4 AO = tex2D(g_sampleAo, TexCoord);
 	float4 fianlColor = AO * tex2D(g_sampleMainColor, TexCoord);
 
-    return fianlColor;
+    return AO;
 }
 technique HBAO
 {

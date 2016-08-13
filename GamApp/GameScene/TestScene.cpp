@@ -92,7 +92,7 @@ void TestScene::OnLoad()
 		Material sponzaMat;
 		sponzaMat.Power = 20;
 		sponzaEntity->SetMaterial(&sponzaMat);
-		if (true)
+		if (false)
 		{
 			sponzaEntity->SetSpecularMap("Res\\Mesh\\sponza\\sponza_floor_a_spec.tga", 0);
 

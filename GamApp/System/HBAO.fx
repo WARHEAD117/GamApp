@@ -291,8 +291,8 @@ float3 tangent_vector(float2 deltaUV, float3 dPdu, float3 dPdv)
 
 float MyAO(float2 TexCoord)
 {
-    float R = 1.0;
-    int stepCount = 1;
+    float R = 0.7;
+    int stepCount = 4;
 
 	//观察空间位置
     float3 pos = GetPosition(TexCoord, g_samplePosition);
@@ -302,7 +302,7 @@ float MyAO(float2 TexCoord)
     float height = 2 * g_zNear * g_ViewAngle_half_tan;
     float width = 2 * g_zNear * g_ViewAngle_half_tan * g_ViewAspect;
 
-    float2 r_uv = float2(dis / height, dis / width);
+    float2 r_uv = float2(dis / width, dis / height);
 
     float RadiusPixels = r_uv.x * g_ScreenWidth;
 
@@ -320,7 +320,7 @@ float MyAO(float2 TexCoord)
     float3 rand = getRandom(TexCoord);
     
 
-    int iterations = 1;
+    int iterations = 6;
     float totalAo = 0;
     for (int i = 0; i < iterations; ++i)
     {
@@ -332,16 +332,17 @@ float MyAO(float2 TexCoord)
 
         float4 tangentPlane;
         tangentPlane = float4(normal, dot(pos, normal));
-        float3 tangent;
+        float3 tangent = cross(float3(RotateDirection(dir, float2(cos(0.5 * M_PI), sin(0.5 * M_PI))), 0),
+        normal);
         //float3 tangent = nearestPos - pos;
         //tangent -= dot(normal, tangent) * normal;
 
-        float b = dot(normal, float3(dir, 0));
+        float b = dot(float3(dir, 0), normal);
         b = normal.z > 0 ? -b : b;
         float3 pn = b * float3(dir, 0);
         float sign = b < 0 ? -1 : 1;
         float t = b * atan(length(pn.xy) / normal.z);
-        // t = atan(tangent.z / length(tangent.xy));
+        t = atan(tangent.z / length(tangent.xy));
 
         float wao = 0;
         float lastAo = 0;
@@ -362,38 +363,39 @@ float MyAO(float2 TexCoord)
             RayPixel += step;
 
             float3 H_Vec = samplePos - pos;
+
+            //用来计算衰减
             float l = length(H_Vec);
             float r = l / R;
             float wr = 1 - r * r;
+
+            //保存上一次的ao结果
             lastAo = ao;
 
-            float3 zaxis = float3(0, 0, -1);
             h = atan(-H_Vec.z / length(H_Vec.xy));
 
-
-            if (l < R && h > maxAngle && dot(H_Vec, normal) > 0.0)
+            //if (l < R && h > maxAngle && dot(H_Vec, normal) > 0.0)
+            if (l < R )
             {
-                maxAngle = h;
+                //maxAngle = h;
                 //ao = doAO(normal, H_Vec, dir, tangent);
-                ao = sin(h) - sin(t);
-                wao += wr * (ao - lastAo);
-                
-                ///wao = 1;
 
+                //这个是改进后，法线方向半球的遮挡计算，0.3是偏移值
+                ao = saturate(dot(normalize(H_Vec), normalize(normal)) - 0.3);
+
+                //这个是原始的计算方式...
+                //ao = sin(h) - sin(t);
+                //ao = saturate(ao);
+                
             }
-            else
-            {
-                //wao = 0;
-            }
-            //wao = h / (M_PI / 2);
+            
+            wao += wr * (ao - lastAo);
 
         }
         totalAo += wao;
 
     }
     totalAo = 1 - totalAo / (float) iterations;
-
-    
 
     totalAo = clamp(totalAo, 0, 1);
     return float4(totalAo, totalAo, totalAo, 1);

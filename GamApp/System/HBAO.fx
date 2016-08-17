@@ -32,6 +32,9 @@ sampler_state
 	MinFilter = Point;
 	MagFilter = Point;
 	MipFilter = Point;
+
+    AddressU = wrap;
+    AddressV = wrap;
 };
 
 sampler2D g_samplePosition =
@@ -289,10 +292,10 @@ float3 tangent_vector(float2 deltaUV, float3 dPdu, float3 dPdv)
     return deltaUV.x * dPdu + deltaUV.y * dPdv;
 }
 
-float MyAO(float2 TexCoord)
+float4 MyAO(float2 TexCoord)
 {
     float R = 0.7;
-    int stepCount = 4;
+    int stepCount = 1;
 
 	//观察空间位置
     float3 pos = GetPosition(TexCoord, g_samplePosition);
@@ -320,7 +323,7 @@ float MyAO(float2 TexCoord)
     float3 rand = getRandom(TexCoord);
     
 
-    int iterations = 6;
+    int iterations = 1;
     float totalAo = 0;
     for (int i = 0; i < iterations; ++i)
     {
@@ -329,20 +332,24 @@ float MyAO(float2 TexCoord)
         dir = normalize(dir);
 
         float RayPixel = (rand.z * step + 1.0);
+        //RayPixel = 1.0;
+
+        
+        float b = dot(float3(dir, 0), normal);
+        b = normal.z > 0 ? -1 : 1;
 
         float4 tangentPlane;
         tangentPlane = float4(normal, dot(pos, normal));
-        float3 tangent = cross(float3(RotateDirection(dir, float2(cos(0.5 * M_PI), sin(0.5 * M_PI))), 0),
-        normal);
-        //float3 tangent = nearestPos - pos;
-        //tangent -= dot(normal, tangent) * normal;
+        float3 tangent = cross(float3(RotateDirection(dir, float2(cos(-0.5 * M_PI), sin(-0.5 * M_PI))), 0), normal);
 
-        float b = dot(float3(dir, 0), normal);
-        b = normal.z > 0 ? -b : b;
+        tangent = normalize(tangent);
+        
+        //return float4(tangent, 1.0f);
+
         float3 pn = b * float3(dir, 0);
         float sign = b < 0 ? -1 : 1;
         float t = b * atan(length(pn.xy) / normal.z);
-        t = atan(tangent.z / length(tangent.xy));
+        t = atan(-tangent.z / length(tangent.xy));
 
         float wao = 0;
         float lastAo = 0;
@@ -384,8 +391,13 @@ float MyAO(float2 TexCoord)
                 ao = saturate(dot(normalize(H_Vec), normalize(normal)) - 0.3);
 
                 //这个是原始的计算方式...
-                //ao = sin(h) - sin(t);
-                //ao = saturate(ao);
+                ao = sin(h) - sin(t);
+                if(h < t)
+                {
+                    ao = 0;
+                    //return float4(1, 0, 0, 1);
+                }
+                //ao = max(ao, 0);
                 
             }
             
@@ -403,12 +415,12 @@ float MyAO(float2 TexCoord)
 
 float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
 {
-    float AO;
+    float4 AO;
 
     //AO = NVIDIA_CoarseAO(TexCoord);
     AO = MyAO(TexCoord);
 
-    return float4(AO, AO, AO, 1);
+    return AO;
 
 }
 

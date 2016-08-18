@@ -110,9 +110,9 @@ float2 RotateDirection(float2 Dir, float2 CosSin)
 float M_PI = 3.1415926;
 
 
-float3 getRandom(in float2 uv)
+float3 GetRandom(in float2 uv)
 {
-    return normalize(tex2D(g_sampleRandomNormal, /*g_screen_size*/float2(g_ScreenWidth, g_ScreenHeight) * uv / /*random_size*/float2(256, 256)).xyz );
+    return normalize(tex2D(g_sampleRandomNormal, float2(g_ScreenWidth, g_ScreenHeight) * uv / /*random_size*/float2(256, 256)).xyz );
 }
 
 float2 GetRayUV(float3 rayPos)
@@ -129,8 +129,16 @@ float2 GetRayUV(float3 rayPos)
 
 float4 MySSR(float2 TexCoord)
 {
-    float stepLength = 1.5;
-
+    //射线追踪的步数
+    int StepCount = 20;
+    //原始步长
+    float Length = 1.5;
+    //假象厚度
+    float Thickness = 1;
+    //回溯的步数
+    int BackStepCount = 5;
+    //光线衰减的系数
+    float ScaleFactor = 0.7;
 
 	//观察空间位置
     float3 pos = GetPosition(TexCoord, g_samplePosition);
@@ -143,109 +151,101 @@ float4 MySSR(float2 TexCoord)
     float3 normal = GetNormal(TexCoord, g_sampleNormal);
     normal = normalize(normal);
 
-	//随机纹理
-    float3 rand = getRandom(TexCoord);
-
-    stepLength *= rand.x;
     
-    float3 viewDir = normalize(pos);
-    //viewDir = normalize(float3(0,0,1));
-    float3 reflectDir = reflect(viewDir, normal);
-    
+    //计算反射向量
+    float3 reflectDir = reflect(pos, normal);
     reflectDir = normalize(reflectDir);
 
     //float rand_A_X = 2 * (rand.y - 0.5) * M_PI;
     //float rand_A_Y = 2 * (rand.z - 0.5) * M_PI;
     //reflectDir.xy = RotateDirection(reflectDir.xy, float2(cos(rand_A_X), sin(rand_A_X)));
 
+	//随机纹理
+    float3 rand = GetRandom(TexCoord);
+
+    //生成随机步长，并限制步长的最小值
+    float stepLength = Length * max(0.2 + 0.2 * rand.x, rand.x);
+    //在垂直屏幕方向适当的加长步长，可以反射到更远的物体
     stepLength *= (abs(reflectDir.z) + 1);
 
-    //return float4(reflectDir, 1);
 
+    //反射的默认颜色
     float4 sampleColor = float4(0,0,0,0);
 
-    float2 reflectUV = float2(0, 0);
+    //检查正向射线追踪
+    bool checkForward = false;
 
-    bool flag = false;
-    int iterations = 30;
-    int forward = 0;
-    float depth = 0;
+    //击中的位置
+    float3 hitPos;
 
-    int test = 0;
-
-    float4 withThickness = float4(0, 0, 0, 1);
-
-    //reflectDir = float3(1, 1, 1);
-    for (int i = 1; i < iterations; ++i)
+    //正向的射线追踪
+    for (int i = 1; i < StepCount; ++i)
     {
         float3 rayPos = pos + reflectDir * stepLength * i;
         float2 rayUV = GetRayUV(rayPos);
         float sampleDepth = GetDepth(rayUV, g_samplePosition);
 
-        float3 lastRayPos = (pos + reflectDir * stepLength * (i - 1));
-        float2 lastRayUV = GetRayUV(lastRayPos);
-        float lastSampleDepth = GetDepth(lastRayUV, g_samplePosition);
-
-        if (sampleDepth < rayPos.z)
-        {
-            test = 1;
-        }
-
         //追踪的结果分两种
         //一种是射线击中深度，但是击中的位置是大于厚度的，这种情况下不能确定这个点是不是正确的反射位置，还需要后面的回溯
         //另一种是击中的位置小于厚度，这说明这个点肯定是大致正确的，所以可以提前确定颜色，回溯时会进一步得到精确结果
-        if (sampleDepth < rayPos.z && !flag)
+        if (sampleDepth < rayPos.z && !checkForward)
         {
-            reflectUV = rayUV;
-            flag = true;
-            forward = i;
-            depth = sampleDepth;
-            if (rayPos.z - sampleDepth < 1)
-            {
-                sampleColor = tex2D(g_sampleMainColor, reflectUV);
-                sampleColor.a = 1;
+            checkForward = true;
 
+            if (rayPos.z - sampleDepth < Thickness)
+            {
+                sampleColor = tex2D(g_sampleMainColor, rayUV);
+                sampleColor.a = 1;
             }
+
+            hitPos = rayPos;
+            break;
+
         }
     }
 
-    bool flag2 = false;
+    //检查反向射线追踪
+    bool checkBack = false;
 
-    
-
-    if (flag > 0)
+    //反向射线追踪
+    if (checkForward > 0)
     {
-        float3 rayPos = pos + reflectDir * stepLength * forward;
-
         //向反方向回溯
         float3 backDir = - reflectDir;
         backDir = normalize(backDir);
 
-        //回溯的步数
-        int backStepCount = 10;
         //回溯的步长
-        float backStepLength = 1.0f * stepLength / backStepCount;
+        float BackStepLength = 1.0f * stepLength / BackStepCount;
         
-        float3 BackRayPos = rayPos;
-
-        for (int j = 1; j < backStepCount; j++)
+        for (int j = 1; j < BackStepCount; j++)
         {
-            BackRayPos = rayPos + backDir * backStepLength * j;
-                        
+            //起点为正向击中的位置
+            float3 rayPos = hitPos + backDir * BackStepLength * j;
             float2 rayUV = GetRayUV(rayPos);
-            
             float sampleDepth = GetDepth(rayUV, g_samplePosition);
 
             //如果发现射线深度小于深度图，说明回溯成功
-            if ( sampleDepth > BackRayPos.z && flag2 == false )
+            if (sampleDepth > rayPos.z && sampleDepth - rayPos.z < Thickness && checkBack == false)
             {
-                reflectUV = rayUV;
-                sampleColor = tex2D(g_sampleMainColor, reflectUV);
+                checkBack = true;
+
+                sampleColor = tex2D(g_sampleMainColor, rayUV);
                 sampleColor.a = 1;
-                flag2 = true;
+
+                //更新击中的位置
+                hitPos = rayPos;
+
             }
         }
     }
+    
+    //根据原始步长和步数以及纵拉伸计算光线的最大长度，使用系数调整
+    float maxLength = Length * StepCount * (abs(reflectDir.z) + 1) * ScaleFactor;
+    //根据最大长度计算衰减幅度
+    float attenuation = max(maxLength - length(hitPos - pos), 0) / maxLength;
+
+    //对于追踪到的像素应用衰减，没有追踪到的像素使用原来的值
+    sampleColor = checkForward ? sampleColor * attenuation : sampleColor;
 
     return sampleColor;
 }

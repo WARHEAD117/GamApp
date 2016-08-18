@@ -31,6 +31,18 @@ void SSR::CreatePostEffect()
 		&m_pSSRTarget, NULL);
 	HRESULT hr = m_pSSRTarget->GetSurfaceLevel(0, &m_pSSRSurface);
 
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
+		1, D3DUSAGE_RENDERTARGET,
+		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
+		&m_pBlurXTarget, NULL);
+	hr = m_pBlurXTarget->GetSurfaceLevel(0, &m_pBlurXSurface);
+
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
+		1, D3DUSAGE_RENDERTARGET,
+		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
+		&m_pBlurYTarget, NULL);
+	hr = m_pBlurYTarget->GetSurfaceLevel(0, &m_pBlurYSurface);
+
 	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "System\\noiseColor.png", &m_pRandomNormal))
 	{
 		MessageBox(GetForegroundWindow(), "TextureError", "randomNormal", MB_OK);
@@ -38,6 +50,9 @@ void SSR::CreatePostEffect()
 	}
 }
 
+int sampleCount = 15;
+float m_SampleWeights[15];
+float m_SampleOffsets[30];
 
 void SSR::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 {
@@ -81,6 +96,7 @@ void SSR::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	m_postEffect->SetFloat("g_sample_rad", m_sample_rad);
 	m_postEffect->SetFloat("g_rad_scale", m_rad_scale);
 	m_postEffect->SetFloat("g_rad_threshold", m_rad_threshold);
+
 	m_postEffect->CommitChanges();
 
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pSSRSurface);
@@ -94,14 +110,55 @@ void SSR::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		m_postEffect->EndPass();
 	}
 
+	if (false)
+	{
+		//================================================================================================================
+		//Blur X
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pBlurXSurface);
+		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
+
+		m_postEffect->SetTexture("g_SSRBuffer", m_pSSRTarget);
+		m_postEffect->SetTexture(MAINCOLORBUFFER, mainBuffer);
+
+		SetGaussian(m_postEffect, 1.0f / RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, 0, "g_SampleWeights", "g_SampleOffsets");
+
+		m_postEffect->CommitChanges();
+
+		m_postEffect->BeginPass(1);
+		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+		m_postEffect->EndPass();
+
+		//================================================================================================================
+		//Blur Y
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pSSRSurface);
+		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
+
+		m_postEffect->SetTexture("g_SSRBuffer", m_pBlurXTarget);
+		m_postEffect->SetTexture(MAINCOLORBUFFER, mainBuffer);
+
+
+		SetGaussian(m_postEffect, 0, 1.0f / RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight, "g_SampleWeights", "g_SampleOffsets");
+
+		m_postEffect->CommitChanges();
+
+		m_postEffect->BeginPass(1);
+		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+		m_postEffect->EndPass();
+
+
+		//================================================================================================================
+	}
+	
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pPostSurface);
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
 
-	m_postEffect->SetTexture("g_AoBuffer", m_pSSRTarget);
+	m_postEffect->SetTexture("g_SSRBuffer", m_pSSRTarget);
 	m_postEffect->SetTexture(MAINCOLORBUFFER, mainBuffer);
+
+	SetGaussian(m_postEffect, 1.0f / RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, 0, "g_SampleWeights", "g_SampleOffsets");
 	m_postEffect->CommitChanges();
 
-	m_postEffect->BeginPass(1);
+	m_postEffect->BeginPass(2);
 	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 	m_postEffect->EndPass();
 
@@ -169,4 +226,49 @@ void SSR::ComputeSSRConfig()
 		m_rad_scale = 0.3f;
 		m_rad_threshold = 4.0f;
 	}
+}
+
+void SSR::SetGaussian(LPD3DXEFFECT effect, float deltaX, float deltaY, std::string weightArrayName, std::string offsetArrayName)
+{
+	//===
+	m_SampleWeights[0] = ComputeGaussianWeight(0);
+	m_SampleOffsets[0] = 0.0f;
+	m_SampleOffsets[1] = 0.0f;
+
+	float totalWeights = m_SampleWeights[0];
+
+	for (int i = 0; i < sampleCount / 2; i++)
+	{
+		float weight = ComputeGaussianWeight(i + 1);
+		m_SampleWeights[i * 2 + 1] = weight;
+		m_SampleWeights[i * 2 + 2] = weight;
+		totalWeights += weight * 2;
+
+		float sampleOffset = i * 2 + 1.5f;
+		D3DXVECTOR2 delta = D3DXVECTOR2(deltaX, deltaY) * sampleOffset;
+
+		m_SampleOffsets[i * 4 + 1] = delta.x;
+		m_SampleOffsets[i * 4 + 2] = delta.y;
+		m_SampleOffsets[i * 4 + 3] = -delta.x;
+		m_SampleOffsets[i * 4 + 4] = -delta.y;
+	}
+
+	for (int i = 0; i < sampleCount; i++)
+	{
+		m_SampleWeights[i] /= totalWeights;
+	}
+
+	// 将计算结果传递到GaussianBlur特效
+	effect->SetFloatArray(weightArrayName.c_str(), m_SampleWeights, sampleCount);
+	effect->SetFloatArray(offsetArrayName.c_str(), m_SampleOffsets, sampleCount * 2);
+	//==
+}
+
+float m_BlurAmount = 5.5;
+float SSR::ComputeGaussianWeight(float n)
+{
+	//高斯参数计算公式
+	float theta = m_BlurAmount;
+	return (float)((1.0 / sqrt(2 * D3DX_PI * theta)) *
+		exp(-(n * n) / (2 * theta * theta)));
 }

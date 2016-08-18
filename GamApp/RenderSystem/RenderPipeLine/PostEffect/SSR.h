@@ -23,5 +23,14 @@ private:
 	LPDIRECT3DTEXTURE9			m_pRandomNormal;
 	LPDIRECT3DTEXTURE9			m_pSSRTarget;
 	LPDIRECT3DSURFACE9			m_pSSRSurface;
+
+
+	LPDIRECT3DTEXTURE9			m_pBlurXTarget;
+	LPDIRECT3DSURFACE9			m_pBlurXSurface;
+	LPDIRECT3DTEXTURE9			m_pBlurYTarget;
+	LPDIRECT3DSURFACE9			m_pBlurYSurface;
+
+	void SetGaussian(LPD3DXEFFECT effect, float deltaX, float deltaY, std::string weightArrayName, std::string offsetArrayName);
+	float ComputeGaussianWeight(float n);
 };
 

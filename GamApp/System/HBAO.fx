@@ -187,7 +187,7 @@ float ComputeCoarseAO(float2 FullResUV, float RadiusPixels, float4 Rand, float3 
             float3 S = FetchQuarterResViewPos(SnappedUV);
 #else
             //根据前进的步长和方向算出整数的像素数，然后乘每个像素的uv大小。加上中心点的uv，就是最终的采样uv值
-            float2 g_InvFullResolution = float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight);
+            float2 g_InvFullResolution = float2(1.0f / g_ScreenWidth, -1.0f / g_ScreenHeight);
             float2 SnappedUV = round(RayPixels * Direction) * g_InvFullResolution + FullResUV;
             float3 S = GetPosition(SnappedUV, g_samplePosition);
 #endif
@@ -295,7 +295,7 @@ float3 tangent_vector(float2 deltaUV, float3 dPdu, float3 dPdv)
 float4 MyAO(float2 TexCoord)
 {
     float R = 0.7;
-    int stepCount = 1;
+    int stepCount = 6;
 
 	//观察空间位置
     float3 pos = GetPosition(TexCoord, g_samplePosition);
@@ -323,7 +323,7 @@ float4 MyAO(float2 TexCoord)
     float3 rand = getRandom(TexCoord);
     
 
-    int iterations = 1;
+    int iterations = 6;
     float totalAo = 0;
     for (int i = 0; i < iterations; ++i)
     {
@@ -362,7 +362,7 @@ float4 MyAO(float2 TexCoord)
         for (int j = 0; j < stepCount; j++)
         {
             //根据前进的步长和方向算出整数的像素数，然后乘每个像素的uv大小。加上中心点的uv，就是最终的采样uv值
-            float2 g_InvFullResolution = float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight);
+            float2 g_InvFullResolution = float2(1.0f / g_ScreenWidth, -1.0f / g_ScreenHeight);
             float2 SnappedUV = round(RayPixel * dir) * g_InvFullResolution + TexCoord;
 
             float3 samplePos = GetPosition(SnappedUV, g_samplePosition);
@@ -388,13 +388,13 @@ float4 MyAO(float2 TexCoord)
                 //ao = doAO(normal, H_Vec, dir, tangent);
 
                 //这个是改进后，法线方向半球的遮挡计算，0.3是偏移值
-                ao = saturate(dot(normalize(H_Vec), normalize(normal)) - 0.3);
+                //ao = saturate(dot(normalize(H_Vec), normalize(normal)) - 0.3);
 
                 //这个是原始的计算方式...
                 ao = sin(h) - sin(t);
                 if(h < t)
                 {
-                    ao = 0;
+                    //ao = 0;
                     //return float4(1, 0, 0, 1);
                 }
                 //ao = max(ao, 0);

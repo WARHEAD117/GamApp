@@ -13,6 +13,7 @@
 #include "RenderPipeLine/PostEffect/HDRLighting.h"
 #include "RenderPipeLine/PostEffect/DOF.h"
 #include "RenderPipeLine/PostEffect/SSGI.h"
+#include "RenderPipeLine/PostEffect/SSR.h"
 
 #include "Sky/SkyBox.h"
 
@@ -52,6 +53,8 @@ DOF dof;
 SSGI ssgi;
 PostEffectBase fxaa;
 PostEffectBase ditherHalfToning;
+SSR ssr;
+
 PostEffectBase colorChange;
 
 SkyBox skyBox;
@@ -63,6 +66,8 @@ bool	m_enableHDR;
 bool	m_enableGI;
 bool	m_enableFXAA;
 bool	m_enableDither;
+bool	m_enableSSR;
+
 bool	m_enableColorChange;
 
 RenderPipe::RenderPipe()
@@ -77,6 +82,7 @@ RenderPipe::RenderPipe()
 	hdrLighting.CreatePostEffect();
 	dof.CreatePostEffect();
 	ssgi.CreatePostEffect();
+	ssr.CreatePostEffect();
 
 	fxaa.CreatePostEffect("System\\FXAA.fx");
 	ditherHalfToning.CreatePostEffect("System\\Dither_Halftoning.fx");
@@ -90,6 +96,7 @@ RenderPipe::RenderPipe()
 	m_enableFXAA = true;
 	m_enableDither = false;
 	m_enableColorChange = false;
+	m_enableSSR = false;
 
 	m_showNormal = false;
 	m_showPosition = false;
@@ -854,6 +861,18 @@ void RenderPipe::RenderAll()
 		ditherHalfToning.RenderPost(m_pPostTarget);
 		m_pPostTarget = ditherHalfToning.GetPostTarget();
 	}
+
+	if (GAMEINPUT::Instance().KeyPressed(DIK_8))
+	{
+		m_enableSSR = !m_enableSSR;
+	}
+
+	if (m_enableSSR)
+	{
+		ssr.RenderPost(m_pPostTarget);
+		m_pPostTarget = ssr.GetPostTarget();
+	}
+
 	/*
 	if (GAMEINPUT::Instance().KeyPressed(DIK_7))
 	{

@@ -210,6 +210,9 @@
     <ClInclude Include="RenderSystem\RenderPipeLine\PostEffect\HBAO.h">
       <Filter>RenderSystem\PostEffect</Filter>
     </ClInclude>
+    <ClInclude Include="RenderSystem\RenderPipeLine\PostEffect\SSR.h">
+      <Filter>RenderSystem\PostEffect</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GameSystem\Camera\Camera.cpp">
@@ -335,6 +338,9 @@
     <ClCompile Include="RenderSystem\RenderPipeLine\PostEffect\HBAO.cpp">
       <Filter>RenderSystem\PostEffect</Filter>
     </ClCompile>
+    <ClCompile Include="RenderSystem\RenderPipeLine\PostEffect\SSR.cpp">
+      <Filter>RenderSystem\PostEffect</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="System\commonDiffuse.fx">
@@ -389,6 +395,9 @@
       <Filter>System</Filter>
     </FxCompile>
     <FxCompile Include="System\HBAO.fx">
+      <Filter>System</Filter>
+    </FxCompile>
+    <FxCompile Include="System\SSR.fx">
       <Filter>System</Filter>
     </FxCompile>
   </ItemGroup>

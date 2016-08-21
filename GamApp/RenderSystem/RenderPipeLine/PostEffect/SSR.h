@@ -12,8 +12,8 @@ public:
 	void ComputeSSRConfig();
 
 private:
-	float		m_intensity;
-	float		m_scale;
+	float		m_Roughness;
+	float		m_Thickness;
 	float		m_bias;
 	float		m_sample_rad;
 	float		m_rad_scale;
@@ -24,6 +24,7 @@ private:
 	LPDIRECT3DTEXTURE9			m_pSSRTarget;
 	LPDIRECT3DSURFACE9			m_pSSRSurface;
 
+	LPDIRECT3DTEXTURE9			m_pMainTargetWithMip;
 
 	LPDIRECT3DTEXTURE9			m_pBlurXTarget;
 	LPDIRECT3DSURFACE9			m_pBlurXSurface;
@@ -32,5 +33,6 @@ private:
 
 	void SetGaussian(LPD3DXEFFECT effect, float deltaX, float deltaY, std::string weightArrayName, std::string offsetArrayName);
 	float ComputeGaussianWeight(float n);
+	bool BuildMipMap(const LPDIRECT3DTEXTURE9 src, LPDIRECT3DTEXTURE9 dest);
 };
 

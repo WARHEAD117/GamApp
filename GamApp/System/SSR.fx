@@ -3,8 +3,10 @@
 int			g_mapWidth;
 int			g_mapHeight;
 
-float		g_intensity = 1;
-float		g_scale = 1;
+float       g_Roughness = 10.0;
+float       g_MaxMipLevel = 0;
+float		g_Thickness = 1;
+
 float		g_bias = 0;
 float		g_sample_rad = 0.03f;
 
@@ -110,9 +112,9 @@ float2 RotateDirection(float2 Dir, float2 CosSin)
 float M_PI = 3.1415926;
 
 
-float3 GetRandom(in float2 uv)
+float4 GetRandom(in float2 uv)
 {
-    return normalize(tex2D(g_sampleRandomNormal, float2(g_ScreenWidth, g_ScreenHeight) * uv / /*random_size*/float2(256, 256)).xyz );
+    return normalize(tex2D(g_sampleRandomNormal, float2(g_ScreenWidth, g_ScreenHeight) * uv / /*random_size*/float2(256, 256)) );
 }
 
 float2 GetRayUV(float3 rayPos)
@@ -127,18 +129,50 @@ float2 GetRayUV(float3 rayPos)
     return float2(u, v);
 }
 
+float3 ComputeRandomDir(float4 rand, float factor, float3 normal, float3 baseDir)
+{
+    float theta = (rand.y - 0.5) * M_PI * factor;
+    float phi = 2 * (rand.z - 0.5) * M_PI;
+    float x = cos(phi) * sin(theta);
+    float y = sin(phi) * sin(theta);
+    float z = cos(theta);
+
+    float3 b = cross(normal, baseDir);
+    float3 t = cross(b, baseDir);
+
+    float3x3 TBN = float3x3(t, b, baseDir);
+    
+    float3 randomDir = mul(float3(x, y, z), TBN);
+    randomDir = normalize(randomDir);
+
+    return randomDir;
+}
+
 float4 MySSR(float2 TexCoord)
 {
+    //Roughness
+    float Roughness = 0.2;
+    Roughness = g_Roughness;
+    Roughness = max(g_Roughness, 0);
+
+    //最大MipMap等级
+    int MaxMipLevel = g_MaxMipLevel;
+
     //射线追踪的步数
     int StepCount = 20;
     //原始步长
     float Length = 1.5;
     //假象厚度
     float Thickness = 1;
+    Thickness = g_Thickness;
+
     //回溯的步数
-    int BackStepCount = 5;
+    int BackStepCount = 10;
     //光线衰减的系数
     float ScaleFactor = 0.7;
+
+    
+    float level = 1.0 / Roughness * MaxMipLevel;
 
 	//观察空间位置
     float3 pos = GetPosition(TexCoord, g_samplePosition);
@@ -150,21 +184,51 @@ float4 MySSR(float2 TexCoord)
 	//观察空间法线
     float3 normal = GetNormal(TexCoord, g_sampleNormal);
     normal = normalize(normal);
-
     
     //计算反射向量
     float3 reflectDir = reflect(pos, normal);
     reflectDir = normalize(reflectDir);
 
-    //float rand_A_X = 2 * (rand.y - 0.5) * M_PI;
-    //float rand_A_Y = 2 * (rand.z - 0.5) * M_PI;
-    //reflectDir.xy = RotateDirection(reflectDir.xy, float2(cos(rand_A_X), sin(rand_A_X)));
-
 	//随机纹理
-    float3 rand = GetRandom(TexCoord);
+    float4 rand = GetRandom(TexCoord);
 
+    //计算随机角度(应该是用重要性采样来计算角度)
+    float theta = (rand.y - 0.5) * M_PI * Roughness;
+    theta = acos(pow(rand.y, (1.0 / (1.0 + Roughness))));
+
+    float phi = 2 * M_PI * rand.z;
+    float x = cos(phi) * sin(theta);
+    float y = sin(phi) * sin(theta);
+    float z = cos(theta);
+
+    float3 b = cross(normal, reflectDir);
+    float3 t = cross(b, reflectDir);
+
+    float3x3 TBN = float3x3(t, b, reflectDir);
+    reflectDir = mul(float3(x,y,z), TBN);
+    reflectDir = normalize(reflectDir);
+
+    //这里其实应该重新生成方向
+    int count = 0;
+    while (dot(reflectDir, normal) < 0 && count < 10 )
+    {
+        rand = GetRandom(float2(rand.x, rand.y));
+        reflectDir = ComputeRandomDir(rand, Roughness, normal, reflectDir);
+        count++;
+    }
+    /*
+    if (dot(reflectDir, normal) < 0)
+    {
+        return float4(0, 0, 0, 1);
+    }
+    else
+    {
+        return float4(0, 1, 0, 1);
+    }
+    */
+    
     //生成随机步长，并限制步长的最小值
-    float stepLength = Length * max(0.2 + 0.2 * rand.x, rand.x);
+    float stepLength = Length * (0.5 + 0.5 * rand.x);
     //在垂直屏幕方向适当的加长步长，可以反射到更远的物体
     stepLength *= (abs(reflectDir.z) + 1);
 
@@ -178,26 +242,23 @@ float4 MySSR(float2 TexCoord)
     //击中的位置
     float3 hitPos;
 
+    //击中的距离
+    float hitLengh = 0;
+    
+    //根据原始步长和步数以及纵拉伸计算光线的最大长度，使用系数调整
+    float maxLength = Length * StepCount * (abs(reflectDir.z) + 1) * ScaleFactor;
+
     //正向的射线追踪
-    for (int i = 1; i < StepCount; ++i)
+    for (int i = 1; i <= StepCount; ++i)
     {
         float3 rayPos = pos + reflectDir * stepLength * i;
         float2 rayUV = GetRayUV(rayPos);
         float sampleDepth = GetDepth(rayUV, g_samplePosition);
 
-        //追踪的结果分两种
-        //一种是射线击中深度，但是击中的位置是大于厚度的，这种情况下不能确定这个点是不是正确的反射位置，还需要后面的回溯
-        //另一种是击中的位置小于厚度，这说明这个点肯定是大致正确的，所以可以提前确定颜色，回溯时会进一步得到精确结果
+        //初步的追踪
         if (sampleDepth < rayPos.z && !checkForward)
         {
             checkForward = true;
-
-            if (rayPos.z - sampleDepth < Thickness)
-            {
-                sampleColor = tex2D(g_sampleMainColor, rayUV);
-                sampleColor.a = 1;
-            }
-
             hitPos = rayPos;
             break;
 
@@ -217,7 +278,7 @@ float4 MySSR(float2 TexCoord)
         //回溯的步长
         float BackStepLength = 1.0f * stepLength / BackStepCount;
         
-        for (int j = 1; j < BackStepCount; j++)
+        for (int j = 1; j <= BackStepCount; j++)
         {
             //起点为正向击中的位置
             float3 rayPos = hitPos + backDir * BackStepLength * j;
@@ -228,24 +289,25 @@ float4 MySSR(float2 TexCoord)
             if (sampleDepth > rayPos.z && sampleDepth - rayPos.z < Thickness && checkBack == false)
             {
                 checkBack = true;
-
-                sampleColor = tex2D(g_sampleMainColor, rayUV);
-                sampleColor.a = 1;
-
+                
                 //更新击中的位置
                 hitPos = rayPos;
+                hitLengh = length(hitPos - pos);
+                float disFactor = hitLengh / maxLength * 3;
+                float4 lodUV = float4(rayUV, 0, level * disFactor * disFactor);
+                sampleColor = tex2Dlod(g_sampleMainColor, lodUV);
+                sampleColor.a = 1;
+
 
             }
         }
     }
     
-    //根据原始步长和步数以及纵拉伸计算光线的最大长度，使用系数调整
-    float maxLength = Length * StepCount * (abs(reflectDir.z) + 1) * ScaleFactor;
     //根据最大长度计算衰减幅度
     float attenuation = max(maxLength - length(hitPos - pos), 0) / maxLength;
 
     //对于追踪到的像素应用衰减，没有追踪到的像素使用原来的值
-    sampleColor = checkForward ? sampleColor * attenuation : sampleColor;
+    sampleColor = checkForward ? sampleColor * attenuation * attenuation : sampleColor;
 
     return sampleColor;
 }

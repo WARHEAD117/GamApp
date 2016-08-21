@@ -16,6 +16,8 @@ float		g_zFar = 1000.0f;
 int			g_ScreenWidth;
 int			g_ScreenHeight;
 
+int2        g_ScreenSize;
+
 float		g_ViewAngle_half_tan;
 float		g_ViewAspect;
 

@@ -14,15 +14,18 @@ public:
 private:
 	float		m_Roughness;
 	float		m_Thickness;
-	float		m_bias;
-	float		m_sample_rad;
-	float		m_rad_scale;
+	float		m_RayAngle;
+	float		m_Length;
+	float		m_ScaleFactor;
 	float		m_rad_threshold;
 	bool		m_SSREnable;
 
-	LPDIRECT3DTEXTURE9			m_pRandomNormal;
+	LPDIRECT3DTEXTURE9			m_pRandomTex;
 	LPDIRECT3DTEXTURE9			m_pSSRTarget;
 	LPDIRECT3DSURFACE9			m_pSSRSurface;
+
+	LPDIRECT3DTEXTURE9			m_pResolveTarget;
+	LPDIRECT3DSURFACE9			m_pResolveSurface;
 
 	LPDIRECT3DTEXTURE9			m_pMainTargetWithMip;
 

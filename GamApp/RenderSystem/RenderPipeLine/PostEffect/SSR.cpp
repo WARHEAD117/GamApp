@@ -7,11 +7,11 @@
 
 SSR::SSR()
 {
-	m_Roughness = 10;
-	m_Thickness = 1.0f;
-	m_bias = 0.2f;
-	m_sample_rad = 0.03f;
-	m_rad_scale = 0.3f;
+	m_Roughness = 100;
+	m_RayAngle = 0.1f;
+
+	m_Length = 3.0f;
+	m_ScaleFactor = 0.7f;
 	m_rad_threshold = 4.0f;
 	m_SSREnable = true;
 }
@@ -34,6 +34,12 @@ void SSR::CreatePostEffect()
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
 		1, D3DUSAGE_RENDERTARGET,
 		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
+		&m_pResolveTarget, NULL);
+	hr = m_pResolveTarget->GetSurfaceLevel(0, &m_pResolveSurface);
+
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
+		1, D3DUSAGE_RENDERTARGET,
+		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
 		&m_pBlurXTarget, NULL);
 	hr = m_pBlurXTarget->GetSurfaceLevel(0, &m_pBlurXSurface);
 
@@ -43,14 +49,14 @@ void SSR::CreatePostEffect()
 		&m_pBlurYTarget, NULL);
 	hr = m_pBlurYTarget->GetSurfaceLevel(0, &m_pBlurYSurface);
 
-	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "System\\noiseColor.png", &m_pRandomNormal))
+	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "System\\noiseColor.png", &m_pRandomTex))
 	{
 		MessageBox(GetForegroundWindow(), "TextureError", "randomNormal", MB_OK);
 		abort();
 	}
 
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
-		6, D3DUSAGE_RENDERTARGET,
+		4, D3DUSAGE_RENDERTARGET,
 		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
 		&m_pMainTargetWithMip, NULL);
 }
@@ -109,18 +115,20 @@ void SSR::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 	m_postEffect->SetTexture(NORMALBUFFER, RENDERPIPE::Instance().m_pNormalTarget);
 	m_postEffect->SetTexture(POSITIONBUFFER, RENDERPIPE::Instance().m_pPositionTarget);
-	m_postEffect->SetTexture("g_RandomNormal", m_pRandomNormal);
+	m_postEffect->SetTexture("g_RandTex", m_pRandomTex);
+	D3DSURFACE_DESC randTexDesc;
+	m_pRandomTex->GetLevelDesc(0, &randTexDesc);
+	int randTexSize[2] = { randTexDesc.Width, randTexDesc.Height };
+	m_postEffect->SetIntArray("g_RandTexSize", randTexSize, 2);
 
 	m_postEffect->SetTexture(MAINCOLORBUFFER, m_pMainTargetWithMip);
-	
-	m_postEffect->SetFloat("g_Roughness", m_Roughness);
-	m_postEffect->SetInt("g_MaxMipLevel", maxMipLevel);
-	m_postEffect->SetFloat("g_Thickness", m_Thickness);
 
-	m_postEffect->SetFloat("g_bias", m_bias);
-	m_postEffect->SetFloat("g_sample_rad", m_sample_rad);
-	m_postEffect->SetFloat("g_rad_scale", m_rad_scale);
-	m_postEffect->SetFloat("g_rad_threshold", m_rad_threshold);
+	m_postEffect->SetInt("g_MaxMipLevel", maxMipLevel);
+	m_postEffect->SetFloat("g_Roughness", m_Roughness * m_Roughness);
+	m_postEffect->SetFloat("g_RayAngle", m_RayAngle);
+
+	m_postEffect->SetFloat("g_Length", m_Length);
+	m_postEffect->SetFloat("g_ScaleFactor", m_ScaleFactor);
 
 	m_postEffect->CommitChanges();
 
@@ -129,6 +137,22 @@ void SSR::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	m_postEffect->CommitChanges();
 
 	m_postEffect->BeginPass(0);
+	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+	m_postEffect->EndPass();
+
+	//================================================================================================================
+	//Color Resolve
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pResolveSurface);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
+
+	int screenSize[2] = { RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight };
+	m_postEffect->SetIntArray("g_ScreenSize", screenSize, 2);
+	m_postEffect->SetTexture("g_SSRBuffer", m_pSSRTarget);
+
+	m_postEffect->SetTexture(MAINCOLORBUFFER, m_pMainTargetWithMip);
+	m_postEffect->CommitChanges();
+
+	m_postEffect->BeginPass(3);
 	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 	m_postEffect->EndPass();
 
@@ -174,7 +198,7 @@ void SSR::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pPostSurface);
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
 
-	m_postEffect->SetTexture("g_SSRBuffer", m_pSSRTarget);
+	m_postEffect->SetTexture("g_SSRBuffer", m_pResolveTarget);
 	m_postEffect->SetTexture(MAINCOLORBUFFER, m_pMainTargetWithMip);
 
 	SetGaussian(m_postEffect, 1.0f / RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, 0, "g_SampleWeights", "g_SampleOffsets");
@@ -191,68 +215,54 @@ void SSR::ComputeSSRConfig()
 {
 	if (GAMEINPUT::Instance().KeyDown(DIK_M) && !GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
-		m_Roughness += 0.8f;
+		m_Roughness = m_Roughness > 10 ? m_Roughness + 0.8f : m_Roughness + 0.1;
 	}
-	if (GAMEINPUT::Instance().KeyDown(DIK_N) && !GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
-	{
-		m_Thickness += 0.01f;
-	}
-
-	if (GAMEINPUT::Instance().KeyDown(DIK_U) && !GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
-	{
-		m_sample_rad += 0.0001f;
-	}
-	if (GAMEINPUT::Instance().KeyDown(DIK_I) && !GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
-	{
-		m_bias += 0.0001f;
-	}
-	if (GAMEINPUT::Instance().KeyDown(DIK_O) && !GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
-	{
-		m_rad_scale += 0.0001f;
-	}
-	//if (GAMEINPUT::Instance().KeyDown(DIK_P) && !GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
-	//{
-	//	m_rad_threshold += 0.0001f;
-	//}
 
 	if (GAMEINPUT::Instance().KeyDown(DIK_M) && GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
-		m_Roughness -= 0.8f;
+		m_Roughness = m_Roughness > 10 ? m_Roughness - 0.8f : m_Roughness - 0.1;
 		m_Roughness = m_Roughness < 0 ? 0 : m_Roughness;
 
 	}
-	if (GAMEINPUT::Instance().KeyDown(DIK_N) && GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
+
+	if (GAMEINPUT::Instance().KeyDown(DIK_N) && !GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
-		m_Thickness -= 0.01f;
-		m_Thickness = m_Thickness < 0 ? 0 : m_Thickness;
+		m_RayAngle += 0.001f;
+		m_RayAngle = m_RayAngle >0.5 ? 0.5 : m_RayAngle;
 	}
 
-	if (GAMEINPUT::Instance().KeyDown(DIK_U) && GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
+	if (GAMEINPUT::Instance().KeyDown(DIK_N) && GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
-		m_sample_rad -= 0.0001f;
+		m_RayAngle -= 0.001f;
+		m_RayAngle = m_RayAngle < 0 ? 0 : m_RayAngle;
 	}
-	if (GAMEINPUT::Instance().KeyDown(DIK_I) && GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
+
+
+	if (GAMEINPUT::Instance().KeyDown(DIK_B) && !GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
-		m_bias -= 0.0001f;
+		m_Length += 0.001f;
 	}
-	if (GAMEINPUT::Instance().KeyDown(DIK_O) && GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
+	if (GAMEINPUT::Instance().KeyDown(DIK_B) && GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
-		m_rad_scale -= 0.0001f;
+		m_Length -= 0.001f;
 	}
-	//if (GAMEINPUT::Instance().KeyDown(DIK_P) && GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
-	//{
-	//	m_rad_threshold -= 0.0001f;
-	//}
+
+	if (GAMEINPUT::Instance().KeyDown(DIK_V) && !GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
+	{
+		m_ScaleFactor += 0.001f;
+	}
+	if (GAMEINPUT::Instance().KeyDown(DIK_V) && GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
+	{
+		m_ScaleFactor -= 0.001f;
+	}
 
 	if (GAMEINPUT::Instance().KeyDown(DIK_R))
 	{
 		m_Roughness = 10.0f;
-		m_Thickness = 1.0f;
+		m_RayAngle = 0.1f;
 
-		m_bias = 0.2f;
-		m_sample_rad = 0.03f;
-		m_rad_scale = 0.3f;
-		m_rad_threshold = 4.0f;
+		m_Length = 3.0f;
+		m_ScaleFactor = 0.7f;
 	}
 }
 

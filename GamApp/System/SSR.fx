@@ -7,16 +7,15 @@
 float g_MaxMipLevel = 0;
 
 float g_Roughness = 10.0;
-float g_Thickness = 1;
 float g_RayAngle = 0.1;
 
-float g_Length = 3;
+float g_StepLength = 3;
 float g_ScaleFactor = 0.7;
 
 int2 g_RandTexSize;
 
 texture		g_NormalBuffer;
-texture g_RandTex;
+texture     g_RandTex;
 texture		g_PositionBuffer;
 texture		g_ViewDirBuffer;
 
@@ -207,11 +206,8 @@ bool RayMarching(float StepLength, int StepCount, int BisectionStepCount, float3
         //起始的步长
         float BisectionStepLength = StepLength;
         
-        //起始的射线起点
-        float3 rayPos = hitPos;
-
         //射线的末端对应UV
-        float2 rayUV;
+        float2 hitUV;
 
         //从前一步得到的起点开始反向二分法追踪
         //每次将步长减半，并向着二分的查找方向前进
@@ -227,13 +223,13 @@ bool RayMarching(float StepLength, int StepCount, int BisectionStepCount, float3
             //步长减半
             BisectionStepLength *= 0.5;
             //射线前进
-            rayPos += BisectionDir * BisectionStepLength;
+            hitPos += BisectionDir * BisectionStepLength;
             //将射线末端转换为UV坐标
-            rayUV = GetRayUV(rayPos);
+            hitUV = GetRayUV(hitPos);
             //采样深度图
-            float sampleDepth = GetDepth(rayUV, g_samplePosition);
+            float sampleDepth = GetDepth(hitUV, g_samplePosition);
             //取得当前深度图和射线深度的差值
-            float delta = sampleDepth - rayPos.z;
+            float delta = sampleDepth - hitPos.z;
             //两次步进差值符号相反，步进反向
             if (delta * hitDelta < 0)
             {
@@ -248,9 +244,10 @@ bool RayMarching(float StepLength, int StepCount, int BisectionStepCount, float3
         //需要研究到底该怎么选择这个值
         if (abs(hitDelta) <= 2 * BisectionStepLength)
         {
-            hitPos = rayPos;
-            return true;
-
+            if (hitUV.x < 0 || hitUV.y < 0 || hitUV.x > 1 || hitUV.y > 1)
+                return false;
+            else
+                return true;
         }
     }
 
@@ -262,19 +259,14 @@ bool RayMarching(float StepLength, int StepCount, int BisectionStepCount, float3
 
 float4 MySSR(float2 TexCoord)
 {
-    //Roughness
-    float Roughness = g_Roughness;
-    Roughness = max(g_Roughness, 0);
-
     //最大MipMap等级
     int MaxMipLevel = g_MaxMipLevel;
-
+    //Roughness
+    float Roughness = saturate(g_Roughness);
     //射线追踪的步数
     int StepCount = STEPCOUNT;
     //原始步长
-    float Length = g_Length;
-    //假象厚度
-    float Thickness = g_Thickness;
+    float StepLength = g_StepLength;
 
     //二分回溯的步数
     int BisectionStepCount = BISECTION_STEPCOUNT;
@@ -282,8 +274,8 @@ float4 MySSR(float2 TexCoord)
     float ScaleFactor = g_ScaleFactor;
 
     //射线的立体角
-    float rayAngle = g_RayAngle * M_PI;
-    float tan_RayAngle = tan(rayAngle);
+    float RayAngle = g_RayAngle * M_PI;
+    float TanRayAngle = tan(RayAngle);
     
     float level = 10.0 / Roughness * MaxMipLevel;
 
@@ -301,10 +293,10 @@ float4 MySSR(float2 TexCoord)
     float4 rand = GetRandom(TexCoord);
 
     //生成随机反射角度
-    float3 reflectDir = reflectDirBase;
+    float3 reflectDir = ComputeSampleDir(rand, Roughness, normal, reflectDirBase, V);;
     //反射方向在切平面以下的时候重新生成反射方向
     int count = 0;
-    while (count = 0 || (dot(reflectDir, normal) <= 0 && count < 10))
+    while ((dot(reflectDir, normal) <= 0 && count < 10))
     {
         rand = GetRandom(float2(rand.x, rand.y));
         reflectDir = ComputeSampleDir(rand, Roughness, normal, reflectDirBase, V);
@@ -313,139 +305,48 @@ float4 MySSR(float2 TexCoord)
     
     //return dot(reflectDir, normal) < 0 ? float4(0, 0, 0, 1) : return float4(0, 1, 0, 1);
     
-    //生成随机步长，并限制步长的最小值
-    float stepLength = Length * (0.5 + 0.5 * rand.x);
-    //在垂直屏幕方向适当的加长步长，可以反射到更远的物体
-    stepLength *= (abs(reflectDir.z) + 1);
-
-    //检查正向射线追踪
-    bool checkForward = false;
+    //生成随机步长，并且在垂直屏幕方向适当的加长步长，可以反射到更远的物体
+    float RandStepLength = StepLength * (0.5 + 0.5 * rand.x) * (abs(reflectDir.z) + 1);
 
     //击中的位置
     float3 hitPos;
+    bool rayHit = RayMarching(RandStepLength, StepCount, BisectionStepCount, pos, reflectDir, hitPos);
 
-    //击中点的误差
-    float hitDelta = 0;
-
-    //击中的距离
-    float hitLengh = 0;
-    
-    //根据原始步长和步数以及纵拉伸计算光线的最大长度，使用系数调整
-    float maxLength = Length * StepCount * (abs(reflectDir.z) + 1) * ScaleFactor;
-
-    //正向的射线追踪
-    for (int i = 1; i <= StepCount; ++i)
-    {
-        float3 rayPos = pos + reflectDir * stepLength * i;
-        float2 rayUV = GetRayUV(rayPos);
-        float sampleDepth = GetDepth(rayUV, g_samplePosition);
-
-        //初步的追踪
-        if (sampleDepth < rayPos.z && !checkForward)
-        {
-            checkForward = true;
-            hitPos = rayPos;
-            hitDelta = sampleDepth - rayPos.z;
-            break;
-
-        }
-    }
     
     //反射的默认颜色
     float4 hitColor = float4(0, 0, 0, 0);
     //默认的输出UV颜色
-    float4 hitUv = float4(0, 0, 0, 0);
+    float4 hitUV = float4(0, 0, 0, 0);
 
-    //二分法射线追踪
-    if (checkForward > 0)
+    if(rayHit)
     {
-        //二分的步进方向，起始方向是反射射线的相反方向
-        float3 BisectionDir = -reflectDir;
-        BisectionDir = normalize(BisectionDir);
-
-        //起始的步长
-        float BisectionStepLength = stepLength;
         
-        //起始的射线起点
-        float3 rayPos = hitPos;
-
-        //射线的末端对应UV
-        float2 rayUV;
-
-        //从前一步得到的起点开始反向二分法追踪
-        //每次将步长减半，并向着二分的查找方向前进
-        //在前进到的位置取深度，计算深度图和射线深度的差
-        //并且保存下来供下一次查找使用
-        //当两次查找的差值符号相同（即两次步进的结果在深度图的同侧）
-        //不改变步进方向
-        //当两次查找的差值符号相反（即两次步进的结果在深度图的异侧）
-        //改变步进方向
-        //循环得到精确的二分查找结果
-        for (int j = 1; j <= BisectionStepCount; j++)
-        {
-            //步长减半
-            BisectionStepLength *= 0.5;
-            //射线前进
-            rayPos += BisectionDir * BisectionStepLength;
-            //将射线末端转换为UV坐标
-            rayUV = GetRayUV(rayPos);
-            //采样深度图
-            float sampleDepth = GetDepth(rayUV, g_samplePosition);
-            //取得当前深度图和射线深度的差值
-            float delta = sampleDepth - rayPos.z;
-            //两次步进差值符号相反，步进反向
-            if (delta * hitDelta < 0)
-            {
-                BisectionDir = -BisectionDir;
-            }
-            //保存这次步进的差值
-            hitDelta = delta;
-        }
-
-        //如果最后一次步进的差值小于一定的值，说明击中的点处于同一平面
-        //现在选择了步长的两倍，但是对于接几乎垂直于屏幕的面会出现误判
-        //需要研究到底该怎么选择这个值
-        if (abs(hitDelta) <= 2 * BisectionStepLength)
-        {
-            //保存击中的位置
-            hitPos = rayPos;
-            //击中的点到出发点的距离
-            hitLengh = length(hitPos - pos);
+    //根据原始步长和步数以及纵拉伸计算光线的最大长度，使用系数调整
+        float maxLength = StepLength * StepCount * (abs(reflectDir.z) + 1) * ScaleFactor;
+        //击中的点到出发点的距离
+        //击中的距离
+        float hitLengh = length(hitPos - pos);
             //距离系数
-            float disFactor = hitLengh / maxLength * 3 * tan_RayAngle;
+        float disFactor = hitLengh / maxLength * 3 * TanRayAngle;
 
-            //带有lod级别信息的UV坐标
-            hitUv = float4(rayUV, 0, level * disFactor);
-            //采样集中的颜色
-            hitColor = tex2Dlod(g_sampleMainColor, hitUv);
+        
+        //将射线末端转换为UV坐标
+        hitUV.xy = GetRayUV(hitPos);
+        //带有lod级别信息的UV坐标
+        hitUV = float4(hitUV.xy, 1, level * disFactor);
+        //采样集中的颜色
+        hitColor = tex2Dlod(g_sampleMainColor, hitUV);
             
-            //根据最大长度计算衰减幅度
-            float attenuation = max(maxLength - hitLengh, 0) / maxLength;
+        //根据最大长度计算衰减幅度
+        float attenuation = max(maxLength - hitLengh, 0) / maxLength;
 
-            //衰减集中的颜色
-            hitColor = hitColor * attenuation * attenuation;
-
-            hitColor.a = 1;
-
-            //击中位置UV为负数或者超出1的像素为屏幕外的像素，需要标记为未击中
-            if (hitUv.x < 0 || hitUv.y < 0 || hitUv.x > 1 || hitUv.y > 1)
-            {
-                hitUv.z = 0;
-                hitColor.a = 0;
-            }
-            else
-            {
-                //通过b通道(z)保存是否击中的标记
-                hitUv.z = 1;
-                //通过alpha通道保存是否击中的标记
-                hitColor.a = 1;
-            }
-
-        }
+        //衰减集中的颜色
+        hitColor = hitColor * attenuation * attenuation;
+        hitColor.a = 1;
     }
-    
+
     //return hitColor;
-    return hitUv;
+    return hitUV;
 }
 
 float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
@@ -527,7 +428,7 @@ float4 ColorResolve(float2 TexCoord : TEXCOORD0) : COLOR
         //return weight;
         
         //根据原始步长和步数以及纵拉伸计算光线的最大长度，使用系数调整
-            float maxLength = g_Length * STEPCOUNT * (abs(normalize(Ray).z) + 1) * g_ScaleFactor;
+        float maxLength = g_StepLength * STEPCOUNT * (abs(normalize(Ray).z) + 1) * g_ScaleFactor;
 
         //根据最大长度计算衰减幅度
             float attenuation = max(maxLength - RayLengh, 0) / maxLength;

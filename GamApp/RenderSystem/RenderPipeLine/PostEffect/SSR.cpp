@@ -10,7 +10,7 @@ SSR::SSR()
 	m_Roughness = 0.2;
 	m_RayAngle = 0.1f;
 
-	m_Length = 3.0f;
+	m_StepLength = 3.0f;
 	m_ScaleFactor = 0.7f;
 	m_rad_threshold = 4.0f;
 	m_SSREnable = true;
@@ -127,7 +127,7 @@ void SSR::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	m_postEffect->SetFloat("g_Roughness", m_Roughness);
 	m_postEffect->SetFloat("g_RayAngle", m_RayAngle);
 
-	m_postEffect->SetFloat("g_Length", m_Length);
+	m_postEffect->SetFloat("g_StepLength", m_StepLength);
 	m_postEffect->SetFloat("g_ScaleFactor", m_ScaleFactor);
 
 	m_postEffect->CommitChanges();
@@ -239,11 +239,11 @@ void SSR::ComputeSSRConfig()
 
 	if (GAMEINPUT::Instance().KeyDown(DIK_B) && !GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
-		m_Length += 0.001f;
+		m_StepLength += 0.001f;
 	}
 	if (GAMEINPUT::Instance().KeyDown(DIK_B) && GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
-		m_Length -= 0.001f;
+		m_StepLength -= 0.001f;
 	}
 
 	if (GAMEINPUT::Instance().KeyDown(DIK_V) && !GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
@@ -260,7 +260,7 @@ void SSR::ComputeSSRConfig()
 		m_Roughness = 0.2f;
 		m_RayAngle = 0.1f;
 
-		m_Length = 3.0f;
+		m_StepLength = 3.0f;
 		m_ScaleFactor = 0.7f;
 	}
 }

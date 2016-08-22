@@ -135,7 +135,7 @@ float2 GetRayUV(float3 rayPos)
     return float2(u, v);
 }
 
-float3 ComputeRandomDir(float4 rand, float roughness, float3 N, float3 baseDir, float3 V)
+float3 ImportanceSampleGGX(float4 rand, float roughness, float3 N, float3 baseDir, float3 V)
 {
     //GGX
     float phi = 2 * rand.z * M_PI;
@@ -152,15 +152,113 @@ float3 ComputeRandomDir(float4 rand, float roughness, float3 N, float3 baseDir, 
 
     float3x3 TBN = float3x3(TangentX, TangentY, N);
     
-    float3 randomH = mul(float3(H_x, H_y, H_z), TBN);
-    randomH = normalize(randomH);
+    float3 H = mul(float3(H_x, H_y, H_z), TBN);
+    H = normalize(H);
 
-    //通过H和V计算出光照方向，也就是反射方向的重要性采样
-    float3 H = randomH;
-    float3 reflectDir = 2 * dot(V, H) * H - V;
-
-    return normalize(reflectDir);
+    return normalize(H);
 }
+
+float3 ComputeSampleDir(float4 rand, float roughness, float3 N, float3 baseDir, float3 V)
+{
+    float3 H = ImportanceSampleGGX(rand, roughness, N, baseDir, V);
+    float3 SampleDir = 2 * dot(V, H) * H - V;
+    return SampleDir;
+
+}
+
+bool RayMarching(float StepLength, int StepCount, int BisectionStepCount, float3 StartPos, float3 RayDir, out float3 hitPos)
+{
+    //检查正向射线追踪
+    bool checkForward = false;
+    
+    //击中点的误差
+    float hitDelta = 0;
+
+    //正向的射线追踪
+    for (int i = 1; i <= StepCount; ++i)
+    {
+        float3 rayPos = StartPos + RayDir * StepLength * i;
+        float2 rayUV = GetRayUV(rayPos);
+        float sampleDepth = GetDepth(rayUV, g_samplePosition);
+
+        //初步的追踪
+        if (sampleDepth < rayPos.z && !checkForward)
+        {
+            checkForward = true;
+            hitPos = rayPos;
+            hitDelta = sampleDepth - rayPos.z;
+            break;
+
+        }
+    }
+    
+    //反射的默认颜色
+    float4 hitColor = float4(0, 0, 0, 0);
+    //默认的输出UV颜色
+    float4 hitUv = float4(0, 0, 0, 0);
+
+    //二分法射线追踪
+    if (checkForward > 0)
+    {
+        //二分的步进方向，起始方向是反射射线的相反方向
+        float3 BisectionDir = -RayDir;
+        BisectionDir = normalize(BisectionDir);
+
+        //起始的步长
+        float BisectionStepLength = StepLength;
+        
+        //起始的射线起点
+        float3 rayPos = hitPos;
+
+        //射线的末端对应UV
+        float2 rayUV;
+
+        //从前一步得到的起点开始反向二分法追踪
+        //每次将步长减半，并向着二分的查找方向前进
+        //在前进到的位置取深度，计算深度图和射线深度的差
+        //并且保存下来供下一次查找使用
+        //当两次查找的差值符号相同（即两次步进的结果在深度图的同侧）
+        //不改变步进方向
+        //当两次查找的差值符号相反（即两次步进的结果在深度图的异侧）
+        //改变步进方向
+        //循环得到精确的二分查找结果
+        for (int j = 1; j <= BisectionStepCount; j++)
+        {
+            //步长减半
+            BisectionStepLength *= 0.5;
+            //射线前进
+            rayPos += BisectionDir * BisectionStepLength;
+            //将射线末端转换为UV坐标
+            rayUV = GetRayUV(rayPos);
+            //采样深度图
+            float sampleDepth = GetDepth(rayUV, g_samplePosition);
+            //取得当前深度图和射线深度的差值
+            float delta = sampleDepth - rayPos.z;
+            //两次步进差值符号相反，步进反向
+            if (delta * hitDelta < 0)
+            {
+                BisectionDir = -BisectionDir;
+            }
+            //保存这次步进的差值
+            hitDelta = delta;
+        }
+
+        //如果最后一次步进的差值小于一定的值，说明击中的点处于同一平面
+        //现在选择了步长的两倍，但是对于接几乎垂直于屏幕的面会出现误判
+        //需要研究到底该怎么选择这个值
+        if (abs(hitDelta) <= 2 * BisectionStepLength)
+        {
+            hitPos = rayPos;
+            return true;
+
+        }
+    }
+
+    hitPos = float3(0, 0, 0);
+    return false;
+
+}
+
 
 float4 MySSR(float2 TexCoord)
 {
@@ -192,54 +290,33 @@ float4 MySSR(float2 TexCoord)
 	//观察空间位置
     float3 pos = GetPosition(TexCoord, g_samplePosition);
     float3 V = normalize(-pos);
-
-	//深度重建的位置会有误差，最远处的误差会导致背景变灰，所以要消除影响
-    if (pos.z > g_zFar)
-        return float4(0, 0, 0, 1);
-
+    
 	//观察空间法线
     float3 normal = GetNormal(TexCoord, g_sampleNormal);
-    normal = normalize(normal);
     
     //计算反射向量
-    float3 reflectDir = reflect(pos, normal);
-    reflectDir = normalize(reflectDir);
+    float3 reflectDirBase = normalize(reflect(pos, normal));
 
-    float3 reflectDirBase = reflectDir;
 	//随机纹理
     float4 rand = GetRandom(TexCoord);
 
-    //计算随机角度(应该是用重要性采样来计算角度)
-    reflectDir = ComputeRandomDir(rand, Roughness, normal, reflectDirBase, V);
-
-    //这里其实应该重新生成方向
+    //生成随机反射角度
+    float3 reflectDir = reflectDirBase;
+    //反射方向在切平面以下的时候重新生成反射方向
     int count = 0;
-    while (dot(reflectDir, normal) < 0 && count < 10 )
+    while (count = 0 || (dot(reflectDir, normal) <= 0 && count < 10))
     {
         rand = GetRandom(float2(rand.x, rand.y));
-        reflectDir = ComputeRandomDir(rand, Roughness, normal, reflectDirBase, V);
+        reflectDir = ComputeSampleDir(rand, Roughness, normal, reflectDirBase, V);
         count++;
     }
-
-    //reflectDir = reflect(pos, normal);
-    //reflectDir = normalize(reflectDir);
-    /*
-    if (dot(reflectDir, normal) < 0)
-    {
-        return float4(0, 0, 0, 1);
-    }
-    else
-    {
-        return float4(0, 1, 0, 1);
-    }
-    */
+    
+    //return dot(reflectDir, normal) < 0 ? float4(0, 0, 0, 1) : return float4(0, 1, 0, 1);
     
     //生成随机步长，并限制步长的最小值
     float stepLength = Length * (0.5 + 0.5 * rand.x);
     //在垂直屏幕方向适当的加长步长，可以反射到更远的物体
     stepLength *= (abs(reflectDir.z) + 1);
-
-
 
     //检查正向射线追踪
     bool checkForward = false;

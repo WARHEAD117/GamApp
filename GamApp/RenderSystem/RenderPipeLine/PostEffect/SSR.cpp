@@ -7,7 +7,7 @@
 
 SSR::SSR()
 {
-	m_Roughness = 100;
+	m_Roughness = 0.2;
 	m_RayAngle = 0.1f;
 
 	m_Length = 3.0f;
@@ -124,7 +124,7 @@ void SSR::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	m_postEffect->SetTexture(MAINCOLORBUFFER, m_pMainTargetWithMip);
 
 	m_postEffect->SetInt("g_MaxMipLevel", maxMipLevel);
-	m_postEffect->SetFloat("g_Roughness", m_Roughness * m_Roughness);
+	m_postEffect->SetFloat("g_Roughness", m_Roughness);
 	m_postEffect->SetFloat("g_RayAngle", m_RayAngle);
 
 	m_postEffect->SetFloat("g_Length", m_Length);
@@ -215,13 +215,12 @@ void SSR::ComputeSSRConfig()
 {
 	if (GAMEINPUT::Instance().KeyDown(DIK_M) && !GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
-		m_Roughness = m_Roughness > 10 ? m_Roughness + 0.8f : m_Roughness + 0.1;
+		m_Roughness = m_Roughness >= 1 ? 1 : m_Roughness + 0.001;
 	}
 
 	if (GAMEINPUT::Instance().KeyDown(DIK_M) && GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
-		m_Roughness = m_Roughness > 10 ? m_Roughness - 0.8f : m_Roughness - 0.1;
-		m_Roughness = m_Roughness < 0 ? 0 : m_Roughness;
+		m_Roughness = m_Roughness <= 0.00001 ? 0.00001 : m_Roughness - 0.001;
 
 	}
 
@@ -258,7 +257,7 @@ void SSR::ComputeSSRConfig()
 
 	if (GAMEINPUT::Instance().KeyDown(DIK_R))
 	{
-		m_Roughness = 10.0f;
+		m_Roughness = 0.2f;
 		m_RayAngle = 0.1f;
 
 		m_Length = 3.0f;

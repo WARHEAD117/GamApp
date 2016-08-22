@@ -73,7 +73,7 @@ float3 GetNormal(in float2 uv, sampler2D sampleNormal)
 
 	float3 normal = decode(normal_shininess.xy);
 
-	return normal;
+	return normalize( normal );
 }
 
 float3 GetNormal(sampler2D sampleNormal, in float2 uv)

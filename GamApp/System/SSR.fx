@@ -135,23 +135,31 @@ float2 GetRayUV(float3 rayPos)
     return float2(u, v);
 }
 
-float3 ComputeRandomDir(float4 rand, float factor, float3 normal, float3 baseDir)
+float3 ComputeRandomDir(float4 rand, float roughness, float3 N, float3 baseDir, float3 V)
 {
-    float theta = (rand.y - 0.5) * M_PI * factor;
-    float phi = 2 * (rand.z - 0.5) * M_PI;
-    float x = cos(phi) * sin(theta);
-    float y = sin(phi) * sin(theta);
-    float z = cos(theta);
+    //GGX
+    float phi = 2 * rand.z * M_PI;
+    float cosTheta = sqrt((1 - rand.y) / (1 + (roughness * roughness - 1) * rand.y));
+    float sinTheta = sqrt(1 - cosTheta * cosTheta);
 
-    float3 b = cross(normal, baseDir);
-    float3 t = cross(b, baseDir);
-
-    float3x3 TBN = float3x3(t, b, baseDir);
+    float H_x = cos(phi) * sinTheta;
+    float H_y = sin(phi) * sinTheta;
+    float H_z = cosTheta;
     
-    float3 randomDir = mul(float3(x, y, z), TBN);
-    randomDir = normalize(randomDir);
+    //将切线空间的H转换回观察空间
+    float3 TangentY = cross(N, baseDir);
+    float3 TangentX = cross(TangentY, N);
 
-    return randomDir;
+    float3x3 TBN = float3x3(TangentX, TangentY, N);
+    
+    float3 randomH = mul(float3(H_x, H_y, H_z), TBN);
+    randomH = normalize(randomH);
+
+    //通过H和V计算出光照方向，也就是反射方向的重要性采样
+    float3 H = randomH;
+    float3 reflectDir = 2 * dot(V, H) * H - V;
+
+    return normalize(reflectDir);
 }
 
 float4 MySSR(float2 TexCoord)
@@ -183,6 +191,7 @@ float4 MySSR(float2 TexCoord)
 
 	//观察空间位置
     float3 pos = GetPosition(TexCoord, g_samplePosition);
+    float3 V = normalize(-pos);
 
 	//深度重建的位置会有误差，最远处的误差会导致背景变灰，所以要消除影响
     if (pos.z > g_zFar)
@@ -196,33 +205,22 @@ float4 MySSR(float2 TexCoord)
     float3 reflectDir = reflect(pos, normal);
     reflectDir = normalize(reflectDir);
 
+    float3 reflectDirBase = reflectDir;
 	//随机纹理
     float4 rand = GetRandom(TexCoord);
 
     //计算随机角度(应该是用重要性采样来计算角度)
-    float theta = (rand.y - 0.5) * M_PI * Roughness;
-    theta = acos(pow(rand.y, (1.0 / (1.0 + Roughness))));
-
-    float phi = 2 * M_PI * rand.z;
-    float x = cos(phi) * sin(theta);
-    float y = sin(phi) * sin(theta);
-    float z = cos(theta);
-
-    float3 b = cross(normal, reflectDir);
-    float3 t = cross(b, reflectDir);
-
-    float3x3 TBN = float3x3(t, b, reflectDir);
-    //reflectDir = mul(float3(x,y,z), TBN);
-    reflectDir = normalize(reflectDir);
+    reflectDir = ComputeRandomDir(rand, Roughness, normal, reflectDirBase, V);
 
     //这里其实应该重新生成方向
     int count = 0;
     while (dot(reflectDir, normal) < 0 && count < 10 )
     {
         rand = GetRandom(float2(rand.x, rand.y));
-        //reflectDir = ComputeRandomDir(rand, Roughness, normal, reflectDir);
+        reflectDir = ComputeRandomDir(rand, Roughness, normal, reflectDirBase, V);
         count++;
     }
+
     //reflectDir = reflect(pos, normal);
     //reflectDir = normalize(reflectDir);
     /*
@@ -406,52 +404,66 @@ float4 ColorResolve(float2 TexCoord : TEXCOORD0) : COLOR
 
     float3 pos = GetPosition(TexCoord, g_samplePosition);
     float3 normal = GetNormal(TexCoord, g_sampleNormal);
-    normal = normalize(normal);
-
-    float3 reflectDir = reflect(pos, normal);
-    reflectDir = normalize(reflectDir);
 
     float weightSum = 0;
     float4 resolveColor = float4(0, 0, 0, 0);
     for (int i = 0; i < 4; i++)
     {
-        
-        float3 hitPos = GetPosition(neighborUV[i].xy, g_samplePosition);
+        if (neighborUV[i].z > 0.5)
+        {
+            float3 hitPos = GetPosition(neighborUV[i].xy, g_samplePosition);
 
-        float3 Ray = hitPos - pos;
-        float RayLengh = length(Ray);
-        Ray = normalize(Ray);
-        float3 View = normalize(-pos);
+            float3 Ray = hitPos - pos;
+            float RayLengh = length(Ray);
+            Ray = normalize(Ray);
+            float3 View = normalize(-pos);
         
-        float3 h = normalize(Ray + View);
+            float3 H = normalize(Ray + View);
 
-        float cosTheta = saturate(dot(normal, Ray));
-        float theta = acos(cosTheta);
+            float cosTheta = saturate(dot(normal, Ray));
+            float theta = acos(cosTheta);
         
-        float PDF = (g_Roughness + 1) * 0.5 / M_PI * pow(cosTheta, g_Roughness) * sin(theta);
-        float BRDF = (g_Roughness + 2) / 8 * pow(dot(h, normal), g_Roughness) * dot(normal, Ray);
+            float NoH = saturate(dot(normal, H));
+            float NoV = saturate(dot(normal, View));
+            float NoL = saturate(dot(normal, Ray));
+            float VoH = saturate(dot(View, H));
+
+            float D = g_Roughness * g_Roughness / (M_PI * M_PI * pow(NoH * NoH * (g_Roughness * g_Roughness - 1) + 1, 2));
+            float k = (g_Roughness + 1) * (g_Roughness + 1) / 8;
+            float G_L = NoV / (NoV * (1 - k) + k);
+            float G_V = NoL / (NoL * (1 - k) + k);
+            float G = G_L * G_V;
+            float3 specularColor = float3(1, 1, 1);
+            float Fc = pow(1 - VoH, 5);
+            float F = (1 - Fc) * specularColor + Fc;
+
+        //PDF = D * dot(N,H) / (4 * dot(V,H))
+            float PDF = D * NoH / (4 * VoH);
+        //BRDF = D * G * F / (4 * dot(N,L) * dot(N,V))
+            float BRDF = D * G * F / (4 * NoL * NoV);
         
-        float weight = 1;
+            float weight = 1;
         //lodUV[i].z;
 
-        weight *= saturate(dot(reflectDir, Ray));
-        //BRDF / PDF;
+            weight *= BRDF / PDF * cosTheta;
 
         //return weight;
         
         //根据原始步长和步数以及纵拉伸计算光线的最大长度，使用系数调整
-        float maxLength = g_Length * STEPCOUNT * (abs(normalize(Ray).z) + 1) * g_ScaleFactor;
+            float maxLength = g_Length * STEPCOUNT * (abs(normalize(Ray).z) + 1) * g_ScaleFactor;
 
         //根据最大长度计算衰减幅度
-        float attenuation = max(maxLength - RayLengh, 0) / maxLength;
+            float attenuation = max(maxLength - RayLengh, 0) / maxLength;
 
-        float4 hitColor = tex2Dlod(g_sampleMainColor, neighborUV[i]) * neighborUV[i].z;
+        //使用标记使没有击中的像素变成黑色
+            float4 hitColor = tex2Dlod(g_sampleMainColor, neighborUV[i]);
 
         //对于追踪到的像素应用衰减，没有追踪到的像素使用原来的值
-        hitColor = neighborUV[i].z ? hitColor * attenuation * attenuation : hitColor;
+            hitColor = neighborUV[i].z ? hitColor * attenuation * attenuation : hitColor;
 
-        resolveColor += hitColor * weight;
-        weightSum += weight;
+            resolveColor += hitColor * weight;
+            weightSum += weight;
+        }
     }
 
     //return weightSum;

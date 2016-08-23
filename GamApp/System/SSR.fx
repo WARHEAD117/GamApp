@@ -150,11 +150,11 @@ float2 GetRayUV(float3 rayPos)
     return float2(u, v);
 }
 
-float3 ImportanceSampleGGX(float4 rand, float roughness, float3 N, float3 baseDir, float3 V)
+float3 ImportanceSampleGGX(float2 rand, float roughness, float3 N, float3 baseDir, float3 V)
 {
     //GGX
-    float phi = 2 * rand.z * M_PI;
-    float cosTheta = sqrt((1 - rand.y) / (1 + (roughness * roughness - 1) * rand.y));
+    float phi = 2 * rand.y * M_PI;
+    float cosTheta = sqrt((1 - rand.x) / (1 + (roughness * roughness - 1) * rand.x));
     float sinTheta = sqrt(1 - cosTheta * cosTheta);
 
     float H_x = cos(phi) * sinTheta;
@@ -173,7 +173,7 @@ float3 ImportanceSampleGGX(float4 rand, float roughness, float3 N, float3 baseDi
     return normalize(H);
 }
 
-float3 ComputeSampleDir(float4 rand, float roughness, float3 N, float3 baseDir, float3 V)
+float3 ComputeSampleDir(float2 rand, float roughness, float3 N, float3 baseDir, float3 V)
 {
     float3 H = ImportanceSampleGGX(rand, roughness, N, baseDir, V);
     float3 SampleDir = 2 * dot(V, H) * H - V;
@@ -311,13 +311,15 @@ float4 MySSR(float2 TexCoord)
 	//随机纹理
     float4 rand = GetRandom(TexCoord);
 
+	float bias = 0.1;
+	//rand.x = lerp(rand.x, 1.0, bias);
     //生成随机反射角度
     float3 reflectDir = ComputeSampleDir(rand, Roughness, normal, reflectDirBase, V);;
     //反射方向在切平面以下的时候重新生成反射方向
     int count = 0;
     while ((dot(reflectDir, normal) <= 0 && count < 10))
     {
-        rand = GetRandom(float2(rand.x, rand.y));
+        rand = GetRandom(float2(rand.y, rand.z));
         reflectDir = ComputeSampleDir(rand, Roughness, normal, reflectDirBase, V);
         count++;
     }
@@ -431,7 +433,7 @@ float4 ColorResolve(float2 TexCoord : TEXCOORD0) : COLOR
     float4 resolveColor = float4(0, 0, 0, 0);
     for (int i = 0; i < 4; i++)
     {
-        float4 PixelHit = tex2D(g_sampleSSR, halfResTexCoord + halfResStep * offset[i]);
+		float4 PixelHit = tex2D(g_sampleSSR, TexCoord + halfResStep * offset[i]);
         //if (neighborUV[i].z > 0.0)
         {
             float3 hitPos = PixelHit.xyz;

@@ -10,7 +10,9 @@ float g_Roughness = 10.0;
 float g_RayAngle = 0.1;
 
 float g_StepLength = 3;
-float g_ScaleFactor = 0.7;
+float g_MaxLenghFactor = 0.7;
+float g_ScaleFactor = 20.0;
+float g_ScaleFactor2 = 10.0;
 
 int2 g_RandTexSize;
 
@@ -57,9 +59,9 @@ sampler2D g_sampleMainColor =
 sampler_state
 {
 	Texture = <g_MainColorBuffer>;
-    MinFilter = Point;
-    MagFilter = Point;
-    MipFilter = Point;
+    MinFilter = linear;
+    MagFilter = linear;
+    MipFilter = linear;
 
     AddressU = Border;
     AddressV = Border;
@@ -225,6 +227,7 @@ bool RayMarching(float StepLength, int StepCount, int BisectionStepCount, float3
         //射线的末端对应UV
         float2 hitUV;
 
+        float sampleDepth;
         //从前一步得到的起点开始反向二分法追踪
         //每次将步长减半，并向着二分的查找方向前进
         //在前进到的位置取深度，计算深度图和射线深度的差
@@ -243,7 +246,7 @@ bool RayMarching(float StepLength, int StepCount, int BisectionStepCount, float3
             //将射线末端转换为UV坐标
             hitUV = GetRayUV(hitPos);
             //采样深度图
-            float sampleDepth = GetDepth(hitUV, g_samplePosition);
+            sampleDepth = GetDepth(hitUV, g_samplePosition);
             //取得当前深度图和射线深度的差值
             float delta = sampleDepth - hitPos.z;
             //两次步进差值符号相反，步进反向
@@ -255,15 +258,20 @@ bool RayMarching(float StepLength, int StepCount, int BisectionStepCount, float3
             hitDelta = delta;
         }
 
+        
         //如果最后一次步进的差值小于一定的值，说明击中的点处于同一平面
-        //现在选择了步长的两倍，但是对于接几乎垂直于屏幕的面会出现误判
         //需要研究到底该怎么选择这个值
-        if (abs(hitDelta) <= 2 * BisectionStepLength)
+        
+        //现在的方法是:
+        //额外采样一次深度图，既可以估算倾斜方向的梯度
+        //通过梯度控制最终像素选择的距离误差，一定程度上可以降低噪点
+        float sampleDepthLD = GetDepth(hitUV + 1.0 / g_ScreenSize, g_samplePosition);
+        float d_depthXY = abs(sampleDepth - sampleDepthLD);
+
+        //if (abs(hitDelta) <= 10 * BisectionStepLength)
+        if (abs(hitDelta) <= g_ScaleFactor * (1.0 / (max(d_depthXY, 1)) * g_ScaleFactor2) * BisectionStepLength)
         {
-            if (hitUV.x < 0 || hitUV.y < 0 || hitUV.x > 1 || hitUV.y > 1)
-                return false;
-            else
-                return true;
+            return true;
         }
     }
 
@@ -281,19 +289,17 @@ float4 MySSR(float2 TexCoord)
     float Roughness = saturate(g_Roughness);
     //射线追踪的步数
     int StepCount = STEPCOUNT;
-    //原始步长
-    float StepLength = g_StepLength;
-
     //二分回溯的步数
     int BisectionStepCount = BISECTION_STEPCOUNT;
+    //原始步长
+    float StepLength = g_StepLength;
     //光线衰减的系数
-    float ScaleFactor = g_ScaleFactor;
+    float ScaleFactor = g_MaxLenghFactor;
 
     //射线的立体角
     float RayAngle = g_RayAngle * M_PI;
     float TanRayAngle = tan(RayAngle);
     
-    float level = 10.0 / Roughness * MaxMipLevel;
 
 	//观察空间位置
     float3 pos = GetPosition(TexCoord, g_samplePosition);
@@ -303,24 +309,24 @@ float4 MySSR(float2 TexCoord)
     float3 V = normalize(-pos);
     
 	//观察空间法线
-    float3 normal = GetNormal(TexCoord, g_sampleNormal);
+    float3 N = GetNormal(TexCoord, g_sampleNormal);
     
     //计算反射向量
-    float3 reflectDirBase = normalize(reflect(pos, normal));
+    float3 reflectDirBase = normalize(reflect(pos, N));
 
 	//随机纹理
     float4 rand = GetRandom(TexCoord);
 
 	float bias = 0.1;
-	//rand.x = lerp(rand.x, 1.0, bias);
+	//rand.x = lerp(rand.x, 1.0, ScaleFactor);
     //生成随机反射角度
-    float3 reflectDir = ComputeSampleDir(rand, Roughness, normal, reflectDirBase, V);;
+    float3 reflectDir = ComputeSampleDir(rand, Roughness, N, reflectDirBase, V);;
     //反射方向在切平面以下的时候重新生成反射方向
     int count = 0;
-    while ((dot(reflectDir, normal) <= 0 && count < 10))
+    while ((dot(reflectDir, N) <= 0 && count < 10))
     {
         rand = GetRandom(float2(rand.y, rand.z));
-        reflectDir = ComputeSampleDir(rand, Roughness, normal, reflectDirBase, V);
+        reflectDir = ComputeSampleDir(rand, Roughness, N, reflectDirBase, V);
         count++;
     }
     reflectDir = normalize(reflectDir);
@@ -343,18 +349,19 @@ float4 MySSR(float2 TexCoord)
     if(rayHit)
     {
         
-        //根据原始步长和步数以及纵拉伸计算光线的最大长度，使用系数调整
-        float maxLength = StepLength * StepCount * /*(abs(reflectDir.z) + 1)*/ 2.0 * ScaleFactor;
+        //根据原始步长和步数计算光线的最大长度，使用系数调整
+        float maxLength = StepLength * StepCount * 2 * g_MaxLenghFactor;
+        
         //击中的点到出发点的距离
         //击中的距离
         float hitLengh = length(hitPos - pos);
             //距离系数
         float disFactor = hitLengh / maxLength * 3 * TanRayAngle;
 
-        
         //将射线末端转换为UV坐标
         hitUV.xy = GetRayUV(hitPos);
         //带有lod级别信息的UV坐标
+        float level = 10.0 / Roughness * MaxMipLevel;
         hitUV = float4(hitUV.xy, 1, level * disFactor);
         //采样集中的颜色
         hitColor = tex2Dlod(g_sampleMainColor, hitUV);
@@ -371,7 +378,7 @@ float4 MySSR(float2 TexCoord)
     }
 
     float3 H = normalize(reflectDir + normalize(-pos));
-    float NoH = saturate(dot(normal, H));
+    float NoH = saturate(dot(N, H));
     float VoH = saturate(dot(reflectDir, H));
     float D = g_Roughness * g_Roughness / (M_PI * pow(NoH * NoH * (g_Roughness * g_Roughness - 1) + 1, 2));
     float PDF = D * NoH / (4 * VoH);
@@ -427,28 +434,39 @@ float4 ColorResolve(float2 TexCoord : TEXCOORD0) : COLOR
     float NoV = saturate(dot(N, V));
 
     //根据原始步长和步数以及纵拉伸计算光线的最大长度，使用系数调整
-    float maxLength = g_StepLength * STEPCOUNT * 2 * g_ScaleFactor;
+    float maxLength = g_StepLength * STEPCOUNT * 2 * g_MaxLenghFactor;
 
     float weightSum = 0;
     float4 resolveColor = float4(0, 0, 0, 0);
     for (int i = 0; i < 4; i++)
     {
-		float4 PixelHit = tex2D(g_sampleSSR, TexCoord + halfResStep * offset[i]);
+		float4 PixelHit = tex2D(g_sampleSSR, TexCoord + halfResStep * 2 * offset[i]);
+        bool RayHit = PixelHit.w < 0.0 ? false : true;
+        PixelHit.w = RayHit ? PixelHit.w : -PixelHit.w;
+
         //if (neighborUV[i].z > 0.0)
         {
             float3 hitPos = PixelHit.xyz;
             float2 hitUV = GetRayUV(hitPos);
+            
+            float4 hitColor = RayHit ? tex2Dlod(g_sampleMainColor, float4(hitUV, 0, 0)) : float4(0, 0, 0, 0);
 
-            float4 hitColor = tex2Dlod(g_sampleMainColor, float4(hitUV,0,1));
-            float3 L = hitPos - pos;
+            float2 fadeUVCoord = abs(hitUV * 2.0 - 1);
+            float fade = max(fadeUVCoord.x, fadeUVCoord.y);
+            float screenFade = 0.75;
+            float fadeFactor = 1.0 - max(fade - screenFade, 0.0) / (1.0 - screenFade);
+            fadeFactor = saturate(fadeFactor);
+            
+            float3 L = RayHit ? hitPos - pos : hitPos;
+            
+            //to do
             float RayLengh = length(L);
+            //根据最大长度计算衰减幅度
+            float attenuation = max(maxLength - RayLengh, 0) / maxLength;
 
-            if (PixelHit.w < 0.0)
-            {
-                hitColor = float4(0, 0, 0, 0);
-                L = hitPos;
-                RayLengh = 0;
-            }
+            //对于追踪到的像素应用衰减，没有追踪到的像素使用原来的值
+            hitColor = hitColor * attenuation * attenuation * fadeFactor;
+
 
             L = normalize(L);
 
@@ -474,17 +492,11 @@ float4 ColorResolve(float2 TexCoord : TEXCOORD0) : COLOR
             float BRDF = D * G * F / (4 * NoL * NoV);
 
             //PDF = D * dot(N,H) / (4 * dot(V,H))
-            float PDF = abs(PixelHit.w);
+            float PDF = PixelHit.w;
             
             float weight = 1;
             
             weight *= BRDF / PDF * cosTheta;
-
-            //根据最大长度计算衰减幅度
-            float attenuation = max(maxLength - RayLengh, 0) / maxLength;
-
-            //对于追踪到的像素应用衰减，没有追踪到的像素使用原来的值
-            //hitColor = hitColor * attenuation * attenuation;
 
             resolveColor += hitColor * weight;
             weightSum += weight;

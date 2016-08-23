@@ -11,7 +11,8 @@ SSR::SSR()
 	m_RayAngle = 0.1f;
 
 	m_StepLength = 3.0f;
-	m_ScaleFactor = 0.7f;
+	m_ScaleFactor = 16.0f;
+	m_ScaleFactor2 = 1.0f;
 	m_rad_threshold = 4.0f;
 	m_SSREnable = true;
 }
@@ -56,7 +57,7 @@ void SSR::CreatePostEffect()
 	}
 
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
-		4, D3DUSAGE_RENDERTARGET,
+		8, D3DUSAGE_RENDERTARGET,
 		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
 		&m_pMainTargetWithMip, NULL);
 }
@@ -129,6 +130,7 @@ void SSR::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 	m_postEffect->SetFloat("g_StepLength", m_StepLength);
 	m_postEffect->SetFloat("g_ScaleFactor", m_ScaleFactor);
+	m_postEffect->SetFloat("g_ScaleFactor2", m_ScaleFactor2);
 
 	m_postEffect->CommitChanges();
 
@@ -215,12 +217,14 @@ void SSR::ComputeSSRConfig()
 {
 	if (GAMEINPUT::Instance().KeyDown(DIK_M) && !GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
-		m_Roughness = m_Roughness >= 1 ? 1 : m_Roughness + 0.001;
+		m_Roughness += 0.0005;
+		m_Roughness = m_Roughness >= 1 ? 1 : m_Roughness ;
 	}
 
 	if (GAMEINPUT::Instance().KeyDown(DIK_M) && GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
-		m_Roughness = m_Roughness <= 0.00001 ? 0.00001 : m_Roughness - 0.001;
+		m_Roughness-= 0.0005;
+		m_Roughness = m_Roughness <= 0.0005 ? 0.0005 : m_Roughness;
 
 	}
 
@@ -248,11 +252,21 @@ void SSR::ComputeSSRConfig()
 
 	if (GAMEINPUT::Instance().KeyDown(DIK_V) && !GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
-		m_ScaleFactor += 0.001f;
+		m_ScaleFactor = m_ScaleFactor >= 50 ? 50 : m_ScaleFactor + 0.04;
 	}
 	if (GAMEINPUT::Instance().KeyDown(DIK_V) && GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
-		m_ScaleFactor -= 0.001f;
+		m_ScaleFactor = m_ScaleFactor <= 0.0 ? 0.0 : m_ScaleFactor - 0.04;
+	}
+
+
+	if (GAMEINPUT::Instance().KeyDown(DIK_C) && !GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
+	{
+		m_ScaleFactor2 = m_ScaleFactor2 >= 50 ? 50 : m_ScaleFactor2 + 0.04;
+	}
+	if (GAMEINPUT::Instance().KeyDown(DIK_C) && GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
+	{
+		m_ScaleFactor2 = m_ScaleFactor2 <= 0.0 ? 0.0 : m_ScaleFactor2 - 0.04;
 	}
 
 	if (GAMEINPUT::Instance().KeyDown(DIK_R))
@@ -261,7 +275,8 @@ void SSR::ComputeSSRConfig()
 		m_RayAngle = 0.1f;
 
 		m_StepLength = 3.0f;
-		m_ScaleFactor = 0.7f;
+		m_ScaleFactor = 16.0f;
+		m_ScaleFactor2 = 10.0f;
 	}
 }
 

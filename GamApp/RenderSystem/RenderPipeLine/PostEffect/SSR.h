@@ -16,6 +16,7 @@ private:
 	float		m_RayAngle;
 	float		m_StepLength;
 	float		m_ScaleFactor;
+	float		m_ScaleFactor2;
 	float		m_rad_threshold;
 	bool		m_SSREnable;
 

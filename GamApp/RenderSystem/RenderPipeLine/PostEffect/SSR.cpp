@@ -27,7 +27,7 @@ void SSR::CreatePostEffect()
 
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth / 2, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight / 2,
 		1, D3DUSAGE_RENDERTARGET,
-		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
+		D3DFMT_A32B32G32R32F, D3DPOOL_DEFAULT,
 		&m_pSSRTarget, NULL);
 	HRESULT hr = m_pSSRTarget->GetSurfaceLevel(0, &m_pSSRSurface);
 
@@ -163,7 +163,7 @@ void SSR::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pBlurXSurface);
 		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
 
-		m_postEffect->SetTexture("g_SSRBuffer", m_pSSRTarget);
+		m_postEffect->SetTexture("g_SSRBuffer", m_pResolveTarget);
 		m_postEffect->SetTexture(MAINCOLORBUFFER, mainBuffer);
 
 		SetGaussian(m_postEffect, 1.0f / RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, 0, "g_SampleWeights", "g_SampleOffsets");
@@ -176,7 +176,7 @@ void SSR::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 		//================================================================================================================
 		//Blur Y
-		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pSSRSurface);
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pResolveSurface);
 		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
 
 		m_postEffect->SetTexture("g_SSRBuffer", m_pBlurXTarget);
@@ -199,7 +199,7 @@ void SSR::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
 
 	m_postEffect->SetTexture("g_SSRBuffer", m_pResolveTarget);
-	m_postEffect->SetTexture(MAINCOLORBUFFER, m_pMainTargetWithMip);
+	m_postEffect->SetTexture(MAINCOLORBUFFER, mainBuffer);
 
 	SetGaussian(m_postEffect, 1.0f / RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, 0, "g_SampleWeights", "g_SampleOffsets");
 	m_postEffect->CommitChanges();

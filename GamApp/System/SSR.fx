@@ -32,9 +32,9 @@ sampler2D g_sampleRandomTex =
 sampler_state
 {
     Texture = <g_RandTex>;
-    MinFilter = linear;
-    MagFilter = linear;
-    MipFilter = linear;
+    MinFilter = Point;
+    MagFilter = Point;
+    MipFilter = Point;
 
     AddressU = wrap;
     AddressV = wrap;
@@ -57,9 +57,9 @@ sampler2D g_sampleMainColor =
 sampler_state
 {
 	Texture = <g_MainColorBuffer>;
-    MinFilter = linear;
-    MagFilter = linear;
-    MipFilter = linear;
+    MinFilter = Point;
+    MagFilter = Point;
+    MipFilter = Point;
 
     AddressU = Border;
     AddressV = Border;
@@ -70,9 +70,9 @@ sampler2D g_sampleSSR =
 sampler_state
 {
     Texture = <g_SSRBuffer>;
-	MinFilter = Point;
-    MagFilter = Point;
-	MipFilter = Point;
+	MinFilter = None;
+    MagFilter = None;
+    MipFilter = None;
 
 
     AddressU = Border;
@@ -97,6 +97,22 @@ OutputVS VShader(float4 posL       : POSITION0,
 	outVS.TexCoord = TexCoord;
 
 	return outVS;
+}
+
+float4 texture2DBilinear(sampler2D textureSampler, float2 uv)
+{
+    float stepU = 1.0f / g_ScreenWidth;
+    float stepV = 1.0f / g_ScreenHeight;
+
+	// in vertex shaders you should use texture2DLod instead of texture2D
+    float4 tl = tex2D(textureSampler, uv);
+    float4 tr = tex2D(textureSampler, uv + float2(stepU, 0));
+    float4 bl = tex2D(textureSampler, uv + float2(0, stepV));
+    float4 br = tex2D(textureSampler, uv + float2(stepU, stepV));
+    float2 f = frac(uv.xy * float2(g_ScreenWidth, g_ScreenHeight)); // get the decimal part
+    float4 tA = lerp(tl, tr, f.x); // will interpolate the red dot in the image
+    float4 tB = lerp(bl, br, f.x); // will interpolate the blue dot in the image
+    return lerp(tA, tB, f.y); // will interpolate the green dot in the image
 }
 
 //----------------------------------------------------------------------------------
@@ -281,6 +297,9 @@ float4 MySSR(float2 TexCoord)
 
 	//观察空间位置
     float3 pos = GetPosition(TexCoord, g_samplePosition);
+    if (pos.z > g_zFar)
+        return float4(0, 0, 0, 0);
+
     float3 V = normalize(-pos);
     
 	//观察空间法线
@@ -302,7 +321,8 @@ float4 MySSR(float2 TexCoord)
         reflectDir = ComputeSampleDir(rand, Roughness, normal, reflectDirBase, V);
         count++;
     }
-    
+    reflectDir = normalize(reflectDir);
+
     //return dot(reflectDir, normal) < 0 ? float4(0, 0, 0, 1) : return float4(0, 1, 0, 1);
     
     //生成随机步长，并且在垂直屏幕方向适当的加长步长，可以反射到更远的物体
@@ -321,8 +341,8 @@ float4 MySSR(float2 TexCoord)
     if(rayHit)
     {
         
-    //根据原始步长和步数以及纵拉伸计算光线的最大长度，使用系数调整
-        float maxLength = StepLength * StepCount * (abs(reflectDir.z) + 1) * ScaleFactor;
+        //根据原始步长和步数以及纵拉伸计算光线的最大长度，使用系数调整
+        float maxLength = StepLength * StepCount * /*(abs(reflectDir.z) + 1)*/ 2.0 * ScaleFactor;
         //击中的点到出发点的距离
         //击中的距离
         float hitLengh = length(hitPos - pos);
@@ -341,9 +361,20 @@ float4 MySSR(float2 TexCoord)
         float attenuation = max(maxLength - hitLengh, 0) / maxLength;
 
         //衰减集中的颜色
-        hitColor = hitColor * attenuation * attenuation;
+        //hitColor = hitColor * attenuation * attenuation * attenuation;
         hitColor.a = 1;
+
+
+        hitUV.w = 1;
     }
+
+    float3 H = normalize(reflectDir + normalize(-pos));
+    float NoH = saturate(dot(normal, H));
+    float VoH = saturate(dot(reflectDir, H));
+    float D = g_Roughness * g_Roughness / (M_PI * pow(NoH * NoH * (g_Roughness * g_Roughness - 1) + 1, 2));
+    float PDF = D * NoH / (4 * VoH);
+    hitUV.w = rayHit ? PDF : -PDF;
+    hitUV.xyz = rayHit ? hitPos : reflectDir;
 
     //return hitColor;
     return hitUV;
@@ -359,54 +390,76 @@ float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
 
 }
 
+struct PixelHit
+{
+    float3 hitPos;
+    float hitPdf;
+};
 
 float4 ColorResolve(float2 TexCoord : TEXCOORD0) : COLOR
 {
     //return tex2D(g_sampleSSR, TexCoord);
 
     float2 PixelPos = floor(TexCoord * g_ScreenSize);
-    float2 modPos = PixelPos % 2;
-    float2 halfResPixelCoord = floor(PixelPos * 0.5);
+    int2 modPos = round(PixelPos % 2);
+    int2 halfResPixelPos = floor(PixelPos * 0.5);
+    int2 modHalfPos = round(halfResPixelPos % 2);
 
+    float2 fullResStep = float2(1.0 / g_ScreenWidth, 1.0 / g_ScreenHeight);
     float2 halfResStep = float2(2.0 / g_ScreenWidth, 2.0 / g_ScreenHeight);
-    float2 halfResTexCoord = halfResPixelCoord * halfResStep;
+    float2 halfResTexCoord = halfResPixelPos * halfResStep + fullResStep;
 
-    //return float4(modPos.x, 0, 0, 1);
+    //return tex2D(g_sampleSSR, halfResTexCoord);
 
-    float4 neighborUV[4];
-    
-    neighborUV[0] = tex2D(g_sampleSSR, halfResTexCoord + halfResStep * float2(modPos.x - 1, modPos.y - 1));
-    neighborUV[1] = tex2D(g_sampleSSR, halfResTexCoord + halfResStep * float2(modPos.x, modPos.y - 1));
-    neighborUV[2] = tex2D(g_sampleSSR, halfResTexCoord + halfResStep * float2(modPos.x - 1, modPos.y));
-    neighborUV[3] = tex2D(g_sampleSSR, halfResTexCoord + halfResStep * float2(modPos.x, modPos.y));
+    //return float4(modHalfPos.x, 0, 0, 1);
+
+    float2 offset[4] =
+    { float2(0, 0), float2(-1, 1), float2(1, 1), float2(0, -1) };
 
     float3 pos = GetPosition(TexCoord, g_samplePosition);
-    float3 normal = GetNormal(TexCoord, g_sampleNormal);
+    
+    float3 V = normalize(-pos);
+
+    float3 N = GetNormal(TexCoord, g_sampleNormal);
+    
+    float NoV = saturate(dot(N, V));
+
+    //根据原始步长和步数以及纵拉伸计算光线的最大长度，使用系数调整
+    float maxLength = g_StepLength * STEPCOUNT * 2 * g_ScaleFactor;
 
     float weightSum = 0;
     float4 resolveColor = float4(0, 0, 0, 0);
     for (int i = 0; i < 4; i++)
     {
-        if (neighborUV[i].z > 0.5)
+        float4 PixelHit = tex2D(g_sampleSSR, halfResTexCoord + halfResStep * offset[i]);
+        //if (neighborUV[i].z > 0.0)
         {
-            float3 hitPos = GetPosition(neighborUV[i].xy, g_samplePosition);
+            float3 hitPos = PixelHit.xyz;
+            float2 hitUV = GetRayUV(hitPos);
 
-            float3 Ray = hitPos - pos;
-            float RayLengh = length(Ray);
-            Ray = normalize(Ray);
-            float3 View = normalize(-pos);
-        
-            float3 H = normalize(Ray + View);
+            float4 hitColor = tex2Dlod(g_sampleMainColor, float4(hitUV,0,1));
+            float3 L = hitPos - pos;
+            float RayLengh = length(L);
 
-            float cosTheta = saturate(dot(normal, Ray));
+            if (PixelHit.w < 0.0)
+            {
+                hitColor = float4(0, 0, 0, 0);
+                L = hitPos;
+                RayLengh = 0;
+            }
+
+            L = normalize(L);
+
+            float3 H = normalize(L + V);
+
+            float NoH = saturate(dot(N, H));
+            float NoL = saturate(dot(N, L));
+            float VoH = saturate(dot(V, H));
+            
+            float cosTheta = saturate(dot(N, L));
             float theta = acos(cosTheta);
-        
-            float NoH = saturate(dot(normal, H));
-            float NoV = saturate(dot(normal, View));
-            float NoL = saturate(dot(normal, Ray));
-            float VoH = saturate(dot(View, H));
 
-            float D = g_Roughness * g_Roughness / (M_PI * M_PI * pow(NoH * NoH * (g_Roughness * g_Roughness - 1) + 1, 2));
+            float D = g_Roughness * g_Roughness / (M_PI * pow(NoH * NoH * (g_Roughness * g_Roughness - 1) + 1, 2));
             float k = (g_Roughness + 1) * (g_Roughness + 1) / 8;
             float G_L = NoV / (NoV * (1 - k) + k);
             float G_V = NoL / (NoL * (1 - k) + k);
@@ -414,30 +467,22 @@ float4 ColorResolve(float2 TexCoord : TEXCOORD0) : COLOR
             float3 specularColor = float3(1, 1, 1);
             float Fc = pow(1 - VoH, 5);
             float F = (1 - Fc) * specularColor + Fc;
-
-        //PDF = D * dot(N,H) / (4 * dot(V,H))
-            float PDF = D * NoH / (4 * VoH);
-        //BRDF = D * G * F / (4 * dot(N,L) * dot(N,V))
+            
+            //BRDF = D * G * F / (4 * dot(N,L) * dot(N,V))
             float BRDF = D * G * F / (4 * NoL * NoV);
-        
-            float weight = 1;
-        //lodUV[i].z;
 
+            //PDF = D * dot(N,H) / (4 * dot(V,H))
+            float PDF = abs(PixelHit.w);
+            
+            float weight = 1;
+            
             weight *= BRDF / PDF * cosTheta;
 
-        //return weight;
-        
-        //根据原始步长和步数以及纵拉伸计算光线的最大长度，使用系数调整
-        float maxLength = g_StepLength * STEPCOUNT * (abs(normalize(Ray).z) + 1) * g_ScaleFactor;
-
-        //根据最大长度计算衰减幅度
+            //根据最大长度计算衰减幅度
             float attenuation = max(maxLength - RayLengh, 0) / maxLength;
 
-        //使用标记使没有击中的像素变成黑色
-            float4 hitColor = tex2Dlod(g_sampleMainColor, neighborUV[i]);
-
-        //对于追踪到的像素应用衰减，没有追踪到的像素使用原来的值
-            hitColor = neighborUV[i].z ? hitColor * attenuation * attenuation : hitColor;
+            //对于追踪到的像素应用衰减，没有追踪到的像素使用原来的值
+            //hitColor = hitColor * attenuation * attenuation;
 
             resolveColor += hitColor * weight;
             weightSum += weight;
@@ -451,22 +496,6 @@ float4 ColorResolve(float2 TexCoord : TEXCOORD0) : COLOR
     float4 fianlColor = resolveColor;
 
     return fianlColor;
-}
-
-float4 texture2DBilinear(sampler2D textureSampler, float2 uv)
-{
-	float stepU = 1.0f / g_ScreenWidth;
-	float stepV = 1.0f / g_ScreenHeight;
-
-	// in vertex shaders you should use texture2DLod instead of texture2D
-	float4 tl = tex2D(textureSampler, uv);
-	float4 tr = tex2D(textureSampler, uv + float2(stepU, 0));
-	float4 bl = tex2D(textureSampler, uv + float2(0, stepV));
-	float4 br = tex2D(textureSampler, uv + float2(stepU, stepV));
-    float2 f = frac(uv.xy * float2(g_ScreenWidth, g_ScreenHeight)); // get the decimal part
-	float4 tA = lerp(tl, tr, f.x); // will interpolate the red dot in the image
-	float4 tB = lerp(bl, br, f.x); // will interpolate the blue dot in the image
-	return lerp(tA, tB, f.y); // will interpolate the green dot in the image
 }
 
 #define SAMPLE_COUNT 15
@@ -502,51 +531,9 @@ float4 DrawBlur(float2 TexCoord : TEXCOORD0) : COLOR
     return SSR;
 }
 
-float4 NoDarkBlur(sampler2D textureSampler, float2 uv)
-{
-    float stepU = 1.0f / g_ScreenWidth;
-    float stepV = 1.0f / g_ScreenHeight;
-    float2 step = (stepU, stepV);
-    float4 color[9];
-    
-    color[0] = tex2D(textureSampler, uv);
-    
-    color[1] = tex2D(textureSampler, uv + step * float2(-1, 0));
-    color[2] = tex2D(textureSampler, uv + step * float2(1, 0));
-    color[3] = tex2D(textureSampler, uv + step * float2(0, -1));
-    color[4] = tex2D(textureSampler, uv + step * float2(0, 1));
-
-    color[5] = tex2D(textureSampler, uv + step * float2(-1, -1));
-    color[6] = tex2D(textureSampler, uv + step * float2(1, -1));
-    color[7] = tex2D(textureSampler, uv + step * float2(-1, 1));
-    color[8] = tex2D(textureSampler, uv + step * float2(1, 1));
-    
-
-    float weight[9] = {2, 1, 1, 1, 1, 0.7, 0.7, 0.7, 0.7};
-
-    int count = 0;
-    float weightSum = 0;
-    float4 colorSum = float4(0, 0, 0, 1);
-    for (int i = 0; i < 5; i++)
-    {
-        if (color[i].a != 0)
-        {
-            colorSum += color[i] * weight[i];
-            count++;
-            weightSum += weight[i];
-        }
-        
-    }
-    colorSum /= weightSum;
-        
-
-    return colorSum;
-}
-
 float4 DrawMain(float2 TexCoord : TEXCOORD0) : COLOR
 {
     float4 SSR = tex2D(g_sampleSSR, TexCoord);
-    //SSR = NoDarkBlur(g_sampleSSR, TexCoord);
     float4 fianlColor = SSR + tex2D(g_sampleMainColor, TexCoord);
 
     return SSR;

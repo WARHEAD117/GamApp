@@ -376,6 +376,7 @@ float4 MySSR(float2 TexCoord)
 
         hitUV.w = 1;
     }
+    
 
     float3 H = normalize(reflectDir + normalize(-pos));
     float NoH = saturate(dot(N, H));
@@ -384,6 +385,7 @@ float4 MySSR(float2 TexCoord)
     float PDF = D * NoH / (4 * VoH);
     hitUV.w = rayHit ? PDF : -PDF;
     hitUV.xyz = rayHit ? hitPos : reflectDir;
+
 
     //return hitColor;
     return hitUV;
@@ -444,7 +446,7 @@ float4 ColorResolve(float2 TexCoord : TEXCOORD0) : COLOR
         bool RayHit = PixelHit.w < 0.0 ? false : true;
         PixelHit.w = RayHit ? PixelHit.w : -PixelHit.w;
 
-        //if (neighborUV[i].z > 0.0)
+        //if (RayHit)
         {
             float3 hitPos = PixelHit.xyz;
             float2 hitUV = GetRayUV(hitPos);
@@ -455,6 +457,7 @@ float4 ColorResolve(float2 TexCoord : TEXCOORD0) : COLOR
             float fade = max(fadeUVCoord.x, fadeUVCoord.y);
             float screenFade = 0.75;
             float fadeFactor = 1.0 - max(fade - screenFade, 0.0) / (1.0 - screenFade);
+            fadeFactor = min(fadeUVCoord.x, fadeUVCoord.y) > screenFade ? 1 - sqrt(pow(fadeUVCoord.x - screenFade, 2) + pow(fadeUVCoord.y - screenFade, 2)) / (1 - screenFade) : fadeFactor;
             fadeFactor = saturate(fadeFactor);
             
             float3 L = RayHit ? hitPos - pos : hitPos;
@@ -465,7 +468,7 @@ float4 ColorResolve(float2 TexCoord : TEXCOORD0) : COLOR
             float attenuation = max(maxLength - RayLengh, 0) / maxLength;
 
             //对于追踪到的像素应用衰减，没有追踪到的像素使用原来的值
-            hitColor = hitColor * attenuation * attenuation * fadeFactor;
+            hitColor.a = hitColor.a * attenuation * attenuation * fadeFactor;
 
 
             L = normalize(L);
@@ -548,9 +551,11 @@ float4 DrawBlur(float2 TexCoord : TEXCOORD0) : COLOR
 float4 DrawMain(float2 TexCoord : TEXCOORD0) : COLOR
 {
     float4 SSR = tex2D(g_sampleSSR, TexCoord);
-    float4 fianlColor = SSR + tex2D(g_sampleMainColor, TexCoord);
+    float4 mainColor = tex2D(g_sampleMainColor, TexCoord);
+    mainColor = float4(0.3, 0.35, 0.4, 1);
+    float4 fianlColor = SSR * SSR.a * (1 - g_Roughness) + (1 - SSR.a * (1 - g_Roughness)) * mainColor;
 
-    return SSR;
+    return SSR * SSR.a + (1 - SSR.a) * float4(0,0,0,1);
 }
 
 

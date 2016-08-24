@@ -56,6 +56,12 @@ void SSR::CreatePostEffect()
 		abort();
 	}
 
+	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "System\\EnvBRDFLUT.png", &m_pEnvBRDFLUT))
+	{
+		MessageBox(GetForegroundWindow(), "TextureError", "EnvBRDFLUT", MB_OK);
+		abort();
+	}
+
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
 		8, D3DUSAGE_RENDERTARGET,
 		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
@@ -151,6 +157,7 @@ void SSR::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	m_postEffect->SetIntArray("g_ScreenSize", screenSize, 2);
 	m_postEffect->SetTexture("g_SSRBuffer", m_pSSRTarget);
 
+	m_postEffect->SetTexture("g_EnvBRDFLUT", m_pEnvBRDFLUT);
 	m_postEffect->SetTexture(MAINCOLORBUFFER, m_pMainTargetWithMip);
 	m_postEffect->CommitChanges();
 

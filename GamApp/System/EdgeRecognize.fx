@@ -257,7 +257,7 @@ float4 Laplace_Edge(float2 TexCoord)
 	float drd = dot(normalProjYX, normalRDProjYX);
 	float dld = dot(normalProjXY, normalLDProjXY);
 	float dlu = dot(normalLUProjYX, normalProjYX);
-
+	/*
 	dl = acos(dl);
 	dr = acos(dr);
 	du = acos(du);
@@ -265,9 +265,21 @@ float4 Laplace_Edge(float2 TexCoord)
 	dru = acos(dru);
 	drd = acos(drd);
 	dld = acos(dld);
-	dlu = acos(dlu);
+	dlu = acos(dlu);*/
 	float dmax = (max(max(max(dl, dr), du), dd));
 	float dmin = (min(min(min(dl, dr), du), dd));
+
+	float sinThetaX1 = cross(normalLProj, normalProjX).y;
+	float a = length(cross(normalLProj, normalProjX));
+	//float sinThetaX2 = cross(normalProjX, normalRProj).y;
+	float sinThetaY1 = cross(normalUProj, normalProjY).x;
+	float b = length(cross(normalUProj, normalProjY));
+	//float sinThetaY2 = cross(normalProjX, normalRProj).x;
+	if (sinThetaX1 > 0 || sinThetaY1 > 0)
+		return float4(1 - abs(a), 1 - abs(a), 1 - abs(a), 0);
+	return float4(1, 1, 1, 1);
+
+	return du;
 
 	float d[9] = {0, du, dr, dd, dl, dru, drd, dld, dlu };
 	dmax = -1000;
@@ -280,7 +292,7 @@ float4 Laplace_Edge(float2 TexCoord)
 			dmin = min(d[i], dmin);
 		}
 	}
-	
+
 	dmax = (dmax + dmin) / 2;
 	//dmax = dmax * dmin;
 	float N = 1 - dmax / 3.14 * 0.8;

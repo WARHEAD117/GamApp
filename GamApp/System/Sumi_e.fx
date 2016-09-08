@@ -280,6 +280,17 @@ float4 PShaderBlend(float2 TexCoord : TEXCOORD0) : COLOR
 	return tex2D(g_sampleMainColor, TexCoord);
 }
 
+float3 GetNormalLod(sampler2D sampleNormal, in float2 uv)
+{
+	float4 normal_shininess = tex2Dlod(sampleNormal, float4(uv.x, uv.y, 0, 0));
+
+	normal_shininess.xy = float3ToFloat2(normal_shininess.xyz);
+
+	float3 normal = decode(normal_shininess.xy);
+
+		return normal;
+}
+
 struct P_OutVS
 {
 	float4 posWVP         : POSITION0;
@@ -332,10 +343,27 @@ P_OutVS VShaderParticle(float4 posL       : POSITION0,
 	if (scaledSize >= 1 && thickness > 0.0f)
 	{
 		outVS.posWVP = float4(2 * TexCoord.x - 1, 1 - 2 * TexCoord.y, 0, 1);
-		outVS.psize = scaledSize;
+
+		//======================
+		float3 normal = normalize(GetNormalLod(g_sampleNormal, TexCoord.xy));
+		float projectXY = sqrt(normal.x * normal.x + normal.y * normal.y);
+		float cosA = normal.x / projectXY;
+		float A = acos(cosA);
+		if (normal.y < 0)
+			A = -acos(cosA);
+        float PI = 3.1415926;
+		float p1 = 0.7f;
+		float p2 = 3.0f;
+        float p3 = PI * 0 / 3;
+		float p4 = 0.3f;
+		float res = p1 * (sin(A * p2 + p3) +1) + p4;
+		//
+
+
+		outVS.psize = scaledSize * res;
 	}
 
-	return outVS;
+	return outVS; 
 }
 
 float4 PShaderParticle(float2 TexCoord : TEXCOORD0,

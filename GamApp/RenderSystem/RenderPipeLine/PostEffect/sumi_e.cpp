@@ -338,7 +338,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pPostSurface);
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
-	m_postEffect->SetTexture(MAINCOLORBUFFER, m_StrokesArea); //m_pEdgeImage//RENDERPIPE::Instance().m_pGrayscaleTarget//m_pEdgeBlur//mainBuffer//m_pEdgeForward//RENDERPIPE::Instance().m_pNormalTarget//m_StrokesArea
+	m_postEffect->SetTexture(MAINCOLORBUFFER, mainBuffer); //m_pEdgeImage//RENDERPIPE::Instance().m_pGrayscaleTarget//m_pEdgeBlur//mainBuffer//m_pEdgeForward//RENDERPIPE::Instance().m_pNormalTarget//m_StrokesArea
 
 	m_postEffect->CommitChanges();
 
@@ -349,8 +349,9 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	//=====================================================================================================
 	//实际的水墨画渲染部分
 	float useParticle = false;
-	useParticle = true;
-	bool openInsideParticle = true;
+	//useParticle = true;
+	bool openInsideParticle = false;
+	//openInsideParticle = true;
 
 	//渲染第一次的内部粒子，浅色部分
 	if (openInsideParticle && useParticle)

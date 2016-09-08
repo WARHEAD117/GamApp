@@ -232,7 +232,7 @@ void TestScene::OnLoad()
 	//==========================================================================================
 	if (true)
 	{
-		rock1Entity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\rock\\rock1.X");
+		rock1Entity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\rock\\rock4.X");
 		//rock2Entity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\rock\\rock2.X");
 
 		D3DXMATRIX rock1M;
@@ -251,7 +251,7 @@ void TestScene::OnLoad()
 	//==========================================================================================
 	if (true)
 	{
-		rock2Entity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\rock\\rock2.X");
+		rock2Entity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\rock\\rock3.X");
 		//rock2Entity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\rock\\rock2.X");
 
 		Material rock2Mat;

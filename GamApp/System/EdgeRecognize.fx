@@ -257,7 +257,7 @@ float4 Laplace_Edge(float2 TexCoord)
 	float drd = dot(normalProjYX, normalRDProjYX);
 	float dld = dot(normalProjXY, normalLDProjXY);
 	float dlu = dot(normalLUProjYX, normalProjYX);
-	/*
+	
 	dl = acos(dl);
 	dr = acos(dr);
 	du = acos(du);
@@ -265,7 +265,7 @@ float4 Laplace_Edge(float2 TexCoord)
 	dru = acos(dru);
 	drd = acos(drd);
 	dld = acos(dld);
-	dlu = acos(dlu);*/
+	dlu = acos(dlu);
 	float dmax = (max(max(max(dl, dr), du), dd));
 	float dmin = (min(min(min(dl, dr), du), dd));
 
@@ -275,22 +275,28 @@ float4 Laplace_Edge(float2 TexCoord)
 	float sinThetaY1 = cross(normalUProj, normalProjY).x;
 	float b = length(cross(normalUProj, normalProjY));
 	//float sinThetaY2 = cross(normalProjX, normalRProj).x;
-	if (sinThetaX1 > 0 || sinThetaY1 > 0)
-		return float4(1 - abs(a), 1 - abs(a), 1 - abs(a), 0);
-	return float4(1, 1, 1, 1);
-
-	return du;
+	
+    //if (sinThetaX1 > 0.01 || sinThetaY1 > 0.01)
+	//	return float4(-a, -a, -a, 0);
+	//return float4(1, 1, 1, 1);
 
 	float d[9] = {0, du, dr, dd, dl, dru, drd, dld, dlu };
 	dmax = -1000;
 	dmin = 1000;
+    int maxFlag = -1;
+    int minFlag = -1;
 	for (int i = 1; i < neighborNum + 1; i++)
 	{
 		if (edgeList[i] != true)
-		{
+        {
+            if (d[i] > dmax)
+                maxFlag = i;
 			dmax = max(d[i], dmax);
-			dmin = min(d[i], dmin);
-		}
+            
+            if (d[i] < dmin)
+                minFlag = i;
+            dmin = min(d[i], dmin);
+        }
 	}
 
 	dmax = (dmax + dmin) / 2;
@@ -305,6 +311,44 @@ float4 Laplace_Edge(float2 TexCoord)
 		N *= 0.5;
 		//if (N > 0.6) N = 0.6;
 	}
+
+    float2 dir[8] =
+    {
+        float2(0,-1),
+        float2(1, 0),
+        float2(0, 1),
+        float2(-1,0),
+        float2(1,-1),
+        float2(1,1),
+        float2(-1,1),
+        float2(-1,-1)
+    };
+    dmax = -1000;
+    dmin = 1000;
+    maxFlag = -1;
+    minFlag = -1;
+    for (int i = 1; i < 8 + 1; i++)
+    {
+        if (edgeList[i] != true)
+        {
+            if (d[i] > dmax)
+                maxFlag = i;
+            dmax = max(d[i], dmax);
+            
+            if (d[i] < dmin)
+                minFlag = i;
+            dmin = min(d[i], dmin);
+        }
+    }
+    float2 minDir = dir[minFlag];
+    float2 maxDir = dir[maxFlag];
+    if (sinThetaX1 > 0.01 || sinThetaY1 > 0.01)
+    {
+        
+        //return float4(-maxDir.x, -maxDir.y, 0, 0);
+        //N = -N;
+    }
+
 	float alpha = 1;
 	if (isEdge)
 		alpha = 0;

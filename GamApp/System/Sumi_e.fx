@@ -456,7 +456,7 @@ PInside_OutVS VShaderParticleInside(float4 posL       : POSITION0,
 	//默认颜色为0
 	float thickness = 0;
 	//GrayScaleMap的纹理采样
-	float4 judegColor = tex2Dlod(g_sampleJudgeTex, float4(TexCoord.x, TexCoord.y, 0, 0));
+    float4 judegColor = tex2Dlod(g_sampleMainColor, float4(TexCoord.x, TexCoord.y, 0, 0));
 	//笔迹区域
 	float4 texColor = tex2Dlod(g_sampleMainColor, float4(TexCoord.x, TexCoord.y, 0, 0));
 	//DiffuseMap的纹理采样

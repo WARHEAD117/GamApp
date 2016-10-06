@@ -31,6 +31,28 @@ sampler_state
 	MipFilter = Point;
 };
 
+texture		g_lineMask;
+sampler2D g_sampleLineMask =
+sampler_state
+{
+	Texture = <g_lineMask>;
+	MinFilter = linear;
+	MagFilter = linear;
+	MipFilter = linear;
+	AddressU = wrap;
+	AddressV = wrap;
+};
+
+texture		g_UvTex;
+sampler2D g_sampleUvTex =
+sampler_state
+{
+	Texture = <g_UvTex>;
+	MinFilter = linear;
+	MagFilter = linear;
+	MipFilter = linear;
+};
+
 struct OutputVS
 {
 	float4 posWVP         : POSITION0;
@@ -342,12 +364,22 @@ float4 Laplace_Edge(float2 TexCoord)
     }
     float2 minDir = dir[minFlag];
     float2 maxDir = dir[maxFlag];
-    if (sinThetaX1 > 0.01 || sinThetaY1 > 0.01)
+	if ((sinThetaX1 > 0.005 || sinThetaY1 > 0.005) && !isEdge)
     {
         
         //return float4(-maxDir.x, -maxDir.y, 0, 0);
-        //N = -N;
-    }
+		float2 uv = tex2D(g_sampleUvTex, TexCoord).zw;
+		float4 c = tex2D(g_sampleLineMask, uv);
+		//return tex2D(g_sampleLineMask, uv);
+		//if (c.r < 0.5)
+		{
+			N = -N * 10;
+			N = c.r;
+		}
+	}
+	//float2 uv = tex2D(g_sampleUvTex, TexCoord).zw;
+	//	return float4(uv,0,0);
+	//return tex2D(g_sampleLineMask, uv);
 
 	float alpha = 1;
 	if (isEdge)

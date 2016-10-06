@@ -189,6 +189,7 @@ OutputPS PShader(float3 NormalV		: NORMAL,
 	//nl *= 0.9;
 	PsOut.grayscale = float4(nl, nl, nl, 1);
 	PsOut.grayscale = g_IsSky ? float4(1, 1, 1, 1) : PsOut.grayscale;
+	PsOut.grayscale.zw = frac(TexCoord * 10);
 
 	return PsOut;
 

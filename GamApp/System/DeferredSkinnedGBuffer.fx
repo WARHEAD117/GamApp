@@ -72,7 +72,7 @@ struct OutputPS
 	float4 diffuse			: COLOR0;
 	float4 normal			: COLOR1;
 	float4 position			: COLOR2;
-	float4 silhouette		: COLOR3;
+	float4 grayscale		: COLOR3;
 };
 
 OutputVS VShader(float4 posL		: POSITION,
@@ -176,6 +176,8 @@ OutputPS PShader(float3 NormalV		: NORMAL,
 	float3 sampledNormalV = mul(sampledNormalT, TBN);/* sampledNormalT.x * TBN[0] + sampledNormalT.y * TBN[1] + sampledNormalT.z * TBN[2];*/
 	sampledNormalV = normalize(sampledNormalV);
 
+	float3 viewNormal = sampledNormalV;
+
 	//sampledNormalV = (sampledNormalV + 1.0f) / 2.0f;
 	sampledNormalV.xy = encode(sampledNormalV);
 	sampledNormalV.xyz = float2ToFloat3(sampledNormalV.xy);
@@ -215,7 +217,18 @@ OutputPS PShader(float3 NormalV		: NORMAL,
 	PsOut.normal.a = 1.0f / (Shininess + epsilon);
 	PsOut.position = posV.zzzz;
 
-	PsOut.silhouette = float4(1, 1, 1, 1);
+	float3 light = float3(0, 0, 1);
+		light = normalize(light);
+
+	float3 pos = posV;
+		pos = normalize(pos);
+	light = pos;
+	float nl = dot(viewNormal, -light);
+	nl = pow(nl, 3.5);
+	//nl *= 0.9;
+	PsOut.grayscale = float4(nl, nl, nl, 1);
+	PsOut.grayscale = g_IsSky ? float4(1, 1, 1, 1) : PsOut.grayscale;
+	PsOut.grayscale.zw = TexCoord;
 
 	return PsOut;
 

@@ -14,6 +14,17 @@ EdgeRecognize::~EdgeRecognize()
 {
 }
 
+void EdgeRecognize::CreatePostEffect(std::string effectName)
+{
+	PostEffectBase::CreatePostEffect(effectName, D3DFMT_A8B8G8R8);
+
+	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "Res\\maskline.PNG", &m_pMask))
+	{
+		MessageBox(GetForegroundWindow(), "TextureError", "m_pMask", MB_OK);
+		abort();
+	}
+}
+
 int useWhich = 1;
 void EdgeRecognize::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 {
@@ -23,6 +34,8 @@ void EdgeRecognize::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 	m_postEffect->SetTexture(NORMALBUFFER, RENDERPIPE::Instance().m_pNormalTarget);
 	m_postEffect->SetTexture(POSITIONBUFFER, RENDERPIPE::Instance().m_pPositionTarget);
+	m_postEffect->SetTexture("g_lineMask", m_pMask);
+	m_postEffect->SetTexture("g_UvTex", RENDERPIPE::Instance().m_pGrayscaleTarget);
 	PostEffectBase::RenderPost(mainBuffer);
 }
 

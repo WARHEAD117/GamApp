@@ -130,6 +130,7 @@ void TestScene::OnLoad()
 	if (true)
 	{
 		deerEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\deer\\deer.X");
+		deerEntity->SetTexture("System\\white.dds");
 
 		D3DXMATRIX deerM;
 		D3DXVECTOR3 deerMove = D3DXVECTOR3(-12, 0, 32.5f);
@@ -232,7 +233,7 @@ void TestScene::OnLoad()
 	//==========================================================================================
 	if (true)
 	{
-		rock1Entity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\rock\\rock4.X");
+		rock1Entity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\rock\\rock5.X");
 		//rock2Entity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\rock\\rock2.X");
 
 		D3DXMATRIX rock1M;

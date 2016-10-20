@@ -349,9 +349,9 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	//=====================================================================================================
 	//实际的水墨画渲染部分
 	float useParticle = false;
-	useParticle = true;
+	//useParticle = true;
 	bool openInsideParticle = false;
-	openInsideParticle = true;
+	//openInsideParticle = true;
 
 	//渲染第一次的内部粒子，浅色部分
 	if (openInsideParticle && useParticle)

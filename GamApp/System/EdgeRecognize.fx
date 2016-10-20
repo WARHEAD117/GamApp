@@ -159,39 +159,41 @@ float4 Laplace_Edge(float2 TexCoord)
 
 	float2 offset = float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight);
 
-	float depthN[9];
+		float depthN[9];
 
 	depthN[0] = GetDepth(TexCoord, g_samplePosition);
 
-	depthN[1] = GetDepth(TexCoord + offset * float2( 0,-1), g_samplePosition); //Up
-	depthN[2] = GetDepth(TexCoord + offset * float2( 1, 0), g_samplePosition); //Right
-	depthN[3] = GetDepth(TexCoord + offset * float2( 0, 1), g_samplePosition); //Down
+	depthN[1] = GetDepth(TexCoord + offset * float2(0, -1), g_samplePosition); //Up
+	depthN[2] = GetDepth(TexCoord + offset * float2(1, 0), g_samplePosition); //Right
+	depthN[3] = GetDepth(TexCoord + offset * float2(0, 1), g_samplePosition); //Down
 	depthN[4] = GetDepth(TexCoord + offset * float2(-1, 0), g_samplePosition); //Left
 
-	depthN[5] = GetDepth(TexCoord + offset * float2( 1,-1), g_samplePosition); //RightUp
-	depthN[6] = GetDepth(TexCoord + offset * float2( 1, 1), g_samplePosition); //RightDown
+	depthN[5] = GetDepth(TexCoord + offset * float2(1, -1), g_samplePosition); //RightUp
+	depthN[6] = GetDepth(TexCoord + offset * float2(1, 1), g_samplePosition); //RightDown
 	depthN[7] = GetDepth(TexCoord + offset * float2(-1, 1), g_samplePosition); //LeftDown
-	depthN[8] = GetDepth(TexCoord + offset * float2(-1,-1), g_samplePosition); //LeftUp
+	depthN[8] = GetDepth(TexCoord + offset * float2(-1, -1), g_samplePosition); //LeftUp
 
 	float depthNN[4];
-	depthNN[0] = GetDepth(TexCoord + offset * float2( 0, -2), g_samplePosition); //UpUp
-	depthNN[1] = GetDepth(TexCoord + offset * float2( 2,  0), g_samplePosition); //RightRight
-	depthNN[2] = GetDepth(TexCoord + offset * float2( 0,  2), g_samplePosition); //DownDown
-	depthNN[3] = GetDepth(TexCoord + offset * float2(-2,  0), g_samplePosition); //LeftLeft
+	depthNN[0] = GetDepth(TexCoord + offset * float2(0, -2), g_samplePosition); //UpUp
+	depthNN[1] = GetDepth(TexCoord + offset * float2(2, 0), g_samplePosition); //RightRight
+	depthNN[2] = GetDepth(TexCoord + offset * float2(0, 2), g_samplePosition); //DownDown
+	depthNN[3] = GetDepth(TexCoord + offset * float2(-2, 0), g_samplePosition); //LeftLeft
 
 	float3 normalR[9];
 
 	normalR[0] = normalize(GetNormal(g_sampleNormal, TexCoord));
 
-	normalR[1] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2( 0,-1))); //Up
-	normalR[2] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2( 1, 0))); //Right
-	normalR[3] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2( 0, 1))); //Down
+	//return normalR[0].z;
+
+	normalR[1] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2(0, -1))); //Up
+	normalR[2] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2(1, 0))); //Right
+	normalR[3] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2(0, 1))); //Down
 	normalR[4] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2(-1, 0))); //Left
 
-	normalR[5] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2( 1,-1))); //RightUp
-	normalR[6] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2( 1, 1))); //RIghtDown
+	normalR[5] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2(1, -1))); //RightUp
+	normalR[6] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2(1, 1))); //RIghtDown
 	normalR[7] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2(-1, 1))); //LeftDown
-	normalR[8] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2(-1,-1))); //LeftUp
+	normalR[8] = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2(-1, -1))); //LeftUp
 
 	float depth = depthN[0];
 
@@ -207,7 +209,7 @@ float4 Laplace_Edge(float2 TexCoord)
 	laplaceN[3] = 4 * depthN[3] - (depthN[0] + depthN[6] + depthN[7] + depthNN[2]);
 	laplaceN[4] = 4 * depthN[4] - (depthN[0] + depthN[7] + depthN[8] + depthNN[3]);
 
-	
+
 	bool isEdge = false;
 	bool edgeList[9] = { false, false, false, false, false, false, false, false, false };
 
@@ -252,25 +254,25 @@ float4 Laplace_Edge(float2 TexCoord)
 
 
 	float3 vecXY = normalize(float3(1, 1, 0));
-	float3 vecYX = normalize(float3(1, -1, 0));
+		float3 vecYX = normalize(float3(1, -1, 0));
 
-	float3 normalProjX = normalize(float3(normalR[0].x, 0, normalR[0].z));
-	float3 normalProjY = normalize(float3(0, normalR[0].y, normalR[0].z));
+		float3 normalProjX = normalize(float3(normalR[0].x, 0, normalR[0].z));
+		float3 normalProjY = normalize(float3(0, normalR[0].y, normalR[0].z));
 
-	float3 normalProjXY = dot(normalR[0], vecXY) * vecXY + float3(0, 0, normalR[0].z);
-	float3 normalProjYX = dot(normalR[0], vecYX) * vecYX + float3(0, 0, normalR[0].z);
+		float3 normalProjXY = dot(normalR[0], vecXY) * vecXY + float3(0, 0, normalR[0].z);
+		float3 normalProjYX = dot(normalR[0], vecYX) * vecYX + float3(0, 0, normalR[0].z);
 
-	float3 normalUProj = normalize(float3(0, normalR[1].y, normalR[1].z));
-	float3 normalRProj = normalize(float3(normalR[2].x, 0, normalR[2].z));
-	float3 normalDProj = normalize(float3(0, normalR[3].y, normalR[3].z));
-	float3 normalLProj = normalize(float3(normalR[4].x, 0, normalR[4].z));
+		float3 normalUProj = normalize(float3(0, normalR[1].y, normalR[1].z));
+		float3 normalRProj = normalize(float3(normalR[2].x, 0, normalR[2].z));
+		float3 normalDProj = normalize(float3(0, normalR[3].y, normalR[3].z));
+		float3 normalLProj = normalize(float3(normalR[4].x, 0, normalR[4].z));
 
-	float3 normalRUProjXY = dot(normalR[5], vecXY) * vecXY + float3(0, 0, normalR[5].z);
-	float3 normalRDProjYX = dot(normalR[6], vecYX) * vecYX + float3(0, 0, normalR[6].z);
-	float3 normalLDProjXY = dot(normalR[7], vecXY) * vecXY + float3(0, 0, normalR[7].z);
-	float3 normalLUProjYX = dot(normalR[8], vecYX) * vecYX + float3(0, 0, normalR[8].z);
+		float3 normalRUProjXY = dot(normalR[5], vecXY) * vecXY + float3(0, 0, normalR[5].z);
+		float3 normalRDProjYX = dot(normalR[6], vecYX) * vecYX + float3(0, 0, normalR[6].z);
+		float3 normalLDProjXY = dot(normalR[7], vecXY) * vecXY + float3(0, 0, normalR[7].z);
+		float3 normalLUProjYX = dot(normalR[8], vecYX) * vecYX + float3(0, 0, normalR[8].z);
 
-	float du = dot(normalUProj, normalProjY);
+		float du = dot(normalUProj, normalProjY);
 	float dr = dot(normalProjX, normalRProj);
 	float dd = dot(normalProjY, normalDProj);
 	float dl = dot(normalLProj, normalProjX);
@@ -279,7 +281,7 @@ float4 Laplace_Edge(float2 TexCoord)
 	float drd = dot(normalProjYX, normalRDProjYX);
 	float dld = dot(normalProjXY, normalLDProjXY);
 	float dlu = dot(normalLUProjYX, normalProjYX);
-	
+
 	dl = acos(dl);
 	dr = acos(dr);
 	du = acos(du);
@@ -291,92 +293,187 @@ float4 Laplace_Edge(float2 TexCoord)
 	float dmax = (max(max(max(dl, dr), du), dd));
 	float dmin = (min(min(min(dl, dr), du), dd));
 
-	float sinThetaX1 = cross(normalLProj, normalProjX).y;
-	float a = length(cross(normalLProj, normalProjX));
-	//float sinThetaX2 = cross(normalProjX, normalRProj).y;
-	float sinThetaY1 = cross(normalUProj, normalProjY).x;
-	float b = length(cross(normalUProj, normalProjY));
-	//float sinThetaY2 = cross(normalProjX, normalRProj).x;
-	
-    //if (sinThetaX1 > 0.01 || sinThetaY1 > 0.01)
+	float sinThetaX1 = normalize(cross(normalLProj, normalProjX)).y;
+	float a = length(normalize(cross(normalLProj, normalProjX)));
+	//float sinThetaX2 = normalize(cross(normalProjX, normalRProj)).y;
+	float sinThetaY1 = normalize(cross(normalUProj, normalProjY)).x;
+	float b = length(normalize(cross(normalUProj, normalProjY)));
+	//float sinThetaY2 = normalize(cross(normalProjX, normalRProj)).x;
+
+	//if (sinThetaX1 > 0.01 || sinThetaY1 > 0.01)
 	//	return float4(-a, -a, -a, 0);
 	//return float4(1, 1, 1, 1);
 
-	float d[9] = {0, du, dr, dd, dl, dru, drd, dld, dlu };
+	float d[9] = { 0, du, dr, dd, dl, dru, drd, dld, dlu };
 	dmax = -1000;
 	dmin = 1000;
-    int maxFlag = -1;
-    int minFlag = -1;
+	int maxFlag = -1;
+	int minFlag = -1;
 	for (int i = 1; i < neighborNum + 1; i++)
 	{
 		if (edgeList[i] != true)
-        {
-            if (d[i] > dmax)
-                maxFlag = i;
+		{
+			if (d[i] > dmax)
+				maxFlag = i;
 			dmax = max(d[i], dmax);
-            
-            if (d[i] < dmin)
-                minFlag = i;
-            dmin = min(d[i], dmin);
-        }
+
+			if (d[i] < dmin)
+				minFlag = i;
+			dmin = min(d[i], dmin);
+		}
 	}
 
 	dmax = (dmax + dmin) / 2;
 	//dmax = dmax * dmin;
 	float N = 1 - dmax / 3.14 * 0.8;
 
-	
 
-	N = N*N*N ;
+
+	N = N*N*N;
 	if (isEdge)
 	{
 		N *= 0.5;
 		//if (N > 0.6) N = 0.6;
 	}
 
-    float2 dir[8] =
-    {
-        float2(0,-1),
-        float2(1, 0),
-        float2(0, 1),
-        float2(-1,0),
-        float2(1,-1),
-        float2(1,1),
-        float2(-1,1),
-        float2(-1,-1)
-    };
-    dmax = -1000;
-    dmin = 1000;
-    maxFlag = -1;
-    minFlag = -1;
-    for (int i = 1; i < 8 + 1; i++)
-    {
-        if (edgeList[i] != true)
-        {
-            if (d[i] > dmax)
-                maxFlag = i;
-            dmax = max(d[i], dmax);
-            
-            if (d[i] < dmin)
-                minFlag = i;
-            dmin = min(d[i], dmin);
-        }
-    }
-    float2 minDir = dir[minFlag];
-    float2 maxDir = dir[maxFlag];
-	if ((sinThetaX1 > 0.005 || sinThetaY1 > 0.005) && !isEdge)
-    {
-        
-        //return float4(-maxDir.x, -maxDir.y, 0, 0);
-		float2 uv = tex2D(g_sampleUvTex, TexCoord).zw;
-		float4 c = tex2D(g_sampleLineMask, uv);
-		//return tex2D(g_sampleLineMask, uv);
-		//if (c.r < 0.5)
+	float2 dir[8] =
+	{
+		float2(0, -1),
+		float2(1, 0),
+		float2(0, 1),
+		float2(-1, 0),
+		float2(1, -1),
+		float2(1, 1),
+		float2(-1, 1),
+		float2(-1, -1)
+	};
+	dmax = -1000;
+	dmin = 1000;
+	maxFlag = -1;
+	minFlag = -1;
+	for (int i = 1; i < 8 + 1; i++)
+	{
+		if (edgeList[i] != true)
 		{
-			N = -N * 10;
-			N = c.r;
+			if (d[i] > dmax)
+				maxFlag = i;
+			dmax = max(d[i], dmax);
+
+			if (d[i] < dmin)
+				minFlag = i;
+			dmin = min(d[i], dmin);
 		}
 	}
+	float2 minDir = dir[minFlag];
+		float2 maxDir = dir[maxFlag];
+
+	float p1 = 0.0001;
+	float p2 = 0.005;
+
+	bool testR = false;
+	bool testL = false; 
+	
+	bool testU = false;
+	bool testD = false;
+	{
+		float3 T = float3(1, 0, 0);
+		float3 N = normalR[0];
+		float3 B = cross(T, N);
+		T = cross(N, B);
+		float3x3 TBN = float3x3(T, B, N);
+
+			float3 NR = normalize(mul(TBN, normalR[2]));
+			float3 NL = normalize(mul(TBN, normalR[4]));
+
+			float3 NU = normalize(mul(TBN, normalR[1]));
+			float3 ND = normalize(mul(TBN, normalR[3]));
+
+		if (normalR[0].z < 0)
+		{
+
+			if (NR.x < -p1)
+			{
+				testR = true;
+			}
+			if (NL.x > p1)
+			{
+				testL = true;
+			}
+			if (NU.y < -p1)
+			{
+				testU = true;
+			}
+			if (ND.y > p1)
+			{
+				testD = true;
+			}
+		}
+		else
+		{
+			if (NR.x < -p1)
+			{
+				testL = true;
+			}
+			if (NL.x > p1)
+			{
+				testR = true;
+			}
+			if (NU.y < -p1)
+			{
+				testD = true;
+			}
+			if (ND.y > p1)
+			{
+				testU = true;
+			}
+		}
+		/*
+		if (normalR[0].z > 0)
+		{
+			testR = !testR;
+			testL = !testL;
+			testU = !testU;
+			testD = !testD;
+		}*/
+
+	}
+	if (g_switch == 1)
+	{
+		if ((testR || testL || testU || testD) && !isEdge)
+			//if ((sinThetaX1 > 0.005 || sinThetaY1 > 0.005) && !isEdge)
+		{
+
+			//return float4(-maxDir.x, -maxDir.y, 0, 0);
+			float2 uv = tex2D(g_sampleUvTex, TexCoord).zw;
+				float4 c = tex2D(g_sampleLineMask, uv);
+				//return tex2D(g_sampleLineMask, uv);
+				//if (c.r < 0.5)
+			{
+				N = -N * 10;
+				//N = c.r;
+			}
+		}
+	}
+	else
+	{
+		//if (testR || testL || testU || testD)
+		if ((sinThetaX1 > p2 || sinThetaY1 > p2) && !isEdge)
+		{
+
+			//return float4(-maxDir.x, -maxDir.y, 0, 0);
+			float2 uv = tex2D(g_sampleUvTex, TexCoord).zw;
+				float4 c = tex2D(g_sampleLineMask, uv);
+				//return tex2D(g_sampleLineMask, uv);
+				//if (c.r < 0.5)
+			{
+				N = -N * 10;
+				//N = c.r;
+			}
+		}
+	}
+
+	
+
 	//float2 uv = tex2D(g_sampleUvTex, TexCoord).zw;
 	//	return float4(uv,0,0);
 	//return tex2D(g_sampleLineMask, uv);

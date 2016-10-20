@@ -16,7 +16,7 @@ EdgeRecognize::~EdgeRecognize()
 
 void EdgeRecognize::CreatePostEffect(std::string effectName)
 {
-	PostEffectBase::CreatePostEffect(effectName, D3DFMT_A8B8G8R8);
+	PostEffectBase::CreatePostEffect(effectName, D3DFMT_X8R8G8B8);
 
 	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "Res\\maskline.PNG", &m_pMask))
 	{

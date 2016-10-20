@@ -235,7 +235,12 @@ void TestScene::OnLoad()
 	{
 		rock1Entity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\rock\\rock5.X");
 		//rock2Entity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\rock\\rock2.X");
-
+		/*
+		Material rock1Mat;
+		rock1Mat.Thickness = D3DXVECTOR4(1.5, 1, 1, 1);
+		rock1Mat.MatIndex = 0;
+		rock1Entity->SetMaterial(&rock1Mat);
+		*/
 		D3DXMATRIX rock1M;
 		D3DXVECTOR3 rock1Move = D3DXVECTOR3(-30, -0.5f, 45);
 		D3DXMatrixTranslation(&rock1M, rock1Move.x, rock1Move.y, rock1Move.z);
@@ -252,7 +257,7 @@ void TestScene::OnLoad()
 	//==========================================================================================
 	if (true)
 	{
-		rock2Entity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\rock\\rock3.X");
+		rock2Entity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\rock\\rock6.X");
 		//rock2Entity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\rock\\rock2.X");
 
 		Material rock2Mat;

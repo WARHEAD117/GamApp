@@ -355,12 +355,12 @@ P_OutVS VShaderParticle(float4 posL       : POSITION0,
 		float p1 = 0.7f;
 		float p2 = 3.0f;
         float p3 = PI * 0 / 3;
-		float p4 = 0.3f;
+		float p4 = 0.5f;
 		float res = p1 * (sin(A * p2 + p3) +1) + p4;
 		//
 
 
-		outVS.psize = scaledSize * res;
+		outVS.psize = scaledSize *res;
 	}
 
 	return outVS; 

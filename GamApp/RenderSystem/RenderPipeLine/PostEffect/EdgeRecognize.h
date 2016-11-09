@@ -3,7 +3,10 @@
 class EdgeRecognize :
 	public PostEffectBase
 {
-	LPDIRECT3DTEXTURE9	m_pMask;
+	LPDIRECT3DTEXTURE9	m_pMask; 
+	
+	LPDIRECT3DTEXTURE9	m_pEdgeTarget;
+	LPDIRECT3DSURFACE9	m_pEdgeSurface;
 
 public:
 	EdgeRecognize();

@@ -276,6 +276,14 @@ float4 Laplace_Edge(float2 TexCoord)
 	float dr = dot(normalProjX, normalRProj);
 	float dd = dot(normalProjY, normalDProj);
 	float dl = dot(normalLProj, normalProjX);
+	
+	if (g_switch == 1)
+	{
+		du = dot(normalR[1], normalR[0]);
+		dr = dot(normalR[0], normalR[2]);
+		dd = dot(normalR[0], normalR[3]);
+		dl = dot(normalR[4], normalR[0]);
+	}
 
 	float dru = dot(normalRUProjXY, normalProjXY);
 	float drd = dot(normalProjYX, normalRDProjYX);
@@ -293,16 +301,6 @@ float4 Laplace_Edge(float2 TexCoord)
 	float dmax = (max(max(max(dl, dr), du), dd));
 	float dmin = (min(min(min(dl, dr), du), dd));
 
-	float sinThetaX1 = normalize(cross(normalLProj, normalProjX)).y;
-	float a = length(normalize(cross(normalLProj, normalProjX)));
-	//float sinThetaX2 = normalize(cross(normalProjX, normalRProj)).y;
-	float sinThetaY1 = normalize(cross(normalUProj, normalProjY)).x;
-	float b = length(normalize(cross(normalUProj, normalProjY)));
-	//float sinThetaY2 = normalize(cross(normalProjX, normalRProj)).x;
-
-	//if (sinThetaX1 > 0.01 || sinThetaY1 > 0.01)
-	//	return float4(-a, -a, -a, 0);
-	//return float4(1, 1, 1, 1);
 
 	float d[9] = { 0, du, dr, dd, dl, dru, drd, dld, dlu };
 	dmax = -1000;
@@ -427,46 +425,57 @@ float4 Laplace_Edge(float2 TexCoord)
 				testU = true;
 			}
 		}
-		/*
-		if (normalR[0].z > 0)
-		{
-			testR = !testR;
-			testL = !testL;
-			testU = !testU;
-			testD = !testD;
-		}*/
 
 	}
 	if (g_switch == 1)
 	{
 		if ((testR || testL || testU || testD) && !isEdge)
-			//if ((sinThetaX1 > 0.005 || sinThetaY1 > 0.005) && !isEdge)
 		{
+			float3 normal = normalR[0];
+			float projectXY = sqrt(normal.x * normal.x + normal.y * normal.y);
+			float cosA = normal.x / projectXY;
+			float A = acos(cosA);
+			if (normal.y < 0)
+				A = -acos(cosA);
+			A += 3.14159f / 2.0f;
+			float2x2 rotationM = float2x2(float2(cos(A), -sin(A)), float2(sin(A), cos(A)));
+				//TexCoord = mul(TexCoord - float2(0.5,0.5), rotationM) + float2(0.5,0.5);
 
-			//return float4(-maxDir.x, -maxDir.y, 0, 0);
 			float2 uv = tex2D(g_sampleUvTex, TexCoord).zw;
+
+
+			uv = mul(rotationM, uv - float2(0.5, 0.5)) + float2(0.5, 0.5);
+
 				float4 c = tex2D(g_sampleLineMask, uv);
 				//return tex2D(g_sampleLineMask, uv);
 				//if (c.r < 0.5)
 			{
 				N = -N * 10;
-				//N = c.r;
+				N = c.r;
 			}
 		}
 	}
 	else
 	{
-		//if (testR || testL || testU || testD)
+
+		float sinThetaX1 = normalize(cross(normalLProj, normalProjX)).y;
+		float a = length(normalize(cross(normalLProj, normalProjX)));
+		//float sinThetaX2 = normalize(cross(normalProjX, normalRProj)).y;
+		float sinThetaY1 = normalize(cross(normalUProj, normalProjY)).x;
+		float b = length(normalize(cross(normalUProj, normalProjY)));
+		//float sinThetaY2 = normalize(cross(normalProjX, normalRProj)).x;
+
+		//if (sinThetaX1 > 0.01 || sinThetaY1 > 0.01)
+		//	return float4(-a, -a, -a, 0);
+
 		if ((sinThetaX1 > p2 || sinThetaY1 > p2) && !isEdge)
 		{
-
-			//return float4(-maxDir.x, -maxDir.y, 0, 0);
 			float2 uv = tex2D(g_sampleUvTex, TexCoord).zw;
 				float4 c = tex2D(g_sampleLineMask, uv);
 				//return tex2D(g_sampleLineMask, uv);
 				//if (c.r < 0.5)
 			{
-				N = -N * 10;
+				//N = -N * 10;
 				//N = c.r;
 			}
 		}

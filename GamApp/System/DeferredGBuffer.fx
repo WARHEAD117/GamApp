@@ -147,6 +147,7 @@ OutputPS PShader(float3 NormalV		: NORMAL,
 
 	//纹理采样
 	float4 Texture = tex2D(g_sampleTexture, TexCoord);
+
 	//高光图采样
 	float4 Specular = tex2D(g_sampleSpecularMap, TexCoord);
 

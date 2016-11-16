@@ -360,7 +360,7 @@ P_OutVS VShaderParticle(float4 posL       : POSITION0,
 		//
 
 
-		outVS.psize = scaledSize *res;
+		outVS.psize = scaledSize;// *res;
 	}
 
 	return outVS; 

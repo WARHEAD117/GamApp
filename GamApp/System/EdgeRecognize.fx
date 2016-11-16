@@ -450,8 +450,8 @@ float4 Laplace_Edge(float2 TexCoord)
 				//return tex2D(g_sampleLineMask, uv);
 				//if (c.r < 0.5)
 			{
-				N = -N * 10;
-				N = c.r;
+				//N = -N * 10;
+				//N = c.r;
 			}
 		}
 	}

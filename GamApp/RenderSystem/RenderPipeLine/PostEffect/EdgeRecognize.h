@@ -8,6 +8,9 @@ class EdgeRecognize :
 	LPDIRECT3DTEXTURE9	m_pEdgeTarget;
 	LPDIRECT3DSURFACE9	m_pEdgeSurface;
 
+	LPDIRECT3DTEXTURE9	m_pEdge2Target;
+	LPDIRECT3DSURFACE9	m_pEdge2Surface;
+
 public:
 	EdgeRecognize();
 	~EdgeRecognize();

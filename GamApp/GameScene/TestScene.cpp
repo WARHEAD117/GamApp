@@ -130,7 +130,7 @@ void TestScene::OnLoad()
 	if (true)
 	{
 		deerEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\deer\\deer.X");
-		deerEntity->SetTexture("System\\white.dds");
+		//deerEntity->SetTexture("System\\white.dds");
 
 		D3DXMATRIX deerM;
 		D3DXVECTOR3 deerMove = D3DXVECTOR3(-12, 0, 32.5f);
@@ -495,7 +495,7 @@ void TestScene::OnLoad()
 		//mSkinnedMeshLittle->SetTexture("Res\\DeerAnim\\deer1.png");
 
 		Material ALittleDeerMat;
-		ALittleDeerMat.Thickness = D3DXVECTOR4(0.65, 0.6, 1, 1);
+		ALittleDeerMat.Thickness = D3DXVECTOR4(0.65, 0.4, 1, 1);
 		ALittleDeerMat.MatIndex = 2;
 		mSkinnedMeshLittle->SetMaterial(&ALittleDeerMat);
 

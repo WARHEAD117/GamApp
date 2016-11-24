@@ -364,8 +364,8 @@ P_OutVS VShaderParticle(float4 posL       : POSITION0,
 		float res = p1 * (sin(A * p2 + p3) +1) + p4;
 		//
 
-
-		outVS.psize = scaledSize;// *res;
+		scaledSize *= res;
+		outVS.psize = scaledSize;
 	}
 
 	return outVS; 
@@ -423,7 +423,7 @@ float4 PShaderParticle(float2 TexCoord : TEXCOORD0,
 
 	float alpha = thickness.x / 2;
 
-	float inkColor = 1-GetColor(g_sampleNormal, texC.xy);
+	float inkColor = GetColor(g_sampleNormal, texC.xy);
 
 	float colorFactor = g_colorFactor * inkColor;
 	if (brush.r > 0.59f)

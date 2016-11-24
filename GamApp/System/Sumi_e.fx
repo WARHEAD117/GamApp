@@ -300,6 +300,11 @@ struct P_OutVS
 	float4 thickness	  : COLOR1;
 };
 
+float GetColor(sampler2D sampleNormal, in float2 uv)
+{
+	return tex2D(sampleNormal, uv).a;
+}
+
 P_OutVS VShaderParticle(float4 posL       : POSITION0,
 	float2 TexCoord : TEXCOORD0)
 {
@@ -368,9 +373,9 @@ P_OutVS VShaderParticle(float4 posL       : POSITION0,
 
 float4 PShaderParticle(float2 TexCoord : TEXCOORD0,
 	float4 thickness : COLOR1,
-	float4 color : COLOR0) : COLOR
+	float4 texC : COLOR0) : COLOR
 {
-	float3 normal = normalize(GetNormal(g_sampleNormal, color.xy));
+	float3 normal = normalize(GetNormal(g_sampleNormal, texC.xy));
 	//return float4(normal, 1.0f);
 
 	float projectXY = sqrt(normal.x * normal.x + normal.y * normal.y);
@@ -418,7 +423,9 @@ float4 PShaderParticle(float2 TexCoord : TEXCOORD0,
 
 	float alpha = thickness.x / 2;
 
-	float colorFactor = g_colorFactor;
+	float inkColor = 1-GetColor(g_sampleNormal, texC.xy);
+
+	float colorFactor = g_colorFactor * inkColor;
 	if (brush.r > 0.59f)
 	{
 		brush = float4(1.0f, 1.0f, 1.0f, 0.0f);
@@ -456,7 +463,7 @@ PInside_OutVS VShaderParticleInside(float4 posL       : POSITION0,
 	//默认颜色为0
 	float thickness = 0;
 	//GrayScaleMap的纹理采样
-    float4 judegColor = tex2Dlod(g_sampleMainColor, float4(TexCoord.x, TexCoord.y, 0, 0));
+	float4 judegColor = tex2Dlod(g_sampleJudgeTex, float4(TexCoord.x, TexCoord.y, 0, 0));
 	//笔迹区域
 	float4 texColor = tex2Dlod(g_sampleMainColor, float4(TexCoord.x, TexCoord.y, 0, 0));
 	//DiffuseMap的纹理采样
@@ -497,7 +504,7 @@ PInside_OutVS VShaderParticleInside(float4 posL       : POSITION0,
 	float depth = tex2Dlod(g_samplePosition, float4(TexCoord.x, TexCoord.y, 0, 0));
 
 	int a = 3;
-	if (judegColor.r < 0.4)
+	if (judegColor.r < 0.8)
 	{
 		//float invDepth = 1 - depth / g_zFar;
 		//a = 4 * invDepth;

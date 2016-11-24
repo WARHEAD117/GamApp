@@ -378,7 +378,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		m_postEffect->SetTexture(NORMALBUFFER, RENDERPIPE::Instance().m_pNormalTarget);
 		m_postEffect->SetTexture(POSITIONBUFFER, RENDERPIPE::Instance().m_pPositionTarget);
 		m_postEffect->SetTexture(DIFFUSEBUFFER, RENDERPIPE::Instance().m_pDiffuseTarget);
-		m_postEffect->SetTexture("g_JudgeTex", RENDERPIPE::Instance().m_pGrayscaleTarget);
+		m_postEffect->SetTexture("g_JudgeTex", mainBuffer); //RENDERPIPE::Instance().m_pGrayscaleTarget
 		m_postEffect->SetTexture("g_InkTex1", m_pInkMask);
 		m_postEffect->SetBool("g_UpperLayer", false);
 

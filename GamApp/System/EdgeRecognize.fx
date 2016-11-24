@@ -1045,7 +1045,19 @@ float4 Laplace_Edge2(float2 TexCoord, float2 R_d)
 	float alpha = 1;
 	if (isEdge)
 		alpha = 0;
-	return float4(N, N, N, alpha);
+
+	float gray = tex2D(g_sampleUvTex, TexCoord).x;
+	int J = 1;
+	if (gray < 0.4)
+	{
+		J = 0;
+	}
+	else
+	{
+		J = 1;
+	}
+
+	return float4(N, J, N, alpha);
 }
 
 float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR

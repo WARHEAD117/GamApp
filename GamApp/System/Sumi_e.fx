@@ -364,7 +364,17 @@ P_OutVS VShaderParticle(float4 posL       : POSITION0,
 		float res = p1 * (sin(A * p2 + p3) +1) + p4;
 		//
 
-		scaledSize *= res;
+		//根据diffuse的alpha来判断材质类型
+		if (diffuseColor.a * 255.0f <= 4.5f && diffuseColor.a * 255.0f > 3.5f)
+		{
+			//scaledSize *= res;
+		}
+		else
+		{
+			scaledSize *= res;
+		}
+
+		//scaledSize *= res;
 		outVS.psize = scaledSize;
 	}
 
@@ -421,18 +431,18 @@ float4 PShaderParticle(float2 TexCoord : TEXCOORD0,
 
 	brush.a = 1;
 
-	float alpha = thickness.x / 2;
+	float alpha = thickness.x;// / 2;
 
 	float inkColor = GetColor(g_sampleNormal, texC.xy);
 
-	float colorFactor = g_colorFactor * inkColor;
+	float colorFactor = g_colorFactor;
 	if (brush.r > 0.59f)
 	{
 		brush = float4(1.0f, 1.0f, 1.0f, 0.0f);
 	}
 	else
 	{
-		brush = float4(colorFactor, colorFactor, colorFactor, alpha);
+		brush = float4(colorFactor, colorFactor, colorFactor, alpha * inkColor);
 	}
 		
 	if (TexCoord.x < 0 || TexCoord.x > 1 || TexCoord.y < 0 || TexCoord.y > 1)
@@ -504,7 +514,7 @@ PInside_OutVS VShaderParticleInside(float4 posL       : POSITION0,
 	float depth = tex2Dlod(g_samplePosition, float4(TexCoord.x, TexCoord.y, 0, 0));
 
 	int a = 3;
-	if (judegColor.g < 0.4)
+	if (judegColor.r < 0.9)
 	{
 		//float invDepth = 1 - depth / g_zFar;
 		//a = 4 * invDepth;

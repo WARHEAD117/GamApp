@@ -237,7 +237,7 @@ void TestScene::OnLoad()
 		//rock2Entity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\rock\\rock2.X");
 		
 		Material rock1Mat;
-		rock1Mat.Thickness = D3DXVECTOR4(1, 1, 1, 0);
+		rock1Mat.Thickness = D3DXVECTOR4(1, 1, 1, 1);
 		rock1Mat.MatIndex = 0;
 		rock1Entity->SetMaterial(&rock1Mat);
 		
@@ -283,6 +283,7 @@ void TestScene::OnLoad()
 
 		Material grassMat;
 		grassMat.Thickness = D3DXVECTOR4(0.4, 1, 1, 1);
+		grassMat.MatIndex = 4;
 		grass1Entity->SetMaterial(&grassMat);
 
 		D3DXMATRIX grass1M;
@@ -300,7 +301,8 @@ void TestScene::OnLoad()
 		grass2Entity->SetMaterial(&grassMat);
 
 		Material grass2Mat;
-		grass2Mat.Thickness = D3DXVECTOR4(0.4, 1, 1, 0.5);
+		grass2Mat.MatIndex = 4;
+		grass2Mat.Thickness = D3DXVECTOR4(0.4, 1, 1, 0.6);
 		grass2Entity->SetMaterial(&grass2Mat);
 
 		D3DXMATRIX grass2M;
@@ -318,7 +320,8 @@ void TestScene::OnLoad()
 		grass3Entity->SetMaterial(&grassMat);
 
 		Material grass3Mat;
-		grass3Mat.Thickness = D3DXVECTOR4(0.4, 1, 1, 0);
+		grass3Mat.MatIndex = 4;
+		grass3Mat.Thickness = D3DXVECTOR4(0.4, 1, 1, 0.3);
 		grass3Entity->SetMaterial(&grass3Mat);
 
 		D3DXMATRIX grass3M;

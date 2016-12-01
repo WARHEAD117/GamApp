@@ -299,6 +299,10 @@ void TestScene::OnLoad()
 		grass2Entity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\tree\\grass.X");
 		grass2Entity->SetMaterial(&grassMat);
 
+		Material grass2Mat;
+		grass2Mat.Thickness = D3DXVECTOR4(0.4, 1, 1, 0.5);
+		grass2Entity->SetMaterial(&grass2Mat);
+
 		D3DXMATRIX grass2M;
 		D3DXVECTOR3 grass2Move = D3DXVECTOR3(-25, -0.5f, 47);
 		D3DXMatrixTranslation(&grass2M, grass2Move.x, grass2Move.y, grass2Move.z);
@@ -312,6 +316,10 @@ void TestScene::OnLoad()
 		//==========================================================================================
 		grass3Entity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\tree\\grass.X");
 		grass3Entity->SetMaterial(&grassMat);
+
+		Material grass3Mat;
+		grass3Mat.Thickness = D3DXVECTOR4(0.4, 1, 1, 0);
+		grass3Entity->SetMaterial(&grass3Mat);
 
 		D3DXMATRIX grass3M;
 		D3DXVECTOR3 grass3Move = D3DXVECTOR3(-30, -0.5f, 35);

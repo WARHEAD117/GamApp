@@ -320,10 +320,10 @@ P_OutVS VShaderParticle(float4 posL       : POSITION0,
 
 	float depth = tex2Dlod(g_samplePosition, float4(TexCoord.x, TexCoord.y, 0, 0));
 	//DiffuseMap的纹理采样
-	float4 diffuseColor = tex2Dlod(g_sampleDiffuse, float4(TexCoord.x, TexCoord.y, 0, 0)) * float4(2,2,2,1);
-	float4 color = tex2Dlod(g_sampleMainColor, float4(TexCoord.x, TexCoord.y, 0, 0));
+	float4 material = tex2Dlod(g_sampleDiffuse, float4(TexCoord.x, TexCoord.y, 0, 0)) * float4(2,2,2,1);
+	float4 edge = tex2Dlod(g_sampleMainColor, float4(TexCoord.x, TexCoord.y, 0, 0));
 
-	float thickness = 1 - color.r;
+	float thickness = 1 - edge.r;
 	outVS.thickness = float4(thickness, thickness, thickness, thickness);
 	outVS.texC = float4(TexCoord, 0, 0);
 
@@ -341,9 +341,9 @@ P_OutVS VShaderParticle(float4 posL       : POSITION0,
 		scale = (g_zNear - limit * b) / (limit * limit * limit) * depth * depth + b;
 	}
 
-	scaledSize = size * scale * diffuseColor;
+	scaledSize = size * scale * material.x;
 
-	scaledSize = max(scaledSize, g_minTexSize * diffuseColor);
+	scaledSize = max(scaledSize, g_minTexSize * material.x);
 
 	if (scaledSize >= 1 && thickness > 0.0f)
 	{
@@ -365,7 +365,7 @@ P_OutVS VShaderParticle(float4 posL       : POSITION0,
 		//
 
 		//根据diffuse的alpha来判断材质类型
-		if (diffuseColor.a * 255.0f <= 4.5f && diffuseColor.a * 255.0f > 3.5f)
+		if (material.a * 255.0f <= 4.5f && material.a * 255.0f > 3.5f)
 		{
 			//scaledSize *= res;
 		}

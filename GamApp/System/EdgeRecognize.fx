@@ -1003,39 +1003,17 @@ float4 Laplace_Edge2(float2 TexCoord, float2 R_d)
 
 			float4 c = tex2D(g_sampleLineMask, uv);
 				//return tex2D(g_sampleLineMask, uv);
-				//if (c.r < 0.5)
+
+
+				float gray = tex2D(g_sampleUvTex, TexCoord).x;
+			if (gray < 0.4)
+			//if (N < 0.5)
 			{
-				//N = -N * 10;
-				//N = c.r;
+				N = -N * 10;
+				N = c.r;
 			}
 		}
 	}
-	//else
-	{
-
-		float sinThetaX1 = normalize(cross(normalLProj, normalProjX)).y;
-		float a = length(normalize(cross(normalLProj, normalProjX)));
-		//float sinThetaX2 = normalize(cross(normalProjX, normalRProj)).y;
-		float sinThetaY1 = normalize(cross(normalUProj, normalProjY)).x;
-		float b = length(normalize(cross(normalUProj, normalProjY)));
-		//float sinThetaY2 = normalize(cross(normalProjX, normalRProj)).x;
-
-		//if (sinThetaX1 > 0.01 || sinThetaY1 > 0.01)
-		//	return float4(-a, -a, -a, 0);
-
-		if ((sinThetaX1 > p2 || sinThetaY1 > p2) && !isEdge)
-		{
-			float2 uv = tex2D(g_sampleUvTex, TexCoord).zw;
-				float4 c = tex2D(g_sampleLineMask, uv);
-				//return tex2D(g_sampleLineMask, uv);
-				//if (c.r < 0.5)
-			{
-				//N = -N * 10;
-				//N = c.r;
-			}
-		}
-	}
-
 
 
 	//float2 uv = tex2D(g_sampleUvTex, TexCoord).zw;
@@ -1046,9 +1024,9 @@ float4 Laplace_Edge2(float2 TexCoord, float2 R_d)
 	if (isEdge)
 		alpha = 0;
 
-	float gray = tex2D(g_sampleUvTex, TexCoord).x;
+	float4 gray = tex2D(g_sampleUvTex, TexCoord);
 	int J = 1;
-	if (gray < 0.4)
+	if (gray.x < 0.4)
 	{
 		J = 0;
 	}
@@ -1082,7 +1060,8 @@ float4 PShader2(float2 TexCoord : TEXCOORD0) : COLOR
 	float3 N_L = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2(-1, 0))); //Left
 	float dx = R - R_R;
 	float dy = R - R_D;
-
+	dx = ddx(R);
+	dy = ddy(R);
 	float2 d = normalize(float2(dx, dy));
 
 	//return float4(d,0,0);

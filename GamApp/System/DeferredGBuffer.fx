@@ -171,11 +171,10 @@ OutputPS PShader(float3 NormalV		: NORMAL,
 	Texture.xyz = g_IsSky ?float4(1,1,1,1) : Texture.xyz * g_ThicknessMaterial.xyz;
 	//RGB通道储存纹理颜色
 	PsOut.diffuse.rgb = Texture.xyz / 2.0f;
+	PsOut.diffuse.a = g_ThicknessMaterial.w;
 
 	//A通道储存高光强度
-	PsOut.diffuse.a = g_MatIndex / 255.0f; // Specular.x;
 	PsOut.normal = float4(sampledNormalV.xyz, 1.0f);
-	PsOut.normal.a = g_ThicknessMaterial.w;
 	PsOut.position = posV.zzzz;
 
 
@@ -188,9 +187,10 @@ OutputPS PShader(float3 NormalV		: NORMAL,
 	float nl = dot(viewNormal, -light);
 	nl = pow(nl, 3.5);
 	//nl *= 0.9;
-	PsOut.grayscale = float4(nl, nl, nl, 1);
-	PsOut.grayscale = g_IsSky ? float4(1, 1, 1, 1) : PsOut.grayscale;
+	PsOut.grayscale.x = nl;
+	PsOut.grayscale.y = g_MatIndex / 255.0f;
 	PsOut.grayscale.zw = frac(TexCoord * 10);
+	PsOut.grayscale = g_IsSky ? float4(1, 1, 1, 1) : PsOut.grayscale;
 
 	return PsOut;
 

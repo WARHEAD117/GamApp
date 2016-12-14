@@ -65,6 +65,16 @@ sampler_state
 	MipFilter = linear;
 };
 
+texture		g_DiffuseBuffer;
+sampler2D g_sampleDiffuse =
+sampler_state
+{
+	Texture = <g_DiffuseBuffer>;
+	MinFilter = Point;
+	MagFilter = Point;
+	MipFilter = Point;
+};
+
 struct OutputVS
 {
 	float4 posWVP         : POSITION0;
@@ -1034,8 +1044,8 @@ float4 Laplace_Edge2(float2 TexCoord, float2 R_d)
 	{
 		J = 1;
 	}
-
-	return float4(N, J, N, alpha);
+	float4 material = tex2D(g_sampleDiffuse, TexCoord);
+	return float4(N, gray.y, material.x, alpha);
 }
 
 float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR

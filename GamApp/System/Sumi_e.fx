@@ -240,7 +240,7 @@ float4 PShaderEdgeBlur(float2 TexCoord : TEXCOORD0) : COLOR
 	float4 color4 = tex2D(g_sampleMainColor, TexCoord);
 	float color = color4.r;
 	if (color >= 0.99)
-		return float4(color, color, color, 1);
+		return float4(color, color4.y, color4.z, color4.w);
 
 	float2 offset = float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight);
 
@@ -272,7 +272,7 @@ float4 PShaderEdgeBlur(float2 TexCoord : TEXCOORD0) : COLOR
 	if (count <= 1)
 		return color4;
 	float finalColor = 1.0f * sum / count;
-	return float4(finalColor, finalColor, finalColor, color4.a);
+	return float4(finalColor,color4.y, color4.z, color4.w);
 }
 
 float4 PShaderBlend(float2 TexCoord : TEXCOORD0) : COLOR
@@ -300,9 +300,9 @@ struct P_OutVS
 	float4 thickness	  : COLOR1;
 };
 
-float GetColor(sampler2D sampleNormal, in float2 uv)
+float GetColor(sampler2D sampleTex, in float2 uv)
 {
-	return tex2D(sampleNormal, uv).a;
+	return tex2D(sampleTex, uv).a;
 }
 
 P_OutVS VShaderParticle(float4 posL       : POSITION0,
@@ -319,11 +319,13 @@ P_OutVS VShaderParticle(float4 posL       : POSITION0,
 	outVS.psize = 0;
 
 	float depth = tex2Dlod(g_samplePosition, float4(TexCoord.x, TexCoord.y, 0, 0));
-	//DiffuseMap的纹理采样
-	float4 material = tex2Dlod(g_sampleDiffuse, float4(TexCoord.x, TexCoord.y, 0, 0)) * float4(2,2,2,1);
-	float4 edge = tex2Dlod(g_sampleMainColor, float4(TexCoord.x, TexCoord.y, 0, 0));
+	
+	float materialFactor = tex2Dlod(g_sampleMainColor, float4(TexCoord.x, TexCoord.y, 0, 0)).z * 2;
 
-	float thickness = 1 - edge.r;
+	float4 edgeMap = tex2Dlod(g_sampleMainColor, float4(TexCoord.x, TexCoord.y, 0, 0));
+	
+	float matIndex = edgeMap.y * 255.0f;
+	float thickness = 1 - edgeMap.r;
 	outVS.thickness = float4(thickness, thickness, thickness, thickness);
 	outVS.texC = float4(TexCoord, 0, 0);
 
@@ -341,9 +343,9 @@ P_OutVS VShaderParticle(float4 posL       : POSITION0,
 		scale = (g_zNear - limit * b) / (limit * limit * limit) * depth * depth + b;
 	}
 
-	scaledSize = size * scale * material.x;
+	scaledSize = size * scale * materialFactor.x;
 
-	scaledSize = max(scaledSize, g_minTexSize * material.x);
+	scaledSize = max(scaledSize, g_minTexSize * materialFactor.x);
 
 	if (scaledSize >= 1 && thickness > 0.0f)
 	{
@@ -365,7 +367,7 @@ P_OutVS VShaderParticle(float4 posL       : POSITION0,
 		//
 
 		//根据diffuse的alpha来判断材质类型
-		if (material.a * 255.0f <= 4.5f && material.a * 255.0f > 3.5f)
+		if (matIndex <= 4.5f && matIndex > 3.5f)
 		{
 			//scaledSize *= res;
 		}
@@ -433,7 +435,7 @@ float4 PShaderParticle(float2 TexCoord : TEXCOORD0,
 
 	float alpha = thickness.x;// / 2;
 
-	float inkColor = GetColor(g_sampleNormal, texC.xy);
+	float inkColor = GetColor(g_sampleDiffuse, texC.xy);
 
 	float colorFactor = g_colorFactor;
 	if (brush.r > 0.59f)
@@ -473,48 +475,49 @@ PInside_OutVS VShaderParticleInside(float4 posL       : POSITION0,
 	//默认颜色为0
 	float thickness = 0;
 	//GrayScaleMap的纹理采样
-	float4 judegColor = tex2Dlod(g_sampleJudgeTex, float4(TexCoord.x, TexCoord.y, 0, 0));
+	float4 edge = tex2Dlod(g_sampleJudgeTex, float4(TexCoord.x, TexCoord.y, 0, 0));
+	float matIndex = edge.y * 255.0f;
 	//笔迹区域
 	float4 texColor = tex2Dlod(g_sampleMainColor, float4(TexCoord.x, TexCoord.y, 0, 0));
 	//DiffuseMap的纹理采样
-	float4 diffuseColor = tex2Dlod(g_sampleDiffuse, float4(TexCoord.x, TexCoord.y, 0, 0)) * float4(2, 2, 2, 1);
+	float4 material = tex2Dlod(g_sampleDiffuse, float4(TexCoord.x, TexCoord.y, 0, 0)) * float4(2, 2, 2, 1);
 
 	//根据diffuseMap的颜色确定纹理颜色，这里值越大颜色越深,也可以理解为墨的浓度值
-	thickness = 1 - diffuseColor.g;
+	thickness = 1 - material.g;
 
 	//根据diffuse的alpha来判断材质类型
-	if (diffuseColor.a * 255.0f <= 0.5f)
+	if (matIndex <= 0.5f)
 	{
-		thickness = 1 - diffuseColor.g;
+		thickness = 1 - material.g;
 	}
-	else if (diffuseColor.a * 255.0f <= 1.5f && diffuseColor.a * 255.0f > 0.5f)
+	else if (matIndex <= 1.5f && matIndex > 0.5f)
 	{
 		thickness = 1 - texColor.r;
 	}
-	else if (diffuseColor.a * 255.0f <= 2.5f && diffuseColor.a * 255.0f > 1.5f)
+	else if (matIndex <= 2.5f && matIndex > 1.5f)
 	{
-		thickness = (1 - texColor.r * diffuseColor.b)*(diffuseColor.g);
+		thickness = (1 - texColor.r * material.b)*(material.g);
 	}
 	else
 	{
-		thickness = 1 - diffuseColor.g;
+		thickness = 1 - material.g;
 	}
 
 	if (g_UpperLayer)
 	{
-		if (diffuseColor.a * 255.0f <= 0.5f)
+		if (matIndex <= 0.5f)
 		{
 			thickness = 0;
 		}
-		else if (diffuseColor.a * 255.0f <= 2.5f && diffuseColor.a * 255.0f > 1.5f)
+		else if (matIndex <= 2.5f && matIndex > 1.5f)
 		{
-			thickness = (1 - texColor.r)*(diffuseColor.g);
+			thickness = (1 - texColor.r)*(material.g);
 		}
 	}
 	float depth = tex2Dlod(g_samplePosition, float4(TexCoord.x, TexCoord.y, 0, 0));
 
 	int a = 3;
-	if (judegColor.r < 0.9)
+	if (edge.r < 0.9)
 	{
 		//float invDepth = 1 - depth / g_zFar;
 		//a = 4 * invDepth;
@@ -562,11 +565,11 @@ PInside_OutVS VShaderParticleInside(float4 posL       : POSITION0,
 	outVS.color = float4(thickness, outVS.psize, 0, 0);
 
 
-	if (diffuseColor.a * 255.0f > 2.5f && diffuseColor.a * 255.0f <= 3.5f)
+	if (matIndex > 2.5f && matIndex <= 3.5f)
 	{
 		outVS.posWVP = float4(2 * TexCoord.x - 1, 1 - 2 * TexCoord.y, 0, 1);
 		outVS.psize = 1;
-		thickness = 1-diffuseColor.g;
+		thickness = 1-material.g;
 		outVS.color = float4(thickness, outVS.psize, 0, 0);
 	}
 
@@ -627,7 +630,9 @@ float4 PShaderParticleInside(float2 TexCoord : TEXCOORD0,//粒子内部的纹理
 	//TexCoord = saturate(TexCoord);
 	float4 brush = float4(1, 1, 1, 1);
 	brush = tex2D(g_sampleInkTex1, TexCoord);
-	if (diffuseColorCenter.a * 255.0f > 2.5f && diffuseColorCenter.a * 255.0f <= 3.5f)
+
+	float matIndex = tex2D(g_sampleJudgeTex, texC.xy).y;
+	if (matIndex * 255.0f > 2.5f && matIndex * 255.0f <= 3.5f)
 	{
 		brush = float4(0, 0, 0, 0);
 	}
@@ -652,7 +657,7 @@ float4 PShaderParticleInside(float2 TexCoord : TEXCOORD0,//粒子内部的纹理
 
 
 	//解决第二次渲染内部纹理时的重叠问题
-	if (diffuseColorCenter.a * 255.0f < 0.5f)
+	if (matIndex * 255.0f < 0.5f)
 		brush.r = 1;
 
 	return brush;

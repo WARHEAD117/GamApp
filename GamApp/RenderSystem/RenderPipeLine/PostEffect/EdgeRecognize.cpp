@@ -73,7 +73,7 @@ void EdgeRecognize::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		m_postEffect->SetTexture(MAINCOLORBUFFER, mainBuffer);
 	else
 		m_postEffect->SetTexture(MAINCOLORBUFFER, RENDERPIPE::Instance().m_pMainColorTarget);
-
+	m_postEffect->SetTexture(DIFFUSEBUFFER, RENDERPIPE::Instance().m_pDiffuseTarget);
 
 	//----------------------------------------------------------------------------
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pEdgeSurface);

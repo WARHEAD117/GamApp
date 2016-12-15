@@ -1016,11 +1016,17 @@ float4 Laplace_Edge2(float2 TexCoord, float2 R_d)
 
 
 				float gray = tex2D(g_sampleUvTex, TexCoord).x;
-			if (gray < 0.4)
+			
+			float KasureF = 0.4;
+			if (gray < KasureF)
 			//if (N < 0.5)
 			{
+				float f = (KasureF - gray) / KasureF;
+
 				N = -N * 10;
 				N = c.r;
+				N = (1 - f) * 1 + f * c.r;
+				N = 1 + f * (c.r - 1);
 			}
 		}
 	}

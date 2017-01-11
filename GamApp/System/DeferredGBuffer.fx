@@ -8,6 +8,7 @@ float		g_shininess = 1.0f;
 
 float4		g_ThicknessMaterial = float4(1, 1, 1, 1);
 int			g_MatIndex = 0;
+float4		g_LightDirMaterial = float4(0, 0, 1, 1);
 
 texture		g_Texture;
 sampler2D g_sampleTexture =
@@ -184,6 +185,17 @@ OutputPS PShader(float3 NormalV		: NORMAL,
 	float3 pos = posV;
 	pos = normalize(pos);
 	light = pos;
+
+	float3 N = light;
+	float3 T = float3(1, 0, 0);
+	float3 B = cross(T, N);
+	T = cross(N, B);
+	float3x3 lightTBN = float3x3(T, B, N);
+
+	float3 objLight = g_LightDirMaterial;
+
+	light = mul(objLight, lightTBN);
+
 	float nl = dot(viewNormal, -light);
 	nl = pow(nl, 3.5);
 	//nl *= 0.9;

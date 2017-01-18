@@ -208,7 +208,7 @@ void SumiE::CreatePostEffect()
 	
 	
 }
-
+int test = 0;
 int useWhich2 = 1;
 void ConfigInput()
 {
@@ -691,9 +691,25 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, m_pBufferVex, 0, sizeof(VERTEX));
 		RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(D3DFVF_VERTEX);
 		//-------------------------------------------------------------------------------------------------------------------
-		PDIRECT3DSURFACE9 pSurf_ReDraw = NULL;
 
-		for (int i = 0; i < texCount-1; i++)
+		PDIRECT3DSURFACE9 pSurf_ReDraw = NULL;
+		pSurf_ReDraw = NULL;
+		m_pTexList[texCount - 1]->GetSurfaceLevel(0, &pSurf_ReDraw);
+
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_ReDraw);
+		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
+
+		m_SynthesisEffect->SetTexture("g_Src", m_pPostTarget);
+
+		m_SynthesisEffect->CommitChanges();
+
+		m_SynthesisEffect->BeginPass(2);
+		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+		m_SynthesisEffect->EndPass();
+		//-------------------------------------------------------------------------------------------------------------------
+
+
+		for (int i = 1; i < texCount-1; i++)
 		{
 			pSurf_ReDraw = NULL;
 			m_pTexList[i]->GetSurfaceLevel(0, &pSurf_ReDraw);
@@ -708,9 +724,40 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 			m_SynthesisEffect->BeginPass(2);
 			RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 			m_SynthesisEffect->EndPass();
-		}//-------------------------------------------------------------------------------------------------------------------
+		}
+		
+		//-------------------------------------------------------------------------------------------------------------------
+		PDIRECT3DSURFACE9 pSurf_result = NULL;
+		m_pPostTarget->GetSurfaceLevel(0, &pSurf_result);
+
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_result);
+		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
+
+		
+		if (test == 0)
+		{
+			m_SynthesisEffect->SetTexture("g_Src", m_pTexList[4]);
+			test = 1;
+		}
+		else
+		{
+			m_SynthesisEffect->SetTexture("g_Src", m_pTexList[0]);
+		}
+
+		
+		m_SynthesisEffect->SetTexture("g_Src2", m_pTexList[1]);
+		m_SynthesisEffect->SetTexture("g_Src3", m_pTexList[2]);
+		m_SynthesisEffect->SetTexture("g_Src4", m_pTexList[3]);
+		m_SynthesisEffect->SetTexture("g_Src5", m_pTexList[4]);
+
+		m_SynthesisEffect->CommitChanges();
+
+		m_SynthesisEffect->BeginPass(3);
+		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+		m_SynthesisEffect->EndPass();
+
 		pSurf_ReDraw = NULL;
-		m_pTexList[texCount-1]->GetSurfaceLevel(0, &pSurf_ReDraw);
+		m_pTexList[0]->GetSurfaceLevel(0, &pSurf_ReDraw);
 
 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_ReDraw);
 		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
@@ -723,24 +770,6 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 		m_SynthesisEffect->EndPass();
 
-		//-------------------------------------------------------------------------------------------------------------------
-		PDIRECT3DSURFACE9 pSurf_result = NULL;
-		m_pPostTarget->GetSurfaceLevel(0, &pSurf_result);
-
-		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_result);
-		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
-
-		m_SynthesisEffect->SetTexture("g_Src", m_pTexList[0]);
-		m_SynthesisEffect->SetTexture("g_Src2", m_pTexList[1]);
-		m_SynthesisEffect->SetTexture("g_Src3", m_pTexList[2]);
-		m_SynthesisEffect->SetTexture("g_Src4", m_pTexList[3]);
-		m_SynthesisEffect->SetTexture("g_Src5", m_pTexList[4]);
-
-		m_SynthesisEffect->CommitChanges();
-
-		m_SynthesisEffect->BeginPass(3);
-		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
-		m_SynthesisEffect->EndPass();
 		m_SynthesisEffect->End();
 	}
 }

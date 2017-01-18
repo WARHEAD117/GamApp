@@ -241,9 +241,10 @@ float4 PShaderSrcAdd(float2 TexCoord : TEXCOORD0) : COLOR
 	float4 colorSrc4 = tex2D(g_sampleSrc2, TexCoord);
 	float4 colorSrc5 = tex2D(g_sampleSrc3, TexCoord);
 
-	float4 final = colorSrc*0.0545 + colorSrc2*0.2442 + colorSrc3*0.40262 + colorSrc4*0.2442 + colorSrc5*0.0545;
+	float4 final = colorSrc*0.0 + colorSrc2*0.2442 + colorSrc3*0.40262 + colorSrc4*0.2442 + colorSrc5*0.0545;
+	float4 blur = GaussianBlur(g_ScreenWidth, g_ScreenHeight, g_sampleSrc, TexCoord);
 	//final = colorSrc*0.2 + colorSrc2*0.2 + colorSrc3*0.2 + colorSrc4*0.2 + colorSrc5*0.2;
-	return final;
+	return 0.8 * blur + 0.2 * final;
 
 	float d = colorSrc2.r - final.r;
 	if (d != 0) d = 1;

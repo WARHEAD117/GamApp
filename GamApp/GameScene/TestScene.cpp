@@ -48,6 +48,9 @@ Entity* chestEntity;
 
 Entity* sponzaEntity;
 
+Entity* mushroom1Entity;
+Entity* mushroom2Entity;
+Entity* mushroom3Entity;
 
 Material testMat1;
 EffectLoader effectLoader;
@@ -106,24 +109,72 @@ void TestScene::OnLoad()
 	
 
 	//==========================================================================================
-	if (false)
+	if (true)
 	{
-		horse2Entity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\horse2.X");
+		//horse2Entity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\horse2.X"); //sphere.X
+		horse2Entity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\Mushroom\\mushroom1.X");
 
 		Material horse2Mat;
-		horse2Mat.Thickness = D3DXVECTOR4(1.5, 0.8, 1, 1);
+		horse2Mat.Thickness = D3DXVECTOR4(0.5, 0.8, 1, 1);
 		horse2Mat.MatIndex = 1;
 		horse2Entity->SetMaterial(&horse2Mat);
 
 		D3DXMATRIX horse2M;
-		D3DXVECTOR3 horse2MV = D3DXVECTOR3(-12, 25, -20.5f);
+		D3DXVECTOR3 horse2MV = D3DXVECTOR3(-16.5, 25, -31.5f);
 		D3DXMatrixTranslation(&horse2M, horse2MV.x, horse2MV.y, horse2MV.z);
-		D3DXVECTOR3 horse2SV = D3DXVECTOR3(0.01f, 0.01f, 0.01f);
+		D3DXVECTOR3 horse2SV = D3DXVECTOR3(0.2f, 0.2f, 0.2f);
 		D3DXMATRIX horse2S;
 		D3DXMatrixScaling(&horse2S, horse2SV.x, horse2SV.y, horse2SV.z);
 		D3DXMATRIX horse2RotMat;
-		D3DXMatrixRotationY(&horse2RotMat, -0.225f * D3DX_PI);
-		horse2Entity->SetWorldTransform(horse2RotMat * horse2S * horse2M);
+		D3DXMatrixRotationZ(&horse2RotMat, 0.425f * D3DX_PI);
+		D3DXMATRIX mushroom2RotMat2;
+		D3DXMatrixRotationY(&mushroom2RotMat2, -0.225f * D3DX_PI);
+		horse2Entity->SetWorldTransform(horse2RotMat * mushroom2RotMat2 * horse2S * horse2M);
+	}
+	
+	//==========================================================================================
+	if (true)
+	{
+		//horse2Entity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\horse2.X"); //sphere.X
+		mushroom2Entity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\Mushroom\\mushroom2.X");
+
+		Material mushroom2Mat;
+		mushroom2Mat.Thickness = D3DXVECTOR4(0.7, 0.8, 1, 1);
+		mushroom2Mat.MatIndex = 1;
+		mushroom2Mat.LightDir = D3DXVECTOR4(0, 1, 1, 1);
+		mushroom2Entity->SetMaterial(&mushroom2Mat);
+
+		D3DXMATRIX mushroom2M;
+		D3DXVECTOR3 mushroom2MV = D3DXVECTOR3(-21, 25, -25.5f);
+		D3DXMatrixTranslation(&mushroom2M, mushroom2MV.x, mushroom2MV.y, mushroom2MV.z);
+		D3DXVECTOR3 mushroom2SV = D3DXVECTOR3(0.1f, 0.1f, 0.1f);
+		D3DXMATRIX mushroom2S;
+		D3DXMatrixScaling(&mushroom2S, mushroom2SV.x, mushroom2SV.y, mushroom2SV.z);
+		D3DXMATRIX mushroom2RotMat;
+		D3DXMatrixRotationY(&mushroom2RotMat, -0.225f * D3DX_PI);
+		mushroom2Entity->SetWorldTransform(mushroom2RotMat * mushroom2S * mushroom2M);
+	}
+
+	//==========================================================================================
+	if (true)
+	{
+		mushroom3Entity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\Mushroom\\mushroom3.X");
+
+		Material mushroom3Mat;
+		mushroom3Mat.Thickness = D3DXVECTOR4(0.55, 0.8, 1, 1);
+		mushroom3Mat.MatIndex = 1;
+		mushroom3Mat.LightDir = D3DXVECTOR4(-1,0,1,1);
+		mushroom3Entity->SetMaterial(&mushroom3Mat);
+
+		D3DXMATRIX mushroom3M;
+		D3DXVECTOR3 mushroom3MV = D3DXVECTOR3(-24.5, 25, -21.5f);
+		D3DXMatrixTranslation(&mushroom3M, mushroom3MV.x, mushroom3MV.y, mushroom3MV.z);
+		D3DXVECTOR3 mushroom3SV = D3DXVECTOR3(0.1f, 0.1f, 0.1f);
+		D3DXMATRIX mushroom3S;
+		D3DXMatrixScaling(&mushroom3S, mushroom3SV.x, mushroom3SV.y, mushroom3SV.z);
+		D3DXMATRIX mushroom3RotMat;
+		D3DXMatrixRotationY(&mushroom3RotMat, -0.7f * D3DX_PI);
+		mushroom3Entity->SetWorldTransform(mushroom3RotMat * mushroom3S * mushroom3M);
 	}
 
 	//==========================================================================================

@@ -44,6 +44,7 @@ struct Material
 	float           Power;          /* Sharpness if specular highlight */
 	D3DXVECTOR4	  Thickness;
 	int			  MatIndex;
+	D3DXVECTOR4	  LightDir;
 
 	LPD3DXEFFECT	effect;
 
@@ -56,6 +57,7 @@ struct Material
 		Power = 1;
 		Thickness = D3DXVECTOR4(1.0f, 1.0f, 1.0f, 1.0f);
 		MatIndex = 0;
+		LightDir = D3DXVECTOR4(0.0f, 0.0f, 1.0f, 1.0f);
 	}
 
 	void operator = (const D3DMATERIAL9& d3dmat)

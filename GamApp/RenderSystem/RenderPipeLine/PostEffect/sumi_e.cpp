@@ -166,6 +166,24 @@ void SumiE::CreatePostEffect()
 			D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
 			&m_pTexList[i], NULL);
 	}
+
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
+		1, D3DUSAGE_RENDERTARGET,
+		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
+		&m_pFootprintTarget, NULL);
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
+		1, D3DUSAGE_RENDERTARGET,
+		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
+		&m_pFootprintTarget_LF, NULL);
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
+		1, D3DUSAGE_RENDERTARGET,
+		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
+		&m_pDiffusionTarget, NULL);
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
+		1, D3DUSAGE_RENDERTARGET,
+		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
+		&m_pOUTTarget, NULL);
+
 	
 
 	ID3DXBuffer* error = 0;
@@ -577,7 +595,9 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		m_SynthesisEffect->SetTexture("g_Bloomed", m_pVerticalBlur);
 		
 		m_SynthesisEffect->SetTexture("g_Inside", m_pBluredInside);
-		m_SynthesisEffect->SetTexture("g_Background", m_pBackground);
+		//m_SynthesisEffect->SetTexture("g_Background", m_pBackground);
+
+		m_SynthesisEffect->SetTexture("g_Background", RENDERDEVICE::Instance().defaultTexture);
 
 		m_SynthesisEffect->SetFloat("g_zNear", CameraParam::zNear);
 		m_SynthesisEffect->SetFloat("g_zFar", CameraParam::zFar);
@@ -691,82 +711,92 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, m_pBufferVex, 0, sizeof(VERTEX));
 		RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(D3DFVF_VERTEX);
 		//-------------------------------------------------------------------------------------------------------------------
+		//生成墨迹图
+		PDIRECT3DSURFACE9 pSurf_FP = NULL;
+		pSurf_FP = NULL;
+		m_pFootprintTarget->GetSurfaceLevel(0, &pSurf_FP);
 
-		PDIRECT3DSURFACE9 pSurf_ReDraw = NULL;
-		pSurf_ReDraw = NULL;
-		m_pTexList[texCount - 1]->GetSurfaceLevel(0, &pSurf_ReDraw);
-
-		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_ReDraw);
-		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_FP);
+		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
 
 		m_SynthesisEffect->SetTexture("g_Src", m_pPostTarget);
+		if (test == 0)
+		{
+			test = 1;
+			m_SynthesisEffect->SetTexture("g_FP_LF", RENDERDEVICE::Instance().defaultTexture);
+		}
+		else
+		{
+
+			m_SynthesisEffect->SetTexture("g_FP_LF", m_pFootprintTarget_LF);
+		}
 
 		m_SynthesisEffect->CommitChanges();
 
-		m_SynthesisEffect->BeginPass(2);
+		m_SynthesisEffect->BeginPass(6);
 		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 		m_SynthesisEffect->EndPass();
+
 		//-------------------------------------------------------------------------------------------------------------------
+		//使用墨迹图进行扩散，渲染扩散图
+		pSurf_FP = NULL;
+		m_pDiffusionTarget->GetSurfaceLevel(0, &pSurf_FP);
 
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_FP);
+		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
-		for (int i = 1; i < texCount-1; i++)
-		{
-			pSurf_ReDraw = NULL;
-			m_pTexList[i]->GetSurfaceLevel(0, &pSurf_ReDraw);
+		m_SynthesisEffect->SetTexture("g_Src", m_pFootprintTarget);
 
-			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_ReDraw);
-			RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
+		m_SynthesisEffect->CommitChanges();
 
-			m_SynthesisEffect->SetTexture("g_Src", m_pTexList[i+1]);
+		m_SynthesisEffect->BeginPass(7);
+		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+		m_SynthesisEffect->EndPass();
 
-			m_SynthesisEffect->CommitChanges();
-
-			m_SynthesisEffect->BeginPass(2);
-			RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
-			m_SynthesisEffect->EndPass();
-		}
-		
 		//-------------------------------------------------------------------------------------------------------------------
+		//根据扩散图和水墨渲染的结果进行合成
 		PDIRECT3DSURFACE9 pSurf_result = NULL;
+		m_pOUTTarget->GetSurfaceLevel(0, &pSurf_result);
+
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_result);
+		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
+
+		m_SynthesisEffect->SetTexture("g_Src", m_pPostTarget);
+		m_SynthesisEffect->SetTexture("g_Src2", m_pDiffusionTarget);
+
+		m_SynthesisEffect->CommitChanges();
+
+		m_SynthesisEffect->BeginPass(8);
+		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+		m_SynthesisEffect->EndPass();
+
+		//-------------------------------------------------------------------------------------------------------------------
+		//把扩散图渲染回FP_LF
+		m_pFootprintTarget_LF->GetSurfaceLevel(0, &pSurf_result);
+
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_result);
+		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
+
+		m_SynthesisEffect->SetTexture("g_Src", m_pDiffusionTarget);
+
+		m_SynthesisEffect->CommitChanges();
+
+		m_SynthesisEffect->BeginPass(9);
+		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+		m_SynthesisEffect->EndPass();
+
+		//-------------------------------------------------------------------------------------------------------------------
+		pSurf_result = NULL;
 		m_pPostTarget->GetSurfaceLevel(0, &pSurf_result);
 
 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_result);
 		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
-		
-		if (test == 0)
-		{
-			m_SynthesisEffect->SetTexture("g_Src", m_pTexList[4]);
-			test = 1;
-		}
-		else
-		{
-			m_SynthesisEffect->SetTexture("g_Src", m_pTexList[0]);
-		}
-
-		
-		m_SynthesisEffect->SetTexture("g_Src2", m_pTexList[1]);
-		m_SynthesisEffect->SetTexture("g_Src3", m_pTexList[2]);
-		m_SynthesisEffect->SetTexture("g_Src4", m_pTexList[3]);
-		m_SynthesisEffect->SetTexture("g_Src5", m_pTexList[4]);
+		m_SynthesisEffect->SetTexture("g_Src", m_pOUTTarget);
 
 		m_SynthesisEffect->CommitChanges();
 
-		m_SynthesisEffect->BeginPass(3);
-		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
-		m_SynthesisEffect->EndPass();
-
-		pSurf_ReDraw = NULL;
-		m_pTexList[0]->GetSurfaceLevel(0, &pSurf_ReDraw);
-
-		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_ReDraw);
-		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
-
-		m_SynthesisEffect->SetTexture("g_Src", m_pPostTarget);
-
-		m_SynthesisEffect->CommitChanges();
-
-		m_SynthesisEffect->BeginPass(2);
+		m_SynthesisEffect->BeginPass(9);
 		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 		m_SynthesisEffect->EndPass();
 

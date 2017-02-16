@@ -55,5 +55,10 @@ private:
 	int texCount = 5;
 	LPDIRECT3DTEXTURE9 m_pTexList[5];
 
+	LPDIRECT3DTEXTURE9 m_pFootprintTarget;
+	LPDIRECT3DTEXTURE9 m_pFootprintTarget_LF;
+	LPDIRECT3DTEXTURE9 m_pDiffusionTarget;
+	LPDIRECT3DTEXTURE9 m_pOUTTarget;
+
 };
 

@@ -149,6 +149,16 @@ sampler_state
 	MipFilter = Point;
 };
 
+texture		g_FP_LF;
+sampler2D g_sample_FP_LF =
+sampler_state
+{
+	Texture = <g_FP_LF>;
+	MinFilter = Point;
+	MagFilter = Point;
+	MipFilter = Point;
+};
+
 float g_AlphaFactor = 0.8f;
 
 struct OutputVS
@@ -233,6 +243,87 @@ float4 PShaderSrc(float2 TexCoord : TEXCOORD0) : COLOR
 	return colorSrc;
 }
 
+float4 Diffusion(sampler2D texSampler, float2 TexCoord, float2 screenSize)
+{
+	//return float4(1, 0, 0, 1);
+	float color = tex2D(texSampler, TexCoord).r;
+	float avg = color;
+	float outColor = color;
+
+	if (color > 0.99)
+	{
+		//return float4(1, 0, 0, 1);
+		float colorL = tex2D(texSampler, TexCoord + float2(-1, 0)*float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight)).r;
+		float colorR = tex2D(texSampler, TexCoord + float2(1, 0)*float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight)).r;
+		float colorU = tex2D(texSampler, TexCoord + float2(0, -1)*float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight)).r;
+		float colorD = tex2D(texSampler, TexCoord + float2(0, 1)*float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight)).r;
+
+		float colorLU = tex2D(texSampler, TexCoord + float2(-1, -1)*float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight)).r;
+		float colorRU = tex2D(texSampler, TexCoord + float2(1, -1)*float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight)).r;
+		float colorLD = tex2D(texSampler, TexCoord + float2(-1, 1)*float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight)).r;
+		float colorRD = tex2D(texSampler, TexCoord + float2(1, 1)*float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight)).r;
+
+		int InkQ_L = 255 - colorL * 255;
+		int InkQ_R = 255 - colorR * 255;
+		int InkQ_U = 255 - colorU * 255;
+		int InkQ_D = 255 - colorD * 255;
+
+		int InkQ_LU = 255 - colorLU * 255;
+		int InkQ_RU = 255 - colorRU * 255;
+		int InkQ_LD = 255 - colorLD * 255;
+		int InkQ_RD = 255 - colorRD * 255;
+
+		int sum = 0;
+		int count = 0;
+
+		if (InkQ_L > 0)
+		{
+			sum += InkQ_L; count++;
+		}
+		if (InkQ_R > 0)
+		{
+			sum += InkQ_R; count++;
+		}
+		if (InkQ_U > 0)
+		{
+			sum += InkQ_U; count++;
+		}
+		if (InkQ_D > 0)
+		{
+			sum += InkQ_D; count++;
+		}
+		/*
+		if (InkQ_LU > 0)
+		{
+		sum += InkQ_LU; count++;
+		}
+		if (InkQ_RU > 0)
+		{
+		sum += InkQ_RU; count++;
+		}
+		if (InkQ_LD > 0)
+		{
+		sum += InkQ_LD; count++;
+		}
+		if (InkQ_RD > 0)
+		{
+		sum += InkQ_RD; count++;
+		}
+		*/
+		if (count > 0)
+		{
+			//return float4(1, 0, 0, 1);
+			avg = sum / count;
+			float random = frac(TexCoord.x * count + TexCoord.y * avg + 1.17 * 1.86 * avg / 255) * 0.2f;
+			random = 0;
+			avg *= (0.95f - random);
+			outColor = 1 - avg / 255.0f;
+		}
+	}
+	//return float4(1, 0, 0, 1);
+	return float4(outColor, outColor, outColor, 1.0f);
+}
+
 float4 PShaderSrcAdd(float2 TexCoord : TEXCOORD0) : COLOR
 {
 	float4 colorSrc = tex2D(g_sampleSrc, TexCoord);
@@ -243,8 +334,12 @@ float4 PShaderSrcAdd(float2 TexCoord : TEXCOORD0) : COLOR
 
 	float4 final = colorSrc*0.0 + colorSrc2*0.2442 + colorSrc3*0.40262 + colorSrc4*0.2442 + colorSrc5*0.0545;
 	float4 blur = GaussianBlur(g_ScreenWidth, g_ScreenHeight, g_sampleSrc, TexCoord);
+	blur = Diffusion(g_sampleSrc, TexCoord, float2(g_ScreenWidth, g_ScreenHeight));
 	//final = colorSrc*0.2 + colorSrc2*0.2 + colorSrc3*0.2 + colorSrc4*0.2 + colorSrc5*0.2;
-	return 0.8 * blur + 0.2 * final;
+	//float4 outColor = final.x;
+	//	outColor = blur.x > final.x ? final : blur;
+	//return outColor;
+	return 0.99 * blur + 0.01 * final;
 
 	float d = colorSrc2.r - final.r;
 	if (d != 0) d = 1;
@@ -303,6 +398,52 @@ float4 PShaderInputBlur(float2 TexCoord : TEXCOORD0) : COLOR
 	return c;
 }
 
+float4 PShaderFP(float2 TexCoord : TEXCOORD0) : COLOR
+{ 
+	float4 colorSrc = tex2D(g_sampleSrc, TexCoord);
+	colorSrc = float4(1, 1, 1, 1) - colorSrc.x;
+	colorSrc = colorSrc * 0.99f;
+	colorSrc = float4(1, 1, 1, 1) - colorSrc;
+	float4 colorSrc_LF = tex2D(g_sample_FP_LF, TexCoord);
+
+		colorSrc_LF = float4(1, 1, 1, 1) - colorSrc_LF.x;
+	colorSrc_LF = colorSrc_LF * 0.99f;
+	colorSrc_LF = float4(1, 1, 1, 1) - colorSrc_LF;
+	//return float4(1, 0, 1, 0);
+	float4 outColor = float4(min(colorSrc.x, colorSrc_LF.x), min(colorSrc.y, colorSrc_LF.y), min(colorSrc.z, colorSrc_LF.z), 1);
+	return colorSrc * colorSrc_LF;
+}
+
+float4 PShaderDiffusion(float2 TexCoord : TEXCOORD0) : COLOR
+{
+	float4 colorSrc = tex2D(g_sampleSrc, TexCoord);
+	float4 blur = GaussianBlur(g_ScreenWidth, g_ScreenHeight, g_sampleSrc, TexCoord);
+	//blur = Diffusion(g_sampleSrc, TexCoord, float2(g_ScreenWidth, g_ScreenHeight));
+	//final = colorSrc*0.2 + colorSrc2*0.2 + colorSrc3*0.2 + colorSrc4*0.2 + colorSrc5*0.2;
+	//float4 outColor = final.x;
+	//	outColor = blur.x > final.x ? final : blur;
+	//return outColor;
+	return blur;
+}
+
+float4 PShaderSynthesis2(float2 TexCoord : TEXCOORD0) : COLOR
+{
+	float4 final = tex2D(g_sampleSrc, TexCoord);
+
+	float4 diffusion = tex2D(g_sampleSrc2, TexCoord) * 2;
+
+	float4 outColor = diffusion * final;
+
+	//outColor = float4(min(diffusion.x, final.x), min(diffusion.y, final.y), min(diffusion.z, final.z), 1);
+	return outColor;
+}
+
+float4 PShaderDrawBack(float2 TexCoord : TEXCOORD0) : COLOR
+{
+	float4 colorSrc = tex2D(g_sampleSrc, TexCoord);
+	return colorSrc;
+}
+
 technique SumieSynthesis
 {
 	pass p0
@@ -339,5 +480,28 @@ technique SumieSynthesis
 	{
 		vertexShader = compile vs_3_0 VShader();
 		pixelShader = compile ps_3_0 PShaderInputBlur();
+	}
+
+	pass p6
+	{
+		vertexShader = compile vs_3_0 VShader();
+		pixelShader = compile ps_3_0 PShaderFP();
+	}
+
+	pass p7
+	{
+		vertexShader = compile vs_3_0 VShader();
+		pixelShader = compile ps_3_0 PShaderDiffusion();
+	}
+
+	pass p8
+	{
+		vertexShader = compile vs_3_0 VShader();
+		pixelShader = compile ps_3_0 PShaderSynthesis2();
+	}
+	pass p9
+	{
+		vertexShader = compile vs_3_0 VShader();
+		pixelShader = compile ps_3_0 PShaderDrawBack();
 	}
 }

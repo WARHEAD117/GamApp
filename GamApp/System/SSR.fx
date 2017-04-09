@@ -20,6 +20,7 @@ texture		g_NormalBuffer;
 texture     g_RandTex;
 texture		g_PositionBuffer;
 texture		g_ViewDirBuffer;
+texture     g_EnvBRDFLUT;
 
 sampler2D g_sampleNormal =
 sampler_state
@@ -37,6 +38,18 @@ sampler_state
     MinFilter = Point;
     MagFilter = Point;
     MipFilter = Point;
+
+    AddressU = wrap;
+    AddressV = wrap;
+};
+
+sampler2D g_sampleEnvBRDFLUT =
+sampler_state
+{
+    Texture = <g_EnvBRDFLUT>;
+    MinFilter = linear;
+    MagFilter = linear;
+    MipFilter = linear;
 
     AddressU = wrap;
     AddressV = wrap;
@@ -507,10 +520,11 @@ float4 ColorResolve(float2 TexCoord : TEXCOORD0) : COLOR
     }
 
     //return weightSum;
-
+    float2 EnvBRDF = tex2D(g_sampleEnvBRDFLUT, float2(NoV, g_Roughness));
+    
     resolveColor /= weightSum;
 
-    float4 fianlColor = resolveColor;
+	float4 fianlColor = resolveColor;// *(EnvBRDF.x + EnvBRDF.y);
 
     return fianlColor;
 }

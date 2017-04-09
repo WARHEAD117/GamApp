@@ -59,6 +59,7 @@ void TestScene::OnLoad()
 	
 	//Create Entity
 	//krisEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\Cube.X");
+	/*
 	krisEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile<Entity>("Res\\Mesh\\kris_sheva\\kris.X");
 	{
 		krisEntity->SetSpecularMap("Res\\Mesh\\kris_sheva\\378DAAED_SPEC.png", 0);
@@ -82,7 +83,7 @@ void TestScene::OnLoad()
 		shevaEntity->SetSpecularMap("Res\\Mesh\\kris_sheva\\6F98F51D_SPEC.png", 10);
 		shevaEntity->SetSpecularMap("Res\\Mesh\\kris_sheva\\168C52A9_SPEC.png", 12);
 		shevaEntity->SetSpecularMap("Res\\Mesh\\kris_sheva\\6D714412_SPEC.png", 14);
-	}
+	}*/
 	//testEntity.SetMeshFileName("Res\\Mesh\\car\\car25.X");
 	//testEntity.SetMeshFileName("Res\\Mesh\\tree3\\tree3.X");
 	
@@ -92,7 +93,7 @@ void TestScene::OnLoad()
 		Material sponzaMat;
 		sponzaMat.Power = 20;
 		sponzaEntity->SetMaterial(&sponzaMat);
-		if (false)
+		if (true)
 		{
 			sponzaEntity->SetSpecularMap("Res\\Mesh\\sponza\\sponza_floor_a_spec.tga", 0);
 
@@ -310,6 +311,95 @@ void TestScene::OnLoad()
 	spotLight5->SetLightColor(D3DXCOLOR(1.0, 0.2, 0.0, 1.0f));
 	spotLight5->SetWorldTranslate(0, 50, 0);
 	spotLight5->SetWorldRotation(0, 0, 0);
+
+
+	for (int i = 0; i < 50; i++)
+	{
+		//--------------------------------------------------------------------------
+		PointLight* testLight;
+		testLight = LIGHTMANAGER::Instance().CreateLight<PointLight>(ePointLight);
+		
+		testLight->SetLightColor(D3DXCOLOR(i / 50.0f, (50 - i) / 50.0f, (50 - i) / 50.0f, 1.0f));
+		testLight->SetUseShadow(false);
+		testLight->SetLightRange(2);
+		testLight->SetWorldTranslate(3 * (-25 + i), 1.5, 10);
+	}
+
+	for (int i = 0; i < 50; i++)
+	{
+		//--------------------------------------------------------------------------
+		PointLight* testLight;
+		testLight = LIGHTMANAGER::Instance().CreateLight<PointLight>(ePointLight);
+
+		testLight->SetLightColor(D3DXCOLOR(0.0f, 0.0f, (50 - i) / 50.0f, 1.0f));
+		testLight->SetUseShadow(false);
+		testLight->SetLightRange(2);
+		testLight->SetWorldTranslate(3 * (-25 + i), 0.5, 13);
+	}
+
+	for (int i = 0; i < 50; i++)
+	{
+		//--------------------------------------------------------------------------
+		PointLight* testLight;
+		testLight = LIGHTMANAGER::Instance().CreateLight<PointLight>(ePointLight);
+
+		testLight->SetLightColor(D3DXCOLOR((50 - i) / 50.0f, i / 50.0f, 0.0f, 1.0f));
+		testLight->SetUseShadow(false);
+		testLight->SetLightRange(2);
+		testLight->SetWorldTranslate(3 * (-25 + i), 0.5, 16);
+	}
+	{
+		
+	}
+	{
+		//--------------------------------------------------------------------------
+		PointLight* testLight;
+		testLight = LIGHTMANAGER::Instance().CreateLight<PointLight>(ePointLight);
+		testLight->SetLightColor(D3DXCOLOR(0.7f, 1.7f, 0.7f, 1.0f));
+		testLight->SetUseShadow(false);
+		testLight->SetLightRange(2);
+		testLight->SetWorldTranslate(17.995f, 0.5, 10);
+
+	}
+	{
+		//--------------------------------------------------------------------------
+		PointLight* testLight;
+		testLight = LIGHTMANAGER::Instance().CreateLight<PointLight>(ePointLight);
+		testLight->SetLightColor(D3DXCOLOR(1.7f, 0.7f, 0.7f, 1.0f));
+		testLight->SetUseShadow(false);
+		testLight->SetLightRange(2);
+		testLight->SetWorldTranslate(15.995f, 0.5, 10);
+	}
+
+	{
+		//--------------------------------------------------------------------------
+		PointLight* testLight;
+		testLight = LIGHTMANAGER::Instance().CreateLight<PointLight>(ePointLight);
+		testLight->SetLightColor(D3DXCOLOR(0.7f, 0.7f, 1.7f, 1.0f));
+		testLight->SetUseShadow(false);
+		testLight->SetLightRange(2);
+		testLight->SetWorldTranslate(14.995f, 0.5, 10);
+	}
+
+	{
+		//--------------------------------------------------------------------------
+		PointLight* testLight;
+		testLight = LIGHTMANAGER::Instance().CreateLight<PointLight>(ePointLight);
+		testLight->SetLightColor(D3DXCOLOR(0.7f, 1.7f, 0.7f, 1.0f));
+		testLight->SetUseShadow(false);
+		testLight->SetLightRange(2);
+		testLight->SetWorldTranslate(13.995f, 0.5, 10);
+	}
+
+	{
+		//--------------------------------------------------------------------------
+		PointLight* testLight;
+		testLight = LIGHTMANAGER::Instance().CreateLight<PointLight>(ePointLight);
+		testLight->SetLightColor(D3DXCOLOR(1.7f, 0.7f, 0.7f, 1.0f));
+		testLight->SetUseShadow(false);
+		testLight->SetLightRange(2);
+		testLight->SetWorldTranslate(12.995f, 0.5, 10);
+	}
 	
 }
 

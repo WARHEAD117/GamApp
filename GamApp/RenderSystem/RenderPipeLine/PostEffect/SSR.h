@@ -21,6 +21,8 @@ private:
 	bool		m_SSREnable;
 
 	LPDIRECT3DTEXTURE9			m_pRandomTex;
+	LPDIRECT3DTEXTURE9			m_pEnvBRDFLUT;
+
 	LPDIRECT3DTEXTURE9			m_pSSRTarget;
 	LPDIRECT3DSURFACE9			m_pSSRSurface;
 

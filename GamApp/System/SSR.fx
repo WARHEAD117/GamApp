@@ -459,7 +459,7 @@ float4 ColorResolve(float2 TexCoord : TEXCOORD0) : COLOR
         bool RayHit = PixelHit.w < 0.0 ? false : true;
         PixelHit.w = RayHit ? PixelHit.w : -PixelHit.w;
 
-        //if (RayHit)
+        if (RayHit)
         {
             float3 hitPos = PixelHit.xyz;
             float2 hitUV = GetRayUV(hitPos);

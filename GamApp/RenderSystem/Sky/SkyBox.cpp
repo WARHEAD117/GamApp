@@ -209,3 +209,49 @@ void SkyBox::RenderInGBuffer(ID3DXEffect* pEffect)
 	RENDERDEVICE::Instance().g_pD3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_WRAP);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_WRAP);
 }
+
+void SkyBox::RenderInShading(ID3DXEffect* pEffect)
+{
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZENABLE, FALSE);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CW);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
+	D3DXVECTOR3 cameraPos = RENDERDEVICE::Instance().ViewPosition;
+	D3DXMATRIX worldMat;
+	D3DXMatrixTranslation(&worldMat, cameraPos.x, cameraPos.y, cameraPos.z);
+	D3DXMATRIX viewMat = RENDERDEVICE::Instance().ViewMatrix;
+	D3DXMATRIX projMat = RENDERDEVICE::Instance().ProjMatrix;
+
+	D3DXMATRIX worldView = worldMat * viewMat;
+	D3DXMATRIX viewProj = viewMat * projMat;
+	D3DXMATRIX worldViewProj = worldMat * viewProj;
+
+	pEffect->SetBool("g_IsSky", true);
+
+	pEffect->SetMatrix(WORLDVIEWPROJMATRIX, &worldViewProj);
+	pEffect->SetMatrix(WORLDVIEWMATRIX, &worldView);
+	pEffect->SetMatrix(WORLDMATRIX, &worldMat);
+	pEffect->SetMatrix(VIEWMATRIX, &viewMat);
+
+	//渲染6个面==========================================================================下左右上后前
+	for (int i = 0; i < 6; i++)
+	{
+		pEffect->SetTexture(DIFFUSETEXTURE, m_pSkyTextures[i]);
+		pEffect->SetTexture(NORMALMAP, RENDERDEVICE::Instance().GetDefaultNormalMap());
+		pEffect->SetTexture(SPECULARMAP, RENDERDEVICE::Instance().GetDefaultTexture());
+		pEffect->CommitChanges();
+
+		RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, m_pBufferVex, 4 * i*mVertexByteSize, mVertexByteSize);
+		//RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(mFVF);
+		RENDERDEVICE::Instance().g_pD3DDevice->SetVertexDeclaration(mVertexDecl);
+		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+	}
+
+	pEffect->SetBool("g_IsSky", false);
+	pEffect->CommitChanges();
+
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZENABLE, TRUE);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_WRAP);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_WRAP);
+}

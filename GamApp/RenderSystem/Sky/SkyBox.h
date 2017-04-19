@@ -11,6 +11,7 @@ public:
 	void SetSkyTexture(const std::string filename, int flag);
 	void BuildSkyBox();
 	void RenderInGBuffer(ID3DXEffect* pEffect);
+	void RenderInShading(ID3DXEffect* pEffect);
 
 private:
 	LPDIRECT3DVERTEXBUFFER9    m_pBufferVex;

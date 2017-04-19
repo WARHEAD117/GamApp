@@ -42,6 +42,31 @@ sampler_state
 	MipFilter = Point;
 	AddressU = Clamp;
 	AddressV = Clamp;
+}; 
+
+texture g_Sky;
+sampler2D g_sampleSky =
+sampler_state
+{
+	Texture = <g_Sky>;
+	MinFilter = linear;
+	MagFilter = linear;
+	MipFilter = linear;
+	AddressU = wrap;
+	AddressV = wrap;
+};
+
+
+sampler2D g_samplePosition =
+sampler_state
+{
+	Texture = <g_PositionBuffer>;
+	MinFilter = linear;
+	MagFilter = linear;
+	MipFilter = linear;
+
+	AddressU = Clamp;
+	AddressV = Clamp;
 };
 
 //----------------------------
@@ -49,6 +74,7 @@ struct OutputVS
 {
 	float4 posWVP         : POSITION0;
 	float2 TexCoord		: TEXCOORD0;
+	float3 view: TEXCOORD1;
 };
 
 OutputVS VShader(float4 posL       : POSITION0,
@@ -58,13 +84,18 @@ OutputVS VShader(float4 posL       : POSITION0,
 
 	//最终输出的顶点位置（经过世界、观察、投影矩阵变换）
 	outVS.posWVP = mul(posL, g_WorldViewProj);
+	float4 posW = outVS.posWVP;
+		posW.z = 1;
+	posW.w = 1;
 
+	outVS.view = mul(posW, g_InverseProj);
 	outVS.TexCoord = TexCoord;
 
 	return outVS;
 }
 
-float4 ShadingPass(float2 TexCoord : TEXCOORD0) : COLOR
+float M_PI = 3.1415926;
+float4 ShadingPass(float2 TexCoord : TEXCOORD0, float3 view : TEXCOORD1) : COLOR
 {
 	//采样光照结果
 	float4 DiffuseLightResult = tex2D(g_sampleDiffuseLight, TexCoord);
@@ -80,6 +111,18 @@ float4 ShadingPass(float2 TexCoord : TEXCOORD0) : COLOR
 	//高光强度
 	float  Specularintensity = DiffuseBuffer.a;
 
+	float3 pos = GetPosition(TexCoord, g_samplePosition);
+	if (pos.z > 100000)
+	{
+		float3 dir = normalize(view);
+		float4 t = float4(2 * (TexCoord * float2(1, -1) + float2(-0.5, 0.5)), 1, 1);
+		dir = mul(t, g_InverseProj);
+		dir = normalize(dir);
+		//dir = mul(g_WorldView, dir);
+		float2 skyUV = float2((1 + atan2(dir.x, -dir.z) / M_PI ) /2 , acos(dir.y) / M_PI );
+		Texture = tex2D(g_sampleSky, skyUV);
+		//Texture = float4(view, 1);
+	}
 	//计算最终光照
 	return Texture * diffuseLight + specularLight * Specularintensity;
 }

@@ -147,7 +147,7 @@ void TestScene::OnLoad()
 		}
 	}
 	
-
+	sponzaEntity->SetTexture("");
 	//Entity* roomEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile<Entity>("Res\\Mesh\\room\\room.x");
 	//roomEntity->SetTexture("Res\\Mesh\\room\\wallpaper.dds",0);
 	//roomEntity->SetTexture("Res\\Mesh\\room\\DoorDiff.dds", 1);

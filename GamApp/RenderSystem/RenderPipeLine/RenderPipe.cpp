@@ -116,6 +116,11 @@ RenderPipe::RenderPipe()
 	skyBox.SetSkyTexture("Res\\SkyBox\\back.jpg", 4);
 	skyBox.SetSkyTexture("Res\\SkyBox\\front.jpg", 5);
 	
+	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "Res\\Sky\\uffizi-large.hdr", &m_pSkyTex))//daytime//uffizi-large
+	{
+		MessageBox(GetForegroundWindow(), "TextureError", "Sky", MB_OK);
+		abort();
+	}
 }
 
 
@@ -716,10 +721,23 @@ void RenderPipe::DeferredRender_Shading()
 	shadingPassEffect->SetFloat("g_zFar", CameraParam::zFar);
 
 	shadingPassEffect->SetMatrix(WORLDVIEWPROJMATRIX, &RENDERDEVICE::Instance().OrthoWVPMatrix);
+	D3DXVECTOR3 cameraPos = RENDERDEVICE::Instance().ViewPosition;
+	D3DXMATRIX worldMat;
+	D3DXMatrixTranslation(&worldMat, cameraPos.x, cameraPos.y, cameraPos.z);
+
+	D3DXMATRIX invVP;
+	invVP = RENDERDEVICE::Instance().InvProjMatrix * RENDERDEVICE::Instance().InvViewMatrix;
+	shadingPassEffect->SetMatrix("g_InverseProj", &invVP);
 
 	shadingPassEffect->SetTexture(DIFFUSEBUFFER, m_pDiffuseTarget);
 	shadingPassEffect->SetTexture("g_DiffuseLightBuffer", m_pDiffuseLightTarget);
 	shadingPassEffect->SetTexture("g_SpecularLightBuffer", m_pSpecularLightTarget);
+	
+	shadingPassEffect->SetTexture("g_Sky", m_pSkyTex);
+	//shadingPassEffect->SetTexture(NORMALBUFFER, m_pNormalTarget);
+	shadingPassEffect->SetTexture(POSITIONBUFFER, m_pPositionTarget);
+
+
 	shadingPassEffect->CommitChanges();
 
 	shadingPassEffect->BeginPass(0);

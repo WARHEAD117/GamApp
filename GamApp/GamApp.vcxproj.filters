@@ -189,9 +189,6 @@
     <ClInclude Include="RenderSystem\RenderPipeLine\PostEffect\SSGI.h">
       <Filter>RenderSystem\PostEffect</Filter>
     </ClInclude>
-    <ClInclude Include="System\common.fx">
-      <Filter>System</Filter>
-    </ClInclude>
     <ClInclude Include="RenderSystem\TempSkin\AllocMeshHierarchy.h">
       <Filter>RenderSystem\TempSkin</Filter>
     </ClInclude>
@@ -398,6 +395,9 @@
       <Filter>System</Filter>
     </FxCompile>
     <FxCompile Include="System\SSR.fx">
+      <Filter>System</Filter>
+    </FxCompile>
+    <FxCompile Include="System\common.fx">
       <Filter>System</Filter>
     </FxCompile>
   </ItemGroup>

@@ -191,7 +191,7 @@ OutputPS PShader(float3 NormalV		: NORMAL,
 	float4 Specular = tex2D(g_sampleSpecularMap, TexCoord);
 
 	//天空盒
-	posV = g_IsSky ? float4(1.0e6, 1.0e6, 1.0e6, 1.0e6) : posV;
+	posV.z = g_IsSky ? 1.0e6 : posV.z;
 
 	//投影后的非线性深度
 	//float DepthP = posP.z / posP.w;

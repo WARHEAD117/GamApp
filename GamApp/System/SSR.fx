@@ -508,21 +508,24 @@ float4 ColorResolve(float2 TexCoord : TEXCOORD0) : COLOR
             float BRDF = D * G * F / (4 * NoL * NoV);
 
             //PDF = D * dot(N,H) / (4 * dot(V,H))
-            float PDF = PixelHit.w;
+            //float PDF = PixelHit.w;
+			//float D = g_Roughness * g_Roughness / (M_PI * pow(NoH * NoH * (g_Roughness * g_Roughness - 1) + 1, 2));
+			float PDF = D * NoH / (4 * VoH);
             
             float weight = 1;
             
-            weight *= BRDF / PDF * cosTheta;
+			weight *= BRDF / PDF *cosTheta;
 
-            resolveColor += hitColor * weight;
-            weightSum += weight;
+            //resolveColor += hitColor * weight;
+			resolveColor += hitColor * F *G * VoH / (NoH * NoV);
+           // weightSum += weight;
         }
     }
 
     //return weightSum;
     float2 EnvBRDF = tex2D(g_sampleEnvBRDFLUT, float2(NoV, g_Roughness));
     
-    resolveColor /= weightSum;
+    resolveColor /= 4;
 
 	float4 fianlColor = resolveColor;// *(EnvBRDF.x + EnvBRDF.y);
 
@@ -567,9 +570,9 @@ float4 DrawMain(float2 TexCoord : TEXCOORD0) : COLOR
     float4 SSR = tex2D(g_sampleSSR, TexCoord);
     float4 mainColor = tex2D(g_sampleMainColor, TexCoord);
     mainColor = float4(0.3, 0.35, 0.4, 1);
-    float4 fianlColor = SSR * SSR.a * (1 - g_Roughness) + (1 - SSR.a * (1 - g_Roughness)) * mainColor;
+	float4 fianlColor = SSR * SSR.a * (1 - g_Roughness) + (1 - SSR.a * (1 - g_Roughness)) * mainColor;
 
-    return SSR * SSR.a + (1 - SSR.a) * float4(0,0,0,1);
+		return SSR;// *SSR.a + (1 - SSR.a) * float4(0, 0, 0, 1);
 }
 
 

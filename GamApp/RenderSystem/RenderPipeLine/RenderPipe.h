@@ -69,6 +69,8 @@ private:
 
 	LPDIRECT3DSURFACE9	m_pOriSurface;
 
+	LPDIRECT3DTEXTURE9	m_pSkyTex;
+
 #ifdef RENDER_DEBUG
 	enum DEBUG_MODE
 	{

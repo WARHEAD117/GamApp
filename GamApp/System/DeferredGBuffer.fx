@@ -222,7 +222,7 @@ OutputPS PShader(float3 NormalV		: NORMAL,
 	//A通道储存高光强度
 	PsOut.diffuse.a = Specular.x;
 	PsOut.normal = float4(sampledNormalV.xyz, 1.0f);
-	PsOut.normal.a = 1.0f / (Shininess + epsilon);
+	PsOut.normal.a = Shininess;
 	PsOut.position = posV.zzzz;
 	return PsOut;
 }

@@ -10,6 +10,7 @@ public:
 
 	void SetSkyTexture(const std::string filename, int flag);
 	void BuildSkyBox();
+	void BuildSkyQuad();
 	void RenderInGBuffer(ID3DXEffect* pEffect);
 	void RenderInShading(ID3DXEffect* pEffect);
 
@@ -19,5 +20,9 @@ private:
 
 	LPDIRECT3DVERTEXDECLARATION9	mVertexDecl;
 	int								mVertexByteSize;
+
+	LPDIRECT3DVERTEXBUFFER9    m_pBufferVexQuad;
+	LPDIRECT3DVERTEXDECLARATION9	mVertexDecQuad;
+	int								mVertexByteSizeQuad;
 };
 

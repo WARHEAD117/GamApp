@@ -45,113 +45,162 @@ void SkyBox::BuildSkyBox()
 
 	//初始化天空盒的顶点缓冲区
 	//=============================================================下表面
-	pVertices->position = D3DXVECTOR3(12.0f, -12.0f, 12.0f);
+	pVertices->position = D3DXVECTOR3(1.0f, -1.0f, 1.0f);
 	pVertices->uv = D3DXVECTOR2(1.0f, 0.0f);
 	pVertices++;
 
-	pVertices->position = D3DXVECTOR3(-12.0f, -12.0f, 12.0f);
+	pVertices->position = D3DXVECTOR3(-1.0f, -1.0f, 1.0f);
 	pVertices->uv = D3DXVECTOR2(0.0f, 0.0f);
 	pVertices++;
 
-	pVertices->position = D3DXVECTOR3(12.0f, -12.0f, -12.0f);
+	pVertices->position = D3DXVECTOR3(1.0f, -1.0f, -1.0f);
 	pVertices->uv = D3DXVECTOR2(1.0f, 1.0f);
 	pVertices++;
 
-	pVertices->position = D3DXVECTOR3(-12.0f, -12.0f, -12.0f);
+	pVertices->position = D3DXVECTOR3(-1.0f, -1.0f, -1.0f);
 	pVertices->uv = D3DXVECTOR2(0.0f, 1.0f);
 	pVertices++;
 
 
 	//==========================================================================左表面 
-	pVertices->position = D3DXVECTOR3(-12.0f, 12.0f, 12.0f);
+	pVertices->position = D3DXVECTOR3(-1.0f, 1.0f, 1.0f);
 	pVertices->uv = D3DXVECTOR2(1.0f, 0.0f);
 	pVertices++;
 
-	pVertices->position = D3DXVECTOR3(-12.0f, 12.0f, -12.0f);
+	pVertices->position = D3DXVECTOR3(-1.0f, 1.0f, -1.0f);
 	pVertices->uv = D3DXVECTOR2(0.0f, 0.0f);
 	pVertices++;
 
-	pVertices->position = D3DXVECTOR3(-12.0f, -12.0f, 12.0f);
+	pVertices->position = D3DXVECTOR3(-1.0f, -1.0f, 1.0f);
 	pVertices->uv = D3DXVECTOR2(1.0f, 1.0f);
 	pVertices++;
 
-	pVertices->position = D3DXVECTOR3(-12.0f, -12.0f, -12.0f);
+	pVertices->position = D3DXVECTOR3(-1.0f, -1.0f, -1.0f);
 	pVertices->uv = D3DXVECTOR2(0.0f, 1.0f);
 	pVertices++;
 
 
 
 	//==========================================================================右表面
-	pVertices->position = D3DXVECTOR3(12.0f, 12.0f, -12.0f);
+	pVertices->position = D3DXVECTOR3(1.0f, 1.0f, -1.0f);
 	pVertices->uv = D3DXVECTOR2(1.0f, 0.0f);
 	pVertices++;
 
-	pVertices->position = D3DXVECTOR3(12.0f, 12.0f, 12.0f);
+	pVertices->position = D3DXVECTOR3(1.0f, 1.0f, 1.0f);
 	pVertices->uv = D3DXVECTOR2(0.0f, 0.0f);
 	pVertices++;
 
-	pVertices->position = D3DXVECTOR3(12.0f, -12.0f, -12.0f);
+	pVertices->position = D3DXVECTOR3(1.0f, -1.0f, -1.0f);
 	pVertices->uv = D3DXVECTOR2(1.0f, 1.0f);
 	pVertices++;
 
-	pVertices->position = D3DXVECTOR3(12.0f, -12.0f, 12.0f);
+	pVertices->position = D3DXVECTOR3(1.0f, -1.0f, 1.0f);
 	pVertices->uv = D3DXVECTOR2(0.0f, 1.0f);
 	pVertices++;
 
 	// 	//==========================================================================上表面
-	pVertices->position = D3DXVECTOR3(-12.0f, 12.0f, 12.0f);
+	pVertices->position = D3DXVECTOR3(-1.0f, 1.0f, 1.0f);
 	pVertices->uv = D3DXVECTOR2(0.0f, 1.0f);
 	pVertices++;
 
-	pVertices->position = D3DXVECTOR3(12.0f, 12.0f, 12.0f);
+	pVertices->position = D3DXVECTOR3(1.0f, 1.0f, 1.0f);
 	pVertices->uv = D3DXVECTOR2(1.0f, 1.0f);
 	pVertices++;
 
-	pVertices->position = D3DXVECTOR3(-12.0f, 12.0f, -12.0f);
+	pVertices->position = D3DXVECTOR3(-1.0f, 1.0f, -1.0f);
 	pVertices->uv = D3DXVECTOR2(0.0f, 0.0f);
 	pVertices++;
 
-	pVertices->position = D3DXVECTOR3(12.0f, 12.0f, -12.0f);
+	pVertices->position = D3DXVECTOR3(1.0f, 1.0f, -1.0f);
 	pVertices->uv = D3DXVECTOR2(1.0f, 0.0f);
 	pVertices++;
 
 	// 
 	// 	//==========================================================================后表面
-	pVertices->position = D3DXVECTOR3(-12.0f, -12.0f, 12.0f);
+	pVertices->position = D3DXVECTOR3(-1.0f, -1.0f, 1.0f);
 	pVertices->uv = D3DXVECTOR2(0.0f, 1.0f);
 	pVertices++;
 
-	pVertices->position = D3DXVECTOR3(12.0f, -12.0f, 12.0f);
+	pVertices->position = D3DXVECTOR3(1.0f, -1.0f, 1.0f);
 	pVertices->uv = D3DXVECTOR2(1.0f, 1.0f);
 	pVertices++;
 
-	pVertices->position = D3DXVECTOR3(-12.0f, 12.0f, 12.0f);
+	pVertices->position = D3DXVECTOR3(-1.0f, 1.0f, 1.0f);
 	pVertices->uv = D3DXVECTOR2(0.0f, 0.0f);
 	pVertices++;
 
-	pVertices->position = D3DXVECTOR3(12.0f, 12.0f, 12.0f);
+	pVertices->position = D3DXVECTOR3(1.0f, 1.0f, 1.0f);
 	pVertices->uv = D3DXVECTOR2(1.0f, 0.0f);
 	pVertices++;
 	// 
 	// 	//==========================================================================前表面
-	pVertices->position = D3DXVECTOR3(12.0f, -12.0f, -12.0f);
+	pVertices->position = D3DXVECTOR3(1.0f, -1.0f, -1.0f);
 	pVertices->uv = D3DXVECTOR2(0.0f, 1.0f);
 	pVertices++;
 
-	pVertices->position = D3DXVECTOR3(-12.0f, -12.0f, -12.0f);
+	pVertices->position = D3DXVECTOR3(-1.0f, -1.0f, -1.0f);
 	pVertices->uv = D3DXVECTOR2(1.0f, 1.0f);
 	pVertices++;
 
-	pVertices->position = D3DXVECTOR3(12.0f, 12.0f, -12.0f);
+	pVertices->position = D3DXVECTOR3(1.0f, 1.0f, -1.0f);
 	pVertices->uv = D3DXVECTOR2(0.0f, 0.0f);
 	pVertices++;
 
-	pVertices->position = D3DXVECTOR3(-12.0f, 12.0f, -12.0f);
+	pVertices->position = D3DXVECTOR3(-1.0f, 1.0f, -1.0f);
 	pVertices->uv = D3DXVECTOR2(1.0f, 0.0f);
 	pVertices++;
 
 
 	m_pBufferVex->Unlock();
+}
+
+void SkyBox::BuildSkyQuad()
+{
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateVertexDeclaration(COMMONVERTEXDECL, &mVertexDecQuad);
+	mVertexByteSizeQuad = D3DXGetDeclVertexSize(COMMONVERTEXDECL, 0);
+
+	if (FAILED(RENDERDEVICE::Instance().g_pD3DDevice->CreateVertexBuffer(16 * sizeof(COMMONVERTEX)
+		, 0
+		, 0
+		//,D3DPOOL_DEFAULT
+		, D3DPOOL_MANAGED
+		, &m_pBufferVexQuad
+		, NULL)))
+	{
+		return;
+	}
+	COMMONVERTEX* pVertices;
+	if (FAILED(m_pBufferVexQuad->Lock(0, 16 * sizeof(COMMONVERTEX), (void**)&pVertices,
+		0)))
+	{
+		return;
+	}
+
+	//初始化天空盒的顶点缓冲区
+	//=============================================================下表面
+	pVertices->position = D3DXVECTOR3(1.0f, -1.0f, 0.0f);
+	pVertices->uv.x = 1.0f + 0.5f / RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth;
+	pVertices->uv.y = 1.0f + 0.5f / RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight;
+	pVertices++;
+
+	pVertices->position = D3DXVECTOR3(-1.0f, -1.0f, 0.0f);
+	pVertices->uv.x = 0.0f + 0.5f / RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth;
+	pVertices->uv.y = 1.0f + 0.5f / RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight;
+	pVertices++;
+
+
+
+	pVertices->position = D3DXVECTOR3(1.0f, 1.0f, 0.0f);
+	pVertices->uv.x = 1.0f + 0.5f / RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth;
+	pVertices->uv.y = 0.0f + 0.5f / RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight;
+	pVertices++;
+
+	pVertices->position = D3DXVECTOR3(-1.0f, 1.0f, 0.0f);
+	pVertices->uv.x = 0.0f + 0.5f / RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth;
+	pVertices->uv.y = 0.0f + 0.5f / RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight;
+	pVertices++;
+
+	m_pBufferVexQuad->Unlock();
 }
 
 void SkyBox::SetSkyTexture(const std::string filename, int flag)
@@ -232,20 +281,15 @@ void SkyBox::RenderInShading(ID3DXEffect* pEffect)
 	pEffect->SetMatrix(WORLDVIEWMATRIX, &worldView);
 	pEffect->SetMatrix(WORLDMATRIX, &worldMat);
 	pEffect->SetMatrix(VIEWMATRIX, &viewMat);
+	
+	pEffect->SetTexture(NORMALMAP, RENDERDEVICE::Instance().GetDefaultNormalMap());
+	pEffect->SetTexture(SPECULARMAP, RENDERDEVICE::Instance().GetDefaultTexture());
+	pEffect->CommitChanges();
 
-	//渲染6个面==========================================================================下左右上后前
-	for (int i = 0; i < 6; i++)
-	{
-		pEffect->SetTexture(DIFFUSETEXTURE, m_pSkyTextures[i]);
-		pEffect->SetTexture(NORMALMAP, RENDERDEVICE::Instance().GetDefaultNormalMap());
-		pEffect->SetTexture(SPECULARMAP, RENDERDEVICE::Instance().GetDefaultTexture());
-		pEffect->CommitChanges();
-
-		RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, m_pBufferVex, 4 * i*mVertexByteSize, mVertexByteSize);
-		//RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(mFVF);
-		RENDERDEVICE::Instance().g_pD3DDevice->SetVertexDeclaration(mVertexDecl);
-		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
-	}
+	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, m_pBufferVexQuad, 4 * 0 * mVertexByteSizeQuad, mVertexByteSizeQuad);
+	//RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(mFVF);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetVertexDeclaration(mVertexDecQuad);
+	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 
 	pEffect->SetBool("g_IsSky", false);
 	pEffect->CommitChanges();

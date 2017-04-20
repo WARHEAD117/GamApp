@@ -116,11 +116,12 @@ RenderPipe::RenderPipe()
 	skyBox.SetSkyTexture("Res\\SkyBox\\back.jpg", 4);
 	skyBox.SetSkyTexture("Res\\SkyBox\\front.jpg", 5);
 	
-	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "Res\\Sky\\uffizi-large.hdr", &m_pSkyTex))//daytime//uffizi-large
+	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "Res\\Sky\\s\\uffizi-large.hdr", &m_pSkyTex))//daytime//uffizi-large
 	{
 		MessageBox(GetForegroundWindow(), "TextureError", "Sky", MB_OK);
 		abort();
 	}
+	skyBox.BuildSkyQuad();
 }
 
 
@@ -469,6 +470,14 @@ void RenderPipe::DeferredRender_Lighting()
 	deferredMultiPassEffect->SetInt(SCREENHEIGHT, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight);
 	deferredMultiPassEffect->SetFloat("g_zNear", CameraParam::zNear);
 	deferredMultiPassEffect->SetFloat("g_zFar", CameraParam::zFar);
+
+	///////////////////////////////////////////////////////////////////
+	deferredMultiPassEffect->SetTexture("g_Sky", m_pSkyTex);
+
+	D3DXMATRIX invV;
+	invV = RENDERDEVICE::Instance().InvViewMatrix;
+	deferredMultiPassEffect->SetMatrix("g_invView", &invV);
+	////////////////////////////////////////////////////////////////////
 
 	deferredMultiPassEffect->CommitChanges();
 

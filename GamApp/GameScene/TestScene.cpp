@@ -90,9 +90,7 @@ void TestScene::OnLoad()
 	if (true)
 	{
 		sponzaEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile<Entity>("Res\\Mesh\\sponza\\sponza.X");
-		Material sponzaMat;
-		sponzaMat.Power = 20;
-		sponzaEntity->SetMaterial(&sponzaMat);
+		
 		if (true)
 		{
 			sponzaEntity->SetSpecularMap("Res\\Mesh\\sponza\\sponza_floor_a_spec.tga", 0);
@@ -145,9 +143,14 @@ void TestScene::OnLoad()
 
 			sponzaEntity->SetSpecularMap("Res\\Mesh\\sponza\\sponza_ceiling_a_spec.tga", 23);
 		}
+
+		sponzaEntity->SetTexture("");
+
+		Material sponzaMat;
+		sponzaMat.Power = 0.4;
+		sponzaEntity->SetMaterial(&sponzaMat);
 	}
 	
-	sponzaEntity->SetTexture("");
 	//Entity* roomEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile<Entity>("Res\\Mesh\\room\\room.x");
 	//roomEntity->SetTexture("Res\\Mesh\\room\\wallpaper.dds",0);
 	//roomEntity->SetTexture("Res\\Mesh\\room\\DoorDiff.dds", 1);
@@ -166,6 +169,17 @@ void TestScene::OnLoad()
 	DofMesh->SetWorldScale(0.05f, 0.03f, 0.03f);
 	DofMesh->SetWorldRotation(0, -0.5f * D3DX_PI, 0);
 	
+
+	for (int i = 0; i < 10; i++)
+	{
+		Entity* SphereMesh = ENTITYMANAGER::Instance().CreateEntityFromXFile<Entity>("Res\\Mesh\\Sphere.X");
+		SphereMesh->SetWorldTranslate(0, 0.5, (-i/10.0f +0.5f) * 6);
+		SphereMesh->SetWorldScale(0.03f, 0.03f, 0.03f);
+		SphereMesh->SetWorldRotation(0, -0.5f * D3DX_PI, 0);
+		Material SphereMat;
+		SphereMat.Power = i / 10.0f;
+		SphereMesh->SetMaterial(&SphereMat);
+	}
 
 	/*
 
@@ -205,7 +219,7 @@ void TestScene::OnLoad()
 	//----------------------------------------------------------
 	//--------------------------------------------------------------------------
 	dirLight1 = LIGHTMANAGER::Instance().CreateLight<DirectionLight>(eDirectionLight);
-	dirLight1->SetLightColor(D3DXCOLOR(10.0f, 8.0f, 5.3f, 1.0f));
+	dirLight1->SetLightColor(D3DXCOLOR(5.0f, 4.0f, 2.7f, 1.0f));
 	dirLight1->SetShadowAreaSize(120, 120);
 	dirLight1->SetUseShadow(true);
 	dirLight1->SetWorldTranslate(0, 70, 0);

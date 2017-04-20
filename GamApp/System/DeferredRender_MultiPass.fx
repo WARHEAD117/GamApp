@@ -79,6 +79,18 @@ sampler_state
 	AddressV = Clamp;
 }; 
 
+texture g_Sky;
+sampler2D g_sampleSky =
+sampler_state
+{
+	Texture = <g_Sky>;
+	MinFilter = linear;
+	MagFilter = linear;
+	MipFilter = linear;
+	AddressU = wrap;
+	AddressV = wrap;
+};
+
 //----------------------------
 struct OutputVS_Quad
 {
@@ -144,7 +156,118 @@ float ChebyshevUpperBound(float2 Moments, float t)
 	return max(p, p_max);
 }
 
+float Vis_Smith(float Roughness, float NoV, float NoL)
+{
+	float a = pow(Roughness,2);
+	float a2 = a*a;
+
+	float Vis_SmithV = NoV + sqrt(NoV * (NoV - NoV * a2) + a2);
+	float Vis_SmithL = NoL + sqrt(NoL * (NoL - NoL * a2) + a2);
+	return rcp(Vis_SmithV * Vis_SmithL);
+}
+
+void IBL_BRDF(float3 normal, float3 toEye, inout float4 DiffuseLight, inout float4 SpecularLight, in float Shininess)
+{
+
+	float3 V = normalize(toEye);
+		float3 N = normalize(normal);
+	//	float3 H = normalize(L + V);
+
+	//	float NoH = saturate(dot(N, H));
+	float NoV = saturate(dot(N, V));
+	//float VoH = saturate(dot(V, H));
+
+	//float cosTheta = saturate(dot(N, L));
+	//float theta = acos(cosTheta);
+
+	float Roughness = max(Shininess, 0.0001);
+	float a = Roughness * Roughness;
+
+	// [ Lazarov 2013, "Getting More Physical in Call of Duty: Black Ops II" ]
+	// Adaptation to fit our G term.
+	float4 specularColor = float4(1, 1, 1, 1);
+		 
+	float3 R = 2 * dot(V, N) * N - V;
+
+
+	float4 R_W = mul(R, g_invView);
+
+
+	float3 dir = normalize(R_W);
+	float2 skyUV = float2((1 + atan2(dir.x, -dir.z) / M_PI) / 2, acos(dir.y) / M_PI);
+	float r1 = (1 / M_PI)*acos(dir.z) / sqrt(dir.x * dir.x + dir.y * dir.y);
+	skyUV = -0.5 * float2(dir.x * r1 + 1, dir.y * r1 + 1);
+
+	float4 Texture = tex2D(g_sampleSky, skyUV);
+
+	const half4 c0 = { -1, -0.0275, -0.572, 0.022 };
+	const half4 c1 = { 1, 0.0425, 1.04, -0.04 };
+	half4 r = Roughness * c0 + c1;
+	half a004 = min(r.x * r.x, exp2(-9.28 * NoV)) * r.x + r.y;
+	half2 AB = half2(-1.04, 1.04) * a004 + r.zw;
+
+	SpecularLight = Texture * (specularColor * AB.x + AB.y);
+}
+
 void LightFunc(float3 normal, float3 toLight, float3 toEye, float4 lightColor, inout float4 DiffuseLight, inout float4 SpecularLight, in float Shininess)
+{
+	//裁减掉背光的像素
+	float NL = dot(toLight, normal);
+	clip(NL);
+	//计算漫反射光照
+	float DiffuseRatio = max(NL, 0.0);
+	DiffuseLight = lightColor * DiffuseRatio / M_PI;
+
+
+	float3 V = normalize(toEye);
+	float3 L = normalize(toLight);
+	float3 N = normalize(normal);
+	float3 H = normalize(L + V);
+
+	float NoH = saturate(dot(N, H));
+	float NoV = saturate(dot(N, V));
+	float NoL = saturate(dot(N, L));
+	float VoH = saturate(dot(V, H));
+
+	float cosTheta = saturate(dot(N, L));
+	float theta = acos(cosTheta);
+
+	float Roughness = max(Shininess, 0.0001);
+	float a = Roughness * Roughness;
+
+	//D
+	a = max(a, 0.001);
+	float D = a * a / (M_PI * pow(NoH * NoH * (a * a - 1) + 1, 2));
+
+	//G
+	float k = (Roughness + 1) * (Roughness + 1) / 8;
+	k = a / 2;
+	float G_V = NoV / (NoV * (1 - k) + k);
+	float G_L = NoL / (NoL * (1 - k) + k);
+	float G = G_L * G_V;
+	
+	//G = Vis_Smith(Shininess, NoV, NoL);
+	//G = G * VoH / (NoH * NoV);
+
+	//F
+	float3 specularColor = float3(1, 1, 1);
+	float Fc = pow(1 - VoH, 5);
+	float F = (1 - Fc) * specularColor + Fc;
+
+	//BRDF
+	float BRDF = D * G * F / (4 * NoL * NoV);
+
+	//float BRDF = F * G * VoH/ (NoH * NoV);
+	//BRDF = min(BRDF, 100000);
+	//G_V = NoV + sqrt((NoV - NoV * Roughness) * NoV + Roughness);
+	//G_L = NoV + sqrt((NoL - NoL * Roughness) * NoL + Roughness);
+	//BRDF = (G_V * G_L);
+
+
+	SpecularLight = lightColor * BRDF * DiffuseRatio;
+}
+
+void LightFunc2(float3 normal, float3 toLight, float3 toEye, float4 lightColor, inout float4 DiffuseLight, inout float4 SpecularLight, in float Shininess)
 {
 	//裁减掉背光的像素
 	float NL = dot(toLight, normal);
@@ -280,6 +403,39 @@ struct OutputPS
 	float4 diffuseLight		: COLOR0;
 	float4 specularLight	: COLOR1;
 };
+
+OutputPS ImageBasedLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1)
+{
+	OutputPS outPs;
+	outPs.diffuseLight = 0;
+	outPs.specularLight = 0;
+
+	float lightU = (posWVP.x / posWVP.w + 1.0f) / 2.0f + 0.5f / g_ScreenWidth;
+	float lightV = (1.0f - posWVP.y / posWVP.w) / 2.0f + 0.5f / g_ScreenHeight;
+	float2 TexCoord = float2(lightU, lightV);
+
+	float3 pos = GetPosition(TexCoord, viewDir, g_samplePosition);
+
+	//加入灯光体和stencil剔除后之后就可以省略掉这个判断了
+	if (pos.z > g_zFar)
+		return outPs;
+
+	float4 ToEyeDirV = float4(-pos, 0.0f);
+
+	float4 DiffuseLight = float4(0.0f, 0.0f, 0.0f, 0.0f);
+	float4 SpecularLight = float4(0.0f, 0.0f, 0.0f, 0.0f);
+
+	float3 Normal;// = GetNormal(TexCoord);
+	float Shininess;// = GetShininess(TexCoord);
+	GetNormalandShininess(TexCoord, Normal, Shininess, g_sampleNormal);
+
+	IBL_BRDF(Normal, ToEyeDirV, DiffuseLight, SpecularLight, Shininess);
+
+	//MRT输出光照结果
+	outPs.diffuseLight = DiffuseLight;
+	outPs.specularLight = SpecularLight;
+	return outPs;
+}
 
 OutputPS DirectionLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1)
 {
@@ -515,7 +671,7 @@ technique DeferredRender
 	pass p0 //渲染灯光
 	{
 		vertexShader = compile vs_3_0 VShaderLightVolume();
-		pixelShader = compile ps_3_0 DirectionLightPass();
+		pixelShader = compile ps_3_0 ImageBasedLightPass();
 		AlphaBlendEnable = true;                        //设置渲染状态        
 		SrcBlend = ONE;
 		DestBlend = ONE;
@@ -575,5 +731,14 @@ technique DeferredRender
 		SrcBlend = ZERO;
 		DestBlend = ONE;
 		ColorWriteEnable = 0;
+	}
+	pass p7 //渲染灯光
+	{
+		vertexShader = compile vs_3_0 VShaderLightVolume();
+		pixelShader = compile ps_3_0 ImageBasedLightPass();
+		AlphaBlendEnable = true;                        //设置渲染状态        
+		SrcBlend = ONE;
+		DestBlend = ONE;
+		ColorWriteEnable = 0xFFFFFFFF;
 	}
 }

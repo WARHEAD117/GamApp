@@ -144,10 +144,6 @@ float2 RotateDirection(float2 Dir, float2 CosSin)
                   Dir.x * CosSin.y + Dir.y * CosSin.x);
 }
 
-
-float M_PI = 3.1415926;
-
-
 float4 GetRandom(in float2 uv)
 {
     return normalize(tex2D(g_sampleRandomTex, float2(g_ScreenWidth, g_ScreenHeight) * uv / g_RandTexSize));

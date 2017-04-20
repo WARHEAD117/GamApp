@@ -145,9 +145,6 @@ float4 GetJitter()
 #endif
 }
 
-
-float M_PI = 3.1415926;
-
 //----------------------------------------------------------------------------------
 float ComputeCoarseAO(float2 FullResUV, float RadiusPixels, float4 Rand, float3 ViewPosition, float3 ViewNormal, float R)
 {

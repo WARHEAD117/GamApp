@@ -115,8 +115,13 @@ RenderPipe::RenderPipe()
 	skyBox.SetSkyTexture("Res\\SkyBox\\top.jpg", 3);
 	skyBox.SetSkyTexture("Res\\SkyBox\\back.jpg", 4);
 	skyBox.SetSkyTexture("Res\\SkyBox\\front.jpg", 5);
-	
+
 	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "Res\\Sky\\s\\uffizi-large.hdr", &m_pSkyTex))//daytime//uffizi-large
+	{
+		MessageBox(GetForegroundWindow(), "TextureError", "Sky", MB_OK);
+		abort();
+	}
+	if (E_FAIL == D3DXCreateCubeTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "Res\\Sky\\s\\env.dds", &m_pSkyCube))//daytime//uffizi-large
 	{
 		MessageBox(GetForegroundWindow(), "TextureError", "Sky", MB_OK);
 		abort();
@@ -473,7 +478,7 @@ void RenderPipe::DeferredRender_Lighting()
 
 	///////////////////////////////////////////////////////////////////
 	deferredMultiPassEffect->SetTexture("g_Sky", m_pSkyTex);
-
+	deferredMultiPassEffect->SetTexture("g_SkyCube", m_pSkyCube);
 	D3DXMATRIX invV;
 	invV = RENDERDEVICE::Instance().InvViewMatrix;
 	deferredMultiPassEffect->SetMatrix("g_invView", &invV);

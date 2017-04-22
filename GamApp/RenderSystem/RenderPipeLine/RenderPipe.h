@@ -71,6 +71,8 @@ private:
 
 	LPDIRECT3DTEXTURE9	m_pSkyTex;
 
+	LPDIRECT3DCUBETEXTURE9	m_pSkyCube;
+
 #ifdef RENDER_DEBUG
 	enum DEBUG_MODE
 	{

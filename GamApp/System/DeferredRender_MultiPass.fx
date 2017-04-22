@@ -40,18 +40,18 @@ sampler2D g_sampleNormal =
 sampler_state
 {
 	Texture = <g_NormalBuffer>;
-	MinFilter = Point;
-	MagFilter = Point;
-	MipFilter = Point;
+	MinFilter = point;
+	MagFilter = point;
+	MipFilter = point;
 };
 
 sampler2D g_samplePosition =
 sampler_state
 {
 	Texture = <g_PositionBuffer>;
-	MinFilter = Point;
-	MagFilter = Point;
-	MipFilter = Point;
+	MinFilter = point;
+	MagFilter = point;
+	MipFilter = point;
 };
 
 //----------------------------
@@ -86,7 +86,19 @@ sampler_state
 	Texture = <g_Sky>;
 	MinFilter = linear;
 	MagFilter = linear;
-	MipFilter = linear;
+	MipFilter = NONE;
+	AddressU = wrap;
+	AddressV = wrap;
+};
+
+texture g_SkyCube;
+samplerCUBE  g_sampleSkyCube =
+sampler_state
+{
+	Texture = <g_SkyCube>;
+	MinFilter = linear;
+	MagFilter = linear;
+	MipFilter = NONE;
 	AddressU = wrap;
 	AddressV = wrap;
 };
@@ -166,11 +178,63 @@ float Vis_Smith(float Roughness, float NoV, float NoL)
 	return rcp(Vis_SmithV * Vis_SmithL);
 }
 
+float rnd(float2 uv) {
+	return frac(sin(dot(uv, float2(12.9898, 78.233) * 2.0)) * 43758.5453);
+}
+
+float2 Hammersley(uint i, uint N) 
+{
+	float sini = sin(float(i));
+	float cosi = cos(float(i));
+	float2 rand2 = float2(float(i) / float(N), rnd(float2(sini, cosi)));
+	return rand2;
+}
+float3 ImportanceSampleGGX(float2 Xi, float Roughness, float3 N) {
+	float a = Roughness * Roughness;
+	float Phi = 2 * M_PI * Xi.x; 
+	float CosTheta = sqrt((1 - Xi.y) / (1 + (a*a - 1) * Xi.y)); 
+	float SinTheta = sqrt(1 - CosTheta * CosTheta);
+	float3 H; H.x = SinTheta * cos(Phi); 
+	H.y = SinTheta * sin(Phi); H.z = CosTheta;
+	float3 UpVector = abs(N.z) < 0.999 ? float3(0, 0, 1) : float3(1, 0, 0); 
+	float3 TangentX = normalize(cross(UpVector, N)); 
+	float3 TangentY = cross(N, TangentX); // Tangent to world space 
+	return TangentX * H.x + TangentY * H.y + N * H.z;
+}
+float3 PrefilterEnvMap(float Roughness, float3 R) {
+	float3 N = R; 
+	float3 V = R;
+	float3 PrefilteredColor = 0;
+	const uint NumSamples = 196; 
+	float TotalWeight = 0;
+	for (uint i = 0; i < NumSamples; i++) 
+	{
+		float2 Xi = Hammersley(i, NumSamples); 
+		float3 H = ImportanceSampleGGX(Xi, Roughness, N); 
+		float3 L = 2 * dot(V, H) * H - V;
+		float NoL = saturate(dot(N, L)); 
+		if (NoL > 0) 
+		{ 
+			//PrefilteredColor += EnvMap.SampleLevel(EnvMapSampler, L, 0).rgb * NoL; TotalWeight += NoL;
+
+			float2 skyUV = float2((1 + atan2(L.x, -L.z) / M_PI) / 2, acos(L.y) / M_PI);
+			float r1 = (1 / M_PI)*acos(L.z) / sqrt(L.x * L.x + L.y * L.y);
+			skyUV = float2(0.5, -0.5) * float2(L.x * r1 + 1, L.y * r1 + 1);
+
+			float4 Texture = tex2D(g_sampleSky, skyUV);
+			//Texture = texCUBE(g_sampleSkyCube, L);
+			PrefilteredColor += Texture.rgb * NoL;
+			TotalWeight += NoL;
+		}
+	}
+	return PrefilteredColor / TotalWeight;
+}
+
+
 void IBL_BRDF(float3 normal, float3 toEye, inout float4 DiffuseLight, inout float4 SpecularLight, in float Shininess)
 {
-
 	float3 V = normalize(toEye);
-		float3 N = normalize(normal);
+	float3 N = normalize(normal);
 	//	float3 H = normalize(L + V);
 
 	//	float NoH = saturate(dot(N, H));
@@ -180,7 +244,7 @@ void IBL_BRDF(float3 normal, float3 toEye, inout float4 DiffuseLight, inout floa
 	//float cosTheta = saturate(dot(N, L));
 	//float theta = acos(cosTheta);
 
-	float Roughness = max(Shininess, 0.0001);
+	float Roughness = Shininess;
 	float a = Roughness * Roughness;
 
 	// [ Lazarov 2013, "Getting More Physical in Call of Duty: Black Ops II" ]
@@ -189,16 +253,16 @@ void IBL_BRDF(float3 normal, float3 toEye, inout float4 DiffuseLight, inout floa
 		 
 	float3 R = 2 * dot(V, N) * N - V;
 
-
 	float4 R_W = mul(R, g_invView);
 
-
-	float3 dir = normalize(R_W);
+	float3 dir = (R_W);
 	float2 skyUV = float2((1 + atan2(dir.x, -dir.z) / M_PI) / 2, acos(dir.y) / M_PI);
 	float r1 = (1 / M_PI)*acos(dir.z) / sqrt(dir.x * dir.x + dir.y * dir.y);
-	skyUV = -0.5 * float2(dir.x * r1 + 1, dir.y * r1 + 1);
+	skyUV = float2(0.5,-0.5) * float2(dir.x * r1 + 1, dir.y * r1 + 1);
 
 	float4 Texture = tex2D(g_sampleSky, skyUV);
+	//Texture = texCUBE(g_sampleSkyCube, dir);
+	Texture.xyz = PrefilterEnvMap(Roughness, dir);
 
 	const half4 c0 = { -1, -0.0275, -0.572, 0.022 };
 	const half4 c1 = { 1, 0.0425, 1.04, -0.04 };
@@ -232,7 +296,7 @@ void LightFunc(float3 normal, float3 toLight, float3 toEye, float4 lightColor, i
 	float cosTheta = saturate(dot(N, L));
 	float theta = acos(cosTheta);
 
-	float Roughness = max(Shininess, 0.0001);
+	float Roughness = Shininess;
 	float a = Roughness * Roughness;
 
 	//D
@@ -671,7 +735,7 @@ technique DeferredRender
 	pass p0 //渲染灯光
 	{
 		vertexShader = compile vs_3_0 VShaderLightVolume();
-		pixelShader = compile ps_3_0 ImageBasedLightPass();
+		pixelShader = compile ps_3_0 ImageBasedLightPass();//ImageBasedLightPass//DirectionLightPass
 		AlphaBlendEnable = true;                        //设置渲染状态        
 		SrcBlend = ONE;
 		DestBlend = ONE;

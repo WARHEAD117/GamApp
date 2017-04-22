@@ -144,10 +144,10 @@ void TestScene::OnLoad()
 			sponzaEntity->SetSpecularMap("Res\\Mesh\\sponza\\sponza_ceiling_a_spec.tga", 23);
 		}
 
-		sponzaEntity->SetTexture("");
+		//sponzaEntity->SetTexture("");
 
 		Material sponzaMat;
-		sponzaMat.Power = 0.4;
+		sponzaMat.Power = 0.0;
 		sponzaEntity->SetMaterial(&sponzaMat);
 	}
 	
@@ -319,13 +319,15 @@ void TestScene::OnLoad()
 	spotLight4->SetWorldTranslate(-10, 4, -5);
 	spotLight4->SetWorldRotation(-0.25f * D3DX_PI, 0, 0);
 	*/
-	spotLight5 = LIGHTMANAGER::Instance().CreateLight<SpotLight>(eSpotLight);
-	spotLight5->SetLightRange(100);
-	spotLight5->SetUseShadow(true);
-	spotLight5->SetLightColor(D3DXCOLOR(1.0, 0.2, 0.0, 1.0f));
-	spotLight5->SetWorldTranslate(0, 50, 0);
-	spotLight5->SetWorldRotation(0, 0, 0);
-
+	if (true)
+	{
+		spotLight5 = LIGHTMANAGER::Instance().CreateLight<SpotLight>(eSpotLight);
+		spotLight5->SetLightRange(100);
+		spotLight5->SetUseShadow(false);
+		spotLight5->SetLightColor(D3DXCOLOR(1.0, 0.2, 0.0, 1.0f));
+		spotLight5->SetWorldTranslate(0, 50, 0);
+		spotLight5->SetWorldRotation(0, 0, 0);
+	}
 
 	for (int i = 0; i < 50; i++)
 	{

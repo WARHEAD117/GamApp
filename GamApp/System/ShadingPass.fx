@@ -116,6 +116,8 @@ float4 ShadingPass(float2 TexCoord : TEXCOORD0, float3 view : TEXCOORD1) : COLOR
 	{
 		float3 dir = normalize(view);
 		float2 skyUV = float2((1 + atan2(dir.x, -dir.z) / M_PI ) /2 , acos(dir.y) / M_PI );
+		float r1 = (1 / M_PI)*acos(dir.z) / sqrt(dir.x * dir.x + dir.y * dir.y);
+		skyUV = -0.5 * float2(dir.x * r1 + 1, dir.y * r1 + 1);
 		Texture = tex2D(g_sampleSky, skyUV);
 
 		//Texture = float4(view, 1);

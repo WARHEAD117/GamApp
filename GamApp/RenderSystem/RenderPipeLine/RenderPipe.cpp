@@ -193,9 +193,9 @@ void RenderPipe::BuildBuffers()
 	//G-Buffer
 	//B-Buffer分配
 	//					   R8			 G8		      B8			  A8
-	//DiffuseBuffer  |  diffuseR  |   diffuseG  |  diffuseG  |  specularIntensity |
-	//NormalBuffer	 |		normalX		 |	 normalY	     |	  shininess       |
-	//PositionBuffer |					  viewSpaceDepth						  |
+	//DiffuseBuffer  |   albedoR  |    albedoG  |   albedoG  |  matelness |
+	//NormalBuffer	 |		normalX		 |	 normalY	     |	Roughness |
+	//PositionBuffer |					  viewSpaceDepth				  |
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
 		1, D3DUSAGE_RENDERTARGET,
 		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
@@ -470,6 +470,7 @@ void RenderPipe::DeferredRender_Lighting()
 
 	deferredMultiPassEffect->SetTexture(NORMALBUFFER, m_pNormalTarget);
 	deferredMultiPassEffect->SetTexture(POSITIONBUFFER, m_pPositionTarget);
+	deferredMultiPassEffect->SetTexture(DIFFUSEBUFFER, m_pDiffuseTarget);
 
 	deferredMultiPassEffect->SetInt(SCREENWIDTH, RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth);
 	deferredMultiPassEffect->SetInt(SCREENHEIGHT, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight);

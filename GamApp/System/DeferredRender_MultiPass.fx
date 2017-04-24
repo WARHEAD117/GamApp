@@ -54,6 +54,14 @@ sampler_state
 	MipFilter = point;
 };
 
+sampler2D g_sampleDiffuse =
+sampler_state
+{
+	Texture = <g_DiffuseBuffer>;
+	MinFilter = Point;
+	MagFilter = Point;
+	MipFilter = Point;
+};
 //----------------------------
 //如果使用PCF算法，必须使用Point过滤
 //如果使用VSM，就可使用别的过滤方式，比如ANISOTROPIC或者linear
@@ -86,7 +94,7 @@ sampler_state
 	Texture = <g_Sky>;
 	MinFilter = linear;
 	MagFilter = linear;
-	MipFilter = NONE;
+	MipFilter = linear;
 	AddressU = wrap;
 	AddressV = wrap;
 };
@@ -98,7 +106,7 @@ sampler_state
 	Texture = <g_SkyCube>;
 	MinFilter = linear;
 	MagFilter = linear;
-	MipFilter = NONE;
+	//MipFilter = linear;
 	AddressU = wrap;
 	AddressV = wrap;
 };
@@ -221,7 +229,12 @@ float3 PrefilterEnvMap(float Roughness, float3 R) {
 			float r1 = (1 / M_PI)*acos(L.z) / sqrt(L.x * L.x + L.y * L.y);
 			skyUV = float2(0.5, -0.5) * float2(L.x * r1 + 1, L.y * r1 + 1);
 
-			float4 Texture = tex2D(g_sampleSky, skyUV);
+			float4 Texture = tex2Dlod(g_sampleSky, float4(skyUV,0,0));
+			//线性空间和伽马空间的转换...不明白为什么
+			//但是不转换的话，颜色不对会发红
+			//DX的textureViewer也有同样的问题
+			Texture = pow(Texture, 1 / 2.2);
+
 			//Texture = texCUBE(g_sampleSkyCube, L);
 			PrefilteredColor += Texture.rgb * NoL;
 			TotalWeight += NoL;
@@ -231,7 +244,7 @@ float3 PrefilterEnvMap(float Roughness, float3 R) {
 }
 
 
-void IBL_BRDF(float3 normal, float3 toEye, inout float4 DiffuseLight, inout float4 SpecularLight, in float Shininess)
+void IBL_BRDF(float3 normal, float3 toEye, float3 diffuseColor, float3 specularColor, inout float3 DiffuseLight, inout float3 SpecularLight, in float Roughness)
 {
 	float3 V = normalize(toEye);
 	float3 N = normalize(normal);
@@ -244,13 +257,10 @@ void IBL_BRDF(float3 normal, float3 toEye, inout float4 DiffuseLight, inout floa
 	//float cosTheta = saturate(dot(N, L));
 	//float theta = acos(cosTheta);
 
-	float Roughness = Shininess;
 	float a = Roughness * Roughness;
 
 	// [ Lazarov 2013, "Getting More Physical in Call of Duty: Black Ops II" ]
-	// Adaptation to fit our G term.
-	float4 specularColor = float4(1, 1, 1, 1);
-		 
+	// Adaptation to fit our G term.		 
 	float3 R = 2 * dot(V, N) * N - V;
 
 	float4 R_W = mul(R, g_invView);
@@ -260,9 +270,9 @@ void IBL_BRDF(float3 normal, float3 toEye, inout float4 DiffuseLight, inout floa
 	float r1 = (1 / M_PI)*acos(dir.z) / sqrt(dir.x * dir.x + dir.y * dir.y);
 	skyUV = float2(0.5,-0.5) * float2(dir.x * r1 + 1, dir.y * r1 + 1);
 
-	float4 Texture = tex2D(g_sampleSky, skyUV);
+	float3 Texture = tex2D(g_sampleSky, skyUV).rgb;
 	//Texture = texCUBE(g_sampleSkyCube, dir);
-	Texture.xyz = PrefilterEnvMap(Roughness, dir);
+	Texture = PrefilterEnvMap(Roughness, dir);
 
 	const half4 c0 = { -1, -0.0275, -0.572, 0.022 };
 	const half4 c1 = { 1, 0.0425, 1.04, -0.04 };
@@ -273,14 +283,14 @@ void IBL_BRDF(float3 normal, float3 toEye, inout float4 DiffuseLight, inout floa
 	SpecularLight = Texture * (specularColor * AB.x + AB.y);
 }
 
-void LightFunc(float3 normal, float3 toLight, float3 toEye, float4 lightColor, inout float4 DiffuseLight, inout float4 SpecularLight, in float Shininess)
+void LightFunc(float3 normal, float3 toLight, float3 toEye, float3 lightColor, float3 diffuseColor, float3 specularColor, inout float3 DiffuseLight, inout float3 SpecularLight, in float Roughness)
 {
 	//裁减掉背光的像素
 	float NL = dot(toLight, normal);
 	clip(NL);
 	//计算漫反射光照
 	float DiffuseRatio = max(NL, 0.0);
-	DiffuseLight = lightColor * DiffuseRatio / M_PI;
+	DiffuseLight = lightColor * diffuseColor * DiffuseRatio / M_PI;
 
 
 	float3 V = normalize(toEye);
@@ -292,11 +302,11 @@ void LightFunc(float3 normal, float3 toLight, float3 toEye, float4 lightColor, i
 	float NoV = saturate(dot(N, V));
 	float NoL = saturate(dot(N, L));
 	float VoH = saturate(dot(V, H));
+	float LoH = saturate(dot(L, H));
 
 	float cosTheta = saturate(dot(N, L));
 	float theta = acos(cosTheta);
 
-	float Roughness = Shininess;
 	float a = Roughness * Roughness;
 
 	//D
@@ -314,12 +324,14 @@ void LightFunc(float3 normal, float3 toLight, float3 toEye, float4 lightColor, i
 	//G = G * VoH / (NoH * NoV);
 
 	//F
-	float3 specularColor = float3(1, 1, 1);
-	float Fc = pow(1 - VoH, 5);
-	float F = (1 - Fc) * specularColor + Fc;
+	//float Fc = pow(1 - VoH, 5);
+	//float F = (1 - Fc) * specularColor + Fc;
+
+	//F Schlick
+	float3 F = specularColor + (1 - specularColor) * pow(1 - LoH, 5);
 
 	//BRDF
-	float BRDF = D * G * F / (4 * NoL * NoV);
+	float3 BRDF = D * G * F / (4 * NoL * NoV);
 
 	//float BRDF = F * G * VoH/ (NoH * NoV);
 	//BRDF = min(BRDF, 100000);
@@ -356,110 +368,6 @@ void LightFunc2(float3 normal, float3 toLight, float3 toEye, float4 lightColor, 
 	SpecularLight = lightColor * PoweredSpecular * DiffuseRatio * G;
 }
 
-float2 ComputeMoments(float Depth)
-{
-	float2 Moments;
-
-	Moments.x = Depth;
-
-	float dx = ddx(Depth);
-	float dy = ddy(Depth);
-
-	Moments.y = Depth*Depth + 0.25 * (dx*dx + dy*dy);
-
-	return Moments;
-}
-
-float ShadowFunc(bool useShadow, float3 objViewPos)
-{
-	float shadowContribute = 1.0f;
-	//if (useShadow)
-	{
-		//Shadow
-		float4 lightViewPos = mul(float4(objViewPos, 1.0f), g_viewToLight);
-		float4 lightProjPos = mul(float4(objViewPos, 1.0f), g_viewToLightProj);
-		float lightU = (lightProjPos.x / lightProjPos.w + 1.0f) / 2.0f;
-		float lightV = (1.0f - lightProjPos.y / lightProjPos.w) / 2.0f;
-
-		float2 ShadowTexCoord = float2(lightU, lightV);
-
-		//裁减掉shadowMap的uv值0-1范围之外的部分
-		//也可以使用border，但是对于FP16的值，需要先缩放才能使用border，否则设置的borderColor最大值仅为1，没法使用
-		clip(float2(1, 1) - ShadowTexCoord);
-		clip(ShadowTexCoord);
-
-		//float2 Moments = tex2D(g_sampleShadow, ShadowTexCoord);
-		//float2 Moments = GaussianBlur(g_ShadowMapSize, g_ShadowMapSize, g_sampleShadow, ShadowTexCoord);
-		float2 Moments = ComputeMoments(GaussianBlur(g_ShadowMapSize, g_ShadowMapSize, g_sampleShadow, ShadowTexCoord).x);
-
-		shadowContribute = ChebyshevUpperBound(Moments, lightViewPos.z);
-	}
-	return shadowContribute;
-}
-
-float PointShadowFunc(bool useShadow, float3 objViewPos)
-{
-	float shadowContribute = 1.0f;
-	//if (useShadow)
-	{
-		//Shadow
-		float3 toObj = objViewPos - g_LightPos.xyz;
-
-		float4 worldToObj = mul(float4(toObj, 0.0f), g_invView);
-
-		float2 Moments = texCUBE(g_sampleShadow, normalize(worldToObj.xyz));
-
-			
-		shadowContribute = ChebyshevUpperBound(Moments, length(worldToObj.xyz));
-	}
-	return shadowContribute;
-}
-
-float PCFShadowFunc(bool useShadow, float3 objViewPos)
-{
-	float shadowContribute = 1.0f;
-	//if (useShadow)
-	{
-		//Shadow
-		float4 lightViewPos = mul(float4(objViewPos, 1.0f), g_viewToLight);
-		float4 lightProjPos = mul(float4(objViewPos, 1.0f), g_viewToLightProj);
-		float lightU = (lightProjPos.x / lightProjPos.w + 1.0f) / 2.0f;
-		float lightV = (1.0f - lightProjPos.y / lightProjPos.w) / 2.0f;
-
-		int SHADOWMAP_SIZE = g_ShadowMapSize;
-		float2 ShadowTexCoord = float2(lightU, lightV);
-		float2 texturePos = ShadowTexCoord * SHADOWMAP_SIZE;
-		float2 lerps = frac(texturePos);
-
-		float shadowBias = g_ShadowBias;
-
-		float shadowVal[4];
-		shadowVal[0] = (tex2D(g_sampleShadow, ShadowTexCoord) + shadowBias < lightViewPos.z / lightViewPos.w) ? 0.0f : 1.0f;
-		shadowVal[1] = (tex2D(g_sampleShadow, ShadowTexCoord + float2(1.0f / SHADOWMAP_SIZE, 0.0f)) + shadowBias < lightViewPos.z / lightViewPos.w) ? 0.0f : 1.0f;
-		shadowVal[2] = (tex2D(g_sampleShadow, ShadowTexCoord + float2(0.0f, 1.0f / SHADOWMAP_SIZE)) + shadowBias < lightViewPos.z / lightViewPos.w) ? 0.0f : 1.0f;
-		shadowVal[3] = (tex2D(g_sampleShadow, ShadowTexCoord + float2(1.0f / SHADOWMAP_SIZE, 1.0f / SHADOWMAP_SIZE)) + shadowBias < lightViewPos.z / lightViewPos.w) ? 0.0f : 1.0f;
-
-		shadowContribute = lerp(lerp(shadowVal[0], shadowVal[1], lerps.x), lerp(shadowVal[2], shadowVal[3], lerps.x), lerps.y);
-
-	}
-	return shadowContribute;
-}
-
-float PCFPointShadowFunc(bool useShadow, float3 worldViewPos)
-{
-	float shadowContribute = 1.0f;
-	//if (useShadow)
-	{
-		//Shadow
-		//g_LightPos是view空间下的灯光位置
-		float3 toObjVec = worldViewPos - g_LightPos.xyz;
-		float4 worldToObjVec = mul(float4(toObjVec, 0.0f), g_invView);
-
-		float shadowBias = g_ShadowBias;
-		shadowContribute = (texCUBE(g_sampleShadow, normalize(worldToObjVec.xyz)) + shadowBias < length(toObjVec)) ? 0.0f : 1.0f;
-	}
-	return shadowContribute;
-}
 
 //光照结果的MRT输出
 struct OutputPS
@@ -485,19 +393,27 @@ OutputPS ImageBasedLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOOR
 		return outPs;
 
 	float4 ToEyeDirV = float4(-pos, 0.0f);
-
-	float4 DiffuseLight = float4(0.0f, 0.0f, 0.0f, 0.0f);
-	float4 SpecularLight = float4(0.0f, 0.0f, 0.0f, 0.0f);
+		
+	float3 DiffuseLight = float3(0.0f, 0.0f, 0.0f);
+	float3 SpecularLight = float3(0.0f, 0.0f, 0.0f);
 
 	float3 Normal;// = GetNormal(TexCoord);
 	float Shininess;// = GetShininess(TexCoord);
 	GetNormalandShininess(TexCoord, Normal, Shininess, g_sampleNormal);
+	
+	//反射率
+	float4 albedo = tex2D(g_sampleDiffuse, TexCoord);
+		
+	float metalness = albedo.a;
 
-	IBL_BRDF(Normal, ToEyeDirV, DiffuseLight, SpecularLight, Shininess);
+	float3 diffuseColor = albedo.rgb * (1 - metalness);
+	float3 specularColor = lerp(0.04, albedo.rgb, metalness);
 
-	//MRT输出光照结果
-	outPs.diffuseLight = DiffuseLight;
-	outPs.specularLight = SpecularLight;
+	IBL_BRDF(Normal, ToEyeDirV, diffuseColor, specularColor, DiffuseLight, SpecularLight, Shininess);
+
+	//MRT输出光照结果(现在不需要这个了，光照阶段就直接是积分好的了)
+	outPs.diffuseLight = float4(DiffuseLight,1.0f);
+	outPs.specularLight = float4(SpecularLight, 1.0f);
 	return outPs;
 }
 
@@ -520,14 +436,22 @@ OutputPS DirectionLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD
 	float3 ToEyeDirV = normalize(pos * -1.0f);
 	float3 toLight = normalize(-g_LightDir.xyz);
 
-	float4 DiffuseLight = float4(0.0f, 0.0f, 0.0f, 0.0f);
-	float4 SpecularLight = float4(0.0f, 0.0f, 0.0f, 0.0f);
+	float3 DiffuseLight = float3(0.0f, 0.0f, 0.0f);
+	float3 SpecularLight = float3(0.0f, 0.0f, 0.0f);
 
 	float3 Normal;// = GetNormal(TexCoord);
 	float Shininess;// = GetShininess(TexCoord);
 	GetNormalandShininess(TexCoord, Normal, Shininess, g_sampleNormal);
+	
+	//反射率
+	float4 albedo = tex2D(g_sampleDiffuse, TexCoord);
+		
+	float metalness = albedo.a;
 
-	LightFunc(Normal, toLight, ToEyeDirV, g_LightColor, DiffuseLight, SpecularLight, Shininess);
+	float3 diffuseColor = albedo.rgb * (1 - metalness);
+	float3 specularColor = lerp(0.04, albedo.rgb, metalness);
+
+	LightFunc(Normal, toLight, ToEyeDirV, g_LightColor, diffuseColor, specularColor, DiffuseLight, SpecularLight, Shininess);
 
 	float shadowFinal = 1.0f;
 	//shadowFinal = ShadowFunc(g_bUseShadow, pos);
@@ -535,9 +459,9 @@ OutputPS DirectionLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD
 	//阴影图采样
 	shadowFinal = tex2D(g_sampleShadowResult, TexCoord);
 
-	//MRT输出光照结果
-	outPs.diffuseLight = DiffuseLight * shadowFinal.x;
-	outPs.specularLight = SpecularLight * shadowFinal.x;
+	//MRT输出光照结果(现在不需要这个了，光照阶段就直接是积分好的了)
+	outPs.diffuseLight = float4(DiffuseLight * shadowFinal.x, 1.0f);
+	outPs.specularLight = float4(SpecularLight * shadowFinal.x, 1.0f);
 	return outPs;
 }
 
@@ -559,8 +483,8 @@ OutputPS PointLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1)
 
 	float3 ToEyeDirV = normalize(pos * -1.0f);
 
-	float4 DiffuseLight = float4(0.0f, 0.0f, 0.0f, 0.0f);
-	float4 SpecularLight = float4(0.0f, 0.0f, 0.0f, 0.0f);
+	float3 DiffuseLight = float3(0.0f, 0.0f, 0.0f);
+	float3 SpecularLight = float3(0.0f, 0.0f, 0.0f);
 
 	float3 toLight = g_LightPos.xyz - pos;
 	float toLightDistance = length(toLight);
@@ -575,15 +499,23 @@ OutputPS PointLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1)
 	float attenuation = (1.0f - disRange) / (g_LightAttenuation.x + g_LightAttenuation.y * disRange + g_LightAttenuation.z * disRange * disRange + 0.000001f);
 	//attenuation = 1 - dot(toLight / g_LightRange, toLight / g_LightRange);
 
-	float4 lightColor = attenuation * g_LightColor;
+	float3 lightColor = attenuation * g_LightColor;
 
 	toLight = normalize(toLight);
 
 	float3 Normal;// = GetNormal(TexCoord);
 	float Shininess;// = GetShininess(TexCoord);
 	GetNormalandShininess(TexCoord, Normal, Shininess, g_sampleNormal);
+	
+	//反射率
+	float4 albedo = tex2D(g_sampleDiffuse, TexCoord);
+		
+	float metalness = albedo.a;
 
-	LightFunc(Normal, toLight, ToEyeDirV, lightColor, DiffuseLight, SpecularLight, Shininess);
+	float3 diffuseColor = albedo.rgb * (1 - metalness);
+	float3 specularColor = lerp(0.04, albedo.rgb, metalness);
+
+	LightFunc(Normal, toLight, ToEyeDirV, g_LightColor, diffuseColor, specularColor, DiffuseLight, SpecularLight, Shininess);
 
 	float shadowFinal = 1.0f;
 	//shadowFinal = PointShadowFunc(g_bUseShadow, pos);
@@ -592,9 +524,9 @@ OutputPS PointLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1)
 	//shadowFinal = tex2D(g_sampleShadowResult, TexCoord);
 	shadowFinal = GaussianBlur(g_ScreenWidth, g_ScreenHeight, g_sampleShadowResult, TexCoord);
 
-	//MRT输出光照结果
-	outPs.diffuseLight = DiffuseLight * shadowFinal.x;
-	outPs.specularLight = SpecularLight * shadowFinal.x;
+	//MRT输出光照结果(现在不需要这个了，光照阶段就直接是积分好的了)
+	outPs.diffuseLight = float4(DiffuseLight * shadowFinal.x, 1.0f);
+	outPs.specularLight = float4(SpecularLight * shadowFinal.x, 1.0f);
 	return outPs;
 }
 
@@ -620,8 +552,8 @@ OutputPS SpotLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1)
 
 	float3 ToEyeDirV = normalize(pos * -1.0f);
 
-	float4 DiffuseLight = float4(0.0f, 0.0f, 0.0f, 0.0f);
-	float4 SpecularLight = float4(0.0f, 0.0f, 0.0f, 0.0f);
+	float3 DiffuseLight = float3(0.0f, 0.0f, 0.0f);
+	float3 SpecularLight = float3(0.0f, 0.0f, 0.0f);
 
 	float3 toLight = g_LightPos.xyz - pos;
 
@@ -657,13 +589,21 @@ OutputPS SpotLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1)
 	//灯光falloff的指数衰减
 	//TODO：
 
-	float4 lightColor = attenuation * g_LightColor * falloff;
+	float3 lightColor = attenuation * g_LightColor * falloff;
 	
 	float3 Normal;// = GetNormal(TexCoord);
 	float Shininess;// = GetShininess(TexCoord);
 	GetNormalandShininess(TexCoord, Normal, Shininess, g_sampleNormal);
+	
+	//反射率
+	float4 albedo = tex2D(g_sampleDiffuse, TexCoord);
+		
+	float metalness = albedo.a;
 
-	LightFunc(Normal, toLight, ToEyeDirV, lightColor, DiffuseLight, SpecularLight, Shininess);
+	float3 diffuseColor = albedo.rgb * (1 - metalness);
+	float3 specularColor = lerp(0.04, albedo.rgb, metalness);
+
+	LightFunc(Normal, toLight, ToEyeDirV, g_LightColor, diffuseColor, specularColor, DiffuseLight, SpecularLight, Shininess);
 
 	float shadowFinal = 1.0f;
 	//shadowFinal = ShadowFunc(g_bUseShadow, pos);
@@ -671,9 +611,115 @@ OutputPS SpotLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1)
 	shadowFinal = tex2D(g_sampleShadowResult, TexCoord);
 
 	//MRT输出光照结果
-	outPs.diffuseLight = DiffuseLight * shadowFinal.x;
-	outPs.specularLight = SpecularLight * shadowFinal.x;
+	outPs.diffuseLight = float4(DiffuseLight * shadowFinal.x, 1.0f);
+	outPs.specularLight = float4(SpecularLight * shadowFinal.x, 1.0f);
 	return outPs;
+}
+
+
+float2 ComputeMoments(float Depth)
+{
+	float2 Moments;
+
+	Moments.x = Depth;
+
+	float dx = ddx(Depth);
+	float dy = ddy(Depth);
+
+	Moments.y = Depth*Depth + 0.25 * (dx*dx + dy*dy);
+
+	return Moments;
+}
+
+float ShadowFunc(bool useShadow, float3 objViewPos)
+{
+	float shadowContribute = 1.0f;
+	//if (useShadow)
+	{
+		//Shadow
+		float4 lightViewPos = mul(float4(objViewPos, 1.0f), g_viewToLight);
+			float4 lightProjPos = mul(float4(objViewPos, 1.0f), g_viewToLightProj);
+			float lightU = (lightProjPos.x / lightProjPos.w + 1.0f) / 2.0f;
+		float lightV = (1.0f - lightProjPos.y / lightProjPos.w) / 2.0f;
+
+		float2 ShadowTexCoord = float2(lightU, lightV);
+
+			//裁减掉shadowMap的uv值0-1范围之外的部分
+			//也可以使用border，但是对于FP16的值，需要先缩放才能使用border，否则设置的borderColor最大值仅为1，没法使用
+			clip(float2(1, 1) - ShadowTexCoord);
+		clip(ShadowTexCoord);
+
+		//float2 Moments = tex2D(g_sampleShadow, ShadowTexCoord);
+		//float2 Moments = GaussianBlur(g_ShadowMapSize, g_ShadowMapSize, g_sampleShadow, ShadowTexCoord);
+		float2 Moments = ComputeMoments(GaussianBlur(g_ShadowMapSize, g_ShadowMapSize, g_sampleShadow, ShadowTexCoord).x);
+
+			shadowContribute = ChebyshevUpperBound(Moments, lightViewPos.z);
+	}
+	return shadowContribute;
+}
+
+float PointShadowFunc(bool useShadow, float3 objViewPos)
+{
+	float shadowContribute = 1.0f;
+	//if (useShadow)
+	{
+		//Shadow
+		float3 toObj = objViewPos - g_LightPos.xyz;
+
+			float4 worldToObj = mul(float4(toObj, 0.0f), g_invView);
+
+			float2 Moments = texCUBE(g_sampleShadow, normalize(worldToObj.xyz));
+
+
+			shadowContribute = ChebyshevUpperBound(Moments, length(worldToObj.xyz));
+	}
+	return shadowContribute;
+}
+
+float PCFShadowFunc(bool useShadow, float3 objViewPos)
+{
+	float shadowContribute = 1.0f;
+	//if (useShadow)
+	{
+		//Shadow
+		float4 lightViewPos = mul(float4(objViewPos, 1.0f), g_viewToLight);
+			float4 lightProjPos = mul(float4(objViewPos, 1.0f), g_viewToLightProj);
+			float lightU = (lightProjPos.x / lightProjPos.w + 1.0f) / 2.0f;
+		float lightV = (1.0f - lightProjPos.y / lightProjPos.w) / 2.0f;
+
+		int SHADOWMAP_SIZE = g_ShadowMapSize;
+		float2 ShadowTexCoord = float2(lightU, lightV);
+			float2 texturePos = ShadowTexCoord * SHADOWMAP_SIZE;
+			float2 lerps = frac(texturePos);
+
+			float shadowBias = g_ShadowBias;
+
+		float shadowVal[4];
+		shadowVal[0] = (tex2D(g_sampleShadow, ShadowTexCoord) + shadowBias < lightViewPos.z / lightViewPos.w) ? 0.0f : 1.0f;
+		shadowVal[1] = (tex2D(g_sampleShadow, ShadowTexCoord + float2(1.0f / SHADOWMAP_SIZE, 0.0f)) + shadowBias < lightViewPos.z / lightViewPos.w) ? 0.0f : 1.0f;
+		shadowVal[2] = (tex2D(g_sampleShadow, ShadowTexCoord + float2(0.0f, 1.0f / SHADOWMAP_SIZE)) + shadowBias < lightViewPos.z / lightViewPos.w) ? 0.0f : 1.0f;
+		shadowVal[3] = (tex2D(g_sampleShadow, ShadowTexCoord + float2(1.0f / SHADOWMAP_SIZE, 1.0f / SHADOWMAP_SIZE)) + shadowBias < lightViewPos.z / lightViewPos.w) ? 0.0f : 1.0f;
+
+		shadowContribute = lerp(lerp(shadowVal[0], shadowVal[1], lerps.x), lerp(shadowVal[2], shadowVal[3], lerps.x), lerps.y);
+
+	}
+	return shadowContribute;
+}
+
+float PCFPointShadowFunc(bool useShadow, float3 worldViewPos)
+{
+	float shadowContribute = 1.0f;
+	//if (useShadow)
+	{
+		//Shadow
+		//g_LightPos是view空间下的灯光位置
+		float3 toObjVec = worldViewPos - g_LightPos.xyz;
+			float4 worldToObjVec = mul(float4(toObjVec, 0.0f), g_invView);
+
+			float shadowBias = g_ShadowBias;
+		shadowContribute = (texCUBE(g_sampleShadow, normalize(worldToObjVec.xyz)) + shadowBias < length(toObjVec)) ? 0.0f : 1.0f;
+	}
+	return shadowContribute;
 }
 
 float4 ShadowPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1) : COLOR

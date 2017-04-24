@@ -147,7 +147,7 @@ void TestScene::OnLoad()
 		//sponzaEntity->SetTexture("");
 
 		Material sponzaMat;
-		sponzaMat.Power = 0.0;
+		sponzaMat.Power = 1.0;
 		sponzaEntity->SetMaterial(&sponzaMat);
 	}
 	

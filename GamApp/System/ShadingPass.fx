@@ -104,12 +104,6 @@ float4 ShadingPass(float2 TexCoord : TEXCOORD0, float3 view : TEXCOORD1) : COLOR
 	float4 diffuseLight = float4(DiffuseLightResult.xyz, 1.0f);
 	float4 specularLight = float4(SpecularLightResult.xyz, 1.0f);
 
-	//纹理采样
-	float4 DiffuseBuffer = tex2D(g_sampleDiffuse, TexCoord);
-	//纹理颜色
-	float4 Texture = float4(DiffuseBuffer.rgb, 1.0f);
-	//高光强度
-	float  Specularintensity = DiffuseBuffer.a;
 
 	float3 pos = GetPosition(TexCoord, g_samplePosition);
 	if (pos.z > 100000)
@@ -120,10 +114,15 @@ float4 ShadingPass(float2 TexCoord : TEXCOORD0, float3 view : TEXCOORD1) : COLOR
 		skyUV = -0.5 * float2(dir.x * r1 + 1, dir.y * r1 + 1);
 		Texture = tex2D(g_sampleSky, skyUV);
 
+		//线性空间和伽马空间的转换...不明白为什么
+		//但是不转换的话，颜色不对会发红
+		//DX的textureViewer也有同样的问题
+		float4 Texture = pow(Texture, 1 / 2.2);
 		//Texture = float4(view, 1);
+		return Texture;
 	}
-	//计算最终光照
-	return Texture * diffuseLight + specularLight * Specularintensity;
+	//计算最终光照(现在不需要这个了，光照阶段就直接是积分好的了)
+	return diffuseLight + specularLight;
 }
 
 technique DeferredRender

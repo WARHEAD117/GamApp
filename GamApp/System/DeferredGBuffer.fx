@@ -219,10 +219,11 @@ OutputPS PShader(float3 NormalV		: NORMAL,
 	//RGB通道储存纹理颜色
 	PsOut.diffuse.rgb = Texture.xyz;
 
-	//A通道储存高光强度
-	PsOut.diffuse.a = Specular.x;
+	//Diffuse的A通道储存金属程度
+	float matelness = 0.85;
+	PsOut.diffuse.a = matelness;
 	PsOut.normal = float4(sampledNormalV.xyz, 1.0f);
-	PsOut.normal.a = Shininess;
+	PsOut.normal.a = 1-Shininess * Specular.x;
 	PsOut.position = posV.zzzz;
 	return PsOut;
 }

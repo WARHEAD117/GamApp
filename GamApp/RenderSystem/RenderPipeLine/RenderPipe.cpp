@@ -60,7 +60,7 @@ PostEffectBase colorChange;
 SkyBox skyBox;
 
 bool	m_enableHBAO;
-bool	m_enableAO;
+bool	m_enableIBL;
 bool	m_enableDOF;
 bool	m_enableHDR;
 bool	m_enableGI;
@@ -89,7 +89,7 @@ RenderPipe::RenderPipe()
 	colorChange.CreatePostEffect("System\\ColorChange.fx");
 
 	m_enableHBAO = true; 
-	m_enableAO = false;
+	m_enableIBL = false;
 	m_enableDOF = false;
 	m_enableHDR = true;
 	m_enableGI = false;
@@ -513,6 +513,12 @@ void RenderPipe::DeferredRender_Lighting()
 	for (int i = 0; i < lightCount; i++)
 	{
 		BaseLight* pLight = LIGHTMANAGER::Instance().GetLight(i);
+
+		if (!m_enableIBL)
+		{
+			if (pLight->GetLightType() == eImageBasedLight)
+				continue;
+		}
 		D3DXVECTOR3 lightDir = pLight->GetLightViewDir();
 		D3DXVECTOR3 lightPos = pLight->GetLightViewPos();
 		D3DXVECTOR4 lightColor = pLight->GetLightColor();
@@ -697,6 +703,10 @@ void RenderPipe::DeferredRender_Lighting()
 	RENDERDEVICE::Instance().g_pD3DDevice->SetVertexDeclaration(mScreenQuadDecl);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetIndices(pScreenQuadIndex);
 
+	//SSR反射Pass
+
+	deferredMultiPassEffect->SetTexture("g_SSRBuffer", ssr.GetPostTarget());
+
 	//环境光Pass
 	deferredMultiPassEffect->BeginPass(5);
 
@@ -824,12 +834,12 @@ void RenderPipe::RenderAll()
 
 	if (GAMEINPUT::Instance().KeyPressed(DIK_1))
 	{
-		m_enableAO = !m_enableAO;
+		m_enableIBL = !m_enableIBL;
 	}
-	if (m_enableAO)
+	if (m_enableIBL)
 	{
-		ssao.RenderPost(m_pPostTarget);
-		m_pPostTarget = ssao.GetPostTarget();
+		//ssao.RenderPost(m_pPostTarget);
+		//m_pPostTarget = ssao.GetPostTarget();
 	}
 
 	if (GAMEINPUT::Instance().KeyPressed(DIK_4))
@@ -895,7 +905,7 @@ void RenderPipe::RenderAll()
 	if (m_enableSSR)
 	{
 		ssr.RenderPost(m_pPostTarget);
-		m_pPostTarget = ssr.GetPostTarget();
+		//m_pPostTarget = ssr.GetPostTarget();
 	}
 
 	/*

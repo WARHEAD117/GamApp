@@ -294,6 +294,8 @@ float4 MySSR(float2 TexCoord)
 {
     //最大MipMap等级
     int MaxMipLevel = g_MaxMipLevel;
+
+	float g_R = GetShininess(TexCoord, g_sampleNormal);
     //Roughness
     float Roughness = saturate(g_Roughness);
     //射线追踪的步数
@@ -512,18 +514,18 @@ float4 ColorResolve(float2 TexCoord : TEXCOORD0) : COLOR
             
 			weight *= BRDF / PDF *cosTheta;
 
-            //resolveColor += hitColor * weight;
-			resolveColor += hitColor * F *G * VoH / (NoH * NoV);
-           // weightSum += weight;
+            resolveColor += hitColor * weight;
+			//resolveColor += hitColor * F *G * VoH / (NoH * NoV);
+           weightSum += weight;
         }
     }
 
     //return weightSum;
     float2 EnvBRDF = tex2D(g_sampleEnvBRDFLUT, float2(NoV, g_Roughness));
     
-    resolveColor /= 4;
+		resolveColor /= weightSum;
 
-	float4 fianlColor = resolveColor;// *(EnvBRDF.x + EnvBRDF.y);
+	float4 fianlColor = resolveColor *(EnvBRDF.x + EnvBRDF.y);
 
     return fianlColor;
 }

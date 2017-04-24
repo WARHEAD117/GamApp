@@ -111,6 +111,19 @@ sampler_state
 	AddressV = wrap;
 };
 
+texture g_SSRBuffer;
+sampler2D g_sampleSSR =
+sampler_state
+{
+	Texture = <g_SSRBuffer>;
+	MinFilter = linear;
+	MagFilter = linear;
+	MipFilter = linear;
+
+	AddressU = Border;
+	AddressV = Border;
+};
+
 //----------------------------
 struct OutputVS_Quad
 {
@@ -764,7 +777,11 @@ float4 AmbientPass(float2 TexCoord : TEXCOORD0) : COLOR
 
 	float3 diffuseColor = albedo.rgb * (1 - metalness);
 
-	return Ambient * float4(diffuseColor,1.0f);
+	//临时增加屏幕空间镜面反射
+	float3 ssrColor = tex2D(g_sampleSSR, TexCoord);
+	float3 specularColor = lerp(0.04, ssrColor.rgb, metalness);
+
+	return Ambient * float4(diffuseColor , 1.0f);
 }
 
 technique DeferredRender

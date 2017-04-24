@@ -218,14 +218,8 @@ void RenderPipe::BuildBuffers()
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
 		1, D3DUSAGE_RENDERTARGET,
 		D3DFMT_A16B16G16R16F, D3DPOOL_DEFAULT,
-		&m_pDiffuseLightTarget, NULL);
-	hr = m_pDiffuseLightTarget->GetSurfaceLevel(0, &m_pDiffuseLightSurface);
-
-	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
-		1, D3DUSAGE_RENDERTARGET,
-		D3DFMT_A16B16G16R16F, D3DPOOL_DEFAULT,
-		&m_pSpecularLightTarget, NULL);
-	hr = m_pSpecularLightTarget->GetSurfaceLevel(0, &m_pSpecularLightSurface);
+		&m_pLightTarget, NULL);
+	hr = m_pLightTarget->GetSurfaceLevel(0, &m_pLightSurface);
 
 	//Shadow-Buffer
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
@@ -459,8 +453,7 @@ void RenderPipe::ComputeLightPassIndex(LightType type, UINT& lightPassIndex, UIN
 void RenderPipe::DeferredRender_Lighting()
 {
 	//Lighting Pass
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pDiffuseLightSurface);
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(1, m_pSpecularLightSurface);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pLightSurface);
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_STENCIL, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
 	deferredMultiPassEffect->SetMatrix(VIEWMATRIX, &RENDERDEVICE::Instance().ViewMatrix);
@@ -582,8 +575,7 @@ void RenderPipe::DeferredRender_Lighting()
 			deferredMultiPassEffect->EndPass();
 
 		}
-		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pDiffuseLightSurface);
-		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(1, m_pSpecularLightSurface);
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pLightSurface);
 
 
 		if (GAMEINPUT::Instance().KeyPressed(DIK_RETURN))
@@ -745,8 +737,7 @@ void RenderPipe::DeferredRender_Shading()
 	shadingPassEffect->SetMatrix("g_InverseProj", &invVP);
 
 	shadingPassEffect->SetTexture(DIFFUSEBUFFER, m_pDiffuseTarget);
-	shadingPassEffect->SetTexture("g_DiffuseLightBuffer", m_pDiffuseLightTarget);
-	shadingPassEffect->SetTexture("g_SpecularLightBuffer", m_pSpecularLightTarget);
+	shadingPassEffect->SetTexture("g_LightBuffer", m_pLightTarget);
 	
 	shadingPassEffect->SetTexture("g_Sky", m_pSkyTex);
 	//shadingPassEffect->SetTexture(NORMALBUFFER, m_pNormalTarget);
@@ -982,10 +973,7 @@ void RenderPipe::RenderAll()
 		m_pPostTarget = m_pDiffuseTarget;
 		break;
 	case ShowDiffuseLight:
-		m_pPostTarget = m_pDiffuseLightTarget;
-		break;
-	case ShowSpecularLight:
-		m_pPostTarget = m_pSpecularLightTarget;
+		m_pPostTarget = m_pLightTarget;
 		break;
 	case ShowShadowResult:
 		m_pPostTarget = m_pShadowTarget;

@@ -20,29 +20,17 @@ sampler_state
 	MipFilter = Point;
 };
 
-texture g_DiffuseLightBuffer;
-sampler2D g_sampleDiffuseLight =
+texture g_LightBuffer;
+sampler2D g_sampleLight =
 sampler_state
 {
-	Texture = <g_DiffuseLightBuffer>;
+	Texture = <g_LightBuffer>;
 	MinFilter = Point;
 	MagFilter = Point;
 	MipFilter = Point;
 	AddressU = Clamp;
 	AddressV = Clamp;
 };
-
-texture g_SpecularLightBuffer;
-sampler2D g_sampleSpecularLight =
-sampler_state
-{
-	Texture = <g_SpecularLightBuffer>;
-	MinFilter = Point;
-	MagFilter = Point;
-	MipFilter = Point;
-	AddressU = Clamp;
-	AddressV = Clamp;
-}; 
 
 texture g_Sky;
 sampler2D g_sampleSky =
@@ -98,12 +86,9 @@ OutputVS VShader(float4 posL       : POSITION0,
 float4 ShadingPass(float2 TexCoord : TEXCOORD0, float3 view : TEXCOORD1) : COLOR
 {
 	//采样光照结果
-	float4 DiffuseLightResult = tex2D(g_sampleDiffuseLight, TexCoord);
-	float4 SpecularLightResult = tex2D(g_sampleSpecularLight, TexCoord);
+	float4 LightResult = tex2D(g_sampleLight, TexCoord);
 
-	float4 diffuseLight = float4(DiffuseLightResult.xyz, 1.0f);
-	float4 specularLight = float4(SpecularLightResult.xyz, 1.0f);
-
+	float4 Light = float4(LightResult.xyz, 1.0f);
 
 	float3 pos = GetPosition(TexCoord, g_samplePosition);
 	if (pos.z > 100000)
@@ -112,17 +97,17 @@ float4 ShadingPass(float2 TexCoord : TEXCOORD0, float3 view : TEXCOORD1) : COLOR
 		float2 skyUV = float2((1 + atan2(dir.x, -dir.z) / M_PI ) /2 , acos(dir.y) / M_PI );
 		float r1 = (1 / M_PI)*acos(dir.z) / sqrt(dir.x * dir.x + dir.y * dir.y);
 		skyUV = -0.5 * float2(dir.x * r1 + 1, dir.y * r1 + 1);
-		Texture = tex2D(g_sampleSky, skyUV);
+		float4 Texture = tex2D(g_sampleSky, skyUV);
 
 		//线性空间和伽马空间的转换...不明白为什么
 		//但是不转换的话，颜色不对会发红
 		//DX的textureViewer也有同样的问题
-		float4 Texture = pow(Texture, 1 / 2.2);
+		Texture = pow(Texture, 1 / 2.2);
 		//Texture = float4(view, 1);
 		return Texture;
 	}
-	//计算最终光照(现在不需要这个了，光照阶段就直接是积分好的了)
-	return diffuseLight + specularLight;
+
+	return Light;
 }
 
 technique DeferredRender

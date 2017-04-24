@@ -372,15 +372,13 @@ void LightFunc2(float3 normal, float3 toLight, float3 toEye, float4 lightColor, 
 //光照结果的MRT输出
 struct OutputPS
 {
-	float4 diffuseLight		: COLOR0;
-	float4 specularLight	: COLOR1;
+	float4 Light		: COLOR0;
 };
 
 OutputPS ImageBasedLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1)
 {
 	OutputPS outPs;
-	outPs.diffuseLight = 0;
-	outPs.specularLight = 0;
+	outPs.Light = 0;
 
 	float lightU = (posWVP.x / posWVP.w + 1.0f) / 2.0f + 0.5f / g_ScreenWidth;
 	float lightV = (1.0f - posWVP.y / posWVP.w) / 2.0f + 0.5f / g_ScreenHeight;
@@ -411,17 +409,14 @@ OutputPS ImageBasedLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOOR
 
 	IBL_BRDF(Normal, ToEyeDirV, diffuseColor, specularColor, DiffuseLight, SpecularLight, Shininess);
 
-	//MRT输出光照结果(现在不需要这个了，光照阶段就直接是积分好的了)
-	outPs.diffuseLight = float4(DiffuseLight,1.0f);
-	outPs.specularLight = float4(SpecularLight, 1.0f);
+	outPs.Light = float4(DiffuseLight, 1.0f) + float4(SpecularLight, 1.0f);
 	return outPs;
 }
 
 OutputPS DirectionLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1)
 {
 	OutputPS outPs;
-	outPs.diffuseLight = 0;
-	outPs.specularLight = 0;
+	outPs.Light = 0;
 
 	float lightU = (posWVP.x / posWVP.w + 1.0f) / 2.0f + 0.5f / g_ScreenWidth;
 	float lightV = (1.0f - posWVP.y / posWVP.w) / 2.0f + 0.5f / g_ScreenHeight;
@@ -459,17 +454,14 @@ OutputPS DirectionLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD
 	//阴影图采样
 	shadowFinal = tex2D(g_sampleShadowResult, TexCoord);
 
-	//MRT输出光照结果(现在不需要这个了，光照阶段就直接是积分好的了)
-	outPs.diffuseLight = float4(DiffuseLight * shadowFinal.x, 1.0f);
-	outPs.specularLight = float4(SpecularLight * shadowFinal.x, 1.0f);
+	outPs.Light = float4(DiffuseLight, 1.0f) + float4(SpecularLight, 1.0f);
 	return outPs;
 }
 
 OutputPS PointLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1)
 {
 	OutputPS outPs;
-	outPs.diffuseLight = 0;
-	outPs.specularLight = 0;
+	outPs.Light = 0;
 
 	float lightU = (posWVP.x / posWVP.w + 1.0f) / 2.0f + 0.5f / g_ScreenWidth;
 	float lightV = (1.0f - posWVP.y / posWVP.w) / 2.0f + 0.5f / g_ScreenHeight;
@@ -524,17 +516,14 @@ OutputPS PointLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1)
 	//shadowFinal = tex2D(g_sampleShadowResult, TexCoord);
 	shadowFinal = GaussianBlur(g_ScreenWidth, g_ScreenHeight, g_sampleShadowResult, TexCoord);
 
-	//MRT输出光照结果(现在不需要这个了，光照阶段就直接是积分好的了)
-	outPs.diffuseLight = float4(DiffuseLight * shadowFinal.x, 1.0f);
-	outPs.specularLight = float4(SpecularLight * shadowFinal.x, 1.0f);
+	outPs.Light = float4(DiffuseLight, 1.0f) + float4(SpecularLight, 1.0f);
 	return outPs;
 }
 
 OutputPS SpotLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1)
 {
 	OutputPS outPs;
-	outPs.diffuseLight = 0;
-	outPs.specularLight = 0;
+	outPs.Light = 0;
 
 	//outPs.diffuseLight = g_LightColor;
 	//outPs.specularLight = g_LightColor;
@@ -610,9 +599,7 @@ OutputPS SpotLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1)
 	//阴影图采样
 	shadowFinal = tex2D(g_sampleShadowResult, TexCoord);
 
-	//MRT输出光照结果
-	outPs.diffuseLight = float4(DiffuseLight * shadowFinal.x, 1.0f);
-	outPs.specularLight = float4(SpecularLight * shadowFinal.x, 1.0f);
+	outPs.Light = float4(DiffuseLight, 1.0f) + float4(SpecularLight, 1.0f);
 	return outPs;
 }
 

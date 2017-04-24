@@ -43,8 +43,7 @@ public:
 	LPDIRECT3DTEXTURE9	m_pNormalTarget;
 	LPDIRECT3DTEXTURE9	m_pPositionTarget;
 
-	LPDIRECT3DTEXTURE9	m_pDiffuseLightTarget;
-	LPDIRECT3DTEXTURE9	m_pSpecularLightTarget;
+	LPDIRECT3DTEXTURE9	m_pLightTarget;
 
 	LPDIRECT3DTEXTURE9	m_pShadowTarget;
 
@@ -60,8 +59,7 @@ private:
 	LPDIRECT3DSURFACE9	m_pNormalSurface;
 	LPDIRECT3DSURFACE9	m_pPositionSurface;
 
-	LPDIRECT3DSURFACE9	m_pDiffuseLightSurface;
-	LPDIRECT3DSURFACE9	m_pSpecularLightSurface;
+	LPDIRECT3DSURFACE9	m_pLightSurface;
 
 	LPDIRECT3DSURFACE9	m_pShadowSurface;
 

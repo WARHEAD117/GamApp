@@ -454,7 +454,7 @@ OutputPS DirectionLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD
 	//阴影图采样
 	shadowFinal = tex2D(g_sampleShadowResult, TexCoord);
 
-	outPs.Light = float4(DiffuseLight, 1.0f) + float4(SpecularLight, 1.0f);
+	outPs.Light = float4(DiffuseLight * shadowFinal, 1.0f) + float4(SpecularLight * shadowFinal, 1.0f);
 	return outPs;
 }
 
@@ -507,7 +507,7 @@ OutputPS PointLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1)
 	float3 diffuseColor = albedo.rgb * (1 - metalness);
 	float3 specularColor = lerp(0.04, albedo.rgb, metalness);
 
-	LightFunc(Normal, toLight, ToEyeDirV, g_LightColor, diffuseColor, specularColor, DiffuseLight, SpecularLight, Shininess);
+	LightFunc(Normal, toLight, ToEyeDirV, lightColor, diffuseColor, specularColor, DiffuseLight, SpecularLight, Shininess);
 
 	float shadowFinal = 1.0f;
 	//shadowFinal = PointShadowFunc(g_bUseShadow, pos);
@@ -516,7 +516,7 @@ OutputPS PointLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1)
 	//shadowFinal = tex2D(g_sampleShadowResult, TexCoord);
 	shadowFinal = GaussianBlur(g_ScreenWidth, g_ScreenHeight, g_sampleShadowResult, TexCoord);
 
-	outPs.Light = float4(DiffuseLight, 1.0f) + float4(SpecularLight, 1.0f);
+	outPs.Light = float4(DiffuseLight * shadowFinal, 1.0f) + float4(SpecularLight * shadowFinal, 1.0f);
 	return outPs;
 }
 
@@ -592,14 +592,14 @@ OutputPS SpotLightPass(float4 posWVP : TEXCOORD0, float4 viewDir : TEXCOORD1)
 	float3 diffuseColor = albedo.rgb * (1 - metalness);
 	float3 specularColor = lerp(0.04, albedo.rgb, metalness);
 
-	LightFunc(Normal, toLight, ToEyeDirV, g_LightColor, diffuseColor, specularColor, DiffuseLight, SpecularLight, Shininess);
+	LightFunc(Normal, toLight, ToEyeDirV, lightColor, diffuseColor, specularColor, DiffuseLight, SpecularLight, Shininess);
 
 	float shadowFinal = 1.0f;
 	//shadowFinal = ShadowFunc(g_bUseShadow, pos);
 	//阴影图采样
 	shadowFinal = tex2D(g_sampleShadowResult, TexCoord);
 
-	outPs.Light = float4(DiffuseLight, 1.0f) + float4(SpecularLight, 1.0f);
+	outPs.Light = float4(DiffuseLight * shadowFinal, 1.0f) + float4(SpecularLight * shadowFinal, 1.0f);
 	return outPs;
 }
 
@@ -757,10 +757,14 @@ float4 AmbientPass(float2 TexCoord : TEXCOORD0) : COLOR
 	//计算环境光
 	float4 Ambient = g_AmbientColor;
 
-	//高亮天空盒（实际上应该用HDR天空盒）
-	Ambient = GetDepth(TexCoord, g_samplePosition) > g_zFar ? float4(1, 1, 1, 1) : Ambient;
+	//反射率
+	float4 albedo = tex2D(g_sampleDiffuse, TexCoord);
 
-	return Ambient;
+	float metalness = albedo.a;
+
+	float3 diffuseColor = albedo.rgb * (1 - metalness);
+
+	return Ambient * float4(diffuseColor,1.0f);
 }
 
 technique DeferredRender
@@ -768,7 +772,7 @@ technique DeferredRender
 	pass p0 //渲染灯光
 	{
 		vertexShader = compile vs_3_0 VShaderLightVolume();
-		pixelShader = compile ps_3_0 ImageBasedLightPass();//ImageBasedLightPass//DirectionLightPass
+		pixelShader = compile ps_3_0 DirectionLightPass();//ImageBasedLightPass//DirectionLightPass
 		AlphaBlendEnable = true;                        //设置渲染状态        
 		SrcBlend = ONE;
 		DestBlend = ONE;

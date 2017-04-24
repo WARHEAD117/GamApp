@@ -442,6 +442,11 @@ void RenderPipe::ComputeLightPassIndex(LightType type, UINT& lightPassIndex, UIN
 		lightPassIndex = 2;
 		shadowPassIndex = 3;
 	}
+	else if (type == eImageBasedLight)
+	{
+		lightPassIndex = 7;
+		shadowPassIndex = 3;
+	}
 	else
 	{
 		lightPassIndex = 0;
@@ -470,13 +475,6 @@ void RenderPipe::DeferredRender_Lighting()
 	deferredMultiPassEffect->SetFloat("g_zNear", CameraParam::zNear);
 	deferredMultiPassEffect->SetFloat("g_zFar", CameraParam::zFar);
 
-	///////////////////////////////////////////////////////////////////
-	deferredMultiPassEffect->SetTexture("g_Sky", m_pSkyTex);
-	deferredMultiPassEffect->SetTexture("g_SkyCube", m_pSkyCube);
-	D3DXMATRIX invV;
-	invV = RENDERDEVICE::Instance().InvViewMatrix;
-	deferredMultiPassEffect->SetMatrix("g_invView", &invV);
-	////////////////////////////////////////////////////////////////////
 
 	deferredMultiPassEffect->CommitChanges();
 
@@ -591,7 +589,7 @@ void RenderPipe::DeferredRender_Lighting()
 		//			 2.为什么把阴影也应用模板剔除的话，效率比起只处理灯光要低？
 		//====================================================================================
 		//方向光不使用模板剔除
-		if (lt != eDirectionLight && enableStencilLight)
+		if (lt != eDirectionLight && lt != eImageBasedLight && enableStencilLight)
 		{
 			//清空模板缓冲，使Stencil值均为0
 			RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_STENCIL, 0x0, 1.0f, 0);
@@ -672,6 +670,9 @@ void RenderPipe::DeferredRender_Lighting()
 
 
 		deferredMultiPassEffect->SetTexture("g_ShadowResult", m_pShadowTarget);
+
+		pLight->SetLightEffect(deferredMultiPassEffect);
+
 		deferredMultiPassEffect->CommitChanges();
 
 		deferredMultiPassEffect->BeginPass(lightpass);
@@ -681,7 +682,7 @@ void RenderPipe::DeferredRender_Lighting()
 		deferredMultiPassEffect->EndPass();
 
 		//方向光不使用模板剔除
-		if (lt != eDirectionLight && enableStencilLight)
+		if (lt != eDirectionLight && lt != eImageBasedLight && enableStencilLight)
 		{
 			//关闭模板
 			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_STENCILENABLE, FALSE);

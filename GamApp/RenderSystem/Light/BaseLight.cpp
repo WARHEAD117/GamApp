@@ -275,3 +275,8 @@ void BaseLight::SetShadowMapSize(int size)
 
 	m_ShadowMapSize = size;
 }
+
+void BaseLight::SetLightEffect(ID3DXEffect* pEffect)
+{
+	//empty
+}

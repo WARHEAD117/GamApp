@@ -210,6 +210,9 @@
     <ClInclude Include="RenderSystem\RenderPipeLine\PostEffect\SSR.h">
       <Filter>RenderSystem\PostEffect</Filter>
     </ClInclude>
+    <ClInclude Include="RenderSystem\Light\ImageBasedLight.h">
+      <Filter>RenderSystem\Light</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GameSystem\Camera\Camera.cpp">
@@ -337,6 +340,9 @@
     </ClCompile>
     <ClCompile Include="RenderSystem\RenderPipeLine\PostEffect\SSR.cpp">
       <Filter>RenderSystem\PostEffect</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderSystem\Light\ImageBasedLight.cpp">
+      <Filter>RenderSystem\Light</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -86,6 +86,8 @@ public:
 
 	virtual void OnFrame();
 
+	virtual void SetLightEffect(ID3DXEffect* pEffect);
+
 protected:
 	
 	LPD3DXMESH			m_lightVolume;

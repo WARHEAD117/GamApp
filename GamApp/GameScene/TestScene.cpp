@@ -8,6 +8,7 @@
 #include "Light/DirectionLight.h"
 #include "Light/PointLight.h"
 #include "Light/SpotLight.h"
+#include "Light/ImageBasedLight.h"
 #include "Light/LightManager.h"
 
 #include "RenderSystem/TempSkin/SkinnedMesh.h"
@@ -37,6 +38,8 @@ SkinEntity* mSkinnedMesh;
 SkinEntity* mSkinnedMeshLittle;
 
 EffectLoader effectLoader;
+
+ImageBasedLight* iblLight;
 DirectionLight* dirLight1;
 DirectionLight* dirLight2;
 PointLight* pointLight0;
@@ -217,9 +220,16 @@ void TestScene::OnLoad()
 
 
 	//----------------------------------------------------------
+	bool useIbl = false;
+	useIbl = true;
+	if (useIbl)
+	{
+		iblLight = LIGHTMANAGER::Instance().CreateLight<ImageBasedLight>(eImageBasedLight);
+		iblLight->SetLightProbe("Res\\Sky\\s\\uffizi-large.hdr");
+	}
 	//--------------------------------------------------------------------------
 	dirLight1 = LIGHTMANAGER::Instance().CreateLight<DirectionLight>(eDirectionLight);
-	dirLight1->SetLightColor(D3DXCOLOR(5.0f, 4.0f, 2.7f, 1.0f));
+	dirLight1->SetLightColor(D3DXCOLOR(15.0f, 14.0f, 12.7f, 1.0f));
 	dirLight1->SetShadowAreaSize(120, 120);
 	dirLight1->SetUseShadow(true);
 	dirLight1->SetWorldTranslate(0, 70, 0);
@@ -323,7 +333,7 @@ void TestScene::OnLoad()
 	{
 		spotLight5 = LIGHTMANAGER::Instance().CreateLight<SpotLight>(eSpotLight);
 		spotLight5->SetLightRange(100);
-		spotLight5->SetUseShadow(false);
+		spotLight5->SetUseShadow(true);
 		spotLight5->SetLightColor(D3DXCOLOR(1.0, 0.2, 0.0, 1.0f));
 		spotLight5->SetWorldTranslate(0, 50, 0);
 		spotLight5->SetWorldRotation(0, 0, 0);

@@ -87,5 +87,6 @@ enum LightType
 {
 	eDirectionLight,
 	ePointLight,
-	eSpotLight
+	eSpotLight,
+	eImageBasedLight
 };

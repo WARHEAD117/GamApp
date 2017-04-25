@@ -99,6 +99,43 @@ float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
 	return color;
 }
 
+
+float3 F(float3 x)
+{
+	const float A = 0.22f;
+	const float B = 0.30f;
+	const float C = 0.10f;
+	const float D = 0.20f;
+	const float E = 0.01f;
+	const float F = 0.30f;
+
+	return ((x * (A * x + C * B) + D * E) / (x * (A * x + B) + D * F)) - E / F;
+}
+
+float3 Uncharted2ToneMapping(float3 color, float adapted_lum)
+{
+	const float WHITE = 11.2f;
+	return F(1.6f * adapted_lum * color) / F(WHITE);
+}
+
+
+float3 ACESToneMapping(float3 color, float adapted_lum)
+{
+	const float A = 2.51f;
+	const float B = 0.03f;
+	const float C = 2.43f;
+	const float D = 0.59f;
+	const float E = 0.14f;
+
+	color *= adapted_lum;
+	return (color * (A * color + B)) / (color * (C * color + D) + E);
+}
+
+float3 CEToneMapping(float3 color, float adapted_lum)
+{
+	return 1 - exp(-adapted_lum * color);
+}
+
 technique HDRLighting
 {
 	pass p0
@@ -173,6 +210,10 @@ in float2 vScreenPosition : TEXCOORD0
 	// BRIGHT_PASS_OFFSET will isolate lights from illuminated scene 
 	// objects.
 	vSample.rgb /= (BRIGHT_PASS_OFFSET + vSample);
+
+	//vSample.rgb = ACESToneMapping(vSample.rgb, fAdaptedLum);
+	//vSample.rgb = Uncharted2ToneMapping(vSample.rgb, fAdaptedLum + 0.001f);
+	//vSample.rgb = CEToneMapping(vSample.rgb, fAdaptedLum + 0.001f);
 
 	return vSample;
 }
@@ -449,9 +490,6 @@ technique CalculateAdaptedLum
 	}
 }
 
-
-
-
 //-----------------------------------------------------------------------------
 // Name: FinalScenePassPS
 // Type: Pixel shader                                      
@@ -489,8 +527,12 @@ in float2 vScreenPosition : TEXCOORD0
 	// values for for middle gray and white cutoff.
 	if (g_bEnableToneMap)
 	{
-		vSample.rgb *= g_fMiddleGray / (fAdaptedLum + 0.001f);
-		vSample.rgb /= (1.0f + vSample);
+		//vSample.rgb *= g_fMiddleGray / (fAdaptedLum + 0.001f);
+		//vSample.rgb /= (1.0f + vSample);
+
+		//vSample.rgb = ACESToneMapping(vSample.rgb, 1 / (fAdaptedLum + 0.001f));
+		vSample.rgb = Uncharted2ToneMapping(vSample.rgb, 1 / (fAdaptedLum + 0.001f));
+		//vSample.rgb = CEToneMapping(vSample.rgb, fAdaptedLum + 0.001f);
 	}
 
 	// Add the star and bloom post processing effects

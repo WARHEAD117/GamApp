@@ -284,7 +284,7 @@ void HDRLighting::RenderPost(LPDIRECT3DTEXTURE9 hdrBuffer)
 	m_postEffect->SetTexture(MAINCOLORBUFFER, hdrBuffer);
 	m_postEffect->SetTexture("g_BloomTex", m_apBloomTex[0]);// [0]);
 	m_postEffect->SetTexture("g_StarTex", hdrBuffer);// [0]);
-	m_postEffect->SetTexture("g_LuminanceCur", m_pAdaptedLuminanceCur);
+	m_postEffect->SetTexture("g_LuminanceCur", m_pAdaptedLuminanceLast);
 
 // 	m_postEffect->SetTexture(MAINCOLORBUFFER, hdrBuffer);
 // 	m_postEffect->SetTexture("g_BloomTex", m_apBloomTex[0]);// [0]);

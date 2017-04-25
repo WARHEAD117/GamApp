@@ -41,6 +41,18 @@ void SSR::CreatePostEffect()
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
 		1, D3DUSAGE_RENDERTARGET,
 		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
+		&m_pTemporalTarget, NULL);
+	hr = m_pTemporalTarget->GetSurfaceLevel(0, &m_pTemporalSurface);
+
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
+		1, D3DUSAGE_RENDERTARGET,
+		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
+		&m_pTemporalSwapTarget, NULL);
+	hr = m_pTemporalSwapTarget->GetSurfaceLevel(0, &m_pTemporalSwapSurface);
+
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
+		1, D3DUSAGE_RENDERTARGET,
+		D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
 		&m_pBlurXTarget, NULL);
 	hr = m_pBlurXTarget->GetSurfaceLevel(0, &m_pBlurXSurface);
 
@@ -71,6 +83,9 @@ void SSR::CreatePostEffect()
 int sampleCount = 15;
 float m_SampleWeights[15];
 float m_SampleOffsets[30];
+
+bool m_Switch1 = false;
+bool m_Switch2 = false;
 
 bool SSR::BuildMipMap(const LPDIRECT3DTEXTURE9 src, LPDIRECT3DTEXTURE9 dest)
 {
@@ -138,6 +153,12 @@ void SSR::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	m_postEffect->SetFloat("g_ScaleFactor", m_ScaleFactor);
 	m_postEffect->SetFloat("g_ScaleFactor2", m_ScaleFactor2);
 
+
+	m_postEffect->SetBool("g_Switch1", m_Switch1);
+
+	float randomOffset = 1.0f * rand() / RAND_MAX;
+	m_postEffect->SetFloat("g_randomOffset", randomOffset);
+
 	m_postEffect->CommitChanges();
 
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pSSRSurface);
@@ -164,6 +185,8 @@ void SSR::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	m_postEffect->BeginPass(3);
 	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 	m_postEffect->EndPass();
+
+
 
 	if (false)
 	{
@@ -204,9 +227,44 @@ void SSR::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		//================================================================================================================
 	}
 	
+
+	//---------------------------------------------------------------------------------------------------
+	//把这次的内容累加到之前累加好的Temporal上，得到用来Swap的Temporal
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pTemporalSwapSurface);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
+
+	m_postEffect->SetTexture("g_TemporalBuffer", m_pTemporalTarget);
+	m_postEffect->SetTexture("g_SSRBuffer", m_pResolveTarget);
+
+	m_postEffect->SetMatrix("g_LastView", &RENDERDEVICE::Instance().ViewLastMatrix);
+	m_postEffect->SetMatrix("g_invView", &RENDERDEVICE::Instance().InvViewMatrix);
+	m_postEffect->SetMatrix("g_View", &RENDERDEVICE::Instance().ViewMatrix);
+	m_postEffect->SetMatrix("g_Proj", &RENDERDEVICE::Instance().ProjMatrix);
+	m_postEffect->SetMatrix("g_InverseProj", &RENDERDEVICE::Instance().InvProjMatrix);
+
+	SetGaussian(m_postEffect, 1.0f / RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, 0, "g_SampleWeights", "g_SampleOffsets");
+	m_postEffect->CommitChanges();
+
+	m_postEffect->BeginPass(4);
+	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+	m_postEffect->EndPass();
+
+	//把最新的累加好的内容交换到实际使用的Temporal上
+	//Copy SSRTarget
+	RENDERDEVICE::Instance().g_pD3DDevice->StretchRect(m_pTemporalSwapSurface, NULL, m_pTemporalSurface, NULL, D3DTEXF_LINEAR);
+
+	//-------------------------------------------------------------------------------------------------------
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pPostSurface);
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
 
+	if (m_Switch2)
+	{
+		m_postEffect->SetTexture("g_TemporalBuffer", m_pTemporalTarget);
+	}
+	else
+	{
+		m_postEffect->SetTexture("g_TemporalBuffer", m_pResolveTarget);
+	}
 	m_postEffect->SetTexture("g_SSRBuffer", m_pResolveTarget);
 	m_postEffect->SetTexture(MAINCOLORBUFFER, mainBuffer);
 
@@ -217,7 +275,10 @@ void SSR::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 	m_postEffect->EndPass();
 
+
+
 	m_postEffect->End();
+
 }
 
 void SSR::ComputeSSRConfig()
@@ -274,6 +335,15 @@ void SSR::ComputeSSRConfig()
 	if (GAMEINPUT::Instance().KeyDown(DIK_C) && GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
 		m_ScaleFactor2 = m_ScaleFactor2 <= 0.0 ? 0.0 : m_ScaleFactor2 - 0.04;
+	}
+
+	if (GAMEINPUT::Instance().KeyPressed(DIK_NUMPAD1))
+	{
+		m_Switch1 = !m_Switch1;
+	}
+	if (GAMEINPUT::Instance().KeyPressed(DIK_NUMPAD2))
+	{
+		m_Switch2 = !m_Switch2;
 	}
 
 	if (GAMEINPUT::Instance().KeyDown(DIK_R))

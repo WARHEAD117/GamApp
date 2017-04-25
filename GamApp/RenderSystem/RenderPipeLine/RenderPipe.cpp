@@ -853,6 +853,8 @@ void RenderPipe::RenderAll()
 		m_pPostTarget = ssgi.GetPostTarget();
 	}
 
+
+
 	if (GAMEINPUT::Instance().KeyPressed(DIK_2))
 	{
 		m_enableHDR = !m_enableHDR;
@@ -862,6 +864,16 @@ void RenderPipe::RenderAll()
 	{
 		hdrLighting.RenderPost(m_pPostTarget);
 		m_pPostTarget = hdrLighting.GetPostTarget();
+	}
+	if (GAMEINPUT::Instance().KeyPressed(DIK_8))
+	{
+		m_enableSSR = !m_enableSSR;
+	}
+
+	if (m_enableSSR)
+	{
+		ssr.RenderPost(m_pPostTarget);
+		m_pPostTarget = ssr.GetPostTarget();
 	}
 
 	if (GAMEINPUT::Instance().KeyPressed(DIK_3))
@@ -895,17 +907,6 @@ void RenderPipe::RenderAll()
 	{
 		ditherHalfToning.RenderPost(m_pPostTarget);
 		m_pPostTarget = ditherHalfToning.GetPostTarget();
-	}
-
-	if (GAMEINPUT::Instance().KeyPressed(DIK_8))
-	{
-		m_enableSSR = !m_enableSSR;
-	}
-
-	if (m_enableSSR)
-	{
-		ssr.RenderPost(m_pPostTarget);
-		//m_pPostTarget = ssr.GetPostTarget();
 	}
 
 	/*

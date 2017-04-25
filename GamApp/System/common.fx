@@ -9,6 +9,7 @@ matrix		g_WorldViewProj;
 matrix		g_mWorldInv;
 matrix		g_InverseProj;
 matrix		g_invView;
+matrix		g_LastView;
 
 float		g_zNear = 1.0f;
 float		g_zFar = 1000.0f;

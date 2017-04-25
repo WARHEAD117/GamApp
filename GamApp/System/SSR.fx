@@ -92,6 +92,20 @@ sampler_state
 
     AddressU = Border;
     AddressV = Border;
+}; 
+
+texture g_TemporalBuffer;
+sampler2D g_sampleTemporal =
+sampler_state
+{
+	Texture = <g_TemporalBuffer>;
+	MinFilter = point;
+	MagFilter = point;
+	MipFilter = point;
+
+
+	AddressU = clamp;
+	AddressV = clamp;
 };
 
 struct OutputVS
@@ -289,6 +303,7 @@ bool RayMarching(float StepLength, int StepCount, int BisectionStepCount, float3
 
 }
 
+float g_randomOffset;
 
 float4 MySSR(float2 TexCoord)
 {
@@ -326,7 +341,7 @@ float4 MySSR(float2 TexCoord)
     float3 reflectDirBase = normalize(reflect(pos, N));
 
 	//随机纹理
-    float4 rand = GetRandom(TexCoord);
+	float4 rand = GetRandom(TexCoord + g_randomOffset);
 
 	float bias = 0.1;
 	//rand.x = lerp(rand.x, 1.0, ScaleFactor);
@@ -418,6 +433,8 @@ struct PixelHit
     float hitPdf;
 };
 
+bool g_Switch1;
+
 float4 ColorResolve(float2 TexCoord : TEXCOORD0) : COLOR
 {
     //return tex2D(g_sampleSSR, TexCoord);
@@ -436,7 +453,7 @@ float4 ColorResolve(float2 TexCoord : TEXCOORD0) : COLOR
     //return float4(modHalfPos.x, 0, 0, 1);
 
     float2 offset[4] =
-    { float2(0, 0), float2(-1, 1), float2(1, 1), float2(0, -1) };
+    { float2(0, 0), float2(-2, 2), float2(2, 2), float2(0, -2) };
 
     float3 pos = GetPosition(TexCoord, g_samplePosition);
     
@@ -450,10 +467,20 @@ float4 ColorResolve(float2 TexCoord : TEXCOORD0) : COLOR
     float maxLength = g_StepLength * STEPCOUNT * 2 * g_MaxLenghFactor;
 
     float weightSum = 0;
-    float4 resolveColor = float4(0, 0, 0, 0);
-    for (int i = 0; i < 4; i++)
+	float4 resolveColor = float4(0, 0, 0, 0);
+
+		int count = 4;
+	if (g_Switch1)
+	{
+		count = 1;
+	}
+	else
+	{
+		count = 4;
+	}
+	for (int i = 0; i < count; i++)
     {
-		float4 PixelHit = tex2D(g_sampleSSR, TexCoord + halfResStep * 2 * offset[i]);
+		float4 PixelHit = tex2D(g_sampleSSR, TexCoord + fullResStep * offset[i]);
         bool RayHit = PixelHit.w < 0.0 ? false : true;
         PixelHit.w = RayHit ? PixelHit.w : -PixelHit.w;
 
@@ -471,7 +498,7 @@ float4 ColorResolve(float2 TexCoord : TEXCOORD0) : COLOR
             fadeFactor = min(fadeUVCoord.x, fadeUVCoord.y) > screenFade ? 1 - sqrt(pow(fadeUVCoord.x - screenFade, 2) + pow(fadeUVCoord.y - screenFade, 2)) / (1 - screenFade) : fadeFactor;
             fadeFactor = saturate(fadeFactor);
             
-            float3 L = RayHit ? hitPos - pos : hitPos;
+            float3 L = RayHit ? hitPos - pos : hitPos - pos;
             
             //to do
             float RayLengh = length(L);
@@ -479,7 +506,7 @@ float4 ColorResolve(float2 TexCoord : TEXCOORD0) : COLOR
             float attenuation = max(maxLength - RayLengh, 0) / maxLength;
 
             //对于追踪到的像素应用衰减，没有追踪到的像素使用原来的值
-            hitColor.a = hitColor.a * attenuation * attenuation * fadeFactor;
+            hitColor = hitColor * attenuation * attenuation * fadeFactor;
 
 
             L = normalize(L);
@@ -565,14 +592,36 @@ float4 DrawBlur(float2 TexCoord : TEXCOORD0) : COLOR
 
 float4 DrawMain(float2 TexCoord : TEXCOORD0) : COLOR
 {
-    float4 SSR = tex2D(g_sampleSSR, TexCoord);
-    float4 mainColor = tex2D(g_sampleMainColor, TexCoord);
-    mainColor = float4(0.3, 0.35, 0.4, 1);
-	float4 fianlColor = SSR * SSR.a * (1 - g_Roughness) + (1 - SSR.a * (1 - g_Roughness)) * mainColor;
+	
+	float4 historyColor = tex2D(g_sampleTemporal, TexCoord);
+	float4 SSR = tex2D(g_sampleSSR, TexCoord);
+	float4 mainColor = tex2D(g_sampleMainColor, TexCoord);
 
-		return SSR;// *SSR.a + (1 - SSR.a) * float4(0, 0, 0, 1);
+	float4 final = historyColor;
+	return final;// +mainColor;// *SSR.a + (1 - SSR.a) * float4(0, 0, 0, 1);
 }
 
+float4 Temporal(float2 TexCoord : TEXCOORD0) : COLOR
+{
+	//观察空间位置
+	float3 pos = GetPosition(TexCoord, g_samplePosition);
+	//世界空间位置
+	float4 posW = mul(float4(pos, 1.0f), g_invView);
+	//上一帧的观察空间位置
+	float4 lastPosV = mul(posW, g_LastView);
+	float4 lastPosP = mul(lastPosV, g_Proj);//X
+	float2 lastUV = lastPosP.xy * float2(1, -1) + float2(0.5, 0.5);
+	lastUV = GetRayUV(lastPosV.xyz);
+
+
+	float4 historyColor = tex2D(g_sampleTemporal, lastUV);
+	float4 SSR = tex2D(g_sampleSSR, TexCoord);
+
+	if (historyColor.x == 0 && historyColor.y == 0 && historyColor.z == 0)
+		historyColor = SSR;
+	float4 final = lerp(historyColor, SSR, 0.05f);
+	return final;
+}
 
 technique SSR
 {
@@ -591,9 +640,14 @@ technique SSR
 		vertexShader = compile vs_3_0 VShader();
 		pixelShader = compile ps_3_0 DrawMain();
 	}
-    pass p3
-    {
-        vertexShader = compile vs_3_0 VShader();
-        pixelShader = compile ps_3_0 ColorResolve();
-    }
+	pass p3
+	{
+		vertexShader = compile vs_3_0 VShader();
+		pixelShader = compile ps_3_0 ColorResolve();
+	}
+	pass p4
+	{
+		vertexShader = compile vs_3_0 VShader();
+		pixelShader = compile ps_3_0 Temporal();
+	}
 }

@@ -18,6 +18,7 @@ public:
 	void BuildProjMtx();
 
 	D3DXMATRIX GetView(){ return mView; };
+	D3DXMATRIX GetViewLast(){ return mViewLast; };
 	D3DXMATRIX GetProj(){ return mProj; };
 	D3DXMATRIX GetWorld(){ return mWorld; };
 
@@ -29,6 +30,9 @@ public:
 	D3DXVECTOR3 GetLookDir(){ return mLookAtW - mPosW; };
 
 	D3DXMATRIX mView;   //观察矩阵
+
+	D3DXMATRIX mViewLast;   //观察矩阵
+
 	D3DXMATRIX mProj;     //投影矩阵
 	D3DXMATRIX mWorld;  //世界矩阵
 

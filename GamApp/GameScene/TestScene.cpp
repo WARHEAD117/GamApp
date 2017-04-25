@@ -233,7 +233,7 @@ void TestScene::OnLoad()
 	dirLight1->SetShadowAreaSize(120, 120);
 	dirLight1->SetUseShadow(true);
 	dirLight1->SetWorldTranslate(0, 70, 0);
-	dirLight1->SetWorldRotation(0.125f * D3DX_PI, 0.125f * D3DX_PI, 0);
+	dirLight1->SetWorldRotation(0.055f * D3DX_PI, 0.125f * D3DX_PI, 0);
 	//--------------------------------------------------------------------------
 	/*
 	dirLight2 = LIGHTMANAGER::Instance().CreateLight<DirectionLight>(eDirectionLight);

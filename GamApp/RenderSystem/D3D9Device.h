@@ -33,6 +33,7 @@ public:
 	LPDIRECT3DTEXTURE9						defaultNormalMap;
 
 	D3DXMATRIX								ViewMatrix;
+	D3DXMATRIX								ViewLastMatrix;
 	D3DXMATRIX								ProjMatrix;
 	D3DXMATRIX								InvViewMatrix;
 	D3DXMATRIX								InvProjMatrix;

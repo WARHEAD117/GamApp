@@ -29,6 +29,9 @@ void Camera::Init()
 
 void Camera::OnFrame()
 {
+	mViewLast = mView;
+	RENDERDEVICE::Instance().ViewLastMatrix = mViewLast;
+
 	D3DXMatrixInverse(&mView, NULL, &mWorldTransform);
 	RENDERDEVICE::Instance().ViewMatrix = mView;
 

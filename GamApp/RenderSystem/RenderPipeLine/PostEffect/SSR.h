@@ -29,6 +29,11 @@ private:
 	LPDIRECT3DTEXTURE9			m_pResolveTarget;
 	LPDIRECT3DSURFACE9			m_pResolveSurface;
 
+	LPDIRECT3DTEXTURE9			m_pTemporalTarget;
+	LPDIRECT3DSURFACE9			m_pTemporalSurface;
+	LPDIRECT3DTEXTURE9			m_pTemporalSwapTarget;
+	LPDIRECT3DSURFACE9			m_pTemporalSwapSurface;
+
 	LPDIRECT3DTEXTURE9			m_pMainTargetWithMip;
 
 	LPDIRECT3DTEXTURE9			m_pBlurXTarget;

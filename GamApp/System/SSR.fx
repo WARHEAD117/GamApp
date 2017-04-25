@@ -550,11 +550,53 @@ float4 ColorResolve(float2 TexCoord : TEXCOORD0) : COLOR
     //return weightSum;
     float2 EnvBRDF = tex2D(g_sampleEnvBRDFLUT, float2(NoV, g_Roughness));
     
-		resolveColor /= weightSum;
+	resolveColor /= weightSum;
 
 	float4 fianlColor = resolveColor *(EnvBRDF.x + EnvBRDF.y);
+		
+	//===================================================
+	//reprojection
+	//世界空间位置
+	float3 hisPos = pos;
 
-    return fianlColor;
+	float historyDepth = tex2D(g_sampleTemporal, TexCoord).w;
+	float z = historyDepth * g_zFar;
+	float u = TexCoord.x * 2.0f - 1;
+	float v = (1 - TexCoord.y) * 2.0f - 1.0f;
+	float y = g_ViewAngle_half_tan * v * z;
+	float x = g_ViewAngle_half_tan * u * z * g_ViewAspect;
+	//hisPos = float3(x, y, z);
+
+	float4 posW = mul(float4(hisPos, 1.0f), g_invView);
+	//上一帧的观察空间位置
+	float4 lastPosV = mul(posW, g_LastView);
+
+	float4 lastPosP = mul(lastPosV, g_Proj);//X
+	float2 lastUV = lastPosP.xy * float2(1, -1) + float2(0.5, 0.5);
+
+	lastUV = GetRayUV(lastPosV.xyz);
+
+
+	float4 historyColor = tex2D(g_sampleTemporal, lastUV);
+
+	if (historyColor.x == 0 && historyColor.y == 0 && historyColor.z == 0)
+		historyColor = fianlColor;
+
+	float4 neighborMin, neighborMax;
+	// calculate neighborMin, neighborMax by
+	// iterating through 9 pixels in neighborhood
+	//historyColor = clamp(historyColor, neighborMin, neighborMax);
+
+
+	float4 final = lerp(historyColor, fianlColor, 0.05f);
+
+	float newDepth = pos.z / g_zFar;
+	if (final.w > pos.z)
+	{
+		final.w = pos.z;
+	}
+	
+	return final;
 }
 
 #define SAMPLE_COUNT 15

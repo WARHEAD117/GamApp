@@ -180,6 +180,17 @@ void SSR::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 	m_postEffect->SetTexture("g_EnvBRDFLUT", m_pEnvBRDFLUT);
 	m_postEffect->SetTexture(MAINCOLORBUFFER, m_pMainTargetWithMip);
+
+
+
+	m_postEffect->SetTexture("g_TemporalBuffer", m_pTemporalTarget);
+
+	m_postEffect->SetMatrix("g_LastView", &RENDERDEVICE::Instance().ViewLastMatrix);
+	m_postEffect->SetMatrix("g_invView", &RENDERDEVICE::Instance().InvViewMatrix);
+	m_postEffect->SetMatrix("g_View", &RENDERDEVICE::Instance().ViewMatrix);
+	m_postEffect->SetMatrix("g_Proj", &RENDERDEVICE::Instance().ProjMatrix);
+	m_postEffect->SetMatrix("g_InverseProj", &RENDERDEVICE::Instance().InvProjMatrix);
+
 	m_postEffect->CommitChanges();
 
 	m_postEffect->BeginPass(3);
@@ -251,7 +262,7 @@ void SSR::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 	//把最新的累加好的内容交换到实际使用的Temporal上
 	//Copy SSRTarget
-	RENDERDEVICE::Instance().g_pD3DDevice->StretchRect(m_pTemporalSwapSurface, NULL, m_pTemporalSurface, NULL, D3DTEXF_LINEAR);
+	RENDERDEVICE::Instance().g_pD3DDevice->StretchRect(m_pResolveSurface, NULL, m_pTemporalSurface, NULL, D3DTEXF_LINEAR);
 
 	//-------------------------------------------------------------------------------------------------------
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pPostSurface);

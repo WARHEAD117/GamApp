@@ -29,6 +29,7 @@ public:
 	void	DeferredRender_MultiPass();
 	void	DeferredRender_Shading();
 	void	DeferredRender_Lighting();
+	void	DeferredRender_SSR();
 	void	RenderFinalColor();
 
 	void	RenderShadow();
@@ -71,6 +72,9 @@ private:
 
 	LPDIRECT3DCUBETEXTURE9	m_pSkyCube;
 
+
+	void ComputeSSRConfig();
+
 #ifdef RENDER_DEBUG
 	enum DEBUG_MODE
 	{
@@ -78,8 +82,8 @@ private:
 		ShowNormal,
 		ShowPosition,
 		ShowDiffuse,
-		ShowDiffuseLight,
-		ShowSpecularLight,
+		ShowLight,
+		ShowSSR,
 		ShowShadowResult,
 	};
 

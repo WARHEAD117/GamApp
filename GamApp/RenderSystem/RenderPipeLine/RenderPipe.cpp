@@ -38,6 +38,7 @@ LPDIRECT3DINDEXBUFFER9		pScreenQuadIndex;
 LPD3DXEFFECT GBufferEffect;
 
 LPD3DXEFFECT deferredMultiPassEffect;
+LPD3DXEFFECT ssrEffect;
 LPD3DXEFFECT shadingPassEffect;
 LPD3DXEFFECT finalColorEffect;
 
@@ -69,6 +70,41 @@ bool	m_enableDither;
 bool	m_enableSSR;
 
 bool	m_enableColorChange;
+
+
+//--------------------------------------------------------
+//ssr
+float		m_Roughness;
+float		m_RayAngle;
+float		m_StepLength;
+float		m_ScaleFactor;
+float		m_ScaleFactor2;
+float		m_rad_threshold;
+bool		m_SSREnable;
+
+bool m_Switch3 = false;
+
+LPDIRECT3DTEXTURE9			m_pRandomTex;
+LPDIRECT3DTEXTURE9			m_pEnvBRDFLUT;
+
+LPDIRECT3DTEXTURE9			m_pSSRTarget;
+LPDIRECT3DSURFACE9			m_pSSRSurface;
+
+LPDIRECT3DTEXTURE9			m_pSSRFinalTarget;
+LPDIRECT3DSURFACE9			m_pSSRFinalSurface;
+
+LPDIRECT3DTEXTURE9			m_pResolveTarget;
+LPDIRECT3DSURFACE9			m_pResolveSurface;
+
+LPDIRECT3DTEXTURE9			m_pTemporalTarget;
+LPDIRECT3DSURFACE9			m_pTemporalSurface;
+LPDIRECT3DTEXTURE9			m_pTemporalSwapTarget;
+LPDIRECT3DSURFACE9			m_pTemporalSwapSurface;
+
+
+LPDIRECT3DTEXTURE9			m_pMainLastTarget;
+LPDIRECT3DSURFACE9			m_pMainLastSurface;
+//--------------------------------------------------------
 
 RenderPipe::RenderPipe()
 {
@@ -127,6 +163,27 @@ RenderPipe::RenderPipe()
 		abort();
 	}
 	skyBox.BuildSkyQuad();
+
+
+	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "System\\noiseColor.png", &m_pRandomTex))
+	{
+		MessageBox(GetForegroundWindow(), "TextureError", "randomNormal", MB_OK);
+		abort();
+	}
+
+	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "System\\EnvBRDFLUT.png", &m_pEnvBRDFLUT))
+	{
+		MessageBox(GetForegroundWindow(), "TextureError", "EnvBRDFLUT", MB_OK);
+		abort();
+	}
+
+	m_Roughness = 0.2;
+	m_RayAngle = 0.1f;
+
+	m_StepLength = 3.0f;
+	m_ScaleFactor = 16.0f;
+	m_ScaleFactor2 = 1.0f;
+	m_rad_threshold = 4.0f;
 }
 
 
@@ -234,6 +291,45 @@ void RenderPipe::BuildBuffers()
 		D3DFMT_A16B16G16R16F, D3DPOOL_DEFAULT,
 		&m_pMainColorTarget, NULL);
 	hr = m_pMainColorTarget->GetSurfaceLevel(0, &m_pMainColorSurface);
+
+	//======================================================================================================================
+	//SSR
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
+		1, D3DUSAGE_RENDERTARGET,
+		D3DFMT_A16B16G16R16F, D3DPOOL_DEFAULT,
+		&m_pSSRFinalTarget, NULL);
+	hr = m_pSSRFinalTarget->GetSurfaceLevel(0, &m_pSSRFinalSurface);
+
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth / 2, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight / 2,
+		1, D3DUSAGE_RENDERTARGET,
+		D3DFMT_A32B32G32R32F, D3DPOOL_DEFAULT,
+		&m_pSSRTarget, NULL);
+	hr = m_pSSRTarget->GetSurfaceLevel(0, &m_pSSRSurface);
+
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
+		1, D3DUSAGE_RENDERTARGET,
+		D3DFMT_A16B16G16R16F, D3DPOOL_DEFAULT,
+		&m_pResolveTarget, NULL);
+	hr = m_pResolveTarget->GetSurfaceLevel(0, &m_pResolveSurface);
+
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
+		1, D3DUSAGE_RENDERTARGET,
+		D3DFMT_A16B16G16R16F, D3DPOOL_DEFAULT,
+		&m_pTemporalTarget, NULL);
+	hr = m_pTemporalTarget->GetSurfaceLevel(0, &m_pTemporalSurface);
+
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
+		1, D3DUSAGE_RENDERTARGET,
+		D3DFMT_A16B16G16R16F, D3DPOOL_DEFAULT,
+		&m_pTemporalSwapTarget, NULL);
+	hr = m_pTemporalSwapTarget->GetSurfaceLevel(0, &m_pTemporalSwapSurface);
+
+
+	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
+		1, D3DUSAGE_RENDERTARGET,
+		D3DFMT_A16B16G16R16F, D3DPOOL_DEFAULT,
+		&m_pMainLastTarget, NULL);
+	hr = m_pMainLastTarget->GetSurfaceLevel(0, &m_pMainLastSurface);
 }
 
 void RenderPipe::BuildEffects()
@@ -245,6 +341,15 @@ void RenderPipe::BuildEffects()
 		NULL, &deferredMultiPassEffect, &error))
 	{
 		MessageBox(GetForegroundWindow(), (char*)error->GetBufferPointer(), "Shader", MB_OK);
+		abort();
+	}
+
+	//Create SSR effect
+	error = 0;
+	if (E_FAIL == ::D3DXCreateEffectFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "System\\SSR.fx", NULL, NULL, D3DXSHADER_DEBUG,
+		NULL, &ssrEffect, &error))
+	{
+		MessageBox(GetForegroundWindow(), (char*)error->GetBufferPointer(), "ssrEffect", MB_OK);
 		abort();
 	}
 
@@ -403,11 +508,19 @@ float g_Amount = 0.7f;
 
 bool enableStencilLight = true;
 
+int frameCount = 0;
+
 void RenderPipe::DeferredRender_MultiPass()
 {
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CW);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZENABLE, FALSE);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZWRITEENABLE, FALSE);
+
+
+	//渲染SSR结果
+	if (frameCount > 0)
+		DeferredRender_SSR();
+	frameCount++;
 
 	//渲染灯光结果
 	DeferredRender_Lighting();
@@ -423,6 +536,214 @@ void RenderPipe::DeferredRender_MultiPass()
 
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, NULL);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(1, NULL);
+}
+
+void RenderPipe::ComputeSSRConfig()
+{
+	if (GAMEINPUT::Instance().KeyDown(DIK_M) && !GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
+	{
+		m_Roughness += 0.002;
+		m_Roughness = m_Roughness >= 1 ? 1 : m_Roughness;
+	}
+
+	if (GAMEINPUT::Instance().KeyDown(DIK_M) && GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
+	{
+		m_Roughness -= 0.002;
+		m_Roughness = m_Roughness <= 0.0005 ? 0.0005 : m_Roughness;
+
+	}
+
+	if (GAMEINPUT::Instance().KeyDown(DIK_N) && !GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
+	{
+		m_RayAngle += 0.001f;
+		m_RayAngle = m_RayAngle >0.5 ? 0.5 : m_RayAngle;
+	}
+
+	if (GAMEINPUT::Instance().KeyDown(DIK_N) && GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
+	{
+		m_RayAngle -= 0.001f;
+		m_RayAngle = m_RayAngle < 0 ? 0 : m_RayAngle;
+	}
+
+
+	if (GAMEINPUT::Instance().KeyDown(DIK_B) && !GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
+	{
+		m_StepLength += 0.001f;
+	}
+	if (GAMEINPUT::Instance().KeyDown(DIK_B) && GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
+	{
+		m_StepLength -= 0.001f;
+	}
+
+	if (GAMEINPUT::Instance().KeyDown(DIK_V) && !GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
+	{
+		m_ScaleFactor = m_ScaleFactor >= 50 ? 50 : m_ScaleFactor + 0.04;
+	}
+	if (GAMEINPUT::Instance().KeyDown(DIK_V) && GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
+	{
+		m_ScaleFactor = m_ScaleFactor <= 0.0 ? 0.0 : m_ScaleFactor - 0.04;
+	}
+
+
+	if (GAMEINPUT::Instance().KeyDown(DIK_C) && !GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
+	{
+		m_ScaleFactor2 = m_ScaleFactor2 >= 50 ? 50 : m_ScaleFactor2 + 0.04;
+	}
+	if (GAMEINPUT::Instance().KeyDown(DIK_C) && GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
+	{
+		m_ScaleFactor2 = m_ScaleFactor2 <= 0.0 ? 0.0 : m_ScaleFactor2 - 0.04;
+	}
+
+	if (GAMEINPUT::Instance().KeyPressed(DIK_NUMPAD1))
+	{
+		m_Switch3 = !m_Switch3;
+	}
+
+
+	if (GAMEINPUT::Instance().KeyDown(DIK_R))
+	{
+		m_Roughness = 0.2f;
+		m_RayAngle = 0.1f;
+
+		m_StepLength = 3.0f;
+		m_ScaleFactor = 16.0f;
+		m_ScaleFactor2 = 10.0f;
+	}
+}
+
+void RenderPipe::DeferredRender_SSR()
+{
+	ComputeSSRConfig();
+
+	//设置全屏矩形
+	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, pScreenQuadVertex, 0, mScreenQuadByteSize);
+	//RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(mFVF);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetVertexDeclaration(mScreenQuadDecl);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetIndices(pScreenQuadIndex);
+
+
+	UINT numPasses = 0;
+	ssrEffect->Begin(&numPasses, 0);
+
+
+	ssrEffect->SetMatrix(WORLDVIEWPROJMATRIX, &RENDERDEVICE::Instance().OrthoWVPMatrix);
+	ssrEffect->SetMatrix(INVPROJMATRIX, &RENDERDEVICE::Instance().InvProjMatrix);
+	ssrEffect->SetMatrix(PROJECTIONMATRIX, &RENDERDEVICE::Instance().ProjMatrix);
+
+	ssrEffect->SetFloat("g_zNear", CameraParam::zNear);
+	ssrEffect->SetFloat("g_zFar", CameraParam::zFar);
+
+	float angle = tan(CameraParam::FOV / 2);
+	ssrEffect->SetFloat("g_ViewAngle_half_tan", angle);
+	float aspect = (float)RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth / RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight;
+	ssrEffect->SetFloat("g_ViewAspect", aspect);
+
+	ssrEffect->SetInt(SCREENWIDTH, RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth);
+	ssrEffect->SetInt(SCREENHEIGHT, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight);
+
+	int screenSize[2] = { RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight };
+	ssrEffect->SetIntArray("g_ScreenSize", screenSize, 2);
+
+	ssrEffect->SetTexture(NORMALBUFFER, RENDERPIPE::Instance().m_pNormalTarget);
+	ssrEffect->SetTexture(POSITIONBUFFER, RENDERPIPE::Instance().m_pPositionTarget);
+	ssrEffect->SetTexture("g_RandTex", m_pRandomTex);
+	D3DSURFACE_DESC randTexDesc;
+	m_pRandomTex->GetLevelDesc(0, &randTexDesc);
+	int randTexSize[2] = { randTexDesc.Width, randTexDesc.Height };
+	ssrEffect->SetIntArray("g_RandTexSize", randTexSize, 2);
+
+	ssrEffect->SetTexture(MAINCOLORBUFFER, m_pMainLastTarget);
+
+	ssrEffect->SetInt("g_MaxMipLevel", /*maxMipLevel*/5);
+	ssrEffect->SetFloat("g_Roughness", m_Roughness);
+	ssrEffect->SetFloat("g_RayAngle", m_RayAngle);
+
+	ssrEffect->SetFloat("g_StepLength", m_StepLength);
+	ssrEffect->SetFloat("g_ScaleFactor", m_ScaleFactor);
+	ssrEffect->SetFloat("g_ScaleFactor2", m_ScaleFactor2);
+
+
+	ssrEffect->SetBool("g_Switch1", m_Switch3);
+
+	float randomOffset = 1.0f * rand() / RAND_MAX;
+	ssrEffect->SetFloat("g_randomOffset", randomOffset);
+
+	ssrEffect->CommitChanges();
+
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pSSRSurface);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
+	ssrEffect->CommitChanges();
+
+	ssrEffect->BeginPass(0);
+	RENDERDEVICE::Instance().g_pD3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 4, 0, 2);
+	ssrEffect->EndPass();
+
+	//================================================================================================================
+	//Color Resolve
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pResolveSurface);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
+
+	ssrEffect->SetIntArray("g_ScreenSize", screenSize, 2);
+	ssrEffect->SetTexture("g_SSRBuffer", m_pSSRTarget);
+
+	ssrEffect->SetTexture("g_EnvBRDFLUT", m_pEnvBRDFLUT);
+	ssrEffect->SetTexture(MAINCOLORBUFFER, m_pMainLastTarget);
+
+	ssrEffect->SetTexture("g_TemporalBuffer", m_pTemporalTarget);
+
+	ssrEffect->SetMatrix("g_LastView", &RENDERDEVICE::Instance().ViewLastMatrix);
+	ssrEffect->SetMatrix("g_invView", &RENDERDEVICE::Instance().InvViewMatrix);
+	ssrEffect->SetMatrix("g_View", &RENDERDEVICE::Instance().ViewMatrix);
+	ssrEffect->SetMatrix("g_Proj", &RENDERDEVICE::Instance().ProjMatrix);
+	ssrEffect->SetMatrix("g_InverseProj", &RENDERDEVICE::Instance().InvProjMatrix);
+
+	ssrEffect->CommitChanges();
+
+	ssrEffect->BeginPass(3);
+	RENDERDEVICE::Instance().g_pD3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 4, 0, 2);
+	ssrEffect->EndPass();
+
+
+	//---------------------------------------------------------------------------------------------------
+	//把这次的内容累加到之前累加好的Temporal上，得到用来Swap的Temporal
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pTemporalSwapSurface);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
+
+	ssrEffect->SetTexture("g_TemporalBuffer", m_pTemporalTarget);
+	ssrEffect->SetTexture("g_SSRBuffer", m_pResolveTarget);
+
+	ssrEffect->SetMatrix("g_LastView", &RENDERDEVICE::Instance().ViewLastMatrix);
+	ssrEffect->SetMatrix("g_invView", &RENDERDEVICE::Instance().InvViewMatrix);
+	ssrEffect->SetMatrix("g_View", &RENDERDEVICE::Instance().ViewMatrix);
+	ssrEffect->SetMatrix("g_Proj", &RENDERDEVICE::Instance().ProjMatrix);
+	ssrEffect->SetMatrix("g_InverseProj", &RENDERDEVICE::Instance().InvProjMatrix);
+
+	ssrEffect->CommitChanges();
+
+	ssrEffect->BeginPass(4);
+	RENDERDEVICE::Instance().g_pD3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 4, 0, 2);
+	ssrEffect->EndPass();
+
+	//把最新的累加好的内容交换到实际使用的Temporal上
+	//Copy SSRTarget
+	RENDERDEVICE::Instance().g_pD3DDevice->StretchRect(m_pResolveSurface, NULL, m_pTemporalSurface, NULL, D3DTEXF_LINEAR);
+
+	//-------------------------------------------------------------------------------------------------------
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pSSRFinalSurface);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
+
+	ssrEffect->SetTexture("g_TemporalBuffer", m_pTemporalTarget);
+
+	ssrEffect->SetTexture("g_SSRBuffer", m_pResolveTarget);
+	ssrEffect->SetTexture(MAINCOLORBUFFER, m_pMainLastTarget);
+
+	ssrEffect->CommitChanges();
+
+	ssrEffect->BeginPass(2);
+	RENDERDEVICE::Instance().g_pD3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 4, 0, 2);
+	ssrEffect->EndPass();
+
+	ssrEffect->End();
 }
 
 void RenderPipe::ComputeLightPassIndex(LightType type, UINT& lightPassIndex, UINT& shadowPassIndex)
@@ -865,6 +1186,14 @@ void RenderPipe::RenderAll()
 		hdrLighting.RenderPost(m_pPostTarget);
 		m_pPostTarget = hdrLighting.GetPostTarget();
 	}
+
+	//==========================
+	//Copy Main
+	LPDIRECT3DSURFACE9	postSurface;
+	HRESULT hr = m_pPostTarget->GetSurfaceLevel(0, &postSurface);
+	RENDERDEVICE::Instance().g_pD3DDevice->StretchRect(postSurface, NULL, m_pMainLastSurface, NULL, D3DTEXF_LINEAR);
+	//===========================
+
 	if (GAMEINPUT::Instance().KeyPressed(DIK_8))
 	{
 		m_enableSSR = !m_enableSSR;
@@ -876,17 +1205,6 @@ void RenderPipe::RenderAll()
 		m_pPostTarget = ssr.GetPostTarget();
 	}
 
-	if (GAMEINPUT::Instance().KeyPressed(DIK_3))
-	{
-		m_enableDOF = !m_enableDOF;
-	}
-
-	if (m_enableDOF)
-	{
-		dof.RenderPost(m_pPostTarget);
-		m_pPostTarget = dof.GetPostTarget();
-	}
-
 	if (GAMEINPUT::Instance().KeyPressed(DIK_5))
 	{
 		m_enableFXAA = !m_enableFXAA;
@@ -896,6 +1214,18 @@ void RenderPipe::RenderAll()
 	{
 		fxaa.RenderPost(m_pPostTarget);
 		m_pPostTarget = fxaa.GetPostTarget();
+	}
+
+
+	if (GAMEINPUT::Instance().KeyPressed(DIK_3))
+	{
+		m_enableDOF = !m_enableDOF;
+	}
+
+	if (m_enableDOF)
+	{
+		dof.RenderPost(m_pPostTarget);
+		m_pPostTarget = dof.GetPostTarget();
 	}
 
 	if (GAMEINPUT::Instance().KeyPressed(DIK_6))
@@ -949,19 +1279,19 @@ void RenderPipe::RenderAll()
 
 	if (GAMEINPUT::Instance().KeyPressed(DIK_F7))
 	{
-		if (m_debugMode == ShowDiffuseLight)
+		if (m_debugMode == ShowLight)
 			m_debugMode = NONE;
 		else
-			m_debugMode = ShowDiffuseLight;
+			m_debugMode = ShowLight;
 	}
 
 
 	if (GAMEINPUT::Instance().KeyPressed(DIK_F8))
 	{
-		if (m_debugMode == ShowSpecularLight)
+		if (m_debugMode == ShowSSR)
 			m_debugMode = NONE;
 		else
-			m_debugMode = ShowSpecularLight;
+			m_debugMode = ShowSSR;
 	}
 
 
@@ -984,8 +1314,11 @@ void RenderPipe::RenderAll()
 	case ShowDiffuse:
 		m_pPostTarget = m_pDiffuseTarget;
 		break;
-	case ShowDiffuseLight:
+	case ShowLight:
 		m_pPostTarget = m_pLightTarget;
+		break;
+	case ShowSSR:
+		m_pPostTarget = m_pResolveTarget;
 		break;
 	case ShowShadowResult:
 		m_pPostTarget = m_pShadowTarget;

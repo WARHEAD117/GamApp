@@ -312,7 +312,7 @@ float4 MySSR(float2 TexCoord)
 
 	float g_R = GetShininess(TexCoord, g_sampleNormal);
     //Roughness
-    float Roughness = saturate(g_Roughness);
+	float Roughness = saturate(g_R);
     //射线追踪的步数
     int StepCount = STEPCOUNT;
     //二分回溯的步数
@@ -407,7 +407,7 @@ float4 MySSR(float2 TexCoord)
     float3 H = normalize(reflectDir + normalize(-pos));
     float NoH = saturate(dot(N, H));
     float VoH = saturate(dot(reflectDir, H));
-    float D = g_Roughness * g_Roughness / (M_PI * pow(NoH * NoH * (g_Roughness * g_Roughness - 1) + 1, 2));
+	float D = Roughness * Roughness / (M_PI * pow(NoH * NoH * (Roughness * Roughness - 1) + 1, 2));
     float PDF = D * NoH / (4 * VoH);
     hitUV.w = rayHit ? PDF : -PDF;
     hitUV.xyz = rayHit ? hitPos : reflectDir;
@@ -436,8 +436,11 @@ struct PixelHit
 bool g_Switch1;
 
 float4 ColorResolve(float2 TexCoord : TEXCOORD0) : COLOR
-{
+{ 
+	//return tex2D(g_sampleMainColor, TexCoord);
     //return tex2D(g_sampleSSR, TexCoord);
+
+	float Roughness = GetShininess(TexCoord, g_sampleNormal);
 
     float2 PixelPos = floor(TexCoord * g_ScreenSize);
     int2 modPos = round(PixelPos % 2);
@@ -478,18 +481,30 @@ float4 ColorResolve(float2 TexCoord : TEXCOORD0) : COLOR
 	{
 		count = 4;
 	}
+
+	float3 hit;
 	for (int i = 0; i < count; i++)
     {
 		float4 PixelHit = tex2D(g_sampleSSR, TexCoord + fullResStep * offset[i]);
         bool RayHit = PixelHit.w < 0.0 ? false : true;
         PixelHit.w = RayHit ? PixelHit.w : -PixelHit.w;
 
+
         if (RayHit)
-        {
+		{
+			hit = PixelHit.xyz;
+
             float3 hitPos = PixelHit.xyz;
             float2 hitUV = GetRayUV(hitPos);
             
-            float4 hitColor = RayHit ? tex2Dlod(g_sampleMainColor, float4(hitUV, 0, 0)) : float4(0, 0, 0, 0);
+			//因为是上一帧的图像，所以要进行一次重投影
+			float4 posW = mul(float4(hitPos, 1.0f), g_invView);
+			//上一帧的观察空间位置
+			float4 lastPosV = mul(posW, g_LastView);
+			float2 lastUV = GetRayUV(lastPosV.xyz);
+			hitUV = lastUV;
+			
+            float4 hitColor = tex2Dlod(g_sampleMainColor, float4(hitUV, 0, 0));
 
             float2 fadeUVCoord = abs(hitUV * 2.0 - 1);
             float fade = max(fadeUVCoord.x, fadeUVCoord.y);
@@ -514,27 +529,34 @@ float4 ColorResolve(float2 TexCoord : TEXCOORD0) : COLOR
             float3 H = normalize(L + V);
 
             float NoH = saturate(dot(N, H));
-            float NoL = saturate(dot(N, L));
-            float VoH = saturate(dot(V, H));
+			float NoL = saturate(dot(N, L));
+			float VoH = saturate(dot(V, H));
+			float LoH = saturate(dot(L, H));
             
             float cosTheta = saturate(dot(N, L));
             float theta = acos(cosTheta);
 
-            float D = g_Roughness * g_Roughness / (M_PI * pow(NoH * NoH * (g_Roughness * g_Roughness - 1) + 1, 2));
-            float k = (g_Roughness + 1) * (g_Roughness + 1) / 8;
-            float G_L = NoV / (NoV * (1 - k) + k);
-            float G_V = NoL / (NoL * (1 - k) + k);
-            float G = G_L * G_V;
-            float3 specularColor = float3(1, 1, 1);
-            float Fc = pow(1 - VoH, 5);
-            float F = (1 - Fc) * specularColor + Fc;
+			float a = Roughness * Roughness;
+
+			//D
+			a = max(a, 0.001);
+			float D = a * a / (M_PI * pow(NoH * NoH * (a * a - 1) + 1, 2));
+
+			//G
+			float k = (Roughness + 1) * (Roughness + 1) / 8;
+			k = a / 2;
+			float G_V = NoV / (NoV * (1 - k) + k);
+			float G_L = NoL / (NoL * (1 - k) + k);
+			float G = G_L * G_V;
+
+			//F Schlick
+			float3 specularColor = float3(1, 1, 1);
+			float3 F = specularColor + (1 - specularColor) * pow(1 - LoH, 5);
             
             //BRDF = D * G * F / (4 * dot(N,L) * dot(N,V))
             float BRDF = D * G * F / (4 * NoL * NoV);
 
             //PDF = D * dot(N,H) / (4 * dot(V,H))
-            //float PDF = PixelHit.w;
-			//float D = g_Roughness * g_Roughness / (M_PI * pow(NoH * NoH * (g_Roughness * g_Roughness - 1) + 1, 2));
 			float PDF = D * NoH / (4 * VoH);
             
             float weight = 1;
@@ -548,35 +570,32 @@ float4 ColorResolve(float2 TexCoord : TEXCOORD0) : COLOR
     }
 
     //return weightSum;
-    float2 EnvBRDF = tex2D(g_sampleEnvBRDFLUT, float2(NoV, g_Roughness));
+    float2 EnvBRDF = tex2D(g_sampleEnvBRDFLUT, float2(NoV, Roughness));
     
 	resolveColor /= weightSum;
 
-	float4 fianlColor = resolveColor *(EnvBRDF.x + EnvBRDF.y);
+	float4 fianlColor = resolveColor;// *(EnvBRDF.x + EnvBRDF.y);
 		
 	//===================================================
 	//reprojection
 	//世界空间位置
 	float3 hisPos = pos;
-
-	float historyDepth = tex2D(g_sampleTemporal, TexCoord).w;
-	float z = historyDepth * g_zFar;
-	float u = TexCoord.x * 2.0f - 1;
-	float v = (1 - TexCoord.y) * 2.0f - 1.0f;
-	float y = g_ViewAngle_half_tan * v * z;
-	float x = g_ViewAngle_half_tan * u * z * g_ViewAspect;
-	//hisPos = float3(x, y, z);
-
+	/*
+	float3 Hit = tex2D(g_sampleSSR, TexCoord);
+	hisPos = Hit;
+	float2 curUV = GetRayUV(Hit.xyz);
+	*/
+	//世界坐标
 	float4 posW = mul(float4(hisPos, 1.0f), g_invView);
 	//上一帧的观察空间位置
 	float4 lastPosV = mul(posW, g_LastView);
-
-	float4 lastPosP = mul(lastPosV, g_Proj);//X
-	float2 lastUV = lastPosP.xy * float2(1, -1) + float2(0.5, 0.5);
-
-	lastUV = GetRayUV(lastPosV.xyz);
-
-
+	//float4 lastPosP = mul(lastPosV, g_Proj);//X
+	//float2 lastUV = lastPosP.xy * float2(1, -1) + float2(0.5, 0.5);
+	float2 lastUV = GetRayUV(lastPosV.xyz);
+	/*
+	float2 dUV = lastUV - curUV;
+	lastUV = TexCoord - dUV;
+	*/
 	float4 historyColor = tex2D(g_sampleTemporal, lastUV);
 
 	if (historyColor.x == 0 && historyColor.y == 0 && historyColor.z == 0)
@@ -589,13 +608,6 @@ float4 ColorResolve(float2 TexCoord : TEXCOORD0) : COLOR
 
 
 	float4 final = lerp(historyColor, fianlColor, 0.05f);
-
-	float newDepth = pos.z / g_zFar;
-	if (final.w > pos.z)
-	{
-		final.w = pos.z;
-	}
-	
 	return final;
 }
 
@@ -639,8 +651,11 @@ float4 DrawMain(float2 TexCoord : TEXCOORD0) : COLOR
 	float4 SSR = tex2D(g_sampleSSR, TexCoord);
 	float4 mainColor = tex2D(g_sampleMainColor, TexCoord);
 
+
+	float g_R = GetShininess(TexCoord, g_sampleNormal);
+
 	float4 final = historyColor;
-	return final;// +mainColor;// *SSR.a + (1 - SSR.a) * float4(0, 0, 0, 1);
+		return final * (1 - g_R) + mainColor * g_R;// *SSR.a + (1 - SSR.a) * float4(0, 0, 0, 1);
 }
 
 float4 Temporal(float2 TexCoord : TEXCOORD0) : COLOR

@@ -434,7 +434,8 @@ struct PixelHit
 };
 
 bool g_Switch1;
-
+bool g_ReprojectPassSwitch;
+bool g_HitReprojectSwitch;
 float4 ColorResolve(float2 TexCoord : TEXCOORD0) : COLOR
 { 
 	//return tex2D(g_sampleMainColor, TexCoord);
@@ -502,7 +503,8 @@ float4 ColorResolve(float2 TexCoord : TEXCOORD0) : COLOR
 			//上一帧的观察空间位置
 			float4 lastPosV = mul(posW, g_LastView);
 			float2 lastUV = GetRayUV(lastPosV.xyz);
-			hitUV = lastUV;
+			if (!g_HitReprojectSwitch)
+				hitUV = lastUV;
 			
             float4 hitColor = tex2Dlod(g_sampleMainColor, float4(hitUV, 0, 0));
 
@@ -598,17 +600,17 @@ float4 ColorResolve(float2 TexCoord : TEXCOORD0) : COLOR
 	*/
 	float4 historyColor = tex2D(g_sampleTemporal, lastUV);
 
-	if (historyColor.x == 0 && historyColor.y == 0 && historyColor.z == 0)
-		historyColor = fianlColor;
-
 	float4 neighborMin, neighborMax;
 	// calculate neighborMin, neighborMax by
 	// iterating through 9 pixels in neighborhood
 	//historyColor = clamp(historyColor, neighborMin, neighborMax);
 
-
 	float4 final = lerp(historyColor, fianlColor, 0.05f);
-	return final;
+
+	if (g_ReprojectPassSwitch)
+		return fianlColor;
+	else
+		return final;
 }
 
 #define SAMPLE_COUNT 15
@@ -644,20 +646,7 @@ float4 DrawBlur(float2 TexCoord : TEXCOORD0) : COLOR
     return SSR;
 }
 
-float4 DrawMain(float2 TexCoord : TEXCOORD0) : COLOR
-{
-	
-	float4 historyColor = tex2D(g_sampleTemporal, TexCoord);
-	float4 SSR = tex2D(g_sampleSSR, TexCoord);
-	float4 mainColor = tex2D(g_sampleMainColor, TexCoord);
-
-
-	float g_R = GetShininess(TexCoord, g_sampleNormal);
-
-	float4 final = historyColor;
-		return final * (1 - g_R) + mainColor * g_R;// *SSR.a + (1 - SSR.a) * float4(0, 0, 0, 1);
-}
-
+bool g_ClampHistorySwitch;
 float4 Temporal(float2 TexCoord : TEXCOORD0) : COLOR
 {
 	//观察空间位置
@@ -666,19 +655,55 @@ float4 Temporal(float2 TexCoord : TEXCOORD0) : COLOR
 	float4 posW = mul(float4(pos, 1.0f), g_invView);
 	//上一帧的观察空间位置
 	float4 lastPosV = mul(posW, g_LastView);
-	float4 lastPosP = mul(lastPosV, g_Proj);//X
-	float2 lastUV = lastPosP.xy * float2(1, -1) + float2(0.5, 0.5);
-	lastUV = GetRayUV(lastPosV.xyz);
-
+	float2 lastUV = GetRayUV(lastPosV.xyz);
 
 	float4 historyColor = tex2D(g_sampleTemporal, lastUV);
-	float4 SSR = tex2D(g_sampleSSR, TexCoord);
 
-	if (historyColor.x == 0 && historyColor.y == 0 && historyColor.z == 0)
-		historyColor = SSR;
+	float2 fullResStep = float2(1.0 / g_ScreenWidth, 1.0 / g_ScreenHeight);
+
+	float4 minColor, maxColor;
+	float4 SSR = tex2D(g_sampleSSR, TexCoord);
+	if (g_ClampHistorySwitch)
+	{
+		minColor = SSR;
+		maxColor = SSR;
+		int num = 4;
+		for (int i = 0; i < num; i++)
+		{
+			for (int j = 0; j < num; j++)
+			{
+				float2 offset = float2(i - num / 2, j - num / 2);
+					offset *= fullResStep;
+				float4 curColor = tex2D(g_sampleSSR, TexCoord + offset);
+
+
+				if (curColor.x != 0 && curColor.y != 0 && curColor.z != 0)
+				{
+					maxColor = max(maxColor, curColor);
+					minColor = min(minColor, curColor);
+				}
+			}
+		}
+		historyColor = clamp(historyColor, minColor, maxColor);
+	}
+	
 	float4 final = lerp(historyColor, SSR, 0.05f);
 	return final;
 }
+
+float4 DrawMain(float2 TexCoord : TEXCOORD0) : COLOR
+{
+	
+	float4 ssrColor = tex2D(g_sampleSSR, TexCoord);
+	float4 mainColor = tex2D(g_sampleMainColor, TexCoord);
+
+
+	float g_R = GetShininess(TexCoord, g_sampleNormal);
+
+	float4 final = ssrColor;
+	return final * (1 - g_R) + mainColor * g_R;// *SSR.a + (1 - SSR.a) * float4(0, 0, 0, 1);
+}
+
 
 technique SSR
 {

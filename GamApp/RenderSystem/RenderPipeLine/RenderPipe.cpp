@@ -83,6 +83,9 @@ float		m_rad_threshold;
 bool		m_SSREnable;
 
 bool m_Switch3 = false;
+bool m_ReprojectPassSwitch = false;
+bool m_HitReprojectSwitch = false;
+bool m_ClampHistorySwitch = false;
 
 LPDIRECT3DTEXTURE9			m_pRandomTex;
 LPDIRECT3DTEXTURE9			m_pEnvBRDFLUT;
@@ -598,6 +601,18 @@ void RenderPipe::ComputeSSRConfig()
 	{
 		m_Switch3 = !m_Switch3;
 	}
+	if (GAMEINPUT::Instance().KeyPressed(DIK_NUMPAD2))
+	{
+		m_ReprojectPassSwitch = !m_ReprojectPassSwitch;
+	}
+	if (GAMEINPUT::Instance().KeyPressed(DIK_NUMPAD3))
+	{
+		m_HitReprojectSwitch = !m_HitReprojectSwitch;
+	}
+	if (GAMEINPUT::Instance().KeyPressed(DIK_NUMPAD4))
+	{
+		m_ClampHistorySwitch = !m_ClampHistorySwitch;
+	}
 
 
 	if (GAMEINPUT::Instance().KeyDown(DIK_R))
@@ -671,7 +686,7 @@ void RenderPipe::DeferredRender_SSR()
 	ssrEffect->CommitChanges();
 
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pSSRSurface);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
 	ssrEffect->CommitChanges();
 
 	ssrEffect->BeginPass(0);
@@ -681,7 +696,7 @@ void RenderPipe::DeferredRender_SSR()
 	//================================================================================================================
 	//Color Resolve
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pResolveSurface);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
 
 	ssrEffect->SetIntArray("g_ScreenSize", screenSize, 2);
 	ssrEffect->SetTexture("g_SSRBuffer", m_pSSRTarget);
@@ -697,44 +712,63 @@ void RenderPipe::DeferredRender_SSR()
 	ssrEffect->SetMatrix("g_Proj", &RENDERDEVICE::Instance().ProjMatrix);
 	ssrEffect->SetMatrix("g_InverseProj", &RENDERDEVICE::Instance().InvProjMatrix);
 
+	ssrEffect->SetBool("g_ReprojectPassSwitch", m_ReprojectPassSwitch);
+	ssrEffect->SetBool("g_HitReprojectSwitch", m_HitReprojectSwitch);
+
 	ssrEffect->CommitChanges();
 
 	ssrEffect->BeginPass(3);
 	RENDERDEVICE::Instance().g_pD3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 4, 0, 2);
 	ssrEffect->EndPass();
 
+	if (m_ReprojectPassSwitch)
+	{
+		//---------------------------------------------------------------------------------------------------
+		//把这次的内容累加到之前累加好的Temporal上，得到用来Swap的Temporal
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pTemporalSwapSurface);
+		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
 
-	//---------------------------------------------------------------------------------------------------
-	//把这次的内容累加到之前累加好的Temporal上，得到用来Swap的Temporal
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pTemporalSwapSurface);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
+		ssrEffect->SetTexture("g_TemporalBuffer", m_pTemporalTarget);
+		ssrEffect->SetTexture("g_SSRBuffer", m_pResolveTarget);
 
-	ssrEffect->SetTexture("g_TemporalBuffer", m_pTemporalTarget);
-	ssrEffect->SetTexture("g_SSRBuffer", m_pResolveTarget);
+		ssrEffect->SetMatrix("g_LastView", &RENDERDEVICE::Instance().ViewLastMatrix);
+		ssrEffect->SetMatrix("g_invView", &RENDERDEVICE::Instance().InvViewMatrix);
+		ssrEffect->SetMatrix("g_View", &RENDERDEVICE::Instance().ViewMatrix);
+		ssrEffect->SetMatrix("g_Proj", &RENDERDEVICE::Instance().ProjMatrix);
+		ssrEffect->SetMatrix("g_InverseProj", &RENDERDEVICE::Instance().InvProjMatrix);
 
-	ssrEffect->SetMatrix("g_LastView", &RENDERDEVICE::Instance().ViewLastMatrix);
-	ssrEffect->SetMatrix("g_invView", &RENDERDEVICE::Instance().InvViewMatrix);
-	ssrEffect->SetMatrix("g_View", &RENDERDEVICE::Instance().ViewMatrix);
-	ssrEffect->SetMatrix("g_Proj", &RENDERDEVICE::Instance().ProjMatrix);
-	ssrEffect->SetMatrix("g_InverseProj", &RENDERDEVICE::Instance().InvProjMatrix);
+		ssrEffect->SetBool("g_ClampHistorySwitch", m_ClampHistorySwitch);
 
-	ssrEffect->CommitChanges();
+		ssrEffect->CommitChanges();
 
-	ssrEffect->BeginPass(4);
-	RENDERDEVICE::Instance().g_pD3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 4, 0, 2);
-	ssrEffect->EndPass();
+		ssrEffect->BeginPass(4);
+		RENDERDEVICE::Instance().g_pD3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 4, 0, 2);
+		ssrEffect->EndPass();
 
-	//把最新的累加好的内容交换到实际使用的Temporal上
-	//Copy SSRTarget
-	RENDERDEVICE::Instance().g_pD3DDevice->StretchRect(m_pResolveSurface, NULL, m_pTemporalSurface, NULL, D3DTEXF_LINEAR);
+		//把最新的累加好的内容交换到实际使用的Temporal上
+		//Copy SSRTarget
+		RENDERDEVICE::Instance().g_pD3DDevice->StretchRect(m_pTemporalSwapSurface, NULL, m_pTemporalSurface, NULL, D3DTEXF_LINEAR);
+	}
+	else
+	{
+		//把最新的累加好的内容交换到实际使用的Temporal上
+		//Copy SSRTarget
+		RENDERDEVICE::Instance().g_pD3DDevice->StretchRect(m_pResolveSurface, NULL, m_pTemporalSurface, NULL, D3DTEXF_LINEAR);
+	}
 
 	//-------------------------------------------------------------------------------------------------------
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pSSRFinalSurface);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
 
-	ssrEffect->SetTexture("g_TemporalBuffer", m_pTemporalTarget);
-
-	ssrEffect->SetTexture("g_SSRBuffer", m_pResolveTarget);
+	if (m_ReprojectPassSwitch)
+	{
+		ssrEffect->SetTexture("g_SSRBuffer", m_pTemporalTarget);
+	}
+	else
+	{
+		ssrEffect->SetTexture("g_SSRBuffer", m_pResolveTarget);
+	}
+	//这里是临时的，并不应该用这个作为输出的底色（这个MainColor是上一帧的，SSR反而是这一帧的） 
 	ssrEffect->SetTexture(MAINCOLORBUFFER, m_pMainLastTarget);
 
 	ssrEffect->CommitChanges();
@@ -1318,7 +1352,7 @@ void RenderPipe::RenderAll()
 		m_pPostTarget = m_pLightTarget;
 		break;
 	case ShowSSR:
-		m_pPostTarget = m_pResolveTarget;
+		m_pPostTarget = m_pSSRFinalTarget;
 		break;
 	case ShowShadowResult:
 		m_pPostTarget = m_pShadowTarget;

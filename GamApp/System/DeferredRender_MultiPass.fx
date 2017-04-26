@@ -781,7 +781,7 @@ float4 AmbientPass(float2 TexCoord : TEXCOORD0) : COLOR
 	float3 ssrColor = tex2D(g_sampleSSR, TexCoord);
 	float3 specularColor = lerp(0.04, ssrColor.rgb, metalness);
 
-	return Ambient * float4(diffuseColor , 1.0f);
+	return Ambient * float4(diffuseColor, 1.0f);
 }
 
 technique DeferredRender

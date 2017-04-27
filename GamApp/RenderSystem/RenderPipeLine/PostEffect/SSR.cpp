@@ -172,7 +172,7 @@ void SSR::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	//================================================================================================================
 	//Color Resolve
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pResolveSurface);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
 	int screenSize[2] = { RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight };
 	m_postEffect->SetIntArray("g_ScreenSize", screenSize, 2);
@@ -204,7 +204,7 @@ void SSR::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		//================================================================================================================
 		//Blur X
 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pBlurXSurface);
-		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
+		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
 		m_postEffect->SetTexture("g_SSRBuffer", m_pResolveTarget);
 		m_postEffect->SetTexture(MAINCOLORBUFFER, mainBuffer);
@@ -220,7 +220,7 @@ void SSR::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		//================================================================================================================
 		//Blur Y
 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pResolveSurface);
-		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
+		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
 		m_postEffect->SetTexture("g_SSRBuffer", m_pBlurXTarget);
 		m_postEffect->SetTexture(MAINCOLORBUFFER, mainBuffer);
@@ -242,7 +242,7 @@ void SSR::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	//---------------------------------------------------------------------------------------------------
 	//把这次的内容累加到之前累加好的Temporal上，得到用来Swap的Temporal
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pTemporalSwapSurface);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
 	m_postEffect->SetTexture("g_TemporalBuffer", m_pTemporalTarget);
 	m_postEffect->SetTexture("g_SSRBuffer", m_pResolveTarget);
@@ -266,7 +266,7 @@ void SSR::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 	//-------------------------------------------------------------------------------------------------------
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pPostSurface);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
 	if (m_Switch2)
 	{

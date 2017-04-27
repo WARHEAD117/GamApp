@@ -66,8 +66,9 @@ bool	m_enableDOF;
 bool	m_enableHDR;
 bool	m_enableGI;
 bool	m_enableFXAA;
-bool	m_enableDither;
+bool	m_enableDither; 
 bool	m_enableSSR;
+bool	m_enableSSRPost;
 
 bool	m_enableColorChange;
 
@@ -135,7 +136,8 @@ RenderPipe::RenderPipe()
 	m_enableFXAA = true;
 	m_enableDither = false;
 	m_enableColorChange = false;
-	m_enableSSR = false;
+	m_enableSSR = true;
+	m_enableSSRPost = false;
 
 	m_showNormal = false;
 	m_showPosition = false;
@@ -757,7 +759,7 @@ void RenderPipe::DeferredRender_SSR()
 	}
 
 	//-------------------------------------------------------------------------------------------------------
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pSSRFinalSurface);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pSSRFinalSurface); //renderSurface//m_pSSRFinalSurface
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
 
 	if (m_ReprojectPassSwitch)
@@ -809,6 +811,185 @@ void RenderPipe::ComputeLightPassIndex(LightType type, UINT& lightPassIndex, UIN
 	}
 }
 
+void RenderPipe::Lighting(LPD3DXEFFECT effect, BaseLight* pLight)
+{
+	D3DXVECTOR3 lightDir = pLight->GetLightViewDir();
+	D3DXVECTOR3 lightPos = pLight->GetLightViewPos();
+	D3DXVECTOR4 lightColor = pLight->GetLightColor();
+	D3DXVECTOR4 lightAttenuation = pLight->GetLightAttenuation();
+	D3DXVECTOR4 lightCosHalfAngle = pLight->GetLightCosHalfAngle();
+	float lightRange = pLight->GetLightRange();
+	bool useShadow = pLight->GetUseShadow();
+
+	D3DXVECTOR4 lightDir_View = D3DXVECTOR4(lightDir, 1.0f);
+	D3DXVECTOR4 lightPos_View = D3DXVECTOR4(lightPos, 1.0f);
+
+	effect->SetVector("g_LightDir", &lightDir_View);
+	effect->SetVector("g_LightPos", &lightPos_View);
+	effect->SetVector("g_LightColor", &lightColor);
+	effect->SetVector("g_LightAttenuation", &lightAttenuation);
+	effect->SetFloat("g_LightRange", lightRange);
+	effect->SetVector("g_LightCosAngle", &D3DXVECTOR4(lightCosHalfAngle.x, lightCosHalfAngle.y, 0.0f, 0.0f));
+
+	effect->SetBool("g_bUseShadow", useShadow);
+
+	D3DXMATRIX lightVolumeMatrix = pLight->GetLightVolumeTransform();
+	effect->SetMatrix("g_LightVolumeWVP", &lightVolumeMatrix);
+	D3DXMATRIX toViewDirMatrix = pLight->GetToViewDirMatrix();
+	effect->SetMatrix("g_ToViewDirMatrix", &toViewDirMatrix);
+
+	LightType lt = pLight->GetLightType();
+	UINT lightpass = 0;
+	UINT shadowPass = 0;
+
+	ComputeLightPassIndex(lt, lightpass, shadowPass);
+
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pShadowSurface);
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(1, NULL);
+
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
+	if (useShadow)
+	{
+		effect->SetMatrix("g_invView", &RENDERDEVICE::Instance().InvViewMatrix);
+		effect->SetMatrix("g_ShadowView", &pLight->GetLightViewMatrix());
+		effect->SetMatrix("g_ShadowProj", &pLight->GetLightProjMatrix());
+
+		D3DXMATRIX viewToLightProjMat = RENDERDEVICE::Instance().InvViewMatrix * pLight->GetLightViewMatrix() * pLight->GetLightProjMatrix();
+		effect->SetMatrix("g_viewToLightProj", &viewToLightProjMat);
+		D3DXMATRIX viewToLightMat = RENDERDEVICE::Instance().InvViewMatrix * pLight->GetLightViewMatrix();
+		effect->SetMatrix("g_viewToLight", &viewToLightMat);
+
+		effect->SetTexture("g_ShadowBuffer", pLight->GetShadowTarget());
+
+		effect->SetInt("g_ShadowMapSize", pLight->GetShadowMapSize());
+		effect->SetFloat("g_ShadowBias", 0.4f);
+
+		effect->CommitChanges();
+
+		effect->BeginPass(shadowPass);
+
+		pLight->RenderLightVolume();
+
+		effect->EndPass();
+
+	}
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pLightSurface);
+
+
+	if (GAMEINPUT::Instance().KeyPressed(DIK_RETURN))
+	{
+		enableStencilLight = !enableStencilLight;
+	}
+
+	//====================================================================================
+	//灯光的模板剔除
+	//通过模板剔除掉灯光没有实际照到的像素
+	//
+	//已知的问题：1.只有VS的话，PS会怎么执行？为什么在点光源阴影之后执行没有PS阶段的StencilPass会导致Stencil结果不正确？看起来是转了九十度
+	//			 2.为什么把阴影也应用模板剔除的话，效率比起只处理灯光要低？
+	//====================================================================================
+	//方向光不使用模板剔除
+	if (lt != eDirectionLight && lt != eImageBasedLight && enableStencilLight)
+	{
+		//清空模板缓冲，使Stencil值均为0
+		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_STENCIL, 0x0, 1.0f, 0);
+
+		//开启深度
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZENABLE, TRUE);
+		//启用模板
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_STENCILENABLE, true);
+
+		//===============================================
+		//Step.1 渲染灯光体的背面
+		//第一步需要标记出在灯光照射后表面前方的所有像素，即Z-Buffer深度小于灯光体后表面深度的像素
+		//所以将深度测试方式设置为GREATER，使灯光体后表面深度大于Z-Buffer深度的部分标记为1
+		//================================================
+
+		//设置模板值时，使用“1”作为要设置的值
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_STENCILREF, 0x1);
+
+		//深度大于Z-Buffer时Z-Test结果为Pass
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZFUNC, D3DCMP_GREATER);
+		//Stencil-Test的结果永远为Pass，即不做Stencil测试
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_STENCILFUNC, D3DCMP_ALWAYS);
+		//STENCILPASS代表着深度和模板均通过，而模板测试永远通过，所以代表着深度测试通过，即将深度大于Z-Buffer的像素的模板设置为上面设置的“1”
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_STENCILPASS, D3DSTENCILOP_REPLACE);
+
+		//设置剔除方式为剔除正面，渲染灯光体的背面
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CW);
+		effect->BeginPass(6);
+		pLight->RenderLightVolume();
+		effect->EndPass();
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CW);
+
+
+		//===============================================
+		//Step.2 渲染灯光体的正面
+		//第二步需要标记出在灯光照射前表面前方的所有像素，即Z-Buffer深度小于灯光体前表面深度的像素
+		//然后将这些像素从第一步的结果中去掉，就可以得到同时满足(1)位于灯光后表面前方(2)位于灯光前表面后方 的所有像素
+		//将深度测试方式设置为GREATER，使灯光体前表面深度大于Z-Buffer深度的部分标记为0
+		//
+		//说明：当相机位于灯光范围之内的时候，灯光的前表面深度均为负值，没有像素会通过深度测试
+		//================================================
+
+		//设置模板值时，使用“0”作为要设置的值
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_STENCILREF, 0x0);
+
+		//深度大于Z-Buffer时Z-Test结果为Pass
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZFUNC, D3DCMP_GREATER);
+		//Stencil-Test的结果永远为Pass，即不做Stencil测试
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_STENCILFUNC, D3DCMP_ALWAYS);
+		//将深度大于Z-Buffer的像素的模板设置为上面设置的“0”
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_STENCILPASS, D3DSTENCILOP_REPLACE);
+
+		//设置剔除方式为剔除背面，渲染灯光体的正面
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
+		effect->BeginPass(6);
+		pLight->RenderLightVolume();
+		effect->EndPass();
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CW);
+
+
+		//===============================================
+		//Step.3 渲染实际的灯光
+		//将Z-Test方式设置为ALWAYS，即相当于不做深度测试
+		//剔除所有模板值等于0的像素，剩余的像素就是灯光实际能够照亮的像素了
+		//================================================
+
+		//Z-Test结果永远为Pass
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZFUNC, D3DCMP_ALWAYS);
+
+		//设置模板值时，使用“0”作为要设置的值
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_STENCILREF, 0x0);
+
+		//使用模板测试，模板值不等于上面设置的值，即“0”时，模板测试通过
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_STENCILFUNC, D3DCMP_NOTEQUAL);
+		//模板测试及深度测试通过时，保持模板的值
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_STENCILPASS, D3DSTENCILOP_KEEP);
+	}
+
+
+	effect->SetTexture("g_ShadowResult", m_pShadowTarget);
+
+	pLight->SetLightEffect(effect);
+
+	effect->CommitChanges();
+
+	effect->BeginPass(lightpass);
+
+	pLight->RenderLightVolume();
+
+	effect->EndPass();
+
+	//方向光不使用模板剔除
+	if (lt != eDirectionLight && lt != eImageBasedLight && enableStencilLight)
+	{
+		//关闭模板
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_STENCILENABLE, FALSE);
+		//关闭深度
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZENABLE, FALSE);
+	}
+}
 //
 void RenderPipe::DeferredRender_Lighting()
 {
@@ -862,194 +1043,38 @@ void RenderPipe::DeferredRender_Lighting()
 
 	deferredMultiPassEffect->CommitChanges();
 
+	if (m_enableIBL)
+	{
+		int iblCount = LIGHTMANAGER::Instance().GetIBLCount();
 
+		for (int i = 0; i < iblCount; i++)
+		{
+			BaseLight* pLight = LIGHTMANAGER::Instance().GetIBL(i);
+
+			Lighting(deferredMultiPassEffect, pLight);
+		}
+	}
+	
+	if (m_enableSSR)
+	{
+		//SSR反射Pass
+		RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, pScreenQuadVertex, 0, mScreenQuadByteSize);
+		RENDERDEVICE::Instance().g_pD3DDevice->SetVertexDeclaration(mScreenQuadDecl);
+		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pLightSurface);
+		deferredMultiPassEffect->SetTexture("g_SSRBuffer", m_pSSRFinalTarget);
+		deferredMultiPassEffect->BeginPass(8);
+		deferredMultiPassEffect->CommitChanges();
+		RENDERDEVICE::Instance().g_pD3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 4, 0, 2);
+		deferredMultiPassEffect->EndPass();
+	}
 
 	int lightCount = LIGHTMANAGER::Instance().GetLightCount();
 	for (int i = 0; i < lightCount; i++)
 	{
 		BaseLight* pLight = LIGHTMANAGER::Instance().GetLight(i);
-
-		if (!m_enableIBL)
-		{
-			if (pLight->GetLightType() == eImageBasedLight)
-				continue;
-		}
-		D3DXVECTOR3 lightDir = pLight->GetLightViewDir();
-		D3DXVECTOR3 lightPos = pLight->GetLightViewPos();
-		D3DXVECTOR4 lightColor = pLight->GetLightColor();
-		D3DXVECTOR4 lightAttenuation = pLight->GetLightAttenuation();
-		D3DXVECTOR4 lightCosHalfAngle = pLight->GetLightCosHalfAngle();
-		float lightRange = pLight->GetLightRange();
-		bool useShadow = pLight->GetUseShadow();
-
-		D3DXVECTOR4 lightDir_View = D3DXVECTOR4(lightDir, 1.0f);
-		D3DXVECTOR4 lightPos_View = D3DXVECTOR4(lightPos, 1.0f);
-
-		deferredMultiPassEffect->SetVector("g_LightDir", &lightDir_View);
-		deferredMultiPassEffect->SetVector("g_LightPos", &lightPos_View);
-		deferredMultiPassEffect->SetVector("g_LightColor", &lightColor);
-		deferredMultiPassEffect->SetVector("g_LightAttenuation", &lightAttenuation);
-		deferredMultiPassEffect->SetFloat("g_LightRange", lightRange);
-		deferredMultiPassEffect->SetVector("g_LightCosAngle", &D3DXVECTOR4(lightCosHalfAngle.x, lightCosHalfAngle.y, 0.0f, 0.0f));
-
-		deferredMultiPassEffect->SetBool("g_bUseShadow", useShadow);
-
-		D3DXMATRIX lightVolumeMatrix = pLight->GetLightVolumeTransform();
-		deferredMultiPassEffect->SetMatrix("g_LightVolumeWVP", &lightVolumeMatrix);
-		D3DXMATRIX toViewDirMatrix = pLight->GetToViewDirMatrix();
-		deferredMultiPassEffect->SetMatrix("g_ToViewDirMatrix", &toViewDirMatrix);
-
-		LightType lt = pLight->GetLightType();
-		UINT lightpass = 0;
-		UINT shadowPass = 0;
-
-		ComputeLightPassIndex(lt, lightpass, shadowPass);
-
-		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pShadowSurface);
-		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(1, NULL);
-
-		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
-		if (useShadow)
-		{
-			deferredMultiPassEffect->SetMatrix("g_invView", &RENDERDEVICE::Instance().InvViewMatrix);
-			deferredMultiPassEffect->SetMatrix("g_ShadowView", &pLight->GetLightViewMatrix());
-			deferredMultiPassEffect->SetMatrix("g_ShadowProj", &pLight->GetLightProjMatrix());
-
-			D3DXMATRIX viewToLightProjMat = RENDERDEVICE::Instance().InvViewMatrix * pLight->GetLightViewMatrix() * pLight->GetLightProjMatrix();
-			deferredMultiPassEffect->SetMatrix("g_viewToLightProj", &viewToLightProjMat);
-			D3DXMATRIX viewToLightMat = RENDERDEVICE::Instance().InvViewMatrix * pLight->GetLightViewMatrix();
-			deferredMultiPassEffect->SetMatrix("g_viewToLight", &viewToLightMat);
-
-			deferredMultiPassEffect->SetTexture("g_ShadowBuffer", pLight->GetShadowTarget());
-
-			deferredMultiPassEffect->SetInt("g_ShadowMapSize", pLight->GetShadowMapSize());
-			deferredMultiPassEffect->SetFloat("g_ShadowBias", 0.4f);
-
-			deferredMultiPassEffect->CommitChanges();
-
-			deferredMultiPassEffect->BeginPass(shadowPass);
-
-			pLight->RenderLightVolume();
-
-			deferredMultiPassEffect->EndPass();
-
-		}
-		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pLightSurface);
-
-
-		if (GAMEINPUT::Instance().KeyPressed(DIK_RETURN))
-		{
-			enableStencilLight = !enableStencilLight;
-		}
-
-		//====================================================================================
-		//灯光的模板剔除
-		//通过模板剔除掉灯光没有实际照到的像素
-		//
-		//已知的问题：1.只有VS的话，PS会怎么执行？为什么在点光源阴影之后执行没有PS阶段的StencilPass会导致Stencil结果不正确？看起来是转了九十度
-		//			 2.为什么把阴影也应用模板剔除的话，效率比起只处理灯光要低？
-		//====================================================================================
-		//方向光不使用模板剔除
-		if (lt != eDirectionLight && lt != eImageBasedLight && enableStencilLight)
-		{
-			//清空模板缓冲，使Stencil值均为0
-			RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_STENCIL, 0x0, 1.0f, 0);
-
-			//开启深度
-			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZENABLE, TRUE);
-			//启用模板
-			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_STENCILENABLE, true);
-
-			//===============================================
-			//Step.1 渲染灯光体的背面
-			//第一步需要标记出在灯光照射后表面前方的所有像素，即Z-Buffer深度小于灯光体后表面深度的像素
-			//所以将深度测试方式设置为GREATER，使灯光体后表面深度大于Z-Buffer深度的部分标记为1
-			//================================================
-
-			//设置模板值时，使用“1”作为要设置的值
-			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_STENCILREF, 0x1);
-
-			//深度大于Z-Buffer时Z-Test结果为Pass
-			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZFUNC, D3DCMP_GREATER);
-			//Stencil-Test的结果永远为Pass，即不做Stencil测试
-			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_STENCILFUNC, D3DCMP_ALWAYS);
-			//STENCILPASS代表着深度和模板均通过，而模板测试永远通过，所以代表着深度测试通过，即将深度大于Z-Buffer的像素的模板设置为上面设置的“1”
-			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_STENCILPASS, D3DSTENCILOP_REPLACE);
-
-			//设置剔除方式为剔除正面，渲染灯光体的背面
-			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CW);
-			deferredMultiPassEffect->BeginPass(6);
-			pLight->RenderLightVolume();
-			deferredMultiPassEffect->EndPass();
-			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CW);
-
-
-			//===============================================
-			//Step.2 渲染灯光体的正面
-			//第二步需要标记出在灯光照射前表面前方的所有像素，即Z-Buffer深度小于灯光体前表面深度的像素
-			//然后将这些像素从第一步的结果中去掉，就可以得到同时满足(1)位于灯光后表面前方(2)位于灯光前表面后方 的所有像素
-			//将深度测试方式设置为GREATER，使灯光体前表面深度大于Z-Buffer深度的部分标记为0
-			//
-			//说明：当相机位于灯光范围之内的时候，灯光的前表面深度均为负值，没有像素会通过深度测试
-			//================================================
-
-			//设置模板值时，使用“0”作为要设置的值
-			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_STENCILREF, 0x0);
-
-			//深度大于Z-Buffer时Z-Test结果为Pass
-			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZFUNC, D3DCMP_GREATER);
-			//Stencil-Test的结果永远为Pass，即不做Stencil测试
-			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_STENCILFUNC, D3DCMP_ALWAYS);
-			//将深度大于Z-Buffer的像素的模板设置为上面设置的“0”
-			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_STENCILPASS, D3DSTENCILOP_REPLACE);
-
-			//设置剔除方式为剔除背面，渲染灯光体的正面
-			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
-			deferredMultiPassEffect->BeginPass(6);
-			pLight->RenderLightVolume();
-			deferredMultiPassEffect->EndPass();
-			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CW);
-
-
-			//===============================================
-			//Step.3 渲染实际的灯光
-			//将Z-Test方式设置为ALWAYS，即相当于不做深度测试
-			//剔除所有模板值等于0的像素，剩余的像素就是灯光实际能够照亮的像素了
-			//================================================
-
-			//Z-Test结果永远为Pass
-			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZFUNC, D3DCMP_ALWAYS);
-
-			//设置模板值时，使用“0”作为要设置的值
-			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_STENCILREF, 0x0);
-
-			//使用模板测试，模板值不等于上面设置的值，即“0”时，模板测试通过
-			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_STENCILFUNC, D3DCMP_NOTEQUAL);
-			//模板测试及深度测试通过时，保持模板的值
-			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_STENCILPASS, D3DSTENCILOP_KEEP);
-		}
-
-
-		deferredMultiPassEffect->SetTexture("g_ShadowResult", m_pShadowTarget);
-
-		pLight->SetLightEffect(deferredMultiPassEffect);
-
-		deferredMultiPassEffect->CommitChanges();
-
-		deferredMultiPassEffect->BeginPass(lightpass);
-
-		pLight->RenderLightVolume();
-
-		deferredMultiPassEffect->EndPass();
-
-		//方向光不使用模板剔除
-		if (lt != eDirectionLight && lt != eImageBasedLight && enableStencilLight)
-		{
-			//关闭模板
-			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_STENCILENABLE, FALSE);
-			//关闭深度
-			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZENABLE, FALSE);
-		}
+		
+		Lighting(deferredMultiPassEffect, pLight);
 	}
 
 	//设置全屏矩形
@@ -1208,7 +1233,12 @@ void RenderPipe::RenderAll()
 		m_pPostTarget = ssgi.GetPostTarget();
 	}
 
-
+	//==========================
+	//Copy Main
+	LPDIRECT3DSURFACE9	postSurface;
+	HRESULT hr = m_pPostTarget->GetSurfaceLevel(0, &postSurface);
+	RENDERDEVICE::Instance().g_pD3DDevice->StretchRect(postSurface, NULL, m_pMainLastSurface, NULL, D3DTEXF_LINEAR);
+	//===========================
 
 	if (GAMEINPUT::Instance().KeyPressed(DIK_2))
 	{
@@ -1221,19 +1251,17 @@ void RenderPipe::RenderAll()
 		m_pPostTarget = hdrLighting.GetPostTarget();
 	}
 
-	//==========================
-	//Copy Main
-	LPDIRECT3DSURFACE9	postSurface;
-	HRESULT hr = m_pPostTarget->GetSurfaceLevel(0, &postSurface);
-	RENDERDEVICE::Instance().g_pD3DDevice->StretchRect(postSurface, NULL, m_pMainLastSurface, NULL, D3DTEXF_LINEAR);
-	//===========================
-
 	if (GAMEINPUT::Instance().KeyPressed(DIK_8))
 	{
 		m_enableSSR = !m_enableSSR;
 	}
 
-	if (m_enableSSR)
+	if (GAMEINPUT::Instance().KeyPressed(DIK_9))
+	{
+		m_enableSSRPost = !m_enableSSRPost;
+	}
+
+	if (m_enableSSRPost)
 	{
 		ssr.RenderPost(m_pPostTarget);
 		m_pPostTarget = ssr.GetPostTarget();

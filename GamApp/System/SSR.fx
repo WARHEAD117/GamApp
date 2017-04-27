@@ -409,7 +409,7 @@ float4 MySSR(float2 TexCoord)
     float VoH = saturate(dot(reflectDir, H));
 	float D = Roughness * Roughness / (M_PI * pow(NoH * NoH * (Roughness * Roughness - 1) + 1, 2));
     float PDF = D * NoH / (4 * VoH);
-    hitUV.w = rayHit ? PDF : -PDF;
+    hitUV.w = rayHit ? 1 : 0;
     hitUV.xyz = rayHit ? hitPos : reflectDir;
 
 
@@ -487,9 +487,7 @@ float4 ColorResolve(float2 TexCoord : TEXCOORD0) : COLOR
 	for (int i = 0; i < count; i++)
     {
 		float4 PixelHit = tex2D(g_sampleSSR, TexCoord + fullResStep * offset[i]);
-        bool RayHit = PixelHit.w < 0.0 ? false : true;
-        PixelHit.w = RayHit ? PixelHit.w : -PixelHit.w;
-
+        bool RayHit = PixelHit.w < 0.5 ? false : true;
 
         if (RayHit)
 		{
@@ -693,15 +691,13 @@ float4 Temporal(float2 TexCoord : TEXCOORD0) : COLOR
 
 float4 DrawMain(float2 TexCoord : TEXCOORD0) : COLOR
 {
-	
 	float4 ssrColor = tex2D(g_sampleSSR, TexCoord);
-	float4 mainColor = tex2D(g_sampleMainColor, TexCoord);
-
-
 	float g_R = GetShininess(TexCoord, g_sampleNormal);
 
 	float4 final = ssrColor;
-	return final * (1 - g_R) + mainColor * g_R;// *SSR.a + (1 - SSR.a) * float4(0, 0, 0, 1);
+	//return final * (1 - g_R) + mainColor * g_R;// *SSR.a + (1 - SSR.a) * float4(0, 0, 0, 1);
+	ssrColor.rgb *= (1 - g_R);
+	return ssrColor;
 }
 
 

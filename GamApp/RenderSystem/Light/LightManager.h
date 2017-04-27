@@ -11,12 +11,16 @@ public:
 	~LightManager();
 
 	std::vector<BaseLight*> mLightList;
+	std::vector<BaseLight*> mIBLList;
 
 	void AddLight(BaseLight* const light);
+	void AddIBL(BaseLight* const light);
 	void OnFrame();
 
 	BaseLight* GetLight(int lightIndex);
+	BaseLight* GetIBL(int lightIndex);
 	int GetLightCount();
+	int GetIBLCount();
 
 	template<typename CLASSTYPE>
 	CLASSTYPE* CreateLight(LightType lightType);
@@ -27,8 +31,15 @@ template<typename CLASSTYPE>
 inline CLASSTYPE* LightManager::CreateLight(LightType lightType)
 {
 	CLASSTYPE * newLight = new CLASSTYPE();
+	if (lightType == eImageBasedLight)
+	{
+		AddIBL(newLight);
+	}
+	else
+	{
+		AddLight(newLight);
+	}
 	newLight->SetLightType(lightType);
-	AddLight(newLight);
 	return newLight;
 }
 

@@ -106,7 +106,7 @@ sampler_state
 	Texture = <g_SkyCube>;
 	MinFilter = linear;
 	MagFilter = linear;
-	//MipFilter = linear;
+	MipFilter = linear;
 	AddressU = wrap;
 	AddressV = wrap;
 };
@@ -226,7 +226,7 @@ float3 PrefilterEnvMap(float Roughness, float3 R) {
 	float3 N = R; 
 	float3 V = R;
 	float3 PrefilteredColor = 0;
-	const uint NumSamples = 196; 
+	const uint NumSamples = 32; 
 	float TotalWeight = 0;
 	for (uint i = 0; i < NumSamples; i++) 
 	{
@@ -243,6 +243,7 @@ float3 PrefilterEnvMap(float Roughness, float3 R) {
 			skyUV = float2(0.5, -0.5) * float2(L.x * r1 + 1, L.y * r1 + 1);
 
 			float4 Texture = tex2Dlod(g_sampleSky, float4(skyUV,0,0));
+			//float4 Texture = tex2D(g_sampleSky, skyUV);
 			//线性空间和伽马空间的转换...不明白为什么
 			//但是不转换的话，颜色不对会发红
 			//DX的textureViewer也有同样的问题
@@ -783,6 +784,11 @@ float4 AmbientPass(float2 TexCoord : TEXCOORD0) : COLOR
 
 	return Ambient * float4(diffuseColor, 1.0f);
 }
+float4 BlendSSR(float2 TexCoord : TEXCOORD0) : COLOR
+{
+	float4 ssrColor = tex2D(g_sampleSSR, TexCoord);
+	return ssrColor;
+}
 
 technique DeferredRender
 {
@@ -857,6 +863,15 @@ technique DeferredRender
 		AlphaBlendEnable = true;                        //设置渲染状态        
 		SrcBlend = ONE;
 		DestBlend = ONE;
+		ColorWriteEnable = 0xFFFFFFFF;
+	}
+	pass p8 //渲染SSR
+	{
+		vertexShader = compile vs_3_0 VShader();
+		pixelShader = compile ps_3_0 BlendSSR();
+		AlphaBlendEnable = true;                        //设置渲染状态        
+		SrcBlend = SRCALPHA;
+		DestBlend = INVSRCALPHA;
 		ColorWriteEnable = 0xFFFFFFFF;
 	}
 }

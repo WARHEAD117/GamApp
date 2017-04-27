@@ -28,6 +28,7 @@ public:
 	void	ComputeLightPassIndex(LightType type, UINT& lightPassIndex, UINT& shadowPassIndex);
 	void	DeferredRender_MultiPass();
 	void	DeferredRender_Shading();
+	void	Lighting(LPD3DXEFFECT effect, BaseLight* pLight);
 	void	DeferredRender_Lighting();
 	void	DeferredRender_SSR();
 	void	RenderFinalColor();

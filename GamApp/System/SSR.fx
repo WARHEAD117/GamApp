@@ -214,15 +214,16 @@ bool RayMarching(float StepLength, int StepCount, int BisectionStepCount, float3
     //击中点的误差
     float hitDelta = 0;
 
+	float StepDelta = StepLength;
     //正向的射线追踪
     for (int i = 1; i <= StepCount; ++i)
     {
-        float3 rayPos = StartPos + RayDir * StepLength * i;
+        float3 rayPos = StartPos + RayDir * StepLength;
         float2 rayUV = GetRayUV(rayPos);
         float sampleDepth = GetDepth(rayUV, g_samplePosition);
 
         //初步的追踪
-        if (sampleDepth < rayPos.z && !checkForward)
+		if (sampleDepth < rayPos.z && !checkForward && rayUV.x<1 && rayUV.x >0 && rayUV.y < 1 && rayUV.y > 0)
         {
             checkForward = true;
             hitPos = rayPos;
@@ -230,6 +231,11 @@ bool RayMarching(float StepLength, int StepCount, int BisectionStepCount, float3
             break;
 
         }
+		else
+		{
+			StepDelta = StepLength;
+			StepLength *= 2.0f;
+		}
     }
     
     //反射的默认颜色
@@ -245,7 +251,7 @@ bool RayMarching(float StepLength, int StepCount, int BisectionStepCount, float3
         BisectionDir = normalize(BisectionDir);
 
         //起始的步长
-        float BisectionStepLength = StepLength;
+		float BisectionStepLength = StepDelta;
         
         //射线的末端对应UV
         float2 hitUV;
@@ -332,16 +338,16 @@ float4 MySSR(float2 TexCoord)
     if (pos.z > g_zFar)
         return float4(0, 0, 0, 0);
 
-    float3 V = normalize(-pos);
-    
-	//观察空间法线
-    float3 N = GetNormal(TexCoord, g_sampleNormal);
-    
-    //计算反射向量
-    float3 reflectDirBase = normalize(reflect(pos, N));
+	float3 V = normalize(-pos);
 
-	//随机纹理
-	float4 rand = GetRandom(TexCoord + g_randomOffset);
+		//观察空间法线
+		float3 N = GetNormal(TexCoord, g_sampleNormal);
+
+		//计算反射向量
+		float3 reflectDirBase = normalize(reflect(pos, N));
+
+		//随机纹理
+		float4 rand = GetRandom(TexCoord + g_randomOffset);
 
 	float bias = 0.1;
 	//rand.x = lerp(rand.x, 1.0, ScaleFactor);
@@ -398,18 +404,9 @@ float4 MySSR(float2 TexCoord)
         //衰减集中的颜色
         //hitColor = hitColor * attenuation * attenuation * attenuation;
         hitColor.a = 1;
-
-
         hitUV.w = 1;
     }
-    
 
-    float3 H = normalize(reflectDir + normalize(-pos));
-    float NoH = saturate(dot(N, H));
-    float VoH = saturate(dot(reflectDir, H));
-	float D = Roughness * Roughness / (M_PI * pow(NoH * NoH * (Roughness * Roughness - 1) + 1, 2));
-    float PDF = D * NoH / (4 * VoH);
-    hitUV.w = rayHit ? 1 : 0;
     hitUV.xyz = rayHit ? hitPos : reflectDir;
 
 
@@ -484,6 +481,11 @@ float4 ColorResolve(float2 TexCoord : TEXCOORD0) : COLOR
 	}
 
 	float3 hit;
+
+	int hitCount = 0;
+
+	float fadeSum = 0;
+
 	for (int i = 0; i < count; i++)
     {
 		float4 PixelHit = tex2D(g_sampleSSR, TexCoord + fullResStep * offset[i]);
@@ -510,9 +512,11 @@ float4 ColorResolve(float2 TexCoord : TEXCOORD0) : COLOR
             float fade = max(fadeUVCoord.x, fadeUVCoord.y);
             float screenFade = 0.75;
             float fadeFactor = 1.0 - max(fade - screenFade, 0.0) / (1.0 - screenFade);
-            fadeFactor = min(fadeUVCoord.x, fadeUVCoord.y) > screenFade ? 1 - sqrt(pow(fadeUVCoord.x - screenFade, 2) + pow(fadeUVCoord.y - screenFade, 2)) / (1 - screenFade) : fadeFactor;
+            //fadeFactor = min(fadeUVCoord.x, fadeUVCoord.y) > screenFade ? 1 - sqrt(pow(fadeUVCoord.x - screenFade, 2) + pow(fadeUVCoord.y - screenFade, 2)) / (1 - screenFade) : fadeFactor;
             fadeFactor = saturate(fadeFactor);
             
+			fadeSum += fadeFactor;
+
             float3 L = RayHit ? hitPos - pos : hitPos - pos;
             
             //to do
@@ -521,7 +525,7 @@ float4 ColorResolve(float2 TexCoord : TEXCOORD0) : COLOR
             float attenuation = max(maxLength - RayLengh, 0) / maxLength;
 
             //对于追踪到的像素应用衰减，没有追踪到的像素使用原来的值
-            hitColor = hitColor * attenuation * attenuation * fadeFactor;
+			hitColor = hitColor;// *attenuation * attenuation * fadeFactor;
 
 
             L = normalize(L);
@@ -566,6 +570,7 @@ float4 ColorResolve(float2 TexCoord : TEXCOORD0) : COLOR
             resolveColor += hitColor * weight;
 			//resolveColor += hitColor * F *G * VoH / (NoH * NoV);
            weightSum += weight;
+		   hitCount++;
         }
     }
 
@@ -573,6 +578,8 @@ float4 ColorResolve(float2 TexCoord : TEXCOORD0) : COLOR
     float2 EnvBRDF = tex2D(g_sampleEnvBRDFLUT, float2(NoV, Roughness));
     
 	resolveColor /= weightSum;
+	float avgFade = fadeSum / hitCount;
+	resolveColor.a = 1.0f * hitCount / count * avgFade;
 
 	float4 fianlColor = resolveColor;// *(EnvBRDF.x + EnvBRDF.y);
 		
@@ -686,6 +693,7 @@ float4 Temporal(float2 TexCoord : TEXCOORD0) : COLOR
 	}
 	
 	float4 final = lerp(historyColor, SSR, 0.05f);
+	//return SSR; 
 	return final;
 }
 

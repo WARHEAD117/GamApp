@@ -521,11 +521,13 @@ void RenderPipe::DeferredRender_MultiPass()
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZENABLE, FALSE);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_ZWRITEENABLE, FALSE);
 
-
-	//渲染SSR结果
-	if (frameCount > 0)
-		DeferredRender_SSR();
-	frameCount++;
+	if (m_enableSSR)
+	{
+		//渲染SSR结果
+		if (frameCount > 0)
+			DeferredRender_SSR();
+		frameCount++;
+	}
 
 	//渲染灯光结果
 	DeferredRender_Lighting();
@@ -684,6 +686,9 @@ void RenderPipe::DeferredRender_SSR()
 
 	float randomOffset = 1.0f * rand() / RAND_MAX;
 	ssrEffect->SetFloat("g_randomOffset", randomOffset);
+
+	ssrEffect->SetMatrix("g_Proj", &RENDERDEVICE::Instance().ProjMatrix);
+	ssrEffect->SetMatrix("g_InverseProj", &RENDERDEVICE::Instance().InvProjMatrix);
 
 	ssrEffect->CommitChanges();
 
@@ -1043,6 +1048,7 @@ void RenderPipe::DeferredRender_Lighting()
 
 	deferredMultiPassEffect->CommitChanges();
 
+
 	if (m_enableIBL)
 	{
 		int iblCount = LIGHTMANAGER::Instance().GetIBLCount();
@@ -1054,13 +1060,12 @@ void RenderPipe::DeferredRender_Lighting()
 			Lighting(deferredMultiPassEffect, pLight);
 		}
 	}
-	
+
 	if (m_enableSSR)
 	{
 		//SSR反射Pass
 		RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, pScreenQuadVertex, 0, mScreenQuadByteSize);
 		RENDERDEVICE::Instance().g_pD3DDevice->SetVertexDeclaration(mScreenQuadDecl);
-		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pLightSurface);
 		deferredMultiPassEffect->SetTexture("g_SSRBuffer", m_pSSRFinalTarget);
 		deferredMultiPassEffect->BeginPass(8);
@@ -1076,6 +1081,7 @@ void RenderPipe::DeferredRender_Lighting()
 		
 		Lighting(deferredMultiPassEffect, pLight);
 	}
+
 
 	//设置全屏矩形
 	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, pScreenQuadVertex, 0, mScreenQuadByteSize);

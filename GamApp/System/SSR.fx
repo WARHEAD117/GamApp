@@ -178,8 +178,9 @@ float2 GetRayUV(float3 rayPos)
 float3 ImportanceSampleGGX(float2 rand, float roughness, float3 N, float3 baseDir, float3 V)
 {
     //GGX
+	float a = roughness * roughness;
     float phi = 2 * rand.y * M_PI;
-    float cosTheta = sqrt((1 - rand.x) / (1 + (roughness * roughness - 1) * rand.x));
+	float cosTheta = sqrt((1 - rand.x) / (1 + (a * a - 1) * rand.x));
     float sinTheta = sqrt(1 - cosTheta * cosTheta);
 
     float H_x = cos(phi) * sinTheta;

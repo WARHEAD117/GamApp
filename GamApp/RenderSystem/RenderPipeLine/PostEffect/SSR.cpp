@@ -145,7 +145,7 @@ void SSR::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 	m_postEffect->SetTexture(MAINCOLORBUFFER, m_pMainTargetWithMip);
 
-	m_postEffect->SetInt("g_MaxMipLevel", maxMipLevel);
+	m_postEffect->SetInt("g_MaxMipLevel", 0);
 	m_postEffect->SetFloat("g_Roughness", m_Roughness);
 	m_postEffect->SetFloat("g_RayAngle", m_RayAngle);
 
@@ -268,15 +268,14 @@ void SSR::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pPostSurface);
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
-	if (m_Switch2)
+	if (true)
 	{
-		m_postEffect->SetTexture("g_TemporalBuffer", m_pTemporalTarget);
+		m_postEffect->SetTexture("g_SSRBuffer", m_pTemporalTarget);
 	}
 	else
 	{
-		m_postEffect->SetTexture("g_TemporalBuffer", m_pResolveTarget);
+		m_postEffect->SetTexture("g_SSRBuffer", m_pResolveTarget);
 	}
-	m_postEffect->SetTexture("g_SSRBuffer", m_pResolveTarget);
 	m_postEffect->SetTexture(MAINCOLORBUFFER, mainBuffer);
 
 	SetGaussian(m_postEffect, 1.0f / RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, 0, "g_SampleWeights", "g_SampleOffsets");

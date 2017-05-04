@@ -507,7 +507,7 @@ float4 ColorResolve(float2 TexCoord : TEXCOORD0) : COLOR
 			if (!g_HitReprojectSwitch)
 				hitUV = lastUV;
 			
-            float4 hitColor = tex2Dlod(g_sampleMainColor, float4(hitUV, 0, 0));
+			float4 hitColor = tex2Dlod(g_sampleMainColor, float4(hitUV, 0, 0)) * (1 - Roughness);
 
             float2 fadeUVCoord = abs(hitUV * 2.0 - 1);
             float fade = max(fadeUVCoord.x, fadeUVCoord.y);
@@ -663,17 +663,20 @@ float4 Temporal(float2 TexCoord : TEXCOORD0) : COLOR
 	float4 lastPosV = mul(posW, g_LastView);
 	float2 lastUV = GetRayUV(lastPosV.xyz);
 
+	float g_R = GetShininess(TexCoord, g_sampleNormal);
 	float4 historyColor = tex2D(g_sampleTemporal, lastUV);
 
 	float2 fullResStep = float2(1.0 / g_ScreenWidth, 1.0 / g_ScreenHeight);
 
 	float4 minColor, maxColor;
 	float4 SSR = tex2D(g_sampleSSR, TexCoord);
+	minColor = SSR;
+	maxColor = SSR;
 	if (g_ClampHistorySwitch)
 	{
 		minColor = SSR;
 		maxColor = SSR;
-		int num = 4;
+		int num = 8;
 		for (int i = 0; i < num; i++)
 		{
 			for (int j = 0; j < num; j++)
@@ -683,7 +686,7 @@ float4 Temporal(float2 TexCoord : TEXCOORD0) : COLOR
 				float4 curColor = tex2D(g_sampleSSR, TexCoord + offset);
 
 
-				if (curColor.x != 0 && curColor.y != 0 && curColor.z != 0)
+				if (curColor.a != 0)
 				{
 					maxColor = max(maxColor, curColor);
 					minColor = min(minColor, curColor);

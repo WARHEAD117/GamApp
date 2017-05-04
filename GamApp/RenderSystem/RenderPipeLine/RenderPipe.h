@@ -75,6 +75,7 @@ private:
 
 
 	void ComputeSSRConfig();
+	bool BuildMipMap(const LPDIRECT3DTEXTURE9 src, LPDIRECT3DTEXTURE9 dest);
 
 #ifdef RENDER_DEBUG
 	enum DEBUG_MODE

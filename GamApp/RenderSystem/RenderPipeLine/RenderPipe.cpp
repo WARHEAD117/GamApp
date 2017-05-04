@@ -84,7 +84,7 @@ float		m_rad_threshold;
 bool		m_SSREnable;
 
 bool m_Switch3 = false;
-bool m_ReprojectPassSwitch = false;
+bool m_ReprojectPassSwitch = true;
 bool m_HitReprojectSwitch = false;
 bool m_ClampHistorySwitch = false;
 
@@ -331,7 +331,7 @@ void RenderPipe::BuildBuffers()
 
 
 	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
-		1, D3DUSAGE_RENDERTARGET,
+		8, D3DUSAGE_RENDERTARGET,
 		D3DFMT_A16B16G16R16F, D3DPOOL_DEFAULT,
 		&m_pMainLastTarget, NULL);
 	hr = m_pMainLastTarget->GetSurfaceLevel(0, &m_pMainLastSurface);
@@ -630,9 +630,35 @@ void RenderPipe::ComputeSSRConfig()
 	}
 }
 
+bool RenderPipe::BuildMipMap(const LPDIRECT3DTEXTURE9 src, LPDIRECT3DTEXTURE9 dest)
+{
+	if (!src || !dest)
+		return false;
+
+	int maxlevel = dest->GetLevelCount();
+
+	LPDIRECT3DSURFACE9 srcSurface;
+	src->GetSurfaceLevel(0, &srcSurface);
+
+	LPDIRECT3DSURFACE9 destSurface;
+	dest->GetSurfaceLevel(0, &destSurface);
+	RENDERDEVICE::Instance().g_pD3DDevice->StretchRect(srcSurface, NULL, destSurface, NULL, D3DTEXF_LINEAR);
+
+	for (int i = 1; i < maxlevel; i++)
+	{
+		LPDIRECT3DSURFACE9 lastSurface;
+		dest->GetSurfaceLevel(i-1, &lastSurface);
+		dest->GetSurfaceLevel(i, &destSurface);
+		RENDERDEVICE::Instance().g_pD3DDevice->StretchRect(lastSurface, NULL, destSurface, NULL, D3DTEXF_LINEAR);
+	}
+
+	return true;
+}
+
 void RenderPipe::DeferredRender_SSR()
 {
 	ComputeSSRConfig();
+	int maxMipLevel = m_pMainLastTarget->GetLevelCount();
 
 	//设置全屏矩形
 	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, pScreenQuadVertex, 0, mScreenQuadByteSize);
@@ -673,7 +699,7 @@ void RenderPipe::DeferredRender_SSR()
 
 	ssrEffect->SetTexture(MAINCOLORBUFFER, m_pMainLastTarget);
 
-	ssrEffect->SetInt("g_MaxMipLevel", /*maxMipLevel*/5);
+	ssrEffect->SetInt("g_MaxMipLevel", maxMipLevel);
 	ssrEffect->SetFloat("g_Roughness", m_Roughness);
 	ssrEffect->SetFloat("g_RayAngle", m_RayAngle);
 
@@ -1243,7 +1269,8 @@ void RenderPipe::RenderAll()
 	//Copy Main
 	LPDIRECT3DSURFACE9	postSurface;
 	HRESULT hr = m_pPostTarget->GetSurfaceLevel(0, &postSurface);
-	RENDERDEVICE::Instance().g_pD3DDevice->StretchRect(postSurface, NULL, m_pMainLastSurface, NULL, D3DTEXF_LINEAR);
+	//RENDERDEVICE::Instance().g_pD3DDevice->StretchRect(postSurface, NULL, m_pMainLastSurface, NULL, D3DTEXF_LINEAR);
+	BuildMipMap(m_pPostTarget, m_pMainLastTarget);
 	//===========================
 
 	if (GAMEINPUT::Instance().KeyPressed(DIK_2))
@@ -1386,7 +1413,7 @@ void RenderPipe::RenderAll()
 		m_pPostTarget = m_pLightTarget;
 		break;
 	case ShowSSR:
-		m_pPostTarget = m_pSSRFinalTarget;
+		m_pPostTarget = m_pSSRTarget;
 		break;
 	case ShowShadowResult:
 		m_pPostTarget = m_pShadowTarget;

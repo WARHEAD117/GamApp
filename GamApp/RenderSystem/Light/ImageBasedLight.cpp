@@ -5,6 +5,7 @@ const D3DXVECTOR3 defaultDir(0.0f, -1.0f, 1.0f);
 ImageBasedLight::ImageBasedLight() :
 m_shadowAreaSize(D3DXVECTOR2(100,100))
 {
+	m_useCubemap = false;
 	BuildLightVolume();
 	RebuildViewMatrix();
 	RebuildProjMatrix();
@@ -95,21 +96,36 @@ D3DXMATRIX ImageBasedLight::GetToViewDirMatrix()
 	return RENDERDEVICE::Instance().InvProjMatrix;
 }
 
-void ImageBasedLight::SetLightProbe(const std::string probeTex)
+void ImageBasedLight::SetLightProbe(const std::string probeTex, bool useCube)
 {
-	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, probeTex.c_str(), &m_pLightProbeTex))//daytime//uffizi-large
+	if (!useCube)
 	{
-		MessageBox(GetForegroundWindow(), "TextureError", "m_pLightProbeTex", MB_OK);
-		abort();
+		if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, probeTex.c_str(), &m_pLightProbeTex))//daytime//uffizi-large
+		{
+			MessageBox(GetForegroundWindow(), "TextureError", "m_pLightProbeTex", MB_OK);
+			abort();
+		}
+		m_useCubemap = false;
+	}
+	else
+	{
+		if (E_FAIL == D3DXCreateCubeTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, probeTex.c_str(), &m_pLightProbeCube))//daytime//uffizi-large//env.dds
+		{
+			MessageBox(GetForegroundWindow(), "CubeError", "Sky", MB_OK);
+			abort();
+		}
+		m_useCubemap = true;
 	}
 }
 
 void ImageBasedLight::SetLightEffect(ID3DXEffect* pEffect)
 {
-
-	pEffect->SetTexture("g_Sky", m_pLightProbeTex);
-	//pEffect->SetTexture("g_SkyCube", m_pSkyCube);
+	if (!m_useCubemap)
+		pEffect->SetTexture("g_Sky", m_pLightProbeTex);
+	else
+		pEffect->SetTexture("g_SkyCube", m_pLightProbeCube);
 	D3DXMATRIX invV;
 	invV = RENDERDEVICE::Instance().InvViewMatrix;
 	pEffect->SetMatrix("g_invView", &invV);
+	pEffect->SetBool("g_useCubemap", m_useCubemap);
 }

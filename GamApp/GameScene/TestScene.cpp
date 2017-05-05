@@ -89,7 +89,40 @@ void TestScene::OnLoad()
 	}*/
 	//testEntity.SetMeshFileName("Res\\Mesh\\car\\car25.X");
 	//testEntity.SetMeshFileName("Res\\Mesh\\tree3\\tree3.X");
-	
+	if (true)
+	{
+		Entity* testMesh = ENTITYMANAGER::Instance().CreateEntityFromXFile<Entity>("Res\\Mesh\\Cube.x");
+		testMesh->SetTexture("Res\\Mesh\\check.png");
+		testMesh->SetWorldTranslate(-6, 0, 4 + 0.5);
+		testMesh->SetWorldScale(1.0f, 1.0f, 1.0f);
+		testMesh->SetWorldRotation(0, -0.5f * D3DX_PI, 0);
+		Material cubeMat;
+		cubeMat.Power = 0.0;
+		testMesh->SetMaterial(&cubeMat);
+	}
+	if (true)
+	{
+		Entity* testMesh = ENTITYMANAGER::Instance().CreateEntityFromXFile<Entity>("Res\\Mesh\\Cube.x");
+		testMesh->SetTexture("Res\\Mesh\\check.png");
+		testMesh->SetWorldTranslate(-6, 0, 4-0.5);
+		testMesh->SetWorldScale(1.0f, 1.0f, 1.0f);
+		testMesh->SetWorldRotation(0, -0.5f * D3DX_PI, 0);
+		Material cubeMat;
+		cubeMat.Power = 0.0;
+		testMesh->SetMaterial(&cubeMat);
+	}
+	for (int i = 0; i < 5; i++)
+	{
+		Entity* testMesh = ENTITYMANAGER::Instance().CreateEntityFromXFile<Entity>("Res\\Mesh\\Cube.x");
+		testMesh->SetTexture("");
+		testMesh->SetWorldTranslate(-6, 0.0, 4 + i / 5.0f - 0.4f);
+		testMesh->SetWorldScale(4.0f, 0.01f, 0.2f);
+		testMesh->SetWorldRotation(0, 0, 0);
+		Material cubeMat;
+		cubeMat.Power = (i + 6) / 10.0f;
+		testMesh->SetMaterial(&cubeMat);
+	}
+
 	if (true)
 	{
 		sponzaEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile<Entity>("Res\\Mesh\\sponza\\sponza.X");
@@ -148,9 +181,14 @@ void TestScene::OnLoad()
 		}
 
 		//sponzaEntity->SetTexture("");
+		//sponzaEntity->SetNormalMap("");
+		//sponzaEntity->SetSpecularMap("");
+
+		//sponzaEntity->SetTexture("Res\\Mesh\\check.png");
+		//sponzaEntity->SetTexture("", 0);
 
 		Material sponzaMat;
-		sponzaMat.Power = 1.0;
+		sponzaMat.Power = 0.75;
 		sponzaEntity->SetMaterial(&sponzaMat);
 	}
 	
@@ -175,8 +213,22 @@ void TestScene::OnLoad()
 
 	for (int i = 0; i < 10; i++)
 	{
+		Entity* SphereMesh = ENTITYMANAGER::Instance().CreateEntityFromXFile<Entity>("Res\\Mesh\\pistol\\pistol.X");
+		SphereMesh->SetNormalMap("Res\\Mesh\\pistol\\Cerberus_N.dds");
+		//SphereMesh->SetTexture("");
+		//SphereMesh->SetNormalMap("");
+		SphereMesh->SetWorldTranslate((-i / 10.0f + 0.5f) * 6, 5.5, 0);
+		SphereMesh->SetWorldScale(0.03f, 0.03f, 0.03f);
+		SphereMesh->SetWorldRotation(0, 0, 0);
+		Material SphereMat;
+		SphereMat.Power = i / 10.0f;
+		SphereMesh->SetMaterial(&SphereMat);
+	}
+
+	for (int i = 0; i < 10; i++)
+	{
 		Entity* SphereMesh = ENTITYMANAGER::Instance().CreateEntityFromXFile<Entity>("Res\\Mesh\\Sphere.X");
-		SphereMesh->SetWorldTranslate(0, 0.5, (-i/10.0f +0.5f) * 6);
+		SphereMesh->SetWorldTranslate(0, 0.5, (-i / 10.0f + 0.5f) * 6);
 		SphereMesh->SetWorldScale(0.03f, 0.03f, 0.03f);
 		SphereMesh->SetWorldRotation(0, -0.5f * D3DX_PI, 0);
 		Material SphereMat;
@@ -225,15 +277,16 @@ void TestScene::OnLoad()
 	if (useIbl)
 	{
 		iblLight = LIGHTMANAGER::Instance().CreateLight<ImageBasedLight>(eImageBasedLight);
-		iblLight->SetLightProbe("Res\\Sky\\s\\uffizi-large.hdr");
+		//iblLight->SetLightProbe("Res\\Sky\\s\\uffizi-large.hdr"); 
+		iblLight->SetLightProbe("Res\\Sky\\s\\test.dds", true);
 	}
 	//--------------------------------------------------------------------------
 	dirLight1 = LIGHTMANAGER::Instance().CreateLight<DirectionLight>(eDirectionLight);
-	dirLight1->SetLightColor(D3DXCOLOR(15.0f, 14.0f, 12.7f, 1.0f));
+	dirLight1->SetLightColor(D3DXCOLOR(7.5f, 7.0f, 6.3f, 1.0f));
 	dirLight1->SetShadowAreaSize(120, 120);
 	dirLight1->SetUseShadow(true);
 	dirLight1->SetWorldTranslate(0, 70, 0);
-	dirLight1->SetWorldRotation(0.055f * D3DX_PI, 0.125f * D3DX_PI, 0);
+	dirLight1->SetWorldRotation(0.085f * D3DX_PI, 0.125f * D3DX_PI, 0);
 	//--------------------------------------------------------------------------
 	/*
 	dirLight2 = LIGHTMANAGER::Instance().CreateLight<DirectionLight>(eDirectionLight);

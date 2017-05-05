@@ -247,9 +247,10 @@ float3 PrefilterEnvMap(float Roughness, float3 R) {
 			//线性空间和伽马空间的转换...不明白为什么
 			//但是不转换的话，颜色不对会发红
 			//DX的textureViewer也有同样的问题
-			Texture = pow(Texture, 1 / 2.2);
+			//Texture = pow(Texture, 1 / 2.2);
 
-			//Texture = texCUBE(g_sampleSkyCube, L);
+			Texture = texCUBE(g_sampleSkyCube, float4(L, Roughness * 10));
+
 			PrefilteredColor += Texture.rgb * NoL;
 			TotalWeight += NoL;
 		}
@@ -284,9 +285,9 @@ void IBL_BRDF(float3 normal, float3 toEye, float3 diffuseColor, float3 specularC
 	float r1 = (1 / M_PI)*acos(dir.z) / sqrt(dir.x * dir.x + dir.y * dir.y);
 	skyUV = float2(0.5,-0.5) * float2(dir.x * r1 + 1, dir.y * r1 + 1);
 
-	float3 Texture = tex2D(g_sampleSky, skyUV).rgb;
-	//Texture = texCUBE(g_sampleSkyCube, dir);
-	Texture = PrefilterEnvMap(Roughness, dir);
+	//float3 Texture = tex2D(g_sampleSky, skyUV).rgb;
+	//float3 Texture = PrefilterEnvMap(Roughness, dir);
+	float3 Texture = texCUBElod(g_sampleSkyCube, float4(dir, Roughness * 6));
 
 	const half4 c0 = { -1, -0.0275, -0.572, 0.022 };
 	const half4 c1 = { 1, 0.0425, 1.04, -0.04 };

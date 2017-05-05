@@ -102,7 +102,7 @@ float4 ShadingPass(float2 TexCoord : TEXCOORD0, float3 view : TEXCOORD1) : COLOR
 		//线性空间和伽马空间的转换...不明白为什么
 		//但是不转换的话，颜色不对会发红
 		//DX的textureViewer也有同样的问题
-		Texture = pow(Texture, 1 / 2.2);
+		//Texture = pow(Texture, 1 / 2.2);
 		//Texture = float4(view, 1);
 		return Texture;
 	}

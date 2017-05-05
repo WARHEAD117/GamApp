@@ -220,7 +220,7 @@ OutputPS PShader(float3 NormalV		: NORMAL,
 	PsOut.diffuse.rgb = Texture.xyz;
 
 	//Diffuse的A通道储存金属程度
-	float matelness = 0.85;
+	float matelness = 0.99;
 	PsOut.diffuse.a = matelness;
 	PsOut.normal = float4(sampledNormalV.xyz, 1.0f);
 	PsOut.normal.a = 1-Shininess * Specular.x;

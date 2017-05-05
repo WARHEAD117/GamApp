@@ -87,6 +87,7 @@ bool m_Switch3 = false;
 bool m_ReprojectPassSwitch = true;
 bool m_HitReprojectSwitch = false;
 bool m_ClampHistorySwitch = false;
+bool m_UseMip = true;
 
 LPDIRECT3DTEXTURE9			m_pRandomTex;
 LPDIRECT3DTEXTURE9			m_pEnvBRDFLUT;
@@ -162,7 +163,7 @@ RenderPipe::RenderPipe()
 		MessageBox(GetForegroundWindow(), "TextureError", "Sky", MB_OK);
 		abort();
 	}
-	if (E_FAIL == D3DXCreateCubeTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "Res\\Sky\\s\\env.dds", &m_pSkyCube))//daytime//uffizi-large
+	if (E_FAIL == D3DXCreateCubeTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "Res\\Sky\\s\\test.dds", &m_pSkyCube))//daytime//uffizi-large//env.dds
 	{
 		MessageBox(GetForegroundWindow(), "TextureError", "Sky", MB_OK);
 		abort();
@@ -186,7 +187,7 @@ RenderPipe::RenderPipe()
 	m_RayAngle = 0.1f;
 
 	m_StepLength = 3.0f;
-	m_ScaleFactor = 16.0f;
+	m_ScaleFactor = 0.0f;
 	m_ScaleFactor2 = 1.0f;
 	m_rad_threshold = 4.0f;
 }
@@ -584,11 +585,11 @@ void RenderPipe::ComputeSSRConfig()
 
 	if (GAMEINPUT::Instance().KeyDown(DIK_V) && !GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
-		m_ScaleFactor = m_ScaleFactor >= 50 ? 50 : m_ScaleFactor + 0.04;
+		m_ScaleFactor = m_ScaleFactor >= 1 ? 1 : m_ScaleFactor + 0.001;
 	}
 	if (GAMEINPUT::Instance().KeyDown(DIK_V) && GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
-		m_ScaleFactor = m_ScaleFactor <= 0.0 ? 0.0 : m_ScaleFactor - 0.04;
+		m_ScaleFactor = m_ScaleFactor <= 0.0 ? 0.0 : m_ScaleFactor - 0.001;
 	}
 
 
@@ -617,6 +618,10 @@ void RenderPipe::ComputeSSRConfig()
 	{
 		m_ClampHistorySwitch = !m_ClampHistorySwitch;
 	}
+	if (GAMEINPUT::Instance().KeyPressed(DIK_NUMPAD5))
+	{
+		m_UseMip = !m_UseMip;
+	}
 
 
 	if (GAMEINPUT::Instance().KeyDown(DIK_R))
@@ -625,7 +630,7 @@ void RenderPipe::ComputeSSRConfig()
 		m_RayAngle = 0.1f;
 
 		m_StepLength = 3.0f;
-		m_ScaleFactor = 16.0f;
+		m_ScaleFactor = 0.0f;
 		m_ScaleFactor2 = 10.0f;
 	}
 }
@@ -735,6 +740,7 @@ void RenderPipe::DeferredRender_SSR()
 	ssrEffect->SetTexture("g_SSRBuffer", m_pSSRTarget);
 
 	ssrEffect->SetTexture("g_EnvBRDFLUT", m_pEnvBRDFLUT);
+	ssrEffect->SetTexture(NORMALBUFFER, RENDERPIPE::Instance().m_pNormalTarget);
 	ssrEffect->SetTexture(MAINCOLORBUFFER, m_pMainLastTarget);
 
 	ssrEffect->SetTexture("g_TemporalBuffer", m_pTemporalTarget);
@@ -747,6 +753,7 @@ void RenderPipe::DeferredRender_SSR()
 
 	ssrEffect->SetBool("g_ReprojectPassSwitch", m_ReprojectPassSwitch);
 	ssrEffect->SetBool("g_HitReprojectSwitch", m_HitReprojectSwitch);
+	ssrEffect->SetBool("g_UseMip", m_UseMip);
 
 	ssrEffect->CommitChanges();
 
@@ -1100,12 +1107,15 @@ void RenderPipe::DeferredRender_Lighting()
 		deferredMultiPassEffect->EndPass();
 	}
 
-	int lightCount = LIGHTMANAGER::Instance().GetLightCount();
-	for (int i = 0; i < lightCount; i++)
+	if (true)
 	{
-		BaseLight* pLight = LIGHTMANAGER::Instance().GetLight(i);
-		
-		Lighting(deferredMultiPassEffect, pLight);
+		int lightCount = LIGHTMANAGER::Instance().GetLightCount();
+		for (int i = 0; i < lightCount; i++)
+		{
+			BaseLight* pLight = LIGHTMANAGER::Instance().GetLight(i);
+
+			Lighting(deferredMultiPassEffect, pLight);
+		}
 	}
 
 
@@ -1413,7 +1423,7 @@ void RenderPipe::RenderAll()
 		m_pPostTarget = m_pLightTarget;
 		break;
 	case ShowSSR:
-		m_pPostTarget = m_pSSRTarget;
+		m_pPostTarget = m_pSSRFinalTarget;
 		break;
 	case ShowShadowResult:
 		m_pPostTarget = m_pShadowTarget;

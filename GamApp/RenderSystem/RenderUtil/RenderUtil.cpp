@@ -276,6 +276,7 @@ void RenderUtil::RenderDeferredGeometry(ID3DXEffect* pEffect)
 		}
 
 		pEffect->SetFloat("g_shininess", mSubMeshList[i].pMaterial.Power);
+		pEffect->SetFloat("g_matelness", mSubMeshList[i].pMaterial.Matelness);
 
 		pEffect->CommitChanges();
 

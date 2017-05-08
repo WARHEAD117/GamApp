@@ -5,6 +5,7 @@
 bool		g_IsSky;
 
 float		g_shininess = 1.0f;
+float		g_matelness = 1.0f;
 
 uniform extern float4x4 gFinalXForms[54];
 
@@ -220,7 +221,7 @@ OutputPS PShader(float3 NormalV		: NORMAL,
 	PsOut.diffuse.rgb = Texture.xyz;
 
 	//Diffuse的A通道储存金属程度
-	float matelness = 0.99;
+	float matelness = g_matelness;
 	PsOut.diffuse.a = matelness;
 	PsOut.normal = float4(sampledNormalV.xyz, 1.0f);
 	PsOut.normal.a = 1-Shininess * Specular.x;

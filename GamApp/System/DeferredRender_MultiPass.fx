@@ -124,6 +124,18 @@ sampler_state
 	AddressV = Border;
 };
 
+texture     g_EnvBRDFLUT;
+sampler2D g_sampleEnvBRDFLUT =
+sampler_state
+{
+	Texture = <g_EnvBRDFLUT>;
+	MinFilter = linear;
+	MagFilter = linear;
+	MipFilter = linear;
+
+	AddressU = wrap;
+	AddressV = wrap;
+};
 //----------------------------
 struct OutputVS_Quad
 {
@@ -287,13 +299,15 @@ void IBL_BRDF(float3 normal, float3 toEye, float3 diffuseColor, float3 specularC
 
 	//float3 Texture = tex2D(g_sampleSky, skyUV).rgb;
 	//float3 Texture = PrefilterEnvMap(Roughness, dir);
-	float3 Texture = texCUBElod(g_sampleSkyCube, float4(dir, Roughness * 6));
+	float3 Texture = texCUBElod(g_sampleSkyCube, float4(dir, Roughness * 6)) * 0.5f;
 
 	const half4 c0 = { -1, -0.0275, -0.572, 0.022 };
 	const half4 c1 = { 1, 0.0425, 1.04, -0.04 };
 	half4 r = Roughness * c0 + c1;
 	half a004 = min(r.x * r.x, exp2(-9.28 * NoV)) * r.x + r.y;
 	half2 AB = half2(-1.04, 1.04) * a004 + r.zw;
+
+	//AB = tex2D(g_sampleEnvBRDFLUT, float2(NoV, Roughness));
 
 	SpecularLight = Texture * (specularColor * AB.x + AB.y);
 }

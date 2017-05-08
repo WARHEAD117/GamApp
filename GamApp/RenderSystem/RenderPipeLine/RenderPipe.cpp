@@ -130,7 +130,7 @@ RenderPipe::RenderPipe()
 	colorChange.CreatePostEffect("System\\ColorChange.fx");
 
 	m_enableHBAO = true; 
-	m_enableIBL = false;
+	m_enableIBL = true;
 	m_enableDOF = false;
 	m_enableHDR = true;
 	m_enableGI = false;
@@ -177,7 +177,7 @@ RenderPipe::RenderPipe()
 		abort();
 	}
 
-	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "System\\EnvBRDFLUT.png", &m_pEnvBRDFLUT))
+	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "System\\EnvBRDFLUT.dds", &m_pEnvBRDFLUT))
 	{
 		MessageBox(GetForegroundWindow(), "TextureError", "EnvBRDFLUT", MB_OK);
 		abort();
@@ -1078,6 +1078,8 @@ void RenderPipe::DeferredRender_Lighting()
 	}
 	deferredMultiPassEffect->SetFloat("g_MinVariance", g_minVariance);
 	deferredMultiPassEffect->SetFloat("g_Amount", g_Amount);
+
+	deferredMultiPassEffect->SetTexture("g_EnvBRDFLUT", m_pEnvBRDFLUT);
 
 	deferredMultiPassEffect->CommitChanges();
 

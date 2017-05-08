@@ -68,7 +68,7 @@ void SSR::CreatePostEffect()
 		abort();
 	}
 
-	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "System\\EnvBRDFLUT.png", &m_pEnvBRDFLUT))
+	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "System\\EnvBRDFLUT.dds", &m_pEnvBRDFLUT))
 	{
 		MessageBox(GetForegroundWindow(), "TextureError", "EnvBRDFLUT", MB_OK);
 		abort();

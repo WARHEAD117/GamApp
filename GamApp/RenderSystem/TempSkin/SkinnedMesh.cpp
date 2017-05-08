@@ -146,6 +146,9 @@ void SkinnedMesh::RenderDeferredGeometry(ID3DXEffect* pEffect)
 		pEffect->SetTexture(SPECULARMAP, RENDERDEVICE::Instance().GetDefaultTexture());
 	}
 
+	pEffect->SetFloat("g_shininess", pMaterial.Power);
+	pEffect->SetFloat("g_matelness", pMaterial.Matelness);
+
 	pEffect->SetMatrixArray("gFinalXForms", getFinalXFormArray(), numBones());
 
 	pEffect->CommitChanges();

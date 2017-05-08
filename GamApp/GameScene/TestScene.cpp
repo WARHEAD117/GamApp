@@ -59,6 +59,8 @@ void TestScene::OnLoad()
 	//===================================================================================================
 	//BuildCamera
 	mainCamera.Init();
+	mainCamera.SetWorldTranslate(37, 1, 5);
+	mainCamera.SetWorldRotation(-0.05f * D3DX_PI, -0.55f * D3DX_PI, 0);
 	
 	//Create Entity
 	//krisEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\Cube.X");
@@ -98,6 +100,7 @@ void TestScene::OnLoad()
 		testMesh->SetWorldRotation(0, -0.5f * D3DX_PI, 0);
 		Material cubeMat;
 		cubeMat.Power = 0.0;
+		cubeMat.Matelness = 0.0;
 		testMesh->SetMaterial(&cubeMat);
 	}
 	if (true)
@@ -109,6 +112,7 @@ void TestScene::OnLoad()
 		testMesh->SetWorldRotation(0, -0.5f * D3DX_PI, 0);
 		Material cubeMat;
 		cubeMat.Power = 0.0;
+		cubeMat.Matelness = 0.0;
 		testMesh->SetMaterial(&cubeMat);
 	}
 	for (int i = 0; i < 5; i++)
@@ -189,7 +193,32 @@ void TestScene::OnLoad()
 
 		Material sponzaMat;
 		sponzaMat.Power = 0.75;
+		sponzaMat.Matelness = 0.0;
 		sponzaEntity->SetMaterial(&sponzaMat);
+
+
+		Material sponzaShineMat;
+		sponzaShineMat.Power = 0.8;
+		sponzaShineMat.Matelness = 0.0;
+		sponzaEntity->SetMaterial(&sponzaShineMat,7);
+
+		Material sponzaMatelMat;
+		sponzaMatelMat.Power = 0.90;
+		sponzaMatelMat.Matelness = 1.0;
+		sponzaEntity->SetMaterial(&sponzaMatelMat, 13);
+		sponzaEntity->SetMaterial(&sponzaMatelMat, 9);
+		sponzaEntity->SetMaterial(&sponzaMatelMat, 8);
+
+
+		Material sponzaFlagMat;
+		sponzaFlagMat.Power = 0.80;
+		sponzaFlagMat.Matelness = 0.5;
+		sponzaEntity->SetMaterial(&sponzaFlagMat, 10);
+		sponzaEntity->SetMaterial(&sponzaFlagMat, 11);
+		sponzaEntity->SetMaterial(&sponzaFlagMat, 12);
+		sponzaEntity->SetMaterial(&sponzaFlagMat, 14);
+		sponzaEntity->SetMaterial(&sponzaFlagMat, 15);
+		sponzaEntity->SetMaterial(&sponzaFlagMat, 16);
 	}
 	
 	//Entity* roomEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile<Entity>("Res\\Mesh\\room\\room.x");
@@ -217,23 +246,28 @@ void TestScene::OnLoad()
 		SphereMesh->SetNormalMap("Res\\Mesh\\pistol\\Cerberus_N.dds");
 		//SphereMesh->SetTexture("");
 		//SphereMesh->SetNormalMap("");
-		SphereMesh->SetWorldTranslate((-i / 10.0f + 0.5f) * 6, 5.5, 0);
+		SphereMesh->SetWorldTranslate((-i / 10.0f + 0.5f) * 6, 0.5, 0);
 		SphereMesh->SetWorldScale(0.03f, 0.03f, 0.03f);
 		SphereMesh->SetWorldRotation(0, 0, 0);
 		Material SphereMat;
 		SphereMat.Power = i / 10.0f;
+		SphereMat.Matelness = 1;
 		SphereMesh->SetMaterial(&SphereMat);
 	}
 
 	for (int i = 0; i < 10; i++)
 	{
-		Entity* SphereMesh = ENTITYMANAGER::Instance().CreateEntityFromXFile<Entity>("Res\\Mesh\\Sphere.X");
-		SphereMesh->SetWorldTranslate(0, 0.5, (-i / 10.0f + 0.5f) * 6);
-		SphereMesh->SetWorldScale(0.03f, 0.03f, 0.03f);
-		SphereMesh->SetWorldRotation(0, -0.5f * D3DX_PI, 0);
-		Material SphereMat;
-		SphereMat.Power = i / 10.0f;
-		SphereMesh->SetMaterial(&SphereMat);
+		for (int j = 0; j < 10; j++)
+		{
+			Entity* SphereMesh = ENTITYMANAGER::Instance().CreateEntityFromXFile<Entity>("Res\\Mesh\\Sphere.X");
+			SphereMesh->SetWorldTranslate((j / 10.0f + 0.5f) * 6.5 + 5, 0.5, (-i / 10.0f + 0.4f) * 6.5);
+			SphereMesh->SetWorldScale(0.03f, 0.03f, 0.03f);
+			SphereMesh->SetWorldRotation(0, -0.5f * D3DX_PI, 0);
+			Material SphereMat;
+			SphereMat.Power = i / 10.0f;
+			SphereMat.Matelness = j / 10.0f;
+			SphereMesh->SetMaterial(&SphereMat);
+		}
 	}
 
 	/*

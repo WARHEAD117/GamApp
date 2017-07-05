@@ -401,6 +401,11 @@ float4 PShaderInputBlur(float2 TexCoord : TEXCOORD0) : COLOR
 float4 PShaderFP(float2 TexCoord : TEXCOORD0) : COLOR
 { 
 	float4 colorSrc = tex2D(g_sampleSrc, TexCoord);
+
+	float moveMark = tex2D(g_sampleNormal, TexCoord).a;
+	if (moveMark < 0.5)
+		return colorSrc;
+
 	colorSrc = float4(1, 1, 1, 1) - colorSrc.x;
 	colorSrc = colorSrc * 0.99f;
 	colorSrc = float4(1, 1, 1, 1) - colorSrc;
@@ -418,6 +423,10 @@ float4 PShaderDiffusion(float2 TexCoord : TEXCOORD0) : COLOR
 {
 	float4 colorSrc = tex2D(g_sampleSrc, TexCoord);
 	float4 blur = GaussianBlur(g_ScreenWidth, g_ScreenHeight, g_sampleSrc, TexCoord);
+
+
+
+
 	//blur = Diffusion(g_sampleSrc, TexCoord, float2(g_ScreenWidth, g_ScreenHeight));
 	//final = colorSrc*0.2 + colorSrc2*0.2 + colorSrc3*0.2 + colorSrc4*0.2 + colorSrc5*0.2;
 	//float4 outColor = final.x;

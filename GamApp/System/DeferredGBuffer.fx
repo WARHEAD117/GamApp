@@ -45,6 +45,7 @@ sampler_state
 	AddressU = Wrap;
 	AddressV = Wrap;
 };
+bool g_isMove = false;
 
 struct OutputVS
 {
@@ -174,8 +175,11 @@ OutputPS PShader(float3 NormalV		: NORMAL,
 	PsOut.diffuse.rgb = Texture.xyz / 2.0f;
 	PsOut.diffuse.a = g_ThicknessMaterial.w;
 
+	float move = 0;
+	move = g_isMove == true ? 1 : 0;
+
 	//A通道储存高光强度
-	PsOut.normal = float4(sampledNormalV.xyz, 1.0f);
+	PsOut.normal = float4(sampledNormalV.xyz, move);
 	PsOut.position = posV.zzzz;
 
 

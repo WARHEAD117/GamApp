@@ -17,6 +17,7 @@ RenderUtil::~RenderUtil()
 
 void RenderUtil::BuildEffectInfo()
 {
+	mLastWorldMat = mWorldMat;
 	mWorldMat = mOwner->GetWorldTransform();
 	mViewMat = RENDERDEVICE::Instance().ViewMatrix;
 	mProjMat = RENDERDEVICE::Instance().ProjMatrix;
@@ -278,6 +279,15 @@ void RenderUtil::RenderDeferredGeometry(ID3DXEffect* pEffect)
 		pEffect->SetVector("g_ThicknessMaterial", &mSubMeshList[i].pMaterial.Thickness);
 		pEffect->SetInt("g_MatIndex", mSubMeshList[i].pMaterial.MatIndex);
 		pEffect->SetVector("g_LightDirMaterial", &mSubMeshList[i].pMaterial.LightDir);
+
+		if (mLastWorldMat == mWorldMat)
+		{
+			pEffect->SetBool("g_isMove", false);
+		}
+		else
+		{
+			pEffect->SetBool("g_isMove", true);
+		}
 
 		pEffect->CommitChanges();
 

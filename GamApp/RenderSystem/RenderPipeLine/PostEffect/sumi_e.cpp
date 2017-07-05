@@ -764,6 +764,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		m_SynthesisEffect->SetTexture("g_Src", m_pPostTarget);
 		m_SynthesisEffect->SetTexture("g_Src2", m_pDiffusionTarget);
 
+		m_SynthesisEffect->SetTexture(NORMALBUFFER, RENDERPIPE::Instance().m_pNormalTarget);
 		m_SynthesisEffect->CommitChanges();
 
 		m_SynthesisEffect->BeginPass(8);

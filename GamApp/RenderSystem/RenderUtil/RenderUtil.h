@@ -65,6 +65,9 @@ private:
 	D3DXMATRIX					mWorldMat;
 	D3DXMATRIX					mViewMat;
 	D3DXMATRIX					mProjMat;
+
+	D3DXMATRIX					mLastWorldMat
+;
 	D3DXMATRIX					mWorldView;
 	D3DXMATRIX					mViewProj;
 	D3DXMATRIX					mWorldViewProj;

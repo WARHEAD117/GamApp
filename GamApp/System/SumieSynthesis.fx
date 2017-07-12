@@ -404,18 +404,19 @@ float4 PShaderFP(float2 TexCoord : TEXCOORD0) : COLOR
 
 	float moveMark = tex2D(g_sampleNormal, TexCoord).a;
 	if (moveMark < 0.5)
-		return colorSrc;
+		colorSrc = float4(1, 1, 1, 1);
 
-	colorSrc = float4(1, 1, 1, 1) - colorSrc.x;
-	colorSrc = colorSrc * 0.99f;
-	colorSrc = float4(1, 1, 1, 1) - colorSrc;
 	float4 colorSrc_LF = tex2D(g_sample_FP_LF, TexCoord);
+	
+	colorSrc = float4(1, 1, 1, 1) - colorSrc;
+	//colorSrc = colorSrc *0.99f;
+	colorSrc = float4(1, 1, 1, 1) - colorSrc;
 
-		colorSrc_LF = float4(1, 1, 1, 1) - colorSrc_LF.x;
-	colorSrc_LF = colorSrc_LF * 0.99f;
 	colorSrc_LF = float4(1, 1, 1, 1) - colorSrc_LF;
+	colorSrc_LF = colorSrc_LF *0.9f;
+	colorSrc_LF = float4(1, 1, 1, 1) - colorSrc_LF;
+
 	//return float4(1, 0, 1, 0);
-	float4 outColor = float4(min(colorSrc.x, colorSrc_LF.x), min(colorSrc.y, colorSrc_LF.y), min(colorSrc.z, colorSrc_LF.z), 1);
 	return colorSrc * colorSrc_LF;
 }
 
@@ -439,9 +440,17 @@ float4 PShaderSynthesis2(float2 TexCoord : TEXCOORD0) : COLOR
 {
 	float4 final = tex2D(g_sampleSrc, TexCoord);
 
-	float4 diffusion = tex2D(g_sampleSrc2, TexCoord) * 2;
+	float4 diffusion = tex2D(g_sampleSrc2, TexCoord);
+
 
 	float4 outColor = diffusion * final;
+
+	float moveMark = tex2D(g_sampleNormal, TexCoord).a;
+	if (moveMark < 0.5)
+		outColor = diffusion * final;
+	else
+		outColor = final;
+
 
 	//outColor = float4(min(diffusion.x, final.x), min(diffusion.y, final.y), min(diffusion.z, final.z), 1);
 	return outColor;

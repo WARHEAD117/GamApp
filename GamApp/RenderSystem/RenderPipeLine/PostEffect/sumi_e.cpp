@@ -739,10 +739,10 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 		//-------------------------------------------------------------------------------------------------------------------
 		//使用墨迹图进行扩散，渲染扩散图
-		pSurf_FP = NULL;
-		m_pDiffusionTarget->GetSurfaceLevel(0, &pSurf_FP);
+		PDIRECT3DSURFACE9 pSurf_DT = NULL;
+		m_pDiffusionTarget->GetSurfaceLevel(0, &pSurf_DT);
 
-		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_FP);
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_DT);
 		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
 		m_SynthesisEffect->SetTexture("g_Src", m_pFootprintTarget);
@@ -772,7 +772,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		m_SynthesisEffect->EndPass();
 
 		//-------------------------------------------------------------------------------------------------------------------
-		//把扩散图渲染回FP_LF
+		//把扩散图渲染回FP_LF(lastFrame)
 		m_pFootprintTarget_LF->GetSurfaceLevel(0, &pSurf_result);
 
 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_result);

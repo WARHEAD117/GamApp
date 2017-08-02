@@ -66,7 +66,9 @@ void SumiE::CreatePostEffect()
 		for (UINT i = 0; i < w; ++i)
 		{
 			// Copy particle to VB
-			p[j*w+i].uv = D3DXVECTOR2(i * 1.0f / w, j * 1.0f / h);
+			//p[j*w+i].uv = D3DXVECTOR2(i * 1.0f / w, j * 1.0f / h);
+
+			p[j*w + i].uv = D3DXVECTOR2(i * 1.0f / w + 0.5f / w, j * 1.0f / h + 0.5f / h);
 		}
 	}
 	mParticleBuffer->Unlock();

@@ -371,8 +371,8 @@ P_OutVS VShaderParticle(float4 posL       : POSITION0,
 
 		if (g_useRandom)
 		{
-			float2 rand = (tex2Dlod(g_sampleRandomTex, float4(TexCoord.x + g_randomOffset, TexCoord.y + g_randomOffset, 0, 0)).xy - 1);
-				float2 fullResStepP = float2(2.0 / g_ScreenWidth, 2.0 / g_ScreenHeight);
+			float2 rand = (tex2Dlod(g_sampleRandomTex, float4(TexCoord.x + g_randomOffset, TexCoord.y + g_randomOffset, 0, 0)).xy - 0.5);
+				float2 fullResStepP = float2(1.0 / g_ScreenWidth, 1.0 / g_ScreenHeight);
 				float2 offsetP = fullResStepP * rand;
 				outVS.posWVP = outVS.posWVP + float4(offsetP.x, offsetP.y, 0, 0);
 		}

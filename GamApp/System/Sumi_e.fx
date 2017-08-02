@@ -549,9 +549,8 @@ PInside_OutVS VShaderParticleInside(float4 posL       : POSITION0,
 		//a = 1;
 
 		if (depth < 5)a = 4;
-		else if (depth < 10)a = 3;
-		else if (depth < 15)a = 2;
-		else if (depth < 20)a = 1;
+		else if (depth < 7)a = 3;
+		else if (depth < 10)a = 2;
 		else a = 1;
 	}
 	a = clamp(a, 1, 4);

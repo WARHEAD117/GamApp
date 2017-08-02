@@ -140,6 +140,23 @@ float g_SizeFactor = 0;//1
 float g_alphaTestFactor = 0;//0.79
 
 bool g_UpperLayer = false;
+
+float g_randomOffset = 0; 
+bool g_useRandom;
+texture		g_RandTex;
+sampler2D g_sampleRandomTex =
+sampler_state
+{
+	Texture = <g_RandTex>;
+	MinFilter = Point;
+	MagFilter = Point;
+	MipFilter = Point;
+
+	AddressU = wrap;
+	AddressV = wrap;
+};
+
+
 struct OutputVS
 {
 	float4 posWVP         : POSITION0;
@@ -313,6 +330,7 @@ P_OutVS VShaderParticle(float4 posL       : POSITION0,
 	//最终输出的顶点位置（经过世界、观察、投影矩阵变换）
 	//outVS.posWVP = mul(float4(0.5f, 0.5f, 0, 1), g_Proj);
 	//outVS.posWVP = float4(2*TexCoord.x-1, 1-2*TexCoord.y, 0, 1);
+	
 	outVS.posWVP = float4( - 2, -2, -2, 1);
 	//outVS.TexCoord = TexCoord;
 	
@@ -351,6 +369,13 @@ P_OutVS VShaderParticle(float4 posL       : POSITION0,
 	{
 		outVS.posWVP = float4(2 * TexCoord.x - 1, 1 - 2 * TexCoord.y, 0, 1);
 
+		if (g_useRandom)
+		{
+			float2 rand = (tex2Dlod(g_sampleRandomTex, float4(TexCoord.x + g_randomOffset, TexCoord.y + g_randomOffset, 0, 0)).xy - 1);
+				float2 fullResStepP = float2(2.0 / g_ScreenWidth, 2.0 / g_ScreenHeight);
+				float2 offsetP = fullResStepP * rand;
+				outVS.posWVP = outVS.posWVP + float4(offsetP.x, offsetP.y, 0, 0);
+		}
 		//======================
 		float3 normal = normalize(GetNormalLod(g_sampleNormal, TexCoord.xy));
 		float projectXY = sqrt(normal.x * normal.x + normal.y * normal.y);

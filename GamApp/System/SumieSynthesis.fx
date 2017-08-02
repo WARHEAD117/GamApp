@@ -333,13 +333,13 @@ float4 PShaderSrcAdd(float2 TexCoord : TEXCOORD0) : COLOR
 	float4 colorSrc5 = tex2D(g_sampleSrc3, TexCoord);
 
 	float4 final = colorSrc*0.0 + colorSrc2*0.2442 + colorSrc3*0.40262 + colorSrc4*0.2442 + colorSrc5*0.0545;
-	float4 blur = GaussianBlur(g_ScreenWidth, g_ScreenHeight, g_sampleSrc, TexCoord);
-	blur = Diffusion(g_sampleSrc, TexCoord, float2(g_ScreenWidth, g_ScreenHeight));
+	//float4 blur = GaussianBlur(g_ScreenWidth, g_ScreenHeight, g_sampleSrc, TexCoord);
+	//blur = Diffusion(g_sampleSrc, TexCoord, float2(g_ScreenWidth, g_ScreenHeight));
 	//final = colorSrc*0.2 + colorSrc2*0.2 + colorSrc3*0.2 + colorSrc4*0.2 + colorSrc5*0.2;
 	//float4 outColor = final.x;
 	//	outColor = blur.x > final.x ? final : blur;
 	//return outColor;
-	return 0.99 * blur + 0.01 * final;
+	return final;
 
 	float d = colorSrc2.r - final.r;
 	if (d != 0) d = 1;
@@ -462,6 +462,41 @@ float4 PShaderDrawBack(float2 TexCoord : TEXCOORD0) : COLOR
 	return colorSrc;
 }
 
+float4 PShaderTemporal(float2 TexCoord : TEXCOORD0) : COLOR
+{
+	float4 colorSrc = tex2D(g_sampleSrc, TexCoord);
+
+	float4 historyColor = tex2D(g_sampleSrc2, TexCoord);
+
+	float4 minColor, maxColor;
+	minColor = colorSrc;
+	maxColor = colorSrc; 
+	float2 fullResStep = float2(1.0 / g_ScreenWidth, 1.0 / g_ScreenHeight);
+	if (true)
+	{
+		minColor = colorSrc;
+		maxColor = colorSrc;
+		int num = 2;
+		for (int i = 0; i < num; i++)
+		{
+			for (int j = 0; j < num; j++)
+			{
+				float2 offset = float2(i - num / 2, j - num / 2);
+				offset *= fullResStep;
+				float4 curColor = tex2D(g_sampleSrc, TexCoord + offset);
+
+				maxColor = max(maxColor, curColor);
+				minColor = min(minColor, curColor);
+			}
+		}
+		historyColor = clamp(historyColor, minColor, maxColor);
+	}
+
+	float4 final = lerp(historyColor, colorSrc, 0.05f);
+
+	return final;
+}
+
 technique SumieSynthesis
 {
 	pass p0
@@ -521,5 +556,10 @@ technique SumieSynthesis
 	{
 		vertexShader = compile vs_3_0 VShader();
 		pixelShader = compile ps_3_0 PShaderDrawBack();
+	}
+	pass p10
+	{
+		vertexShader = compile vs_3_0 VShader();
+		pixelShader = compile ps_3_0 PShaderTemporal();
 	}
 }

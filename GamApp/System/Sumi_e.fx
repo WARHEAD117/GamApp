@@ -369,15 +369,20 @@ P_OutVS VShaderParticle(float4 posL       : POSITION0,
 	{
 		outVS.posWVP = float4(2 * TexCoord.x - 1, 1 - 2 * TexCoord.y, 0, 1);
 
+		float3 normal = normalize(GetNormalLod(g_sampleNormal, TexCoord.xy));
+
 		if (g_useRandom)
 		{
 			float2 rand = (tex2Dlod(g_sampleRandomTex, float4(TexCoord.x + g_randomOffset, TexCoord.y + g_randomOffset, 0, 0)).xy - 0.5);
 				float2 fullResStepP = float2(1.0 / g_ScreenWidth, 1.0 / g_ScreenHeight);
 				float2 offsetP = fullResStepP * rand;
+				float2 normalxy = normalize(normal.xy);
+				float3 tangent = cross(float3(0, 0, 1), float3(normal.x, normal.y, 0));
+				float2 tangentxy = normalize(tangent.xy);
+				offsetP = tangentxy * fullResStepP  * rand.x * 2;
 				outVS.posWVP = outVS.posWVP + float4(offsetP.x, offsetP.y, 0, 0);
 		}
 		//======================
-		float3 normal = normalize(GetNormalLod(g_sampleNormal, TexCoord.xy));
 		float projectXY = sqrt(normal.x * normal.x + normal.y * normal.y);
 		float cosA = normal.x / projectXY;
 		float A = acos(cosA);
@@ -420,6 +425,13 @@ float4 PShaderParticle(float2 TexCoord : TEXCOORD0,
 	float A = acos(cosA);
 	if (normal.y < 0)
 		A = -acos(cosA);
+
+	if (g_useRandom)
+	{
+		float2 rand = (tex2D(g_sampleRandomTex, float2(TexCoord.x + g_randomOffset, TexCoord.y + g_randomOffset)).xy - 0.5);
+			float offset = 2 * rand.x;
+		A = A + offset * 60.0 / 180.0 * 3.14159;
+	}
 
 	//return normal;
 

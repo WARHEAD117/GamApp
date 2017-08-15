@@ -161,6 +161,8 @@ sampler_state
 
 float g_AlphaFactor = 0.8f;
 
+matrix g_LastView;
+
 struct OutputVS
 {
 	float4 posWVP         : POSITION0;
@@ -462,11 +464,37 @@ float4 PShaderDrawBack(float2 TexCoord : TEXCOORD0) : COLOR
 	return colorSrc;
 }
 
+float2 GetPosUV(float3 pos)
+{
+
+	float u = g_zNear * pos.x / pos.z / (g_zNear * g_ViewAngle_half_tan * g_ViewAspect);
+	float v = g_zNear * pos.y / pos.z / (g_zNear * g_ViewAngle_half_tan);
+
+	u = 0.5 * u + 0.5;
+	v = 0.5 - 0.5 * v;
+
+	return float2(u, v);
+}
+
+bool g_remap = true;
+
 float4 PShaderTemporal(float2 TexCoord : TEXCOORD0) : COLOR
 {
 	float4 colorSrc = tex2D(g_sampleSrc, TexCoord);
 
-	float4 historyColor = tex2D(g_sampleSrc2, TexCoord);
+	float2 UV = TexCoord;
+	if (g_remap)
+	{
+
+		float3 pos = GetPosition(TexCoord, g_samplePosition);
+			float4 posW = mul(float4(pos, 1.0f), g_invView);
+			float4 lastPosV = mul(posW, g_LastView);
+			UV = GetPosUV(lastPosV.xyz);
+			//lastUV = TexCoord;
+	}
+
+	float4 historyColor = tex2D(g_sampleSrc2, UV);
+
 
 	float4 minColor, maxColor;
 	minColor = colorSrc;
@@ -494,7 +522,7 @@ float4 PShaderTemporal(float2 TexCoord : TEXCOORD0) : COLOR
 
 	float4 final = lerp(historyColor, colorSrc, 0.05f);
 
-	return final;
+		return final;
 }
 
 technique SumieSynthesis

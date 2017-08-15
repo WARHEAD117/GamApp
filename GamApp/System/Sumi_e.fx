@@ -694,6 +694,8 @@ float4 PShaderParticleInside(float2 TexCoord : TEXCOORD0,//粒子内部的纹理
 
 	//解决第二次渲染内部纹理时的重叠问题
 	if (matIndex * 255.0f < 0.5f)
+		brush.r = 1; 
+	if (matIndex * 255.0f > 4.5f && matIndex * 255.0f < 5.5f)
 		brush.r = 1;
 
 	return brush;

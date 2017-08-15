@@ -289,7 +289,7 @@ void TestScene::OnLoad()
 		
 		Material rock1Mat;
 		rock1Mat.Thickness = D3DXVECTOR4(1, 1, 1, 1);
-		rock1Mat.MatIndex = 0;
+		rock1Mat.MatIndex = 5;
 		rock1Entity->SetMaterial(&rock1Mat);
 		
 		D3DXMATRIX rock1M;
@@ -579,7 +579,7 @@ void ComputeMove(D3DXVECTOR3& move)
 {
 	double dTime = GLOBALTIMER::Instance().GetFrameTime();
 	
-	float speed = CameraParam::speed;
+	float speed = CameraParam::speed / 10.0f;
 	if (GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
 		speed *= 5;

@@ -42,7 +42,8 @@ int minInsideTexSize = 0;
 bool useGussTemp = false;
 bool useTemporal = true;
 bool useDiffusion = true;
-bool useRandom = false;
+bool useRandom = true;
+bool remap = true;
 
 void SumiE::CreatePostEffect()
 {
@@ -774,6 +775,19 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 			m_SynthesisEffect->SetTexture("g_Src", m_pTexList[0]);
 			m_SynthesisEffect->SetTexture("g_Src2", m_pTexList[1]);
+
+
+			m_SynthesisEffect->SetTexture(POSITIONBUFFER, RENDERPIPE::Instance().m_pPositionTarget);
+			m_SynthesisEffect->SetMatrix("g_LastView", &RENDERDEVICE::Instance().LastViewMatrix);
+			m_SynthesisEffect->SetMatrix("g_invView", &RENDERDEVICE::Instance().InvViewMatrix);
+
+			if (GAMEINPUT::Instance().KeyPressed(DIK_J))
+			{
+				remap = !remap;
+
+			}
+
+			m_SynthesisEffect->SetBool("g_remap", remap);
 
 			m_SynthesisEffect->CommitChanges();
 

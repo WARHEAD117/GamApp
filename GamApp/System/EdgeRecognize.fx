@@ -1015,13 +1015,20 @@ float4 Laplace_Edge2(float2 TexCoord, float2 R_d)
 				//return tex2D(g_sampleLineMask, uv);
 
 
-				float gray = tex2D(g_sampleUvTex, TexCoord).x;
+				float4 grayMap = tex2D(g_sampleUvTex, TexCoord);
 			
 			float KasureF = 0.4;
-			if (gray < KasureF)
+
+			float matIndex = grayMap.y * 255.0f;
+			if (matIndex < 4.5 || matIndex > 5.5)
+			{
+				c = float4(1, 1, 1, 1);
+			}
+
+			if (grayMap.x < KasureF)
 			//if (N < 0.5)
 			{
-				float f = (KasureF - gray) / KasureF;
+				float f = (KasureF - grayMap.x) / KasureF;
 
 				N = -N * 10;
 				N = c.r;

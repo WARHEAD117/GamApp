@@ -29,6 +29,10 @@ void Camera::Init()
 
 void Camera::OnFrame()
 {
+
+
+	RENDERDEVICE::Instance().LastViewMatrix = RENDERDEVICE::Instance().ViewMatrix;
+
 	D3DXMatrixInverse(&mView, NULL, &mWorldTransform);
 	RENDERDEVICE::Instance().ViewMatrix = mView;
 
@@ -77,11 +81,18 @@ void Camera::BuildViewMtx()
 // 	mView(3, 3) = 1.0f;
 
 	// 	D3DXMATRIX   matView;
+
+	RENDERDEVICE::Instance().LastViewMatrix = RENDERDEVICE::Instance().ViewMatrix;
+
 	D3DXMatrixLookAtLH(&mView, &CameraParam::posW,
 		&CameraParam::lookAtW,
 		&CameraParam::upW);
 	RENDERDEVICE::Instance().ViewMatrix = mView;
 	D3DXMatrixInverse(&mWorldTransform, NULL, &mView);
+
+	D3DXMATRIX invView;
+	D3DXMatrixInverse(&invView, NULL, &mView);
+	RENDERDEVICE::Instance().InvViewMatrix = invView;
 }
 
 void Camera::BuildProjMtx()

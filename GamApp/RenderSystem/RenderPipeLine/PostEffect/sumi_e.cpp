@@ -561,9 +561,10 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
 		m_SynthesisEffect->SetTexture(POSITIONBUFFER, RENDERPIPE::Instance().m_pPositionTarget);
+		m_SynthesisEffect->SetTexture(DIFFUSEBUFFER, RENDERPIPE::Instance().m_pDiffuseTarget);
 		m_SynthesisEffect->SetTexture("g_InputTex", m_pDarkPart);
 
-		SetGaussian(m_SynthesisEffect, 1.0f / RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, 0, "g_SampleWeights", "g_SampleOffsets");
+		SetGaussian(m_SynthesisEffect, 2.0f / RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, 0, "g_SampleWeights", "g_SampleOffsets");
 
 		m_SynthesisEffect->CommitChanges();
 
@@ -579,6 +580,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
 		m_SynthesisEffect->SetTexture(POSITIONBUFFER, RENDERPIPE::Instance().m_pPositionTarget);
+		m_SynthesisEffect->SetTexture(DIFFUSEBUFFER, RENDERPIPE::Instance().m_pDiffuseTarget);
 		m_SynthesisEffect->SetTexture("g_InputTex", m_pHorizontalBlur);
 
 		SetGaussian(m_SynthesisEffect, 0, 1.0f / RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight, "g_SampleWeights", "g_SampleOffsets");
@@ -600,9 +602,9 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		m_SynthesisEffect->SetTexture("g_Bloomed", m_pVerticalBlur);
 		
 		m_SynthesisEffect->SetTexture("g_Inside", m_pBluredInside);
-		//m_SynthesisEffect->SetTexture("g_Background", m_pBackground);
+		m_SynthesisEffect->SetTexture("g_Background", m_pBackground);
 
-		m_SynthesisEffect->SetTexture("g_Background", RENDERDEVICE::Instance().defaultTexture);
+		//m_SynthesisEffect->SetTexture("g_Background", RENDERDEVICE::Instance().defaultTexture);
 
 		m_SynthesisEffect->SetFloat("g_zNear", CameraParam::zNear);
 		m_SynthesisEffect->SetFloat("g_zFar", CameraParam::zFar);

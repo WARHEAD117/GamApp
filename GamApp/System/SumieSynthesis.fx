@@ -21,6 +21,16 @@ sampler_state
 	MipFilter = Point;
 };
 
+texture		g_DiffuseBuffer;
+sampler2D g_sampleDiffuse =
+sampler_state
+{
+	Texture = <g_DiffuseBuffer>;
+	MinFilter = Point;
+	MagFilter = Point;
+	MipFilter = Point;
+};
+
 texture		g_MainColorBuffer;
 sampler2D g_sampleMainColor =
 sampler_state
@@ -211,7 +221,7 @@ float4 PShaderSynthesis(float2 TexCoord : TEXCOORD0) : COLOR
 	float4 bloomColor = tex2D(g_sampleBloomed, TexCoord);
 	bloomColor.rgb = 0;
 
-	float bloomFactor = 1 - insideAlpha;
+	float bloomFactor = 1 -insideAlpha;
 	insideAlpha = bloomFactor * bloomColor.a + (1-bloomFactor)* insideAlpha;
 	
 	insideAlpha = insideAlpha *g_AlphaFactor;
@@ -385,14 +395,19 @@ float4 PShaderInputBlur(float2 TexCoord : TEXCOORD0) : COLOR
 	for (int i = 0; i < SAMPLE_COUNT; i++)
 	{
 		float depthSample = tex2D(g_samplePosition, TexCoord + g_SampleOffsets[i]).r;
-		float weight = g_SampleWeights[i];
 
+		float diffuseSample = tex2D(g_sampleDiffuse, TexCoord + g_SampleOffsets[i]).b;
+
+		float weight = g_SampleWeights[i];
+		/*
 		float deltaD_Inner = depthCenter / 10.0f;
 		if (depthCenter - depthSample >deltaD_Inner && depthSample < 50)
 			weight = 0;
 		else if (depthCenter - depthSample >deltaD_Inner && (depthSample >= 50 && depthSample < 100))
 			weight = g_SampleWeights[i] * ((depthSample - 50.0f) / 50.0f);
+			*/
 
+		weight = g_SampleWeights[i] * (1 - diffuseSample);
 		c += tex2D(g_sampleInput, TexCoord + g_SampleOffsets[i]) * weight;
 		totalWeight += weight;
 	}

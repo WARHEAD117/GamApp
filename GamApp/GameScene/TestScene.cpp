@@ -260,7 +260,7 @@ void TestScene::OnLoad()
 	}
 
 	//==========================================================================================
-	if (true)
+	if (false)
 	{
 
 		bunnyEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\bunny.X");
@@ -279,6 +279,27 @@ void TestScene::OnLoad()
 		D3DXMATRIX bunnyRotMat;
 		D3DXMatrixRotationY(&bunnyRotMat, -0.5f * D3DX_PI);
 		bunnyEntity->SetWorldTransform(bunnyRotMat * bunnyS * bunnyM);
+	}//==========================================================================================
+	if (true)
+	{
+		Entity* usagiEntity;
+		usagiEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\usagi\\usagi.X");
+
+		usagiEntity->SetTexture("Res\\Mesh\\usagi\\usagiTex.jpg");
+
+		Material usagiMat;
+		usagiMat.Thickness = D3DXVECTOR4(0.6, 1, 1, 1);
+		usagiMat.MatIndex = 0;
+		usagiEntity->SetMaterial(&usagiMat);
+		D3DXMATRIX usagiM;
+		D3DXVECTOR3 usagiMV = D3DXVECTOR3(-12, 0, 20.5f);
+		D3DXMatrixTranslation(&usagiM, usagiMV.x, usagiMV.y, usagiMV.z);
+		D3DXVECTOR3 usagiSV = D3DXVECTOR3(0.5f, 0.5f, 0.5f);
+		D3DXMATRIX usagiS;
+		D3DXMatrixScaling(&usagiS, usagiSV.x, usagiSV.y, usagiSV.z);
+		D3DXMATRIX usagiRotMat;
+		D3DXMatrixRotationY(&usagiRotMat, -0.5f * D3DX_PI);
+		usagiEntity->SetWorldTransform(usagiRotMat * usagiS * usagiM);
 	}
 
 	//==========================================================================================
@@ -403,6 +424,26 @@ void TestScene::OnLoad()
 		houseMat.Thickness = D3DXVECTOR4(0.4, 2, 0.5, 1);
 		houseMat.MatIndex = 3;
 		houseEntity->SetMaterial(&houseMat);
+	}	
+	//==========================================================================================
+	if (true)
+	{
+		Entity* sphereEntity;
+		sphereEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\Sphere.X");
+		//sphereEntity->SetTexture("Res\\Mesh\\sphere\\sphere.jpg");
+		sphereEntity->SetTexture("");
+		D3DXMATRIX sphereM;
+		D3DXVECTOR3 sphereMove = D3DXVECTOR3(-15, 3, 25.5f);
+		D3DXMatrixTranslation(&sphereM, sphereMove.x, sphereMove.y, sphereMove.z);
+		D3DXMATRIX sphereS;
+		D3DXVECTOR3 sphereSV = D3DXVECTOR3(2, 2, 2);
+		D3DXMatrixScaling(&sphereS, sphereSV.x, sphereSV.y, sphereSV.z);
+		sphereEntity->SetWorldTransform(sphereS * sphereM);
+
+		Material sphereMat;
+		sphereMat.Thickness = D3DXVECTOR4(0.5, 1, 1, 1);
+		sphereMat.MatIndex = 1;
+		sphereEntity->SetMaterial(&sphereMat);
 	}
 	//==========================================================================================
 	if (false)
@@ -537,13 +578,13 @@ void TestScene::OnLoad()
 		mSkinnedMesh->SetTexture("Res\\DeerAnim\\deer1.png");
 
 		Material ADeerMat;
-		ADeerMat.Thickness = D3DXVECTOR4(1, 1, 1, 1);
+		ADeerMat.Thickness = D3DXVECTOR4(0.7, 1, 1, 1);
 		ADeerMat.MatIndex = 0;
 		mSkinnedMesh->SetMaterial(&ADeerMat);
 
 		D3DXMATRIX ADeerM;
 		D3DXVECTOR3 ADeerMV = D3DXVECTOR3(100, 220, 90);
-		ADeerMV = D3DXVECTOR3(-15, -3, -2.0f);
+		ADeerMV = D3DXVECTOR3(-15, -3, -2.0f); //D3DXVECTOR3(-18, -3.5, 34.5f);// 
 		D3DXMatrixTranslation(&ADeerM, ADeerMV.x, ADeerMV.y, ADeerMV.z);
 		D3DXVECTOR3 ADeerSV = D3DXVECTOR3(40.1f, 40.1f, 40.1f);
 		D3DXMATRIX ADeerS;
@@ -563,7 +604,7 @@ void TestScene::OnLoad()
 
 		D3DXMATRIX ALittleDeerM;
 		D3DXVECTOR3 ALittleDeerMV = D3DXVECTOR3(100, 220, 90);
-		ALittleDeerMV = D3DXVECTOR3(-12.5, 0, -4.0f);
+		ALittleDeerMV = D3DXVECTOR3(-12.5, 0, -4.0f); //D3DXVECTOR3(-18, -0.5, 31.5f);// 
 		D3DXMatrixTranslation(&ALittleDeerM, ALittleDeerMV.x, ALittleDeerMV.y, ALittleDeerMV.z);
 		D3DXVECTOR3 ALittleDeerSV = D3DXVECTOR3(10.1f, 10.1f, 10.1f);
 		D3DXMATRIX ALittleDeerS;
@@ -579,7 +620,7 @@ void ComputeMove(D3DXVECTOR3& move)
 {
 	double dTime = GLOBALTIMER::Instance().GetFrameTime();
 	
-	float speed = CameraParam::speed / 10.0f;
+	float speed = CameraParam::speed;
 	if (GAMEINPUT::Instance().KeyDown(DIK_LSHIFT))
 	{
 		speed *= 5;

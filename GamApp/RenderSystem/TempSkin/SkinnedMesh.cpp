@@ -130,6 +130,9 @@ void SkinnedMesh::RenderDeferredGeometry(ID3DXEffect* pEffect)
 	pEffect->SetVector("g_ThicknessMaterial", &pMaterial.Thickness);
 	pEffect->SetInt("g_MatIndex", pMaterial.MatIndex);
 
+	pEffect->SetVector("g_LightDirMaterial", &pMaterial.LightDir);
+
+
 	pEffect->CommitChanges();
 
 	HR(mSkinnedMesh->DrawSubset(0));

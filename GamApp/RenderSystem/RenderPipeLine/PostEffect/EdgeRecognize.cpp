@@ -30,7 +30,7 @@ void EdgeRecognize::CreatePostEffect(std::string effectName)
 		&m_pEdge2Target, NULL);
 	hr = m_pEdge2Target->GetSurfaceLevel(0, &m_pEdge2Surface);
 
-	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "Res\\maskline.PNG", &m_pMask))
+	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "Res\\maskline_bold_wave3.PNG", &m_pMask))//maskline //maskline_wave //maskline_wave2 // maskline_bold //maskline_bold_wave //maskline_bold_wave2
 	{
 		MessageBox(GetForegroundWindow(), "TextureError", "m_pMask", MB_OK);
 		abort();
@@ -75,30 +75,14 @@ void EdgeRecognize::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		m_postEffect->SetTexture(MAINCOLORBUFFER, RENDERPIPE::Instance().m_pMainColorTarget);
 	m_postEffect->SetTexture(DIFFUSEBUFFER, RENDERPIPE::Instance().m_pDiffuseTarget);
 
-	//----------------------------------------------------------------------------
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pEdgeSurface);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
+	//----------------------------------------------------------------------------
 	UINT numPasses = 0;
-	m_postEffect->Begin(&numPasses, 0);
-	m_postEffect->BeginPass(0);
-
-
-	m_postEffect->CommitChanges();
-
-	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, m_pBufferVex, 0, sizeof(VERTEX));
-	RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(D3DFVF_VERTEX);
-	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
-	m_postEffect->SetTexture(0, NULL);
-
-	m_postEffect->EndPass();
-
-	//----------------------------------------------------------------------------
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pPostSurface);
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
 	m_postEffect->Begin(&numPasses, 0);
-	m_postEffect->BeginPass(1);
+	m_postEffect->BeginPass(0);
 
 	m_postEffect->SetTexture("g_EdgeMap", m_pEdgeTarget);
 	m_postEffect->CommitChanges();

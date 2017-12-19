@@ -379,46 +379,50 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	PDIRECT3DSURFACE9 pSurf_Judge = NULL;
 	m_pJudgeImage->GetSurfaceLevel(0, &pSurf_Judge);
 
-	PDIRECT3DSURFACE9 pSurf_test = NULL;
-	m_pOUTTarget->GetSurfaceLevel(0, &pSurf_test);
 
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_test);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
-
-	m_postEffect->SetTexture(MAINCOLORBUFFER, mainBuffer); //m_pEdgeImage//RENDERPIPE::Instance().m_pGrayscaleTarget//m_pEdgeBlur//mainBuffer//m_pEdgeForward//RENDERPIPE::Instance().m_pNormalTarget//m_StrokesArea
-
-	m_postEffect->CommitChanges();
-
-	m_postEffect->BeginPass(1);
-	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
-	m_postEffect->EndPass();
+	
 
 	if (stillSave)
 	{
+		PDIRECT3DSURFACE9 pSurf_test = NULL;
+		m_pOUTTarget->GetSurfaceLevel(0, &pSurf_test);
+
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_test);
+		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
+
+		m_postEffect->SetTexture(MAINCOLORBUFFER, mainBuffer); //m_pEdgeImage//RENDERPIPE::Instance().m_pGrayscaleTarget//m_pEdgeBlur//mainBuffer//m_pEdgeForward//RENDERPIPE::Instance().m_pNormalTarget//m_StrokesArea
+
+		m_postEffect->CommitChanges();
+
+		m_postEffect->BeginPass(1);
+		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+		m_postEffect->EndPass();
+
 		SaveViewToFile("EdgeBlured.jpg", m_pEdgeBlur);
 		SaveViewToFile("GrayscaleTarget.jpg", RENDERPIPE::Instance().m_pGrayscaleTarget);
 
 		SaveViewToFile("EdgeBuffer.jpg", m_pOUTTarget);
 	}
 
-	//=============================================================================================================
-	//用来测试各种RT的效果2
-	pSurf_test = NULL;
-	m_pOUTTarget->GetSurfaceLevel(0, &pSurf_test);
-
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_test);
-	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
-
-	m_postEffect->SetTexture(MAINCOLORBUFFER, m_pEdgeBlur); //m_pEdgeImage//RENDERPIPE::Instance().m_pGrayscaleTarget//m_pEdgeBlur//mainBuffer//m_pEdgeForward//RENDERPIPE::Instance().m_pNormalTarget//m_StrokesArea
-
-	m_postEffect->CommitChanges();
-
-	m_postEffect->BeginPass(1);
-	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
-	m_postEffect->EndPass();
+	
 
 	if (stillSave)
 	{
+		//=============================================================================================================
+		//用来测试各种RT的效果2
+		PDIRECT3DSURFACE9 pSurf_test = NULL;
+		m_pOUTTarget->GetSurfaceLevel(0, &pSurf_test);
+
+		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_test);
+		RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
+
+		m_postEffect->SetTexture(MAINCOLORBUFFER, m_pEdgeBlur); //m_pEdgeImage//RENDERPIPE::Instance().m_pGrayscaleTarget//m_pEdgeBlur//mainBuffer//m_pEdgeForward//RENDERPIPE::Instance().m_pNormalTarget//m_StrokesArea
+
+		m_postEffect->CommitChanges();
+
+		m_postEffect->BeginPass(1);
+		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+		m_postEffect->EndPass();
 		SaveViewToFile("EdgeBuffer_Blured.jpg", m_pOUTTarget);
 	}
 	//=====================================================================================================
@@ -453,7 +457,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		m_postEffect->SetTexture(NORMALBUFFER, RENDERPIPE::Instance().m_pNormalTarget);
 		m_postEffect->SetTexture(POSITIONBUFFER, RENDERPIPE::Instance().m_pPositionTarget);
 		m_postEffect->SetTexture(DIFFUSEBUFFER, RENDERPIPE::Instance().m_pDiffuseTarget);
-		m_postEffect->SetTexture("g_JudgeTex", mainBuffer); //RENDERPIPE::Instance().m_pGrayscaleTarget
+		m_postEffect->SetTexture("g_JudgeTex", RENDERPIPE::Instance().m_pGrayscaleTarget); //RENDERPIPE::Instance().m_pGrayscaleTarget//mainBuffer
 		m_postEffect->SetTexture("g_InkTex1", m_pInkMask);
 		m_postEffect->SetBool("g_UpperLayer", false);
 
@@ -511,7 +515,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		m_postEffect->SetTexture(POSITIONBUFFER, RENDERPIPE::Instance().m_pPositionTarget);
 		m_postEffect->SetTexture(DIFFUSEBUFFER, RENDERPIPE::Instance().m_pDiffuseTarget);
 		m_postEffect->SetTexture("g_InkTex1", m_pInkMask);
-		m_postEffect->SetTexture("g_JudgeTex", mainBuffer); //RENDERPIPE::Instance().m_pGrayscaleTarget
+		m_postEffect->SetTexture("g_JudgeTex", RENDERPIPE::Instance().m_pGrayscaleTarget); //RENDERPIPE::Instance().m_pGrayscaleTarget//mainBuffer
 		
 		m_postEffect->SetBool("g_UpperLayer", true);
 
@@ -739,7 +743,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		m_postEffect->SetTexture("g_InkTex2", m_pInkTex2);
 		m_postEffect->SetTexture("g_InkTex3", m_pInkTex3);
 
-		m_postEffect->SetTexture("g_JudgeTex", m_pJudgeImage);
+		m_postEffect->SetTexture("g_JudgeTex", m_pJudgeImage); //m_pJudgeImage
 
 		baseTexSize = 3250;
 		maxTexSize = 17;
@@ -965,6 +969,11 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		m_SynthesisEffect->End();
 	}
 
+	if (stillSave)
+	{
+		
+		SaveViewToFile("Final.jpg", m_pOUTTarget);
+	}
 	stillSave = false;
 }
 

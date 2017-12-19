@@ -517,8 +517,8 @@ PInside_OutVS VShaderParticleInside(float4 posL       : POSITION0,
 	//默认颜色为0
 	float thickness = 0;
 	//GrayScaleMap的纹理采样
-	float4 edge = tex2Dlod(g_sampleJudgeTex, float4(TexCoord.x, TexCoord.y, 0, 0));
-	float matIndex = edge.y * 255.0f;
+	float4 MaterialBuffer = tex2Dlod(g_sampleJudgeTex, float4(TexCoord.x, TexCoord.y, 0, 0));
+	float matIndex = MaterialBuffer.x * 255.0f;
 	//笔迹区域
 	float4 texColor = tex2Dlod(g_sampleMainColor, float4(TexCoord.x, TexCoord.y, 0, 0));
 	//DiffuseMap的纹理采样
@@ -559,7 +559,7 @@ PInside_OutVS VShaderParticleInside(float4 posL       : POSITION0,
 	float depth = tex2Dlod(g_samplePosition, float4(TexCoord.x, TexCoord.y, 0, 0));
 
 	int a = 3;
-	if (edge.r < 0.9)
+	if (MaterialBuffer.w < 0.2)
 	{
 		//float invDepth = 1 - depth / g_zFar;
 		//a = 4 * invDepth;
@@ -672,7 +672,7 @@ float4 PShaderParticleInside(float2 TexCoord : TEXCOORD0,//粒子内部的纹理
 	float4 brush = float4(1, 1, 1, 1);
 	brush = tex2D(g_sampleInkTex1, TexCoord);
 
-	float matIndex = tex2D(g_sampleJudgeTex, texC.xy).y;
+	float matIndex = tex2D(g_sampleJudgeTex, texC.xy).x;
 	if (matIndex * 255.0f > 2.5f && matIndex * 255.0f <= 3.5f)
 	{
 		brush = float4(0, 0, 0, 0);

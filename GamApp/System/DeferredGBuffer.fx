@@ -12,7 +12,7 @@ float4		g_LightDirMaterial = float4(0, 0, 1, 1);
 
 float4		g_viewDir;
 float4		g_viewPos;
-bool g_handSwitch = true;
+bool g_handSwitch = false;
 //========================================
 uniform extern float4x4 gFinalXForms[54];
 

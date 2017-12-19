@@ -13,6 +13,12 @@ Camera::Camera(void)
 	mUpW = CameraParam::upW;
 	mLookAtW = CameraParam::lookAtW;
 
+	mPosW = D3DXVECTOR3(3.0f, 5, 33);
+	mRightW  = D3DXVECTOR3(0.0f, 0.0f, 1.0f);
+	mUpW = D3DXVECTOR3(0.0f, 1.0f, 0.0f);
+	mLookAtW = D3DXVECTOR3(-1.0f, 5.0f, 33.0f);
+
+
 	mFOV = CameraParam::FOV;
 }
 Camera::~Camera(void)
@@ -84,9 +90,9 @@ void Camera::BuildViewMtx()
 
 	RENDERDEVICE::Instance().LastViewMatrix = RENDERDEVICE::Instance().ViewMatrix;
 
-	D3DXMatrixLookAtLH(&mView, &CameraParam::posW,
-		&CameraParam::lookAtW,
-		&CameraParam::upW);
+	D3DXMatrixLookAtLH(&mView, &mPosW,
+		&mLookAtW,
+		&mUpW);
 	RENDERDEVICE::Instance().ViewMatrix = mView;
 	D3DXMatrixInverse(&mWorldTransform, NULL, &mView);
 

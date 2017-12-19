@@ -239,7 +239,7 @@ struct OutputPSAreaSplit
 OutputPSAreaSplit PSAreaSplit(float2 TexCoord : TEXCOORD0)
 { 
 	OutputPSAreaSplit output = (OutputPSAreaSplit)0;
-	float color = tex2D(g_sampleGrayscale, TexCoord).r;
+	float color = tex2D(g_sampleGrayscale, TexCoord).w;
 	//if (color < 0.9f)
 	//	return float4(color, color, color, 1.0f);
 	//else
@@ -294,7 +294,9 @@ float4 PShaderEdgeBlur(float2 TexCoord : TEXCOORD0) : COLOR
 
 float4 PShaderBlend(float2 TexCoord : TEXCOORD0) : COLOR
 {
-	return tex2D(g_sampleMainColor, TexCoord);
+	float4 outColor = tex2D(g_sampleMainColor, TexCoord);
+	outColor = float4(outColor.x, outColor.x, outColor.x, 1);
+	return outColor;
 }
 
 float3 GetNormalLod(sampler2D sampleNormal, in float2 uv)
@@ -338,12 +340,15 @@ P_OutVS VShaderParticle(float4 posL       : POSITION0,
 
 	float depth = tex2Dlod(g_samplePosition, float4(TexCoord.x, TexCoord.y, 0, 0));
 	
-	float materialFactor = tex2Dlod(g_sampleMainColor, float4(TexCoord.x, TexCoord.y, 0, 0)).z * 2;
-
 	float4 edgeMap = tex2Dlod(g_sampleMainColor, float4(TexCoord.x, TexCoord.y, 0, 0));
-	
+
+	float edge = edgeMap.x;
+
+	float materialFactor = edgeMap.z * 2;
+
 	float matIndex = edgeMap.y * 255.0f;
-	float thickness = 1 - edgeMap.r;
+
+	float thickness = 1 - edge;
 	outVS.thickness = float4(thickness, thickness, thickness, thickness);
 	outVS.texC = float4(TexCoord, 0, 0);
 

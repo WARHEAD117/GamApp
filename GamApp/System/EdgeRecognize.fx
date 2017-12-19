@@ -459,21 +459,21 @@ float4 Laplace_Edge(float2 TexCoord)
 			
 			float KasureF = 0.4;
 
-			if (matIndex < 4.5 || matIndex > 5.5)
+			if (matIndex > 4.5 && matIndex < 5.5)
 			{
-				c = float4(1, 1, 1, 1);
+				if (gray < KasureF)
+					//if (false)
+					{
+						float f = (KasureF - gray) / KasureF;
+
+						N = -N * 10;
+						N = c.r;
+						N = (1 - f) * 1 + f * c.r;
+						N = 1 + f * (c.r - 1);
+					}
 			}
 
-			if (gray < KasureF)
-			//if (N < 0.5)
-			{
-				float f = (KasureF - gray) / KasureF;
-
-				N = -N * 10;
-				N = c.r;
-				N = (1 - f) * 1 + f * c.r;
-				N = 1 + f * (c.r - 1);
-			}
+			
 		}
 	}
 
@@ -488,7 +488,8 @@ float4 Laplace_Edge(float2 TexCoord)
 
 	float gray = MaterialBuffer.w;
 	float4 material = tex2D(g_sampleDiffuse, TexCoord);
-	return float4(N, matIndex, material.x, alpha);
+	//xyzw-Edge，材质编号，DIffuseMap的x，？？？
+	return float4(N, MaterialBuffer.x, material.x, alpha);
 }
 
 float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR

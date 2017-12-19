@@ -378,10 +378,14 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	//用来测试各种RT的效果
 	PDIRECT3DSURFACE9 pSurf_Judge = NULL;
 	m_pJudgeImage->GetSurfaceLevel(0, &pSurf_Judge);
-	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pPostSurface);
+
+	PDIRECT3DSURFACE9 pSurf_test = NULL;
+	m_pOUTTarget->GetSurfaceLevel(0, &pSurf_test);
+
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_test);
 	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
-	m_postEffect->SetTexture(MAINCOLORBUFFER, m_pEdgeImage); //m_pEdgeImage//RENDERPIPE::Instance().m_pGrayscaleTarget//m_pEdgeBlur//mainBuffer//m_pEdgeForward//RENDERPIPE::Instance().m_pNormalTarget//m_StrokesArea
+	m_postEffect->SetTexture(MAINCOLORBUFFER, mainBuffer); //m_pEdgeImage//RENDERPIPE::Instance().m_pGrayscaleTarget//m_pEdgeBlur//mainBuffer//m_pEdgeForward//RENDERPIPE::Instance().m_pNormalTarget//m_StrokesArea
 
 	m_postEffect->CommitChanges();
 
@@ -393,6 +397,29 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	{
 		SaveViewToFile("EdgeBlured.jpg", m_pEdgeBlur);
 		SaveViewToFile("GrayscaleTarget.jpg", RENDERPIPE::Instance().m_pGrayscaleTarget);
+
+		SaveViewToFile("EdgeBuffer.jpg", m_pOUTTarget);
+	}
+
+	//=============================================================================================================
+	//用来测试各种RT的效果2
+	pSurf_test = NULL;
+	m_pOUTTarget->GetSurfaceLevel(0, &pSurf_test);
+
+	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_test);
+	RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
+
+	m_postEffect->SetTexture(MAINCOLORBUFFER, m_pEdgeBlur); //m_pEdgeImage//RENDERPIPE::Instance().m_pGrayscaleTarget//m_pEdgeBlur//mainBuffer//m_pEdgeForward//RENDERPIPE::Instance().m_pNormalTarget//m_StrokesArea
+
+	m_postEffect->CommitChanges();
+
+	m_postEffect->BeginPass(1);
+	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+	m_postEffect->EndPass();
+
+	if (stillSave)
+	{
+		SaveViewToFile("EdgeBuffer_Blured.jpg", m_pOUTTarget);
 	}
 	//=====================================================================================================
 	//实际的水墨画渲染部分

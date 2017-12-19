@@ -197,3 +197,9 @@ $RECYCLE.BIN/
 /GamApp/BluredInside2.jpg
 /GamApp/BluredInside.jpg
 *.opendb
+/GamApp/m_pEdgeImage.jpg
+/GamApp/EdgeBuffer_withTexturing.jpg
+/GamApp/EdgeBuffer_Blured_withTexturing.jpg
+/GamApp/m_pEdgeImage.jpg
+/GamApp/EdgeBuffer_withTexturing.jpg
+/GamApp/EdgeBuffer_Blured_withTexturing.jpg

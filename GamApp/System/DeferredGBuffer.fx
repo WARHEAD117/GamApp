@@ -203,9 +203,10 @@ OutputPS PShader(float3 NormalV		: NORMAL,
 	float nl = dot(viewNormal, -light);
 	nl = pow(nl, 3.5);
 	//nl *= 0.9;
-	PsOut.grayscale.x = nl;
-	PsOut.grayscale.y = g_MatIndex / 255.0f;
-	PsOut.grayscale.zw = frac(TexCoord * 10);
+	PsOut.grayscale.x = g_MatIndex / 255.0f;
+	PsOut.grayscale.y = frac(TexCoord * 10).x;
+	PsOut.grayscale.z = frac(TexCoord * 10).y;
+	PsOut.grayscale.w = nl;
 	PsOut.grayscale = g_IsSky ? float4(1, 1, 1, 1) : PsOut.grayscale;
 
 	return PsOut;

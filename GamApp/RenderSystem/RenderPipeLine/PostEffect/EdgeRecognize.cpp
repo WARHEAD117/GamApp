@@ -18,18 +18,6 @@ void EdgeRecognize::CreatePostEffect(std::string effectName)
 {
 	PostEffectBase::CreatePostEffect(effectName, D3DFMT_X8R8G8B8);
 
-	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
-		1, D3DUSAGE_RENDERTARGET,
-		D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT,
-		&m_pEdgeTarget, NULL);
-	HRESULT hr = m_pEdgeTarget->GetSurfaceLevel(0, &m_pEdgeSurface);
-
-	RENDERDEVICE::Instance().g_pD3DDevice->CreateTexture(RENDERDEVICE::Instance().g_pD3DPP.BackBufferWidth, RENDERDEVICE::Instance().g_pD3DPP.BackBufferHeight,
-		1, D3DUSAGE_RENDERTARGET,
-		D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT,
-		&m_pEdge2Target, NULL);
-	hr = m_pEdge2Target->GetSurfaceLevel(0, &m_pEdge2Surface);
-
 	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "Res\\maskline.PNG", &m_pMask))
 	{
 		MessageBox(GetForegroundWindow(), "TextureError", "m_pMask", MB_OK);
@@ -84,7 +72,6 @@ void EdgeRecognize::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	m_postEffect->Begin(&numPasses, 0);
 	m_postEffect->BeginPass(0);
 
-	m_postEffect->SetTexture("g_EdgeMap", m_pEdgeTarget);
 	m_postEffect->CommitChanges();
 
 	RENDERDEVICE::Instance().g_pD3DDevice->SetStreamSource(0, m_pBufferVex, 0, sizeof(VERTEX));

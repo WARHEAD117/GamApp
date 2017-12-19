@@ -249,8 +249,23 @@ int sampleCount = 30;
 float m_SampleWeights[30];
 float m_SampleOffsets[60];
 
+bool stillSave = false;
+
 void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 {
+	if (GAMEINPUT::Instance().KeyDown(DIK_SPACE))
+	{
+		stillSave = true;
+	}
+	if (stillSave)
+	{
+		SaveViewToFile("Depth.jpg", RENDERPIPE::Instance().m_pPositionTarget);
+		SaveViewToFile("Normal.jpg", RENDERPIPE::Instance().m_pNormalTarget);
+		SaveViewToFile("Diffuse.jpg", RENDERPIPE::Instance().m_pDiffuseTarget);
+
+
+		SaveViewToFile("Edge.jpg", mainBuffer);
+	}
 	ConfigInput();
 	m_postEffect->SetMatrix(WORLDVIEWPROJMATRIX, &RENDERDEVICE::Instance().OrthoWVPMatrix);
 	m_postEffect->SetMatrix(INVPROJMATRIX, &RENDERDEVICE::Instance().InvProjMatrix);
@@ -319,6 +334,11 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	SafeRelease(pSurf_SA2);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, NULL);
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(1, NULL);
+	if (stillSave)
+	{
+		SaveViewToFile("StrokesArea1.jpg", m_StrokesArea);
+		SaveViewToFile("StrokesArea2.jpg", m_StrokesArea2);
+	}
 	
 
 	//=============================================================================================================
@@ -369,6 +389,11 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 	m_postEffect->EndPass();
 
+	if (stillSave)
+	{
+		SaveViewToFile("EdgeBlured.jpg", m_pEdgeBlur);
+		SaveViewToFile("GrayscaleTarget.jpg", RENDERPIPE::Instance().m_pGrayscaleTarget);
+	}
 	//=====================================================================================================
 	//实际的水墨画渲染部分
 	float useParticle = false;
@@ -425,6 +450,12 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		m_postEffect->EndPass();
 
 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_POINTSPRITEENABLE, false);
+
+
+		if (stillSave)
+		{
+			SaveViewToFile("InsideTarget.jpg", m_pInsideTarget);
+		}
 	}
 
 	//渲染第二次的内部粒子，深色部分
@@ -477,6 +508,11 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		m_postEffect->EndPass();
 
 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_POINTSPRITEENABLE, false);
+
+		if (stillSave)
+		{
+			SaveViewToFile("InsideTarget2.jpg", m_pInsideTarget2);
+		}
 	}
 	
 	m_postEffect->End();
@@ -536,6 +572,10 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 		m_SynthesisEffect->EndPass();
 
+		if (stillSave)
+		{
+			SaveViewToFile("BluredInside.jpg", m_pBluredInside);
+		}
 		//======================================================================================================
 		//提取暗部
 		PDIRECT3DSURFACE9 pSurf_DarkPart = NULL;
@@ -589,6 +629,10 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 		m_SynthesisEffect->EndPass();
 
+		if (stillSave)
+		{
+			SaveViewToFile("BluredInside2.jpg", m_pVerticalBlur);
+		}
 		//======================================================================================================
 		//第二次高斯模糊内部的纹理
 		//并且与背景进行混合
@@ -617,6 +661,11 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		m_SynthesisEffect->EndPass();
 
 		m_SynthesisEffect->End();
+
+		if (stillSave)
+		{
+			SaveViewToFile("Inside.jpg", m_pPostTarget);
+		}
 	}
 	
 
@@ -695,6 +744,11 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_POINTSPRITEENABLE, false);
 		m_postEffect->End();
+
+		if (stillSave)
+		{
+			SaveViewToFile("InOut.jpg", m_pPostTarget);
+		}
 
 	}
 
@@ -883,6 +937,8 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 		m_SynthesisEffect->End();
 	}
+
+	stillSave = false;
 }
 
 
@@ -934,4 +990,20 @@ float SumiE::ComputeGaussianWeight(float n)
 void SumiE::SetEdgeImage(LPDIRECT3DTEXTURE9 edgeImage)
 {
 	m_pEdgeImage = edgeImage;
+}
+
+bool SumiE::SaveViewToFile(std::string strFileName, LPDIRECT3DTEXTURE9 target)
+{
+	// 获得BackBuffer的D3D Surface  
+	//RENDERDEVICE::Instance().g_pD3DDevice->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &back);
+	PDIRECT3DSURFACE9 pSurfSave = NULL;
+	target->GetSurfaceLevel(0, &pSurfSave);
+
+	// 保存成BMP格式  
+	D3DXSaveSurfaceToFile(strFileName.c_str(), D3DXIFF_BMP, pSurfSave, NULL, NULL);
+
+	// 释放Surface，防止内存泄漏  
+	SafeRelease(pSurfSave);
+
+	return TRUE;
 }

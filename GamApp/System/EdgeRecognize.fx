@@ -31,18 +31,6 @@ sampler_state
 	MipFilter = Point;
 };
 
-
-texture		g_EdgeMap;
-sampler2D g_sampleEdgeMap =
-sampler_state
-{
-	Texture = <g_EdgeMap>;
-	MinFilter = Point;
-	MagFilter = Point;
-	MipFilter = Point;
-};
-
-
 texture		g_lineMask;
 sampler2D g_sampleLineMask =
 sampler_state
@@ -174,7 +162,7 @@ float3 GetUnsharpMaskedNormal(float2 texCoords, sampler2D texSampler)
 
 int g_switch = 1;
 
-float4 Laplace_Edge(float2 TexCoord, float2 R_d)
+float4 Laplace_Edge(float2 TexCoord)
 {
 	int neighborNum = 4;
 	//neighborNum = 8;
@@ -235,7 +223,7 @@ float4 Laplace_Edge(float2 TexCoord, float2 R_d)
 	//拉普拉斯过滤器
 	float laplace = 4 * depth - (depthN[1] + depthN[2] + depthN[3] + depthN[4]);
 
-	//第二次拉普拉斯过滤器
+	//临界像素的拉普拉斯过滤器结果
 	float laplaceN[5];
 	laplaceN[1] = 4 * depthN[1] - (depthN[0] + depthN[5] + depthN[8] + depthNN[0]);
 	laplaceN[2] = 4 * depthN[2] - (depthN[0] + depthN[5] + depthN[6] + depthNN[1]);
@@ -246,37 +234,26 @@ float4 Laplace_Edge(float2 TexCoord, float2 R_d)
 	bool isEdge = false;
 	bool edgeList[9] = { false, false, false, false, false, false, false, false, false };
 
-	if (g_switch == 1)
-	{
-		for (int i = 1; i<neighborNum + 1; i++)
-		{
-			if (laplace > 0.4)
-			{
-				//return float4(1, 1, 1, 1);
-			}
-		}
-	}
 
+	//Lij小于-0.6 说明是【边缘像素】 前景侧的边缘
 	if (laplace < -0.6)
 		isEdge = true;
 	else
 		isEdge = false;
 
 
+	//对于边缘像素，要计算邻接像素的权重
+	//也就是邻接像素是不是也是边缘像素
 	for (int i = 1; i< 5; i++)
 	{
+		//如果邻接像素的Lij大于0.6，说明这个邻接像素是背景侧的边缘
 		if (laplaceN[i]  > 0.6)
 		{
 			edgeList[i] = true;
 		}
+		
 	}
-	for (int i = 1; i< 5; i++)
-	{
-		if (laplace > 0.4)
-		{
-			edgeList[i] = true;
-		}
-	}
+
 
 	float3 vecXY = normalize(float3(1, 1, 0));
 	float3 vecYX = normalize(float3(1, -1, 0));
@@ -349,74 +326,20 @@ float4 Laplace_Edge(float2 TexCoord, float2 R_d)
 	dmax = (dmax + dmin) / 2;
 	//dmax = dmax * dmin;
 	float N = 1 - dmax / 3.14 * 0.8;
-
-	du = dot(normalUProj, normalProjY);
-	dr = dot(normalProjX, normalRProj);
-	dd = dot(normalProjY, normalDProj);
-	dl = dot(normalLProj, normalProjX);
-	dl = acos(dl);
-	dr = acos(dr);
-	du = acos(du);
-	dd = acos(dd);
-	d[1] = du;
-	d[2] = dr;
-	d[3] = dd;
-	d[4] = dl;
-
 	N = N*N*N;
+
 	if (isEdge)
 	{
 		N *= 0.5;
 		//if (N > 0.6) N = 0.6;
 	}
-
-	float2 dir[8] =
+	else if (laplace > 0.6)
 	{
-		float2(0, -1),
-		float2(1, 0),
-		float2(0, 1),
-		float2(-1, 0),
-		float2(1, -1),
-		float2(1, 1),
-		float2(-1, 1),
-		float2(-1, -1)
-	};
-
-	float dirR[8] =
-	{
-		0,
-		1,
-		0,
-		1,
-		3.1415 /2.0f,
-		-3.1415 / 2.0f,
-		3.1415 / 2.0f,
-		3.1415 / 2.0f
-	};
-
-
-
-	dmax = -1000;
-	dmin = 1000;
-	maxFlag = -1;
-	minFlag = -1;
-	for (int i = 1; i < 8 + 1; i++)
-	{
-		if (edgeList[i] != true)
-		{
-			if (d[i] > dmax)
-				maxFlag = i;
-			dmax = max(d[i], dmax);
-
-			if (d[i] < dmin)
-				minFlag = i;
-			dmin = min(d[i], dmin);
-		}
+		N = 1;
 	}
-	float2 minDir = dir[minFlag];
-		float2 maxDir = dir[maxFlag];
 
-		float p1 = 0.0001;
+	//擦的方向计算
+	float p1 = 0.0001;
 	float p2 = 0.005;
 
 	bool testR = false;
@@ -478,6 +401,40 @@ float4 Laplace_Edge(float2 TexCoord, float2 R_d)
 		}
 
 	}
+
+	float dirR[8] =
+	{
+		0,
+		1,
+		0,
+		1,
+		3.1415 / 2.0f,
+		-3.1415 / 2.0f,
+		3.1415 / 2.0f,
+		3.1415 / 2.0f
+	};
+
+	dmax = -1000;
+	dmin = 1000;
+	maxFlag = -1;
+	minFlag = -1;
+	for (int i = 1; i < 8 + 1; i++)
+	{
+		if (edgeList[i] != true)
+		{
+			if (d[i] > dmax)
+				maxFlag = i;
+			dmax = max(d[i], dmax);
+
+			if (d[i] < dmin)
+				minFlag = i;
+			dmin = min(d[i], dmin);
+		}
+	}
+
+
+	float4 MaterialBuffer = tex2D(g_sampleUvTex, TexCoord);
+	float matIndex = MaterialBuffer.x * 255.0f;
 	//if (g_switch == 1)
 	{
 		if ((testR || testL || testU || testD) && !isEdge)
@@ -485,37 +442,32 @@ float4 Laplace_Edge(float2 TexCoord, float2 R_d)
 			float3 normal = normalR[0];
 				float projectXY = sqrt(normal.x * normal.x + normal.y * normal.y);
 			float cosA = normal.x / projectXY;
-			cosA = dirR[maxFlag];// R_d.x / sqrt(R_d.x * R_d.x + R_d.y * R_d.y);;
+			cosA = dirR[maxFlag];
 			float A = acos(cosA);
 			if (normal.y < 0)
 				A = -acos(cosA);
 			A += 3.14159f / 2.0f;
 			float2x2 rotationM = float2x2(float2(cos(A), -sin(A)), float2(sin(A), cos(A)));
-				//TexCoord = mul(TexCoord - float2(0.5,0.5), rotationM) + float2(0.5,0.5);
+			
+			float gray = MaterialBuffer.w;
+			float2 uv = float2(MaterialBuffer.y, MaterialBuffer.z);
 
-				float2 uv = tex2D(g_sampleUvTex, TexCoord).zw;
-
-
-				uv = mul(rotationM, uv - float2(0.5, 0.5)) + float2(0.5, 0.5);
+			uv = mul(rotationM, uv - float2(0.5, 0.5)) + float2(0.5, 0.5);
 
 			float4 c = tex2D(g_sampleLineMask, uv);
-				//return tex2D(g_sampleLineMask, uv);
-
-
-				float4 grayMap = tex2D(g_sampleUvTex, TexCoord);
+			
 			
 			float KasureF = 0.4;
 
-			float matIndex = grayMap.y * 255.0f;
 			if (matIndex < 4.5 || matIndex > 5.5)
 			{
 				c = float4(1, 1, 1, 1);
 			}
 
-			if (grayMap.x < KasureF)
+			if (gray < KasureF)
 			//if (N < 0.5)
 			{
-				float f = (KasureF - grayMap.x) / KasureF;
+				float f = (KasureF - gray) / KasureF;
 
 				N = -N * 10;
 				N = c.r;
@@ -534,42 +486,14 @@ float4 Laplace_Edge(float2 TexCoord, float2 R_d)
 	if (isEdge)
 		alpha = 0;
 
-	float4 gray = tex2D(g_sampleUvTex, TexCoord);
-	int J = 1;
-	if (gray.x < 0.4)
-	{
-		J = 0;
-	}
-	else
-	{
-		J = 1;
-	}
+	float gray = MaterialBuffer.w;
 	float4 material = tex2D(g_sampleDiffuse, TexCoord);
-	return float4(N, gray.y, material.x, alpha);
+	return float4(N, matIndex, material.x, alpha);
 }
 
 float4 PShader(float2 TexCoord : TEXCOORD0) : COLOR
 {
-	float2 offset = float2(1.0f / g_ScreenWidth, 1.0f / g_ScreenHeight);
-	float R = tex2D(g_sampleEdgeMap, TexCoord);
-	//return R;
-	float R_L = tex2D(g_sampleEdgeMap, TexCoord + offset * float2(-1, 0));
-	float R_R = tex2D(g_sampleEdgeMap, TexCoord + offset * float2(1, 0));
-	float R_U = tex2D(g_sampleEdgeMap, TexCoord + offset * float2(0, -1));
-	float R_D = tex2D(g_sampleEdgeMap, TexCoord + offset * float2(0, 1));
-
-	float3 N_U = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2(0, -1))); //Up
-	float3 N_R = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2(1, 0))); //Right
-	float3 N_D = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2(0, 1))); //Down
-	float3 N_L = normalize(GetNormal(g_sampleNormal, TexCoord + offset * float2(-1, 0))); //Left
-	float dx = R - R_R;
-	float dy = R - R_D;
-	dx = ddx(R);
-	dy = ddy(R);
-	float2 d = normalize(float2(dx, dy));
-
-	//return float4(d,0,0);
-	float4 edge = Laplace_Edge(TexCoord, d);
+	float4 edge = Laplace_Edge(TexCoord);
 	return edge;
 }
 

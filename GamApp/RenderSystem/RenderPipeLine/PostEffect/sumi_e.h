@@ -13,6 +13,8 @@ public:
 	void SetEdgeImage(LPDIRECT3DTEXTURE9 edgeImage);
 	float ComputeGaussianWeight(float n);
 	void SetGaussian(LPD3DXEFFECT effect, float deltaX, float deltaY, std::string weightArrayName, std::string offsetArrayName);
+
+	bool SaveViewToFile(std::string strFileName, LPDIRECT3DTEXTURE9 target);
 private:
 	LPDIRECT3DVERTEXDECLARATION9	mParticleDecl;
 	LPDIRECT3DVERTEXBUFFER9			mParticleBuffer;

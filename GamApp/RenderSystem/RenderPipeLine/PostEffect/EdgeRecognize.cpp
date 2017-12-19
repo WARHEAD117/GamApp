@@ -18,7 +18,7 @@ void EdgeRecognize::CreatePostEffect(std::string effectName)
 {
 	PostEffectBase::CreatePostEffect(effectName, D3DFMT_X8R8G8B8);
 
-	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "Res\\maskline.PNG", &m_pMask))
+	if (E_FAIL == D3DXCreateTextureFromFile(RENDERDEVICE::Instance().g_pD3DDevice, "Res\\maskline_bold_wave3.PNG", &m_pMask))//maskline //maskline_wave //maskline_wave2 // maskline_bold //maskline_bold_wave //maskline_bold_wave2
 	{
 		MessageBox(GetForegroundWindow(), "TextureError", "m_pMask", MB_OK);
 		abort();

@@ -10,6 +10,12 @@ float4		g_ThicknessMaterial = float4(1, 1, 1, 1);
 int			g_MatIndex = 0;
 float4		g_LightDirMaterial = float4(0, 0, 1, 1);
 
+float4		g_viewDir;
+float4		g_viewPos;
+bool g_handSwitch = false;
+//========================================
+uniform extern float4x4 gFinalXForms[54];
+
 texture		g_Texture;
 sampler2D g_sampleTexture =
 sampler_state
@@ -77,10 +83,35 @@ OutputVS VShader(float4 posL		: POSITION,
 				float2 TexCoord : TEXCOORD0)
 {
 	OutputVS outVS = (OutputVS)0;
+	
+	float4 d = float4(0, 0, 0, 0);
+	
+	//d.xyz =	 0.5 * normalL * sin(TexCoord.x * 50);
 
 	//最终输出的顶点位置（经过世界、观察、投影矩阵变换）
-	outVS.posWVP = mul(posL, g_WorldViewProj);
-	
+	outVS.posWVP = mul(posL + d, g_WorldViewProj);
+
+	float3 normalWV = normalize(mul(normalL, g_WorldView));
+	float3 viewPosWV = mul(g_viewPos.xyz, g_WorldView);
+	float3 viewWV = mul(g_viewDir.xyz, g_WorldView);
+
+	viewWV = mul(posL, g_WorldView);
+	//float3 v = outVS.posWVP - viewWVP;
+	float factor = 0.0025 * sin(70 * posL);
+
+	float von = dot(normalize(viewWV), normalWV);
+	if (von > 0 && g_handSwitch)
+	{
+		normalWV.z = 0;
+		normalWV = normalize(normalWV);
+		float3 normalWVP = mul(normalWV.xyz, g_Proj);
+		float3 d2 = normalWVP * max(0, factor);// *von;
+		outVS.posWVP += (float4(d2, 0) * outVS.posWVP.z);
+	}
+	else
+	{
+		//outVS.posWVP = 0;
+	}
 
 	//这里不该直接乘以WV，而是应该乘以world的逆的转置，这样在有缩放的时候法线才能保证与平面垂直
 	//观察空间下的法线
@@ -104,6 +135,73 @@ OutputVS VShader(float4 posL		: POSITION,
 	return outVS;
 }
 
+
+OutputVS VShader_SM(float4 posL		: POSITION,
+	float3 normalL : NORMAL,
+	float3 tangentL : TANGENT,
+	float3 binormalL : BINORMAL,
+	float2 TexCoord : TEXCOORD0,
+	float4 weight0 : BLENDWEIGHT0,
+	int4 boneIndex : BLENDINDICES0)
+{
+	OutputVS outVS = (OutputVS)0;
+
+	// Do the vertex blending calculation for posL and normalL.
+	float weight1 = 1.0f - weight0.x;
+
+	float4 p = weight0.x * mul(posL, gFinalXForms[boneIndex[0]]);
+		p += weight0.y * mul(posL, gFinalXForms[boneIndex[1]]);
+	p += weight0.z * mul(posL, gFinalXForms[boneIndex[2]]);
+	p += (1 - weight0.x - weight0.y - weight0.z) * mul(posL, gFinalXForms[boneIndex[3]]);
+	//p		+= weight2 * mul(float4(posL, 1.0f), gFinalXForms[boneIndex[2]]);
+	p.w = 1.0f;
+
+	// We can use the same matrix to transform normals since we are assuming
+	// no scaling (i.e., rigid-body).
+	float4 n = weight0.x * mul(float4(normalL, 0.0f), gFinalXForms[boneIndex[0]]);
+		n += weight0.y * mul(float4(normalL, 0.0f), gFinalXForms[boneIndex[1]]);
+	n += weight0.z * mul(float4(normalL, 0.0f), gFinalXForms[boneIndex[2]]);
+	n += (1 - weight0.x - weight0.y - weight0.z) * mul(float4(normalL, 0.0f), gFinalXForms[boneIndex[3]]);
+	//n		+= weight2 * mul(float4(normalL, 0.0f), gFinalXForms[boneIndex[2]]);
+	n.w = 0.0f;
+
+	// We can use the same matrix to transform normals since we are assuming
+	// no scaling (i.e., rigid-body).
+	float4 b = weight0.x * mul(float4(normalL, 0.0f), gFinalXForms[boneIndex[0]]);
+		b += weight0.y * mul(float4(normalL, 0.0f), gFinalXForms[boneIndex[1]]);
+	b += weight0.z * mul(float4(normalL, 0.0f), gFinalXForms[boneIndex[2]]);
+	b += (1 - weight0.x - weight0.y - weight0.z) * mul(float4(normalL, 0.0f), gFinalXForms[boneIndex[3]]);
+	//n		+= weight2 * mul(float4(normalL, 0.0f), gFinalXForms[boneIndex[2]]);
+	b.w = 0.0f;
+
+	float4 t = float4(cross(n.xyz, b.xyz), 0.0f);
+
+
+		//最终输出的顶点位置（经过世界、观察、投影矩阵变换）
+		outVS.posWVP = mul(p, g_WorldViewProj);
+
+
+	//这里不该直接乘以WV，而是应该乘以world的逆的转置，这样在有缩放的时候法线才能保证与平面垂直
+	//观察空间下的法线
+	outVS.normalV = mul(n, g_WorldView);
+
+	//观察空间下的切线
+	outVS.tangentV = mul(t, g_WorldView);
+	//观察空间下的副法线
+	outVS.binormalV = mul(b, g_WorldView);
+
+	outVS.posP = outVS.posWVP;
+	outVS.posV = mul(p, g_WorldView);
+	outVS.TexCoord = TexCoord;
+
+	float flag = dot(normalize(outVS.normalV), -normalize(outVS.posV));
+	if (flag >= 0 && flag <= 0.2)
+		outVS.isEdge = flag;
+	else
+		outVS.isEdge = 0;
+
+	return outVS;
+}
 
 OutputPS PShader(float3 NormalV		: NORMAL,
 				 float3 TangentV		: TANGENT,
@@ -225,6 +323,11 @@ technique DeferredGBuffer
 	pass p0
 	{
 		vertexShader = compile vs_3_0 VShader();
+		pixelShader = compile ps_3_0 PShader();
+	}
+	pass p1
+	{
+		vertexShader = compile vs_3_0 VShader_SM();
 		pixelShader = compile ps_3_0 PShader();
 	}
 }

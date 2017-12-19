@@ -303,6 +303,32 @@ void RenderPipe::RenderGBuffer()
 	deferredMultiPassEffect->SetFloat("g_zNear", CameraParam::zNear);
 	deferredMultiPassEffect->SetFloat("g_zFar", CameraParam::zFar);
 
+	D3DXVECTOR4 viewDir = D3DXVECTOR4(0, 0, 0, 0);
+	viewDir.x = RENDERDEVICE::Instance().ViewMatrix(0, 2);
+	viewDir.y = RENDERDEVICE::Instance().ViewMatrix(1, 2);
+	viewDir.z = RENDERDEVICE::Instance().ViewMatrix(3, 2);
+	viewDir.w = 0;
+	// 	mView(1, 2) = mLookDirW.y;
+	// 	mView(2, 2) = mLookDirW.z;
+	// 	mView(3, 2) = z;
+
+	D3DXVECTOR4 viewPos = D3DXVECTOR4(RENDERDEVICE::Instance().ViewPosition.x, RENDERDEVICE::Instance().ViewPosition.y, RENDERDEVICE::Instance().ViewPosition.z, 0);
+	GBufferEffect->SetVector("g_viewDir", &viewDir);
+	GBufferEffect->SetVector("g_viewPos", &viewPos);
+
+	GBufferEffect->SetMatrix(PROJECTIONMATRIX, &RENDERDEVICE::Instance().ProjMatrix);
+
+	if (GAMEINPUT::Instance().KeyPressed(DIK_K))
+	{
+
+		GBufferEffect->SetBool("g_handSwitch", true);
+	}
+	if (GAMEINPUT::Instance().KeyPressed(DIK_L))
+	{
+
+		GBufferEffect->SetBool("g_handSwitch", false);
+	}
+
 	skyBox.RenderInGBuffer(GBufferEffect);
 
 	for (int i = 0; i < mRenderUtilList.size(); ++i)
@@ -311,20 +337,17 @@ void RenderPipe::RenderGBuffer()
 	}
 
 	GBufferEffect->EndPass();
-	GBufferEffect->End();
 
 	//======================================================
-	nPasses = 0;
-	r1 = SkinnedGBufferEffect->Begin(&nPasses, 0);
-	r2 = SkinnedGBufferEffect->BeginPass(0);
+	r2 = GBufferEffect->BeginPass(1);
 
 	for (int i = 0; i < mSkinnedMeshList.size(); ++i)
 	{
-		mSkinnedMeshList[i]->RenderDeferredGeometry(SkinnedGBufferEffect);
+		mSkinnedMeshList[i]->RenderDeferredGeometry(GBufferEffect);
 	}
 
-	SkinnedGBufferEffect->EndPass();
-	SkinnedGBufferEffect->End();
+	GBufferEffect->EndPass();
+	GBufferEffect->End();
 
 
 	RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, NULL);

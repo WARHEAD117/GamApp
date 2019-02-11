@@ -76,6 +76,19 @@ SkinnedMesh* mSkinnedMesh;
 
 SkinnedMesh* mSkinnedMeshLittle;
 
+enum TestMode
+{
+	lessPoly,
+	morePoly
+};
+TestMode testMode;
+
+bool bunnySwitch = false;
+bool deerSwitch = false;
+bool rockSwitch = false;
+bool mountainSwitch = false;
+bool animDeerSwitch = false;
+
 void TestScene::OnLoad()
 {
 	//===================================================================================================
@@ -83,6 +96,25 @@ void TestScene::OnLoad()
 	mainCamera.Init();
 
 
+	//testMode = lessPoly;
+	testMode = morePoly;
+	if (testMode == lessPoly)
+	{
+		bunnySwitch = true;
+		deerSwitch = false;
+		rockSwitch = false;
+		mountainSwitch = false;
+		animDeerSwitch = false;
+	}
+	else if(testMode == morePoly)
+	{
+		bunnySwitch = true;
+		deerSwitch = true;
+		rockSwitch = true;
+		mountainSwitch = true;
+		animDeerSwitch = true;
+	}
+	bunnySwitch = false;
 	//==========================================================================================
 	//Create Entity
 	if (false)
@@ -109,7 +141,7 @@ void TestScene::OnLoad()
 	
 
 	//==========================================================================================
-	if (true)
+	if (false)
 	{
 		//horse2Entity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\horse2.X"); //sphere.X
 		horse2Entity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\Mushroom\\mushroom1.X");
@@ -133,7 +165,7 @@ void TestScene::OnLoad()
 	}
 	
 	//==========================================================================================
-	if (true)
+	if (false)
 	{
 		//horse2Entity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\horse2.X"); //sphere.X
 		mushroom2Entity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\Mushroom\\mushroom2.X");
@@ -156,7 +188,7 @@ void TestScene::OnLoad()
 	}
 
 	//==========================================================================================
-	if (true)
+	if (false)
 	{
 		mushroom3Entity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\Mushroom\\mushroom3.X");
 
@@ -178,7 +210,7 @@ void TestScene::OnLoad()
 	}
 
 	//==========================================================================================
-	if (true)
+	if (deerSwitch)
 	{
 		deerEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\deer\\deer.X");
 		//deerEntity->SetTexture("System\\white.dds");
@@ -198,7 +230,7 @@ void TestScene::OnLoad()
 
 	}
 	//==========================================================================================
-	if (true)
+	if (false)
 	{
 		deerEntity2 = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\deer\\deer.X");
 
@@ -213,7 +245,7 @@ void TestScene::OnLoad()
 	}
 	
 	//==========================================================================================
-	if (true)
+	if (mountainSwitch)
 	{
 		mountainEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\farMountain2.X");
 		//mountainEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\plane2.X");
@@ -260,7 +292,7 @@ void TestScene::OnLoad()
 	}
 
 	//==========================================================================================
-	if (false)
+	if (bunnySwitch)
 	{
 
 		bunnyEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\bunny.X");
@@ -280,7 +312,7 @@ void TestScene::OnLoad()
 		D3DXMatrixRotationY(&bunnyRotMat, -0.5f * D3DX_PI);
 		bunnyEntity->SetWorldTransform(bunnyRotMat * bunnyS * bunnyM);
 	}//==========================================================================================
-	if (true)
+	if (false)
 	{
 		Entity* usagiEntity;
 		usagiEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\usagi\\usagi.X");
@@ -303,7 +335,7 @@ void TestScene::OnLoad()
 	}
 
 	//==========================================================================================
-	if (true)
+	if (rockSwitch)
 	{
 		rock1Entity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\rock\\rock5.X");
 		//rock2Entity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\rock\\rock2.X");
@@ -327,7 +359,7 @@ void TestScene::OnLoad()
 	
 
 	//==========================================================================================
-	if (true)
+	if (false)
 	{
 		rock2Entity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\rock\\rock6.X");
 		//rock2Entity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\rock\\rock2.X");
@@ -422,11 +454,11 @@ void TestScene::OnLoad()
 
 		Material houseMat;
 		houseMat.Thickness = D3DXVECTOR4(0.4, 2, 0.5, 1);
-		houseMat.MatIndex = 3;
+		houseMat.MatIndex = 4;
 		houseEntity->SetMaterial(&houseMat);
 	}	
 	//==========================================================================================
-	if (true)
+	if (false)
 	{
 		Entity* sphereEntity;
 		sphereEntity = ENTITYMANAGER::Instance().CreateEntityFromXFile("Res\\Mesh\\Sphere.X");
@@ -566,7 +598,7 @@ void TestScene::OnLoad()
 		HenMat.MatIndex = 1;
 		HenEntity->SetMaterial(&HenMat);
 	}
-	if (true)
+	if (animDeerSwitch)
 	{
 
 		//skinnedmesh

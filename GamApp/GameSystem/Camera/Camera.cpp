@@ -13,11 +13,10 @@ Camera::Camera(void)
 	mUpW = CameraParam::upW;
 	mLookAtW = CameraParam::lookAtW;
 
-	mPosW = D3DXVECTOR3(3.0f, 5, 33);
+	mPosW = D3DXVECTOR3(3.0f, 5, 33); //A-12, 0, 32.5f//B3.0f, 5, 33
 	mRightW  = D3DXVECTOR3(0.0f, 0.0f, 1.0f);
 	mUpW = D3DXVECTOR3(0.0f, 1.0f, 0.0f);
-	mLookAtW = D3DXVECTOR3(-1.0f, 5.0f, 33.0f);
-
+	mLookAtW = D3DXVECTOR3(-1.0f, 5.0f, 33.0f);//A-13.0f, 0.4f, 33.0f//B-1.0f, 5.0f, 33.0f
 
 	mFOV = CameraParam::FOV;
 }

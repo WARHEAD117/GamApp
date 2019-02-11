@@ -8,6 +8,7 @@
 
 SumiE::SumiE()
 {
+	texCount = 5;
 }
 
 
@@ -40,9 +41,10 @@ int maxInsideTexSize = 0;
 int minInsideTexSize = 0;
 
 bool useGussTemp = false;
+bool useDiffusion = false;
+
 bool useTemporal = true;
-bool useDiffusion = true;
-bool useRandom = true;
+bool useRandom = false;
 bool remap = true;
 
 void SumiE::CreatePostEffect()
@@ -602,10 +604,41 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		m_SynthesisEffect->BeginPass(1);
 		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 		m_SynthesisEffect->EndPass();
-
 		if (stillSave)
 		{
-			SaveViewToFile("BluredInside.jpg", m_pBluredInside);
+			//=============================================================================================================
+			//用来测试各种RT的效果2
+			PDIRECT3DSURFACE9 pSurf_test = NULL;
+			m_pOUTTarget->GetSurfaceLevel(0, &pSurf_test);
+
+			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_test);
+			RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
+
+			m_SynthesisEffect->SetTexture("g_TestOut", m_pInsideTarget);
+			m_SynthesisEffect->CommitChanges();
+
+			m_SynthesisEffect->BeginPass(11);
+			RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+			m_SynthesisEffect->EndPass();
+			SaveViewToFile("Inside.jpg", m_pOUTTarget);
+		}
+		if (stillSave)
+		{
+			//=============================================================================================================
+			//用来测试各种RT的效果2
+			PDIRECT3DSURFACE9 pSurf_test = NULL;
+			m_pOUTTarget->GetSurfaceLevel(0, &pSurf_test);
+
+			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_test);
+			RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
+
+			m_SynthesisEffect->SetTexture("g_TestOut", m_pBluredInside); 
+			m_SynthesisEffect->CommitChanges();
+
+			m_SynthesisEffect->BeginPass(11);
+			RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+			m_SynthesisEffect->EndPass();
+			SaveViewToFile("Inside2.jpg", m_pOUTTarget);
 		}
 		//======================================================================================================
 		//提取暗部
@@ -622,6 +655,25 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		m_SynthesisEffect->BeginPass(4);
 		RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 		m_SynthesisEffect->EndPass();
+
+		if (stillSave)
+		{
+			//=============================================================================================================
+			//用来测试各种RT的效果2
+			PDIRECT3DSURFACE9 pSurf_test = NULL;
+			m_pOUTTarget->GetSurfaceLevel(0, &pSurf_test);
+
+			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_test);
+			RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
+
+			m_SynthesisEffect->SetTexture("g_TestOut", m_pDarkPart);
+			m_SynthesisEffect->CommitChanges();
+
+			m_SynthesisEffect->BeginPass(11);
+			RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+			m_SynthesisEffect->EndPass();
+			SaveViewToFile("DarkPart.jpg", m_pOUTTarget);
+		}
 
 		//======================================================================================================
 		//水平模糊
@@ -664,7 +716,21 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 		if (stillSave)
 		{
-			SaveViewToFile("BluredInside2.jpg", m_pVerticalBlur);
+			//=============================================================================================================
+			//用来测试各种RT的效果2
+			PDIRECT3DSURFACE9 pSurf_test = NULL;
+			m_pOUTTarget->GetSurfaceLevel(0, &pSurf_test);
+
+			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, pSurf_test);
+			RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
+
+			m_SynthesisEffect->SetTexture("g_TestOut", m_pVerticalBlur);
+			m_SynthesisEffect->CommitChanges();
+
+			m_SynthesisEffect->BeginPass(11);
+			RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+			m_SynthesisEffect->EndPass();
+			SaveViewToFile("BluredInside.jpg", m_pOUTTarget);
 		}
 		//======================================================================================================
 		//第二次高斯模糊内部的纹理
@@ -697,7 +763,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 		if (stillSave)
 		{
-			SaveViewToFile("Inside.jpg", m_pPostTarget);
+			SaveViewToFile("InsideFinal.jpg", m_pPostTarget);
 		}
 	}
 	
@@ -733,6 +799,11 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 
 		RENDERDEVICE::Instance().g_pD3DDevice->SetRenderState(D3DRS_POINTSPRITEENABLE, true);
 
+		if (!openInsideParticle)
+		{
+			//RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
+		}
+
 		D3DXMATRIX temp = RENDERDEVICE::Instance().ViewMatrix * RENDERDEVICE::Instance().ProjMatrix;
 		m_postEffect->SetMatrix(VIEWPROJMATRIX, &temp);
 		m_postEffect->SetMatrix(WORLDVIEWPROJMATRIX, &temp);
@@ -762,7 +833,8 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		{
 			useRandom = !useRandom;
 		}
-		m_postEffect->SetBool("g_useRandom", useRandom);
+		//bool useR = useTemporal ? useRandom : false;
+		m_postEffect->SetBool("g_useRandom", useTemporal);
 
 		m_postEffect->SetFloat("g_randomOffset", randomOffset); 
 		m_postEffect->SetTexture("g_RandTex", m_pRandomTex);
@@ -814,36 +886,6 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 		RENDERDEVICE::Instance().g_pD3DDevice->SetFVF(D3DFVF_VERTEX);
 
 
-		//-------------------------------------------------------------------------------------------------------------------
-		if (GAMEINPUT::Instance().KeyPressed(DIK_G))
-		{
-			useGussTemp = !useGussTemp;
-		}
-		if (useGussTemp)
-		{
-			for (int i = 0; i < texCount - 1; i++)
-			{
-				RENDERDEVICE::Instance().g_pD3DDevice->StretchRect(m_pTexSurfList[i], NULL, m_pTexSurfList[i + 1], NULL, D3DTEXF_LINEAR);
-			}
-
-
-			RENDERDEVICE::Instance().g_pD3DDevice->StretchRect(m_pPostSurface, NULL, m_pTexSurfList[0], NULL, D3DTEXF_LINEAR);
-
-			RENDERDEVICE::Instance().g_pD3DDevice->SetRenderTarget(0, m_pPostSurface);
-			RENDERDEVICE::Instance().g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
-
-			m_SynthesisEffect->SetTexture("g_Src", m_pTexList[0]);
-			m_SynthesisEffect->SetTexture("g_Src2", m_pTexList[1]);
-			m_SynthesisEffect->SetTexture("g_Src3", m_pTexList[2]);
-			m_SynthesisEffect->SetTexture("g_Src4", m_pTexList[3]);
-			m_SynthesisEffect->SetTexture("g_Src5", m_pTexList[4]);
-
-			m_SynthesisEffect->CommitChanges();
-
-			m_SynthesisEffect->BeginPass(3);
-			RENDERDEVICE::Instance().g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
-			m_SynthesisEffect->EndPass();
-		}
 		if (GAMEINPUT::Instance().KeyPressed(DIK_T))
 		{
 			useTemporal = !useTemporal;
@@ -965,6 +1007,14 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 			RENDERDEVICE::Instance().g_pD3DDevice->StretchRect(pSurf_Out, NULL, pSurf_result, NULL, D3DTEXF_LINEAR);
 
 		}
+		else
+		{
+			PDIRECT3DSURFACE9 pSurf_result = NULL;
+			m_pOUTTarget->GetSurfaceLevel(0, &pSurf_result);
+			PDIRECT3DSURFACE9 pSurf_Out = NULL;
+			m_pPostTarget->GetSurfaceLevel(0, &pSurf_result);
+			RENDERDEVICE::Instance().g_pD3DDevice->StretchRect(pSurf_result, NULL, pSurf_Out, NULL, D3DTEXF_LINEAR);
+		}
 		
 
 
@@ -974,7 +1024,7 @@ void SumiE::RenderPost(LPDIRECT3DTEXTURE9 mainBuffer)
 	if (stillSave)
 	{
 		
-		SaveViewToFile("Final.jpg", m_pOUTTarget);
+		SaveViewToFile("Final.jpg", m_pPostTarget);
 	}
 	stillSave = false;
 }

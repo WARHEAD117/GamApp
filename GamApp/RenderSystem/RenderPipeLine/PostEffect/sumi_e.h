@@ -55,7 +55,7 @@ private:
 	LPDIRECT3DTEXTURE9 m_pBackground;
 	LPDIRECT3DTEXTURE9 m_pRandomTex;
 
-	int texCount = 5;
+	int texCount;
 	LPDIRECT3DTEXTURE9 m_pTexList[5];
 	PDIRECT3DSURFACE9 m_pTexSurfList[5];
 

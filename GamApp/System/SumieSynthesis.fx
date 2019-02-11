@@ -167,6 +167,16 @@ sampler_state
 	MinFilter = Point;
 	MagFilter = Point;
 	MipFilter = Point;
+}; 
+
+texture		g_TestOut;
+sampler2D g_sampleTestout =
+sampler_state
+{
+	Texture = <g_TestOut>;
+	MinFilter = Point;
+	MagFilter = Point;
+	MipFilter = Point;
 };
 
 float g_AlphaFactor = 0.8f;
@@ -208,34 +218,29 @@ float GetOverlap(float dark, float light)
 float4 PShaderSynthesis(float2 TexCoord : TEXCOORD0) : COLOR
 {
 	float4 bgColor = tex2D(g_sampleBackground, TexCoord);
-
+	//bgColor = float4(1, 1, 1, 1);
 	float4 colorInside = tex2D(g_sampleInside, TexCoord);
+
+	//0,5的时候不需要重叠第二次，flag会等于1
+	float flag = 1 - colorInside.r;
+
+
 	colorInside = GaussianBlur(g_ScreenWidth, g_ScreenHeight, g_sampleInside, TexCoord);
+	float insideAlpha = colorInside.a;
 
-	float4 colorInside2 = tex2D(g_sampleInside2, TexCoord);
-	colorInside2 = GaussianBlur(g_ScreenWidth, g_ScreenHeight, g_sampleInside2, TexCoord);
-
-	float insideAlpha = colorInside.a;// *g_AlphaFactor;
-	float insideAlpha2 = colorInside2.a *0.5;// *g_AlphaFactor;
-
-	float4 bloomColor = tex2D(g_sampleBloomed, TexCoord);
-	bloomColor.rgb = 0;
-
-	float bloomFactor = 1 -insideAlpha;
-	insideAlpha = bloomFactor * bloomColor.a + (1-bloomFactor)* insideAlpha;
+	float4 colorInside2 = colorInside;
+	float insideAlpha2 = colorInside2.a * flag;
 	
-	insideAlpha = insideAlpha *g_AlphaFactor;
+	float4 bluredInside = tex2D(g_sampleBloomed, TexCoord);
+	float bloomAlpha = bluredInside.a;
 
+	insideAlpha = insideAlpha* insideAlpha + (1 - insideAlpha) * bloomAlpha;
+	
 	float4 brushColor = float4(0, 0, 0, 0);
-	float4 Inside = brushColor * insideAlpha + bgColor * (1 - insideAlpha);
-
-	
-	insideAlpha2 = insideAlpha2 * (1 - colorInside.r);
-	//if (colorInside.r <= 0)
-	Inside = brushColor * insideAlpha2 + Inside * (1 - insideAlpha2);
+		float4 Inside = (1 - insideAlpha *g_AlphaFactor) * (1 - insideAlpha2 * g_AlphaFactor)*bgColor;
 
 	//return colorInside;
-	return bloomColor + Inside;
+	return Inside;
 }
 
 float4 PShaderBlur(float2 TexCoord : TEXCOORD0) : COLOR
@@ -540,6 +545,13 @@ float4 PShaderTemporal(float2 TexCoord : TEXCOORD0) : COLOR
 		return final;
 }
 
+float4 PShaderTestout(float2 TexCoord : TEXCOORD0) : COLOR
+{
+	float4 colorSrc = tex2D(g_sampleTestout, TexCoord);
+	float outC = 1 - colorSrc.w;
+	return float4(outC, outC,outC, 1);
+}
+
 technique SumieSynthesis
 {
 	pass p0
@@ -604,5 +616,11 @@ technique SumieSynthesis
 	{
 		vertexShader = compile vs_3_0 VShader();
 		pixelShader = compile ps_3_0 PShaderTemporal();
+	}
+
+	pass p11
+	{
+		vertexShader = compile vs_3_0 VShader();
+		pixelShader = compile ps_3_0 PShaderTestout();
 	}
 }
